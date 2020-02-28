@@ -1,0 +1,13 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+pytest = {version = "==4.6.5"}
+threedi-api-client = {version = "==3.0b10"}
+
+[requires]
+python_version = "3.7"
