@@ -6,7 +6,9 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-pytest = {version = "==4.6.5"}
+requests = "*"
+requests-mock = "*"
+pytest = "*"
 threedi-api-client = {version = "==3.0b10"}
 
 [requires]
