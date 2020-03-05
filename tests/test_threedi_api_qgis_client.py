@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
+# Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 
 import pytest
 from unittest.mock import Mock, patch
@@ -7,8 +7,9 @@ from openapi_client import (ApiException, Repository, Simulation, Revision, Acti
                             TimeseriesRain, ThreediModel)
 from threedi_api_qgis_client.api_calls.threedi_calls import (get_api_client, ThreediCalls, RepositoriesApi,
                                                              SimulationsApi, RevisionsApi)
-from .conftest import (TEST_API_PARAMETERS, REPO_DATA_LIST, SIM_DATA_LIST, SINGLE_SIM_DATA, ACTION_DATA, PROGRESS_DATA,
-                       CONSTANT_RAIN_DATA, TIME_SERIES_RAIN_DATA, REVISION_DATA_LIST, MODEL_DATA_LIST)
+from .conftest import (TEST_API_PARAMETERS, REPO_DATA_LIST, SIM_DATA_LIST, SINGLE_SIM_DATA, BAD_SIM_DATA,
+                       ACTION_DATA, PROGRESS_DATA, CONSTANT_RAIN_DATA, TIME_SERIES_RAIN_DATA, REVISION_DATA_LIST,
+                       MODEL_DATA_LIST)
 
 
 @patch.object(RepositoriesApi, 'repositories_list')
@@ -76,7 +77,7 @@ def test_simulations_progress(mock_simulations_progress_list):
 def test_all_simulations_progress(mock_simulations_progress_list, mock_simulations_list):
     sims = [Simulation(**data) for data in SIM_DATA_LIST]
     mock_simulations_list.return_value = Mock(results=sims)
-    mock_simulations_progress_list.side_effect = [Progress(**PROGRESS_DATA), ApiException]
+    mock_simulations_progress_list.side_effect = [Progress(**PROGRESS_DATA),  ApiException(404), ApiException(500)]
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
     progress_dict = tc.all_simulations_progress()
@@ -84,6 +85,9 @@ def test_all_simulations_progress(mock_simulations_progress_list, mock_simulatio
     assert all(s.id in progress_dict for s in sims)
     assert progress_dict[sim1.id].to_dict() == PROGRESS_DATA
     assert progress_dict[sim2.id].to_dict() == {'percentage': 0, 'time': 0}
+    mock_simulations_list.return_value = Mock(results=[Simulation(**BAD_SIM_DATA)])
+    with pytest.raises(ApiException):
+        tc.all_simulations_progress()
 
 
 @patch.object(SimulationsApi, 'simulations_events_rain_constant_create',

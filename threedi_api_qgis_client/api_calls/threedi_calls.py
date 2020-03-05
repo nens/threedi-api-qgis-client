@@ -1,3 +1,5 @@
+# 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
+# Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
 from typing import List, Dict
 from threedi_api_client import ThreediApiClient
@@ -59,8 +61,11 @@ class ThreediCalls:
             spk = sim.id
             try:
                 sim_progress = api.simulations_progress_list(str(spk))
-            except ApiException:
-                sim_progress = Progress(percentage=0, time=0)
+            except ApiException as e:
+                if e.status == 404:
+                    sim_progress = Progress(percentage=0, time=0)
+                else:
+                    raise
             progresses[spk] = sim_progress
         return progresses
 

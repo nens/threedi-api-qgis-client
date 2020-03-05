@@ -1,3 +1,5 @@
+# 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
+# Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import datetime
 
 
@@ -56,6 +58,15 @@ SIM_DATA_LIST = [
     ]
 
 SINGLE_SIM_DATA = {
+    "id": 1000,
+    "name": "Bad Simulation",
+    "threedimodel": "14",
+    "organisation": "qwertyhash",
+    "start_datetime": datetime.datetime.utcnow(),
+    "duration": 72000
+}
+
+BAD_SIM_DATA = {
     "name": "qgis client test run",
     "threedimodel": "14",
     "organisation": "qwertyhash",
