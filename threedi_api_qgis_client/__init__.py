@@ -1,5 +1,13 @@
-# -*- coding: utf-8 -*-
+# 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
+# Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 
-"""Top-level package for threedi-api-qgis-client."""
 
-__version__ = '0.1.0'
+# noinspection PyPep8Naming
+def classFactory(iface):  # pylint: disable=invalid-name
+    """Load ThreediQgisClient class from file ThreediQgisClient.
+
+    :param iface: A QGIS interface instance.
+    :type iface: QgsInterface
+    """
+    from .threedi_api_qgis_client import ThreediQgisClient
+    return ThreediQgisClient(iface)
