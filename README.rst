@@ -2,8 +2,8 @@
 threedi-api-qgis-client
 =======================
 
-.. image:: https://img.shields.io/travis/nens/threedi-api-qgis-client.svg
-        :target: https://travis-ci.org/nens/threedi-api-qgis-client
+.. image:: https://travis-ci.com/nens/threedi-api-qgis-client.svg?branch=master
+        :target: https://travis-ci.com/nens/threedi-api-qgis-client
 
 .. image:: https://readthedocs.org/projects/threedi-api-qgis-client/badge/?version=latest
         :target: https://threedi-api-qgis-client.readthedocs.io/en/latest/?badge=latest
