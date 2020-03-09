@@ -8,9 +8,9 @@ from qgis.PyQt.QtWidgets import QApplication, QWizardPage, QWizard, QGridLayout,
 try:
     import pyqtgraph as pg
 except ImportError:
-    temp_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    path = os.path.join(temp_dir, "deps", "pyqtgraph-0.10.0.egg")
-    sys.path.append(path)
+    main_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    deps_path = os.path.join(main_dir, "deps", "pyqtgraph-0.10.0.egg")
+    sys.path.append(deps_path)
     import pyqtgraph as pg
 
 
