@@ -2,6 +2,7 @@ import os
 import sys
 import json
 from math import ceil
+from datetime import datetime
 from qgis.PyQt.QtSvg import QGraphicsSvgItem
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
@@ -14,6 +15,14 @@ except ImportError:
     deps_path = os.path.join(main_dir, "deps", "pyqtgraph-0.10.0-py3-none-any.whl")
     sys.path.append(deps_path)
     import pyqtgraph as pg
+
+try:
+    from dateutil.relativedelta import relativedelta
+except ImportError:
+    main_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    deps_path = os.path.join(main_dir, "deps", "python_dateutil-2.8.1-py2.py3-none-any.whl")
+    sys.path.append(deps_path)
+    from dateutil.relativedelta import relativedelta
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -69,6 +78,21 @@ class Page2bWidget(uicls_p2b, basecls_p2b):
         self.gv_svg.setScene(scene)
         set_widget_background_color(self.gv_svg)
         set_widget_background_color(self)
+        self.date_from.dateTimeChanged.connect(self.update_time_difference)
+        self.date_to.dateTimeChanged.connect(self.update_time_difference)
+        self.time_from.dateTimeChanged.connect(self.update_time_difference)
+        self.time_to.dateTimeChanged.connect(self.update_time_difference)
+
+    def update_time_difference(self):
+        date_from = self.date_from.dateTime().toString('yyyy-MM-dd')
+        time_from = self.time_from.time().toString('H:m')
+        date_to = self.date_to.dateTime().toString('yyyy-MM-dd')
+        time_to = self.time_to.time().toString('H:m')
+        start = datetime.strptime(f"{date_from} {time_from}", '%Y-%m-%d %H:%M')
+        ends = datetime.strptime(f"{date_to} {time_to}", '%Y-%m-%d %H:%M')
+        diff = relativedelta(start, ends)
+        duration = (diff.years, diff.months, diff.days, diff.hours, diff.minutes)
+        self.label_total_time.setText('{} years, {} months, {} days, {} hours, {} minutes'.format(*duration))
 
 
 class Page3Widget(uicls_p3, basecls_p3):
@@ -128,6 +152,7 @@ class Page3Widget(uicls_p3, basecls_p3):
                 intensity = float(self.le_intensity.text())
             except ValueError:
                 return
+            # Time intervals fot constant precipitation
             x_values += list(range(0, 3600 + 180, 180))
             y_values += [intensity] * 21
         elif current_index == 2:
@@ -140,7 +165,9 @@ class Page3Widget(uicls_p3, basecls_p3):
         else:
             #  TODO: Add handling for Design
             return
+        # Bar width as time series interval value
         width = x_values[1] - x_values[0]
+        # Adding ticks in minutes
         dx = [(value, f"{ceil(value / 60)} (mins)") for value in x_values]
         self.plot_ticks = [[dx[0], dx[-1]]]
         ax = self.plot_widget.getAxis('bottom')
@@ -178,7 +205,7 @@ class Page4Widget(uicls_p4, basecls_p4):
         set_widget_background_color(self.gv_svg)
         set_widget_background_color(self)
 
-    def plot_last_precipitation(self):
+    def plot_overview_precipitation(self):
         self.plot_widget.clear()
         plot_bar_graph = self.parent_page.parent_wizard.p3.main_widget.plot_bar_graph
         if plot_bar_graph is None:
@@ -272,4 +299,25 @@ class SimulationWizard(QWizard):
 
     def page_changed(self, page_id):
         if page_id == 4:
-            self.p4.main_widget.plot_last_precipitation()
+            self.p4.main_widget.plot_overview_precipitation()
+            self.set_overview_name()
+            self.set_overview_database()
+            self.set_overview_duration()
+            self.set_overview_precipitation()
+
+    def set_overview_name(self):
+        name = self.p1.main_widget.le_sim_name.text()
+        self.p4.main_widget.sim_name.setText(name)
+
+    def set_overview_database(self):
+        database = self.p1.main_widget.cbo_db.currentText()
+        self.p4.main_widget.sim_database.setText(database)
+
+    def set_overview_duration(self):
+        duration = self.p2b.main_widget.label_total_time.text()
+        self.p4.main_widget.sim_duration.setText(duration)
+
+    def set_overview_precipitation(self):
+        prec_type = self.p3.main_widget.cbo_prec_type.currentText()
+        self.p4.main_widget.sim_prec_type.setText(prec_type)
+        #  TODO: adding calculations of total precipitation
