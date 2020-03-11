@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>750</width>
+    <width>743</width>
     <height>437</height>
    </rect>
   </property>
@@ -35,78 +35,46 @@
    <string notr="true">QComboBox {background-color: rgba(255, 255, 255);}</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="3" column="9">
-    <widget class="QComboBox" name="cbo_to_m">
+   <item row="2" column="1">
+    <widget class="QLabel" name="label_5">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="font">
       <font>
        <family>Segoe UI</family>
        <pointsize>10</pointsize>
       </font>
      </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-     </property>
-     <property name="editable">
-      <bool>true</bool>
-     </property>
-     <property name="frame">
-      <bool>false</bool>
+     <property name="text">
+      <string/>
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <widget class="QComboBox" name="cbo_from_d">
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_3">
      <property name="font">
       <font>
        <family>Segoe UI</family>
-       <pointsize>10</pointsize>
+       <pointsize>12</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
       </font>
      </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-     </property>
-     <property name="editable">
-      <bool>true</bool>
-     </property>
-     <property name="frame">
-      <bool>false</bool>
+     <property name="text">
+      <string>From</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="11">
-    <widget class="QComboBox" name="cbo_to_y">
+   <item row="3" column="7">
+    <widget class="QTimeEdit" name="time_to">
      <property name="font">
       <font>
        <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-     </property>
-     <property name="editable">
-      <bool>true</bool>
-     </property>
-     <property name="frame">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="12">
-    <widget class="QTimeEdit" name="cbo_to_t">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
+       <pointsize>12</pointsize>
       </font>
      </property>
      <property name="autoFillBackground">
@@ -126,7 +94,115 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="0" colspan="13">
+   <item row="7" column="4">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="3">
+    <widget class="QLabel" name="label_7">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Time:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="5">
+    <widget class="QLabel" name="label">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Date:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="7">
+    <widget class="QLabel" name="label_9">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Time:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QLabel" name="label_6">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_4">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Date:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="8">
     <widget class="QGraphicsView" name="gv_svg">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
@@ -148,157 +224,12 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label_3">
+   <item row="3" column="3">
+    <widget class="QTimeEdit" name="time_from">
      <property name="font">
       <font>
        <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>From</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="7">
-    <widget class="QLabel" name="label">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Day:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="6">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="2" column="12">
-    <widget class="QLabel" name="label_9">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Time:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="11">
-    <widget class="QLabel" name="label_8">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Year:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="4">
-    <widget class="QComboBox" name="cbo_from_y">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-     </property>
-     <property name="editable">
-      <bool>true</bool>
-     </property>
-     <property name="frame">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="5">
-    <widget class="QLabel" name="label_7">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Time:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="4">
-    <widget class="QLabel" name="label_6">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Year:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="5">
-    <widget class="QTimeEdit" name="time_from_t">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
+       <pointsize>12</pointsize>
       </font>
      </property>
      <property name="autoFillBackground">
@@ -318,50 +249,12 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="9">
-    <widget class="QLabel" name="label_2">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Month:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label_4">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Day:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="7">
+   <item row="1" column="5">
     <widget class="QLabel" name="label_10">
      <property name="font">
       <font>
        <family>Segoe UI</family>
-       <pointsize>10</pointsize>
+       <pointsize>12</pointsize>
        <weight>75</weight>
        <bold>true</bold>
       </font>
@@ -371,14 +264,8 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="2">
-    <widget class="QLabel" name="label_5">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
+   <item row="5" column="3" colspan="3" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
+    <widget class="QLabel" name="label_13">
      <property name="font">
       <font>
        <family>Segoe UI</family>
@@ -386,161 +273,14 @@
       </font>
      </property>
      <property name="text">
-      <string>Month:</string>
+      <string>Total simulation time:</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
      </property>
     </widget>
    </item>
-   <item row="3" column="2">
-    <widget class="QComboBox" name="cbo_from_m">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-     </property>
-     <property name="editable">
-      <bool>true</bool>
-     </property>
-     <property name="frame">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="3">
-    <widget class="QLabel" name="label_12">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>/</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="1">
-    <widget class="QLabel" name="label_11">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>/</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="6">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Fixed</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>100</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="3" column="10">
-    <widget class="QLabel" name="label_15">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>/</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="8">
-    <widget class="QLabel" name="label_14">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>/</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="6">
-    <spacer name="verticalSpacer_2">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Fixed</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>50</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="3" column="7">
-    <widget class="QComboBox" name="cbo_to_d">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-     </property>
-     <property name="editable">
-      <bool>true</bool>
-     </property>
-     <property name="frame">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="6">
-    <spacer name="horizontalSpacer_2">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Expanding</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>125</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="6" column="4" colspan="7" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
+   <item row="6" column="2" colspan="5" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
     <widget class="QLabel" name="label_total_time">
      <property name="font">
       <font>
@@ -558,19 +298,99 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="5" colspan="3" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
-    <widget class="QLabel" name="label_13">
+   <item row="4" column="4">
+    <spacer name="verticalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>50</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="3" column="4">
+    <spacer name="horizontalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Expanding</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>125</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="3" column="0">
+    <widget class="QDateEdit" name="date_from">
      <property name="font">
       <font>
        <family>Segoe UI</family>
-       <pointsize>10</pointsize>
+       <pointsize>12</pointsize>
       </font>
      </property>
-     <property name="text">
-      <string>Total simulation time:</string>
+     <property name="styleSheet">
+      <string notr="true">QDateEdit {background-color: white;}</string>
      </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="buttonSymbols">
+      <enum>QAbstractSpinBox::NoButtons</enum>
+     </property>
+     <property name="displayFormat">
+      <string>dd/MM/yyyy</string>
+     </property>
+     <property name="calendarPopup">
+      <bool>true</bool>
+     </property>
+     <property name="date">
+      <date>
+       <year>2020</year>
+       <month>1</month>
+       <day>1</day>
+      </date>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="5">
+    <widget class="QDateEdit" name="date_to">
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QDateEdit {background-color: white;}</string>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="buttonSymbols">
+      <enum>QAbstractSpinBox::NoButtons</enum>
+     </property>
+     <property name="displayFormat">
+      <string>dd/MM/yyyy</string>
+     </property>
+     <property name="calendarPopup">
+      <bool>true</bool>
+     </property>
+     <property name="date">
+      <date>
+       <year>2020</year>
+       <month>1</month>
+       <day>1</day>
+      </date>
      </property>
     </widget>
    </item>

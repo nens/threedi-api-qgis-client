@@ -191,7 +191,6 @@ class Page4Widget(uicls_p4, basecls_p4):
 
 
 class Page1(QWizardPage):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -204,7 +203,6 @@ class Page1(QWizardPage):
 
 
 class Page2a(QWizardPage):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -217,7 +215,6 @@ class Page2a(QWizardPage):
 
 
 class Page2b(QWizardPage):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -230,7 +227,6 @@ class Page2b(QWizardPage):
 
 
 class Page3(QWizardPage):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -243,7 +239,6 @@ class Page3(QWizardPage):
 
 
 class Page4(QWizardPage):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -256,7 +251,6 @@ class Page4(QWizardPage):
 
 
 class SimulationWizard(QWizard):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.p1 = Page1(self)
@@ -277,6 +271,5 @@ class SimulationWizard(QWizard):
         self.resize(850, 600)
 
     def page_changed(self, page_id):
-        print(page_id)
         if page_id == 4:
             self.p4.main_widget.plot_last_precipitation()
