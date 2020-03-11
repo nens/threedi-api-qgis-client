@@ -6,7 +6,7 @@ from qgis.PyQt.QtSvg import QGraphicsSvgItem
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 
-from qgis.PyQt.QtWidgets import QApplication, QWizardPage, QWizard, QGridLayout, QGraphicsScene, QSizePolicy, QInputDialog
+from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QGraphicsScene, QSizePolicy, QInputDialog
 try:
     import pyqtgraph as pg
 except ImportError:
@@ -31,9 +31,10 @@ def set_widget_background_color(widget, hex_color='#F0F0F0'):
 
 
 class Page1Widget(uicls_p1, basecls_p1):
-    def __init__(self):
+    def __init__(self, parent_page):
         super(Page1Widget, self).__init__()
         self.setupUi(self)
+        self.parent_page = parent_page
         scene = QGraphicsScene()
         item = QGraphicsSvgItem(os.path.join(base_dir, 'icons', 'sim_wizard_p1.svg'))
         scene.addItem(item)
@@ -45,9 +46,10 @@ class Page1Widget(uicls_p1, basecls_p1):
 
 
 class Page2aWidget(uicls_p2a, basecls_p2a):
-    def __init__(self):
+    def __init__(self, parent_page):
         super(Page2aWidget, self).__init__()
         self.setupUi(self)
+        self.parent_page = parent_page
         scene = QGraphicsScene()
         item = QGraphicsSvgItem(os.path.join(base_dir, 'icons', 'sim_wizard_p2.svg'))
         scene.addItem(item)
@@ -57,9 +59,10 @@ class Page2aWidget(uicls_p2a, basecls_p2a):
 
 
 class Page2bWidget(uicls_p2b, basecls_p2b):
-    def __init__(self):
+    def __init__(self, parent_page):
         super(Page2bWidget, self).__init__()
         self.setupUi(self)
+        self.parent_page = parent_page
         scene = QGraphicsScene()
         item = QGraphicsSvgItem(os.path.join(base_dir, 'icons', 'sim_wizard_p2.svg'))
         scene.addItem(item)
@@ -69,13 +72,16 @@ class Page2bWidget(uicls_p2b, basecls_p2b):
 
 
 class Page3Widget(uicls_p3, basecls_p3):
-    def __init__(self):
+    def __init__(self, parent_page):
         super(Page3Widget, self).__init__()
         self.setupUi(self)
+        self.parent_page = parent_page
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
         self.plot_widget.setMaximumHeight(100)
         self.plot_widget.hideAxis('left')
+        self.plot_bar_graph = None
+        self.plot_ticks = None
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
         self.custom_time_series = [[0, 200], [300, 300], [600, 400], [900, 200], [1200, 50]]
         self.widget_constant.hide()
@@ -113,7 +119,8 @@ class Page3Widget(uicls_p3, basecls_p3):
 
     def plot_precipitation(self):
         self.plot_widget.clear()
-        ax = self.plot_widget.getAxis('bottom')
+        self.plot_bar_graph = None
+        self.plot_ticks = None
         x_values, y_values = [], []
         current_index = self.cbo_prec_type.currentIndex()
         if current_index == 1:
@@ -134,10 +141,12 @@ class Page3Widget(uicls_p3, basecls_p3):
             #  TODO: Add handling for Design
             return
         width = x_values[1] - x_values[0]
-        bar_graph_item = pg.BarGraphItem(x=x_values, height=y_values, width=width, brush=QColor('#1883D7'))
         dx = [(value, f"{ceil(value / 60)} (mins)") for value in x_values]
-        ax.setTicks([[dx[0], dx[-1]]])
-        self.plot_widget.addItem(bar_graph_item)
+        self.plot_ticks = [[dx[0], dx[-1]]]
+        ax = self.plot_widget.getAxis('bottom')
+        ax.setTicks(self.plot_ticks)
+        self.plot_bar_graph = pg.BarGraphItem(x=x_values, height=y_values, width=width, brush=QColor('#1883D7'))
+        self.plot_widget.addItem(self.plot_bar_graph)
 
     def set_custom_time_series(self):
         text_ts = json.dumps(self.custom_time_series) if self.custom_time_series else ''
@@ -153,24 +162,42 @@ class Page3Widget(uicls_p3, basecls_p3):
 
 
 class Page4Widget(uicls_p4, basecls_p4):
-    def __init__(self):
+    def __init__(self, parent_page):
         super(Page4Widget, self).__init__()
         self.setupUi(self)
+        self.parent_page = parent_page
+        self.plot_widget = pg.PlotWidget()
+        self.plot_widget.setBackground(None)
+        self.plot_widget.setMaximumHeight(100)
+        self.plot_widget.hideAxis('left')
+        self.lout_plot.addWidget(self.plot_widget, 0, 0)
         scene = QGraphicsScene()
         item = QGraphicsSvgItem(os.path.join(base_dir, 'icons', 'sim_wizard_p4.svg'))
         scene.addItem(item)
         self.gv_svg.setScene(scene)
         set_widget_background_color(self.gv_svg)
         set_widget_background_color(self)
-        # self.lout_plot.addWidget(self.plot_widget, 0, 0)
+
+    def plot_last_precipitation(self):
+        self.plot_widget.clear()
+        plot_bar_graph = self.parent_page.parent_wizard.p3.main_widget.plot_bar_graph
+        if plot_bar_graph is None:
+            return
+        new_bar_graph = pg.BarGraphItem(**plot_bar_graph.opts)
+        plot_ticks = self.parent_page.parent_wizard.p3.main_widget.plot_ticks
+        ax = self.plot_widget.getAxis('bottom')
+        ax.setTicks(plot_ticks)
+        self.plot_widget.addItem(new_bar_graph)
 
 
 class Page1(QWizardPage):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = Page1Widget(self)
         layout = QGridLayout()
-        layout.addWidget(Page1Widget(), 0, 0)
+        layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.adjustSize()
@@ -180,8 +207,10 @@ class Page2a(QWizardPage):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = Page2aWidget(self)
         layout = QGridLayout()
-        layout.addWidget(Page2aWidget(), 0, 0)
+        layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.adjustSize()
@@ -191,8 +220,10 @@ class Page2b(QWizardPage):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = Page2bWidget(self)
         layout = QGridLayout()
-        layout.addWidget(Page2bWidget(), 0, 0)
+        layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.adjustSize()
@@ -202,8 +233,10 @@ class Page3(QWizardPage):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = Page3Widget(self)
         layout = QGridLayout()
-        layout.addWidget(Page3Widget(), 0, 0)
+        layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.adjustSize()
@@ -213,8 +246,10 @@ class Page4(QWizardPage):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = Page4Widget(self)
         layout = QGridLayout()
-        layout.addWidget(Page4Widget(), 0, 0)
+        layout.addWidget(self.main_widget)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.adjustSize()
@@ -224,28 +259,24 @@ class SimulationWizard(QWizard):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        p1 = Page1(self)
-        p2a = Page2a(self)
-        p2b = Page2b(self)
-        p3 = Page3(self)
-        p4 = Page4(self)
-        self.addPage(p1)
-        self.addPage(p2a)
-        self.addPage(p2b)
-        self.addPage(p3)
-        self.addPage(p4)
+        self.p1 = Page1(self)
+        self.p2a = Page2a(self)
+        self.p2b = Page2b(self)
+        self.p3 = Page3(self)
+        self.p4 = Page4(self)
+        self.addPage(self.p1)
+        self.addPage(self.p2a)
+        self.addPage(self.p2b)
+        self.addPage(self.p3)
+        self.addPage(self.p4)
+        self.currentIdChanged.connect(self.page_changed)
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
         self.parentWidget().setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.resize(850, 600)
 
-
-def run_new_simulation():
-    app = QApplication([])
-    d = SimulationWizard()
-    d.exec()
-
-
-if __name__ == '__main__':
-    run_new_simulation()
+    def page_changed(self, page_id):
+        print(page_id)
+        if page_id == 4:
+            self.p4.main_widget.plot_last_precipitation()

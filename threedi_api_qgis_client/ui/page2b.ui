@@ -115,6 +115,9 @@
      <property name="styleSheet">
       <string notr="true">QTimeEdit {background-color: white;}</string>
      </property>
+     <property name="locale">
+      <locale language="English" country="Netherlands"/>
+     </property>
      <property name="frame">
       <bool>false</bool>
      </property>
@@ -305,7 +308,7 @@
       <string notr="true">QTimeEdit {background-color: white;}</string>
      </property>
      <property name="locale">
-      <locale language="English" country="UnitedKingdom"/>
+      <locale language="English" country="Netherlands"/>
      </property>
      <property name="frame">
       <bool>false</bool>
