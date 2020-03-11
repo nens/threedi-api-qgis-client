@@ -17,11 +17,24 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Constructor."""
         super(ThreediQgisClientDockWidget, self).__init__(parent)
         self.setupUi(self)
-        self.pushButton.clicked.connect(self.run_wizard)
+        self.widget_authorized.hide()
+        self.btn_start.clicked.connect(self.log_in)
+        self.btn_simulate.clicked.connect(self.run_wizard)
+        self.btn_log_out.clicked.connect(self.log_out)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
         event.accept()
+
+    def log_in(self):
+        self.widget_unauthorized.hide()
+        self.widget_authorized.show()
+        self.btn_simulate.setEnabled(True)
+
+    def log_out(self):
+        self.widget_unauthorized.show()
+        self.widget_authorized.hide()
+        self.btn_simulate.setDisabled(True)
 
     def run_wizard(self):
         d = SimulationWizard(self)

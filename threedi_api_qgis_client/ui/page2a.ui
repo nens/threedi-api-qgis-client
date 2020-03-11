@@ -99,7 +99,7 @@
       <bool>true</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QSpinBox {background-color: rgba(255, 255, 255);}</string>
+      <string notr="true">QSpinBox {background-color: white;}</string>
      </property>
      <property name="frame">
       <bool>false</bool>
@@ -152,7 +152,7 @@
       <bool>true</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QDateEdit {background-color: rgba(255, 255, 255);}</string>
+      <string notr="true">QDateEdit {background-color: white;}</string>
      </property>
      <property name="frame">
       <bool>false</bool>
@@ -222,7 +222,7 @@
       <bool>true</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QDateEdit {background-color: rgba(255, 255, 255);}</string>
+      <string notr="true">QDateEdit {background-color: white;}</string>
      </property>
      <property name="frame">
       <bool>false</bool>
@@ -289,7 +289,7 @@
       <bool>true</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QSpinBox {background-color: rgba(255, 255, 255);}</string>
+      <string notr="true">QSpinBox {background-color: white;}</string>
      </property>
      <property name="frame">
       <bool>false</bool>
@@ -317,7 +317,7 @@
       <bool>true</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QSpinBox {background-color: rgba(255, 255, 255);}</string>
+      <string notr="true">QSpinBox {background-color: white;}</string>
      </property>
      <property name="frame">
       <bool>false</bool>
@@ -342,7 +342,7 @@
       <bool>true</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">QSpinBox {background-color: rgba(255, 255, 255);}</string>
+      <string notr="true">QSpinBox {background-color: white;}</string>
      </property>
      <property name="frame">
       <bool>false</bool>
