@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>367</width>
-    <height>897</height>
+    <height>848</height>
    </rect>
   </property>
   <property name="font">
@@ -31,18 +31,27 @@
       </property>
      </widget>
     </item>
-    <item row="10" column="1">
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
+    <item row="6" column="0" colspan="3">
+     <widget class="QToolButton" name="btn_results">
+      <property name="enabled">
+       <bool>false</bool>
       </property>
-      <property name="sizeHint" stdset="0">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
        <size>
-        <width>20</width>
-        <height>40</height>
+        <width>0</width>
+        <height>0</height>
        </size>
       </property>
-     </spacer>
+      <property name="text">
+       <string>RESULTS</string>
+      </property>
+     </widget>
     </item>
     <item row="9" column="0">
      <widget class="QPushButton" name="btn_clear_log">
@@ -54,56 +63,18 @@
       </property>
      </widget>
     </item>
-    <item row="6" column="0" colspan="3">
-     <widget class="QToolButton" name="btn_results">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>50</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>RESULTS</string>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="0" colspan="3">
-     <widget class="QToolButton" name="btn_simulate">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>50</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>SIMULATE</string>
-      </property>
-     </widget>
-    </item>
     <item row="8" column="0" colspan="3">
      <widget class="QListView" name="lv_log">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>150</height>
+        <height>0</height>
        </size>
       </property>
       <property name="font">
@@ -116,35 +87,13 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="0" colspan="3">
-     <widget class="QToolButton" name="btn_upload">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>50</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>UPLOAD</string>
-      </property>
-     </widget>
-    </item>
     <item row="3" column="0" colspan="3">
      <widget class="QToolButton" name="btn_check">
       <property name="enabled">
        <bool>false</bool>
       </property>
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -152,7 +101,7 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>50</height>
+        <height>0</height>
        </size>
       </property>
       <property name="text">
@@ -166,7 +115,7 @@
        <bool>false</bool>
       </property>
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -174,11 +123,33 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>50</height>
+        <height>0</height>
        </size>
       </property>
       <property name="text">
        <string>BUILD</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0" colspan="3">
+     <widget class="QToolButton" name="btn_upload">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>UPLOAD</string>
       </property>
      </widget>
     </item>
@@ -187,7 +158,7 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>24</height>
+        <height>0</height>
        </size>
       </property>
       <property name="frameShape">
@@ -202,7 +173,7 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>150</height>
+           <height>0</height>
           </size>
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
@@ -299,7 +270,7 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>75</height>
+           <height>0</height>
           </size>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
@@ -321,6 +292,9 @@
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Expanding</enum>
+            </property>
             <property name="sizeHint" stdset="0">
              <size>
               <width>40</width>
@@ -332,7 +306,7 @@
           <item row="1" column="1">
            <widget class="QPushButton" name="btn_start">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -341,6 +315,12 @@
              <size>
               <width>150</width>
               <height>50</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
             <property name="text">
@@ -367,6 +347,41 @@
         </widget>
        </item>
       </layout>
+     </widget>
+    </item>
+    <item row="10" column="1">
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>40</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="5" column="0" colspan="3">
+     <widget class="QToolButton" name="btn_simulate">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>SIMULATE</string>
+      </property>
      </widget>
     </item>
    </layout>
