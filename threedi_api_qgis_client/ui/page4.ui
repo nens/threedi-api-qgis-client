@@ -36,7 +36,7 @@
     <widget class="QLabel" name="sim_name">
      <property name="font">
       <font>
-       <pointsize>8</pointsize>
+       <pointsize>9</pointsize>
        <weight>75</weight>
        <bold>true</bold>
       </font>
@@ -102,7 +102,7 @@
     <widget class="QLabel" name="sim_database">
      <property name="font">
       <font>
-       <pointsize>8</pointsize>
+       <pointsize>9</pointsize>
        <weight>75</weight>
        <bold>true</bold>
       </font>
@@ -116,7 +116,7 @@
     <widget class="QLabel" name="sim_duration">
      <property name="font">
       <font>
-       <pointsize>8</pointsize>
+       <pointsize>9</pointsize>
        <weight>75</weight>
        <bold>true</bold>
       </font>
@@ -130,7 +130,7 @@
     <widget class="QLabel" name="sim_prec_type">
      <property name="font">
       <font>
-       <pointsize>8</pointsize>
+       <pointsize>9</pointsize>
        <weight>75</weight>
        <bold>true</bold>
       </font>
@@ -212,7 +212,7 @@
     <widget class="QLabel" name="sim_prec_total">
      <property name="font">
       <font>
-       <pointsize>8</pointsize>
+       <pointsize>9</pointsize>
        <weight>75</weight>
        <bold>true</bold>
       </font>

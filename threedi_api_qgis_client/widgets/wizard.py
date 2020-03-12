@@ -1,5 +1,4 @@
 import os
-import sys
 import json
 from math import ceil
 from datetime import datetime
@@ -8,21 +7,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QGraphicsScene, QSizePolicy, QInputDialog
-try:
-    import pyqtgraph as pg
-except ImportError:
-    main_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    deps_path = os.path.join(main_dir, "deps", "pyqtgraph-0.10.0-py3-none-any.whl")
-    sys.path.append(deps_path)
-    import pyqtgraph as pg
-
-try:
-    from dateutil.relativedelta import relativedelta
-except ImportError:
-    main_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    deps_path = os.path.join(main_dir, "deps", "python_dateutil-2.8.1-py2.py3-none-any.whl")
-    sys.path.append(deps_path)
-    from dateutil.relativedelta import relativedelta
+from ..deps.custom_imports import pg, relativedelta
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -39,9 +24,9 @@ def set_widget_background_color(widget, hex_color='#F0F0F0'):
     widget.setPalette(palette)
 
 
-class Page1Widget(uicls_p1, basecls_p1):
+class SourceWidget(uicls_p1, basecls_p1):
     def __init__(self, parent_page):
-        super(Page1Widget, self).__init__()
+        super(SourceWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         scene = QGraphicsScene()
@@ -54,9 +39,9 @@ class Page1Widget(uicls_p1, basecls_p1):
         line_edit.setPlaceholderText('Choose database')
 
 
-class Page2aWidget(uicls_p2a, basecls_p2a):
+class SimulationDurationWidget(uicls_p2a, basecls_p2a):
     def __init__(self, parent_page):
-        super(Page2aWidget, self).__init__()
+        super(SimulationDurationWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         scene = QGraphicsScene()
@@ -67,9 +52,9 @@ class Page2aWidget(uicls_p2a, basecls_p2a):
         set_widget_background_color(self)
 
 
-class Page2bWidget(uicls_p2b, basecls_p2b):
+class PrecipitationDurationWidget(uicls_p2b, basecls_p2b):
     def __init__(self, parent_page):
-        super(Page2bWidget, self).__init__()
+        super(PrecipitationDurationWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         scene = QGraphicsScene()
@@ -98,9 +83,9 @@ class Page2bWidget(uicls_p2b, basecls_p2b):
             self.label_total_time.setText('Invalid datetime format!')
 
 
-class Page3Widget(uicls_p3, basecls_p3):
+class PrecipitationWidget(uicls_p3, basecls_p3):
     def __init__(self, parent_page):
-        super(Page3Widget, self).__init__()
+        super(PrecipitationWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         self.plot_widget = pg.PlotWidget()
@@ -191,9 +176,9 @@ class Page3Widget(uicls_p3, basecls_p3):
         self.plot_precipitation()
 
 
-class Page4Widget(uicls_p4, basecls_p4):
+class SummaryWidget(uicls_p4, basecls_p4):
     def __init__(self, parent_page):
-        super(Page4Widget, self).__init__()
+        super(SummaryWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         self.plot_widget = pg.PlotWidget()
@@ -224,7 +209,7 @@ class Page1(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
-        self.main_widget = Page1Widget(self)
+        self.main_widget = SourceWidget(self)
         layout = QGridLayout()
         layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
@@ -236,7 +221,7 @@ class Page2a(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
-        self.main_widget = Page2aWidget(self)
+        self.main_widget = SimulationDurationWidget(self)
         layout = QGridLayout()
         layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
@@ -248,7 +233,7 @@ class Page2b(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
-        self.main_widget = Page2bWidget(self)
+        self.main_widget = PrecipitationDurationWidget(self)
         layout = QGridLayout()
         layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
@@ -260,7 +245,7 @@ class Page3(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
-        self.main_widget = Page3Widget(self)
+        self.main_widget = PrecipitationWidget(self)
         layout = QGridLayout()
         layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
@@ -272,7 +257,7 @@ class Page4(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
-        self.main_widget = Page4Widget(self)
+        self.main_widget = SummaryWidget(self)
         layout = QGridLayout()
         layout.addWidget(self.main_widget)
         self.setLayout(layout)
