@@ -84,15 +84,18 @@ class Page2bWidget(uicls_p2b, basecls_p2b):
         self.time_to.dateTimeChanged.connect(self.update_time_difference)
 
     def update_time_difference(self):
-        date_from = self.date_from.dateTime().toString('yyyy-MM-dd')
-        time_from = self.time_from.time().toString('H:m')
-        date_to = self.date_to.dateTime().toString('yyyy-MM-dd')
-        time_to = self.time_to.time().toString('H:m')
-        start = datetime.strptime(f"{date_from} {time_from}", '%Y-%m-%d %H:%M')
-        ends = datetime.strptime(f"{date_to} {time_to}", '%Y-%m-%d %H:%M')
-        diff = relativedelta(ends, start)
-        duration = (diff.years, diff.months, diff.days, diff.hours, diff.minutes)
-        self.label_total_time.setText('{} years, {} months, {} days, {} hours, {} minutes'.format(*duration))
+        try:
+            date_from = self.date_from.dateTime().toString('yyyy-MM-dd')
+            time_from = self.time_from.time().toString('H:m')
+            date_to = self.date_to.dateTime().toString('yyyy-MM-dd')
+            time_to = self.time_to.time().toString('H:m')
+            start = datetime.strptime(f"{date_from} {time_from}", '%Y-%m-%d %H:%M')
+            ends = datetime.strptime(f"{date_to} {time_to}", '%Y-%m-%d %H:%M')
+            diff = relativedelta(ends, start)
+            duration = (diff.years, diff.months, diff.days, diff.hours, diff.minutes)
+            self.label_total_time.setText('{} years, {} months, {} days, {} hours, {} minutes'.format(*duration))
+        except ValueError:
+            self.label_total_time.setText('Invalid datetime format!')
 
 
 class Page3Widget(uicls_p3, basecls_p3):
