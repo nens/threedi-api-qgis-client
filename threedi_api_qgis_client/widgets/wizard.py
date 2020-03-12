@@ -8,14 +8,15 @@ from qgis.PyQt.QtGui import QColor
 
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QGraphicsScene, QSizePolicy, QInputDialog
 from ..deps.custom_imports import pg, relativedelta
+from ..utils import icon_path
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_p1, basecls_p1 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page1.ui'))
-uicls_p2a, basecls_p2a = uic.loadUiType(os.path.join(base_dir, 'ui', 'page2a.ui'))
-uicls_p2b, basecls_p2b = uic.loadUiType(os.path.join(base_dir, 'ui', 'page2b.ui'))
+uicls_p2, basecls_p2 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page2.ui'))
 uicls_p3, basecls_p3 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page3.ui'))
 uicls_p4, basecls_p4 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page4.ui'))
+uicls_p5, basecls_p5 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page5.ui'))
 
 
 def set_widget_background_color(widget, hex_color='#F0F0F0'):
@@ -30,7 +31,7 @@ class SourceWidget(uicls_p1, basecls_p1):
         self.setupUi(self)
         self.parent_page = parent_page
         scene = QGraphicsScene()
-        item = QGraphicsSvgItem(os.path.join(base_dir, 'icons', 'sim_wizard_p1.svg'))
+        item = QGraphicsSvgItem(icon_path('sim_wizard_p1.svg'))
         scene.addItem(item)
         self.gv_svg.setScene(scene)
         set_widget_background_color(self.gv_svg)
@@ -39,26 +40,26 @@ class SourceWidget(uicls_p1, basecls_p1):
         line_edit.setPlaceholderText('Choose database')
 
 
-class SimulationDurationWidget(uicls_p2a, basecls_p2a):
+class SimulationDurationWidget(uicls_p2, basecls_p2):
     def __init__(self, parent_page):
         super(SimulationDurationWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         scene = QGraphicsScene()
-        item = QGraphicsSvgItem(os.path.join(base_dir, 'icons', 'sim_wizard_p2.svg'))
+        item = QGraphicsSvgItem(icon_path('sim_wizard_p2.svg'))
         scene.addItem(item)
         self.gv_svg.setScene(scene)
         set_widget_background_color(self.gv_svg)
         set_widget_background_color(self)
 
 
-class PrecipitationDurationWidget(uicls_p2b, basecls_p2b):
+class PrecipitationDurationWidget(uicls_p3, basecls_p3):
     def __init__(self, parent_page):
         super(PrecipitationDurationWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         scene = QGraphicsScene()
-        item = QGraphicsSvgItem(os.path.join(base_dir, 'icons', 'sim_wizard_p2.svg'))
+        item = QGraphicsSvgItem(icon_path('sim_wizard_p2.svg'))
         scene.addItem(item)
         self.gv_svg.setScene(scene)
         set_widget_background_color(self.gv_svg)
@@ -83,7 +84,7 @@ class PrecipitationDurationWidget(uicls_p2b, basecls_p2b):
             self.label_total_time.setText('Invalid datetime format!')
 
 
-class PrecipitationWidget(uicls_p3, basecls_p3):
+class PrecipitationWidget(uicls_p4, basecls_p4):
     def __init__(self, parent_page):
         super(PrecipitationWidget, self).__init__()
         self.setupUi(self)
@@ -104,7 +105,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.pb_set.clicked.connect(self.set_custom_time_series)
         set_widget_background_color(self)
         scene = QGraphicsScene()
-        item = QGraphicsSvgItem(os.path.join(base_dir, 'icons', 'sim_wizard_p3.svg'))
+        item = QGraphicsSvgItem(icon_path('sim_wizard_p3.svg'))
         scene.addItem(item)
         self.gv_svg.setScene(scene)
         set_widget_background_color(self.gv_svg)
@@ -176,7 +177,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.plot_precipitation()
 
 
-class SummaryWidget(uicls_p4, basecls_p4):
+class SummaryWidget(uicls_p5, basecls_p5):
     def __init__(self, parent_page):
         super(SummaryWidget, self).__init__()
         self.setupUi(self)
@@ -187,7 +188,7 @@ class SummaryWidget(uicls_p4, basecls_p4):
         self.plot_widget.hideAxis('left')
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
         scene = QGraphicsScene()
-        item = QGraphicsSvgItem(os.path.join(base_dir, 'icons', 'sim_wizard_p4.svg'))
+        item = QGraphicsSvgItem(icon_path('sim_wizard_p4.svg'))
         scene.addItem(item)
         self.gv_svg.setScene(scene)
         set_widget_background_color(self.gv_svg)
@@ -195,11 +196,11 @@ class SummaryWidget(uicls_p4, basecls_p4):
 
     def plot_overview_precipitation(self):
         self.plot_widget.clear()
-        plot_bar_graph = self.parent_page.parent_wizard.p3.main_widget.plot_bar_graph
+        plot_bar_graph = self.parent_page.parent_wizard.p4.main_widget.plot_bar_graph
         if plot_bar_graph is None:
             return
         new_bar_graph = pg.BarGraphItem(**plot_bar_graph.opts)
-        plot_ticks = self.parent_page.parent_wizard.p3.main_widget.plot_ticks
+        plot_ticks = self.parent_page.parent_wizard.p4.main_widget.plot_ticks
         ax = self.plot_widget.getAxis('bottom')
         ax.setTicks(plot_ticks)
         self.plot_widget.addItem(new_bar_graph)
@@ -217,7 +218,7 @@ class Page1(QWizardPage):
         self.adjustSize()
 
 
-class Page2a(QWizardPage):
+class Page2(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -229,7 +230,7 @@ class Page2a(QWizardPage):
         self.adjustSize()
 
 
-class Page2b(QWizardPage):
+class Page3(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -241,7 +242,7 @@ class Page2b(QWizardPage):
         self.adjustSize()
 
 
-class Page3(QWizardPage):
+class Page4(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -253,7 +254,7 @@ class Page3(QWizardPage):
         self.adjustSize()
 
 
-class Page4(QWizardPage):
+class Page5(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -269,15 +270,15 @@ class SimulationWizard(QWizard):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.p1 = Page1(self)
-        self.p2a = Page2a(self)
-        self.p2b = Page2b(self)
+        self.p2 = Page2(self)
         self.p3 = Page3(self)
         self.p4 = Page4(self)
+        self.p5 = Page5(self)
         self.addPage(self.p1)
-        self.addPage(self.p2a)
-        self.addPage(self.p2b)
+        self.addPage(self.p2)
         self.addPage(self.p3)
         self.addPage(self.p4)
+        self.addPage(self.p5)
         self.currentIdChanged.connect(self.page_changed)
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
@@ -287,7 +288,7 @@ class SimulationWizard(QWizard):
 
     def page_changed(self, page_id):
         if page_id == 4:
-            self.p4.main_widget.plot_overview_precipitation()
+            self.p5.main_widget.plot_overview_precipitation()
             self.set_overview_name()
             self.set_overview_database()
             self.set_overview_duration()
@@ -295,17 +296,17 @@ class SimulationWizard(QWizard):
 
     def set_overview_name(self):
         name = self.p1.main_widget.le_sim_name.text()
-        self.p4.main_widget.sim_name.setText(name)
+        self.p5.main_widget.sim_name.setText(name)
 
     def set_overview_database(self):
         database = self.p1.main_widget.cbo_db.currentText()
-        self.p4.main_widget.sim_database.setText(database)
+        self.p5.main_widget.sim_database.setText(database)
 
     def set_overview_duration(self):
-        duration = self.p2b.main_widget.label_total_time.text()
-        self.p4.main_widget.sim_duration.setText(duration)
+        duration = self.p3.main_widget.label_total_time.text()
+        self.p5.main_widget.sim_duration.setText(duration)
 
     def set_overview_precipitation(self):
-        prec_type = self.p3.main_widget.cbo_prec_type.currentText()
-        self.p4.main_widget.sim_prec_type.setText(prec_type)
+        prec_type = self.p4.main_widget.cbo_prec_type.currentText()
+        self.p5.main_widget.sim_prec_type.setText(prec_type)
         #  TODO: adding calculations of total precipitation
