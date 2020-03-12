@@ -86,10 +86,10 @@
          </font>
         </property>
         <property name="autoFillBackground">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="styleSheet">
-         <string notr="true">QLineEdit {background-color: rgba(255, 255, 255);}</string>
+         <string notr="true">QLineEdit {background-color: white;}</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -120,7 +120,7 @@
          <bool>false</bool>
         </property>
         <property name="styleSheet">
-         <string notr="true">QLineEdit {background-color: rgba(255, 255, 255);}</string>
+         <string notr="true">QLineEdit {background-color: white;}</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -177,10 +177,10 @@
          <enum>Qt::LeftToRight</enum>
         </property>
         <property name="autoFillBackground">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="styleSheet">
-         <string notr="true">QLineEdit {background-color: rgba(255, 255, 255);}</string>
+         <string notr="true">QLineEdit {background-color: white;}</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -194,6 +194,125 @@
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <layout class="QGridLayout" name="lout_plot">
+     <property name="bottomMargin">
+      <number>10</number>
+     </property>
+    </layout>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Type of precipitation:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <spacer name="verticalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="0" column="0" colspan="2">
+    <widget class="QGraphicsView" name="gv_svg">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="verticalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QAbstractScrollArea::AdjustToContents</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_11">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Rain intensity preview:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="cbo_prec_type">
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+     </property>
+     <property name="editable">
+      <bool>false</bool>
+     </property>
+     <property name="currentText">
+      <string>None</string>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <item>
+      <property name="text">
+       <string>None</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Constant</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Custom</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Design</string>
+      </property>
+     </item>
     </widget>
    </item>
    <item row="3" column="0" colspan="2">
@@ -235,7 +354,7 @@
          <bool>false</bool>
         </property>
         <property name="styleSheet">
-         <string notr="true">QLineEdit {background-color: rgba(255, 255, 255);}</string>
+         <string notr="true">QLineEdit {background-color: white;}</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -266,7 +385,7 @@
          <bool>false</bool>
         </property>
         <property name="styleSheet">
-         <string notr="true">QLineEdit {background-color: rgba(255, 255, 255);}</string>
+         <string notr="true">QLineEdit {background-color: white;}</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -368,125 +487,6 @@
      </layout>
     </widget>
    </item>
-   <item row="1" column="1">
-    <widget class="QComboBox" name="cbo_prec_type">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-     </property>
-     <property name="editable">
-      <bool>false</bool>
-     </property>
-     <property name="currentText">
-      <string>None</string>
-     </property>
-     <property name="frame">
-      <bool>false</bool>
-     </property>
-     <item>
-      <property name="text">
-       <string>None</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Constant</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Custom</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Design</string>
-      </property>
-     </item>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Type of precipitation:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="label_11">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Rain intensity preview:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0" colspan="2">
-    <widget class="QGraphicsView" name="gv_svg">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
-     </property>
-     <property name="verticalScrollBarPolicy">
-      <enum>Qt::ScrollBarAlwaysOff</enum>
-     </property>
-     <property name="horizontalScrollBarPolicy">
-      <enum>Qt::ScrollBarAlwaysOff</enum>
-     </property>
-     <property name="sizeAdjustPolicy">
-      <enum>QAbstractScrollArea::AdjustToContents</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="6" column="0" colspan="2">
-    <layout class="QGridLayout" name="lout_plot">
-     <property name="bottomMargin">
-      <number>10</number>
-     </property>
-    </layout>
-   </item>
    <item row="4" column="0" colspan="2">
     <widget class="QWidget" name="widget_design" native="true">
      <property name="sizePolicy">
@@ -552,7 +552,7 @@
          <bool>false</bool>
         </property>
         <property name="styleSheet">
-         <string notr="true">QLineEdit {background-color: rgba(255, 255, 255);}</string>
+         <string notr="true">QLineEdit {background-color: white;}</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -592,9 +592,62 @@
         <property name="editable">
          <bool>true</bool>
         </property>
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
         <property name="frame">
          <bool>false</bool>
         </property>
+        <item>
+         <property name="text">
+          <string>1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>2</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>3</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>5</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>6</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>7</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>8</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>9</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>10</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item row="1" column="2">
@@ -658,13 +711,49 @@
         <property name="editable">
          <bool>true</bool>
         </property>
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
         <property name="frame">
          <bool>false</bool>
         </property>
+        <item>
+         <property name="text">
+          <string>0.25</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>2</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4</string>
+         </property>
+        </item>
        </widget>
       </item>
      </layout>
     </widget>
+   </item>
+   <item row="8" column="0" colspan="2">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>

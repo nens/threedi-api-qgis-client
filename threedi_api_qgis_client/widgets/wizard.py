@@ -90,7 +90,7 @@ class Page2bWidget(uicls_p2b, basecls_p2b):
         time_to = self.time_to.time().toString('H:m')
         start = datetime.strptime(f"{date_from} {time_from}", '%Y-%m-%d %H:%M')
         ends = datetime.strptime(f"{date_to} {time_to}", '%Y-%m-%d %H:%M')
-        diff = relativedelta(start, ends)
+        diff = relativedelta(ends, start)
         duration = (diff.years, diff.months, diff.days, diff.hours, diff.minutes)
         self.label_total_time.setText('{} years, {} months, {} days, {} hours, {} minutes'.format(*duration))
 
@@ -102,7 +102,7 @@ class Page3Widget(uicls_p3, basecls_p3):
         self.parent_page = parent_page
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
-        self.plot_widget.setMaximumHeight(100)
+        self.plot_widget.setMaximumHeight(60)
         self.plot_widget.hideAxis('left')
         self.plot_bar_graph = None
         self.plot_ticks = None
@@ -152,7 +152,7 @@ class Page3Widget(uicls_p3, basecls_p3):
                 intensity = float(self.le_intensity.text())
             except ValueError:
                 return
-            # Time intervals fot constant precipitation
+            # Time intervals for constant precipitation
             x_values += list(range(0, 3600 + 180, 180))
             y_values += [intensity] * 21
         elif current_index == 2:
@@ -195,7 +195,7 @@ class Page4Widget(uicls_p4, basecls_p4):
         self.parent_page = parent_page
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
-        self.plot_widget.setMaximumHeight(100)
+        self.plot_widget.setMaximumHeight(60)
         self.plot_widget.hideAxis('left')
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
         scene = QGraphicsScene()
