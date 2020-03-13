@@ -10,6 +10,17 @@ threedi-api-qgis-client
         :alt: Documentation Status
 
 
+Deployment
+---------
+
+- update version in client/metadata.txt
+- run `./package.bash` and use zip file from QGIS plugin manager
+- tag repository on git
+
+
+Other
+-----
+
 
 
 Python Boilerplate contains all the boilerplate you need to create a Python package.
