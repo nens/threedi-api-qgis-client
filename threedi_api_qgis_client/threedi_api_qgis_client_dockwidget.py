@@ -5,6 +5,7 @@ import os
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
 from .widgets.wizard import SimulationWizard
+from .utils import set_icon
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'threedi_api_qgis_client_dockwidget_base.ui'))
 
@@ -21,6 +22,11 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btn_start.clicked.connect(self.log_in)
         self.btn_simulate.clicked.connect(self.run_wizard)
         self.btn_log_out.clicked.connect(self.log_out)
+        set_icon(self.btn_build, 'build.svg')
+        set_icon(self.btn_check, 'check.svg')
+        set_icon(self.btn_upload, 'upload.svg')
+        set_icon(self.btn_simulate, 'api.svg')
+        set_icon(self.btn_results, 'results.svg')
 
     def closeEvent(self, event):
         self.closingPlugin.emit()

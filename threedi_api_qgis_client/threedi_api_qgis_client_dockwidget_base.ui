@@ -48,8 +48,26 @@
         <height>0</height>
        </size>
       </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>RESULTS</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>icons/results.svg</normaloff>icons/results.svg</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+      <property name="toolButtonStyle">
+       <enum>Qt::ToolButtonTextBesideIcon</enum>
       </property>
      </widget>
     </item>
@@ -104,8 +122,26 @@
         <height>0</height>
        </size>
       </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>CHECK</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>icons/check.svg</normaloff>icons/check.svg</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+      <property name="toolButtonStyle">
+       <enum>Qt::ToolButtonTextBesideIcon</enum>
       </property>
      </widget>
     </item>
@@ -126,8 +162,29 @@
         <height>0</height>
        </size>
       </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
+      </property>
       <property name="text">
        <string>BUILD</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>icons/build.svg</normaloff>icons/build.svg</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+      <property name="toolButtonStyle">
+       <enum>Qt::ToolButtonTextBesideIcon</enum>
       </property>
      </widget>
     </item>
@@ -148,8 +205,26 @@
         <height>0</height>
        </size>
       </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>UPLOAD</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>icons/upload.svg</normaloff>icons/upload.svg</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+      <property name="toolButtonStyle">
+       <enum>Qt::ToolButtonTextBesideIcon</enum>
       </property>
      </widget>
     </item>
@@ -379,8 +454,26 @@
         <height>0</height>
        </size>
       </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>SIMULATE</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>icons/api.svg</normaloff>icons/api.svg</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>36</width>
+        <height>36</height>
+       </size>
+      </property>
+      <property name="toolButtonStyle">
+       <enum>Qt::ToolButtonTextBesideIcon</enum>
       </property>
      </widget>
     </item>
