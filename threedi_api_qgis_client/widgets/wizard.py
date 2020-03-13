@@ -174,6 +174,9 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.refresh_current_units()
         self.plot_precipitation()
 
+    def refresh_duration(self):
+        self.duration = self.parent_page.parent_wizard.p2.main_widget.calculate_duration()
+
     def duration_in_units(self):
         unit_divider = self.UNITS_DIVIDERS[self.current_units]
         duration_in_units = int(self.duration / unit_divider)
@@ -239,10 +242,10 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.plot_precipitation()
 
     def plot_precipitation(self):
+        self.refresh_duration()
         self.plot_widget.clear()
         self.plot_bar_graph = None
         self.plot_ticks = None
-        self.duration = self.parent_page.parent_wizard.p2.main_widget.calculate_duration()
         current_text = self.cbo_prec_type.currentText()
         if current_text == 'Constant':
             x_values, y_values = self.constant_values()
@@ -368,7 +371,9 @@ class SimulationWizard(QWizard):
         self.resize(850, 500)
 
     def page_changed(self, page_id):
-        if page_id == 3:
+        if page_id == 2:
+            self.p3.main_widget.plot_precipitation()
+        elif page_id == 3:
             self.p4.main_widget.plot_overview_precipitation()
             self.set_overview_name()
             self.set_overview_database()
