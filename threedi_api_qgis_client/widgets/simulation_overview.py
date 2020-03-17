@@ -39,7 +39,7 @@ class SimulationOverview(uicls, basecls):
             progress_value = progress_item.data(Qt.UserRole+1000)
             if progress_value >= 100:
                 continue
-            progress_item.setData(progress_value + 2, Qt.UserRole + 1000)
+            progress_item.setData(progress_value+2, Qt.UserRole+1000)
 
     def insert_data(self, data):
         delegate = ProgressDelegate(self.tv_sim_tree)
@@ -50,6 +50,6 @@ class SimulationOverview(uicls, basecls):
             sim_name_item = QStandardItem(sim_name)
             user_item = QStandardItem(user)
             progress_item = QStandardItem()
-            progress_item.setData(progress_value, Qt.UserRole + 1000)
+            progress_item.setData(progress_value, Qt.UserRole+1000)
             model.appendRow([sim_name_item, user_item, progress_item])
         self.tv_sim_tree.setModel(model)
