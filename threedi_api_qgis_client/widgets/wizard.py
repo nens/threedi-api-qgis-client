@@ -3,11 +3,11 @@
 import os
 import json
 from datetime import datetime
-from qgis.PyQt.QtSvg import QGraphicsSvgItem
+from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 
-from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QGraphicsScene, QSizePolicy, QInputDialog
+from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QInputDialog
 from ..deps.custom_imports import pg, relativedelta
 from ..utils import icon_path
 
@@ -30,11 +30,9 @@ class SourceWidget(uicls_p1, basecls_p1):
         super(SourceWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        scene = QGraphicsScene()
-        item = QGraphicsSvgItem(icon_path('sim_wizard_p1.svg'))
-        scene.addItem(item)
-        self.gv_svg.setScene(scene)
-        set_widget_background_color(self.gv_svg)
+        self.svg_widget = QSvgWidget(icon_path('sim_wizard_p1.svg'))
+        self.svg_lout.addWidget(self.svg_widget)
+        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         line_edit = self.cbo_db.lineEdit()
         line_edit.setPlaceholderText('Choose database')
@@ -45,11 +43,9 @@ class SimulationDurationWidget(uicls_p2, basecls_p2):
         super(SimulationDurationWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        scene = QGraphicsScene()
-        item = QGraphicsSvgItem(icon_path('sim_wizard_p2.svg'))
-        scene.addItem(item)
-        self.gv_svg.setScene(scene)
-        set_widget_background_color(self.gv_svg)
+        self.svg_widget = QSvgWidget(icon_path('sim_wizard_p2.svg'))
+        self.svg_lout.addWidget(self.svg_widget)
+        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.date_from.dateTimeChanged.connect(self.update_time_difference)
         self.date_to.dateTimeChanged.connect(self.update_time_difference)
@@ -92,16 +88,14 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         super(PrecipitationWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.svg_widget = QSvgWidget(icon_path('sim_wizard_p3.svg'))
+        self.svg_lout.addWidget(self.svg_widget)
+        set_widget_background_color(self.svg_widget)
+        set_widget_background_color(self)
         self.current_units = 's'
         self.duration = 0
         self.total_precipitation = 0
         self.custom_time_series = [[0, 200], [300, 300], [600, 400], [900, 200], [1200, 50]]
-        set_widget_background_color(self)
-        scene = QGraphicsScene()
-        item = QGraphicsSvgItem(icon_path('sim_wizard_p3.svg'))
-        scene.addItem(item)
-        self.gv_svg.setScene(scene)
-        set_widget_background_color(self.gv_svg)
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
         self.plot_widget.setMaximumHeight(60)
@@ -282,16 +276,14 @@ class SummaryWidget(uicls_p4, basecls_p4):
         super(SummaryWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.svg_widget = QSvgWidget(icon_path('sim_wizard_p4.svg'))
+        self.svg_lout.addWidget(self.svg_widget)
+        set_widget_background_color(self.svg_widget)
+        set_widget_background_color(self)
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
         self.plot_widget.setMaximumHeight(60)
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
-        scene = QGraphicsScene()
-        item = QGraphicsSvgItem(icon_path('sim_wizard_p4.svg'))
-        scene.addItem(item)
-        self.gv_svg.setScene(scene)
-        set_widget_background_color(self.gv_svg)
-        set_widget_background_color(self)
 
     def plot_overview_precipitation(self):
         self.plot_widget.clear()
@@ -370,7 +362,7 @@ class SimulationWizard(QWizard):
         self.setStyleSheet("background-color:#F0F0F0")
         self.parentWidget().setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.resize(850, 500)
+        self.resize(750, 500)
 
     def page_changed(self, page_id):
         if page_id == 2:
