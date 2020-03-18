@@ -4,8 +4,9 @@ import os
 from typing import List, Dict
 from threedi_api_client import ThreediApiClient
 from openapi_client.exceptions import ApiException
-from openapi_client import (ApiClient, RepositoriesApi, Repository, SimulationsApi, Simulation, Action,
-                            Progress, RevisionsApi, Revision, ThreediModel, ConstantRain, TimeseriesRain)
+from openapi_client import (ApiClient, RepositoriesApi, Repository, SimulationsApi, Simulation, Action, Progress,
+                            RevisionsApi, Revision, ThreediModel, ConstantRain, TimeseriesRain, OrganisationsApi,
+                            Organisation)
 
 
 def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiClient:
@@ -92,3 +93,15 @@ class ThreediCalls:
         api = RevisionsApi(self.api_client)
         revision_models_list = api.revisions_threedimodels(rev_id)
         return revision_models_list
+
+    def fetch_organisation(self, unique_id) -> Organisation:
+        """Fetch Organisation with given id."""
+        api = OrganisationsApi(self.api_client)
+        organisation = api.organisations_read(unique_id)
+        return organisation
+
+    def fetch_organisations(self) -> List[Organisation]:
+        """Fetch all Organisations available for current user."""
+        api = OrganisationsApi(self.api_client)
+        organisations = api.organisations_list().results
+        return organisations

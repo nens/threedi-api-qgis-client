@@ -360,7 +360,6 @@ class SimulationWizard(QWizard):
         self.currentIdChanged.connect(self.page_changed)
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
-        self.parentWidget().setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.resize(750, 500)
 

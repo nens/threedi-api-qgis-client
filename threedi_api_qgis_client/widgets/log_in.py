@@ -16,8 +16,10 @@ class LogInDialog(uicls_log, basecls_log):
         super().__init__(parent)
         self.setupUi(self)
         self.host = "https://api.3di.live/v3.0"
-        self.user = ''
+        self.user = ""
         self.api_client = None
+        self.repositories = None
+        self.organisations = None
         self.running_simulations = None
         self.revisions = None
         self.threedi_models = None
@@ -75,6 +77,8 @@ class LogInDialog(uicls_log, basecls_log):
         self.fetch_msg.show()
         self.wait_widget.update()
         self.log_pbar.setValue(40)
+        self.repositories = {rep.slug: rep for rep in self.fetch_repositories()}
+        self.organisations = {org.unique_id: org for org in self.fetch_organisations()}
         self.running_simulations = self.fetch_running_simulations()
         self.log_pbar.setValue(60)
         self.revisions = {rev.hash: rev for rev in self.fetch_revisions()}
@@ -85,6 +89,16 @@ class LogInDialog(uicls_log, basecls_log):
         self.log_pbar.setValue(100)
         sleep(1.5)
         self.show_action_widget()
+
+    def fetch_organisations(self):
+        tc = ThreediCalls(self.api_client)
+        organisations = tc.fetch_organisations()
+        return organisations
+
+    def fetch_repositories(self):
+        tc = ThreediCalls(self.api_client)
+        repositories = tc.fetch_repositories()
+        return repositories
 
     def fetch_running_simulations(self):
         tc = ThreediCalls(self.api_client)
