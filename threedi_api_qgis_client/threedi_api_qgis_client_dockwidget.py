@@ -39,6 +39,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         event.accept()
 
     def log_in(self):
+        self.simulate_overview_dlg = None
         self.log_in_dlg = LogInDialog()
         self.log_in_dlg.exec_()
         self.api_client = self.log_in_dlg.api_client
@@ -59,8 +60,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def log_out(self):
         if self.simulate_overview_dlg is not None:
             self.simulate_overview_dlg.stop_fetching_progress()
-            sleep(2.55)
-            self.simulate_overview_dlg = None
+            sleep(1)
         self.log_in_dlg = None
         self.api_client = None
         self.current_model = None
