@@ -3,7 +3,7 @@
 import os
 from time import sleep
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QObject, Qt, QThread, pyqtSignal
+from qgis.PyQt.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.PyQt.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionProgressBar, QStyle
 from ..api_calls.threedi_calls import ThreediCalls, ApiException
@@ -40,7 +40,7 @@ class SimulationOverview(uicls, basecls):
         self.progress_sentinel = ProgressSentinel(self.api_client)
         self.progress_sentinel.moveToThread(self.thread)
         self.progress_sentinel.progresses_fetched.connect(self.update_progress)
-        self.progress_sentinel.finished.connect(self.on_finished)
+        self.progress_sentinel.thread_finished.connect(self.on_finished)
         self.thread.started.connect(self.progress_sentinel.run)
         self.thread.start()
 
@@ -50,6 +50,14 @@ class SimulationOverview(uicls, basecls):
 
     def stop_fetching_progress(self):
         self.progress_sentinel.stop()
+
+    def terminate_background_thread(self):
+        if self.thread.isRunning():
+            print('Terminating thread.')
+            self.thread.terminate()
+            print('Waiting for thread termination.')
+            self.thread.wait()
+            print('Worker terminated.')
 
     def update_progress(self, progresses):
         model = self.tv_sim_tree.model()
@@ -77,12 +85,11 @@ class SimulationOverview(uicls, basecls):
     def on_finished(self, msg):
         self.thread.quit()
         self.thread.wait()
-        self.thread.deleteLater()
 
 
-class ProgressSentinel(QThread):
+class ProgressSentinel(QObject):
     """Worker object that will be moved to a separate thread and will check progresses of the running simulations."""
-    finished = pyqtSignal(str)
+    thread_finished = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
 
     def __init__(self, api_client):
@@ -91,19 +98,19 @@ class ProgressSentinel(QThread):
         self.progresses = None
         self.thread_active = True
 
+    @pyqtSlot()
     def run(self):
         error = ''
         try:
             tc = ThreediCalls(self.api_client)
-            while self.thread_active is True:
+            while self.thread_active:
                 self.progresses = tc.all_simulations_progress()
                 self.progresses_fetched.emit(self.progresses)
                 sleep(2.5)
-            self.finished.emit("Simulations finished!")
+            self.thread_finished.emit("Simulations finished!")
         except ApiException as e:
             error = str(e)
-        self.finished.emit(error)
+        self.thread_finished.emit(error)
 
     def stop(self):
         self.thread_active = False
-        self.wait()
