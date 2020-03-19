@@ -167,7 +167,7 @@ class ThreediQgisClient:
             self.pluginIsActive = True
             if self.dockwidget is None:
                 # Create the dockwidget (after translation) and keep reference
-                self.dockwidget = ThreediQgisClientDockWidget()
+                self.dockwidget = ThreediQgisClientDockWidget(self.iface)
 
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)

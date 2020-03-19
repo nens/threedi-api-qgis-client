@@ -5,22 +5,24 @@ from time import sleep
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from ..api_calls.threedi_calls import get_api_client, ThreediCalls
+from ..api_calls.threedi_calls import get_api_client, ThreediCalls, ApiException
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, 'ui', 'sim_log_in.ui'))
 
 
 class LogInDialog(uicls_log, basecls_log):
-    def __init__(self, parent=None):
+    def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+        self.parent_dock = parent_dock
+        self.communication = self.parent_dock.communication
         self.host = "https://api.3di.live/v3.0"
         self.user = ""
         self.api_client = None
         self.repositories = None
         self.organisations = None
-        self.running_simulations = None
+        self.simulations = None
         self.revisions = None
         self.threedi_models = None
         self.model = None
@@ -32,6 +34,7 @@ class LogInDialog(uicls_log, basecls_log):
         self.pb_load_web.clicked.connect(self.show_log_widget)
         self.pb_log_in.clicked.connect(self.log_in_threedi)
         self.pb_next.clicked.connect(self.show_load_widget)
+        #self.models_lv.currentIndexChanged.connect()
         self.pb_load.clicked.connect(self.load_model)
         self.pb_cancel.clicked.connect(self.reject)
         self.pb_cancel_action.clicked.connect(self.reject)
@@ -65,31 +68,6 @@ class LogInDialog(uicls_log, basecls_log):
             self.load_widget.show()
             self.setWindowTitle("Choose model - web")
 
-    def log_in_threedi(self):
-        self.show_wait_widget()
-        self.fetch_msg.hide()
-        self.done_msg.hide()
-        username = self.le_user.text()
-        password = self.le_pass.text()
-        self.log_pbar.setValue(20)
-        self.api_client = get_api_client(self.host, username, password)
-        self.user = username
-        self.fetch_msg.show()
-        self.wait_widget.update()
-        self.log_pbar.setValue(40)
-        self.repositories = {rep.slug: rep for rep in self.fetch_repositories()}
-        self.organisations = {org.unique_id: org for org in self.fetch_organisations()}
-        self.running_simulations = self.fetch_running_simulations()
-        self.log_pbar.setValue(60)
-        self.revisions = {rev.hash: rev for rev in self.fetch_revisions()}
-        self.log_pbar.setValue(80)
-        self.threedi_models = self.fetch_3di_models()
-        self.done_msg.show()
-        self.wait_widget.update()
-        self.log_pbar.setValue(100)
-        sleep(1.5)
-        self.show_action_widget()
-
     def fetch_organisations(self):
         tc = ThreediCalls(self.api_client)
         organisations = tc.fetch_organisations()
@@ -100,9 +78,9 @@ class LogInDialog(uicls_log, basecls_log):
         repositories = tc.fetch_repositories()
         return repositories
 
-    def fetch_running_simulations(self):
+    def fetch_simulations(self):
         tc = ThreediCalls(self.api_client)
-        running_simulations = tc.all_simulations_progress()
+        running_simulations = tc.fetch_simulations()
         return running_simulations
 
     def fetch_revisions(self):
@@ -138,3 +116,36 @@ class LogInDialog(uicls_log, basecls_log):
         if index.isValid():
             self.current_model = self.model.data(index, Qt.UserRole)
         self.close()
+
+    def log_in_threedi(self):
+        try:
+            self.show_wait_widget()
+            self.fetch_msg.hide()
+            self.done_msg.hide()
+            username = self.le_user.text()
+            password = self.le_pass.text()
+            self.log_pbar.setValue(20)
+            self.api_client = get_api_client(self.host, username, password)
+            self.user = username
+            self.fetch_msg.show()
+            self.wait_widget.update()
+            self.log_pbar.setValue(40)
+            self.repositories = {rep.slug: rep for rep in self.fetch_repositories()}
+            self.organisations = {org.unique_id: org for org in self.fetch_organisations()}
+            self.log_pbar.setValue(50)
+            self.simulations = self.fetch_simulations()
+            self.log_pbar.setValue(60)
+            self.revisions = {rev.hash: rev for rev in self.fetch_revisions()}
+            self.log_pbar.setValue(80)
+            self.threedi_models = self.fetch_3di_models()
+            self.done_msg.show()
+            self.wait_widget.update()
+            self.log_pbar.setValue(100)
+            sleep(1.5)
+            self.show_action_widget()
+        except ApiException as e:
+            self.close()
+            self.communication.show_error(e.reason)
+        except ValueError as e:
+            self.close()
+            self.communication.show_error(str(e))

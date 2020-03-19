@@ -28,28 +28,68 @@ class ProgressDelegate(QStyledItemDelegate):
 
 class SimulationOverview(uicls, basecls):
 
-    def __init__(self, api_client, parent=None):
+    def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.api_client = api_client
+        self.parent_dock = parent_dock
+        self.api_client = self.parent_dock.api_client
+        self.threedi_models = self.parent_dock.threedi_models if self.parent_dock.threedi_models is not None else []
+        self.user = self.parent_dock.label_user.text()
         self.simulation_wizard = None
-        self.insert_data(
-            [('Sim1', 'ldebek', 0), ('Sim2', 'ldebek', 10), ('Sim3', 'ldebek', 20), ('Sim4', 'ldebek', 24)])
-        self.pb_new_sim.clicked.connect(self.new_simulation)
+        self.simulation_keys = {}
+        self.tv_model = None
+        self.setup_view_model()
         self.thread = QThread()
         self.progress_sentinel = ProgressSentinel(self.api_client)
         self.progress_sentinel.moveToThread(self.thread)
         self.progress_sentinel.progresses_fetched.connect(self.update_progress)
         self.progress_sentinel.thread_finished.connect(self.on_finished)
         self.thread.started.connect(self.progress_sentinel.run)
+        self.pb_new_sim.clicked.connect(self.new_simulation)
         self.thread.start()
 
     def new_simulation(self):
         self.simulation_wizard = SimulationWizard()
+        models = [m.name for m in self.threedi_models]
+        self.simulation_wizard.p1.main_widget.cbo_db.addItems(models)
         self.simulation_wizard.exec_()
+
+    def setup_view_model(self):
+        delegate = ProgressDelegate(self.tv_sim_tree)
+        self.tv_sim_tree.setItemDelegateForColumn(2, delegate)
+        self.tv_model = QStandardItemModel(0, 3)
+        self.tv_model.setHorizontalHeaderLabels(["Simulation name", "User", "Progress"])
+        self.tv_sim_tree.setModel(self.tv_model)
+
+    def update_progress(self, progresses):
+        for sim_id, (sim, progress) in progresses.items():
+            if progress.percentage == 0 and progress.time == 0:
+                continue
+            if sim_id not in self.simulation_keys:
+                sim_name_item = QStandardItem(sim.name)
+                sim_name_item.setData(sim_id, Qt.UserRole)
+                user_item = QStandardItem(self.user)
+                progress_item = QStandardItem()
+                new_progress_value = int(progress.percentage)
+                progress_item.setData(new_progress_value, Qt.UserRole + 1000)
+                self.tv_model.appendRow([sim_name_item, user_item, progress_item])
+                self.simulation_keys[sim_id] = sim
+
+        row_count = self.tv_model.rowCount()
+        for row_idx in range(row_count):
+            name_item = self.tv_model.item(row_idx, 0)
+            sim_id = name_item.data(Qt.UserRole)
+            progress_item = self.tv_model.item(row_idx, 2)
+            sim, new_progress = progresses[sim_id]
+            new_progress_value = int(new_progress.percentage)
+            progress_item.setData(new_progress_value, Qt.UserRole + 1000)
 
     def stop_fetching_progress(self):
         self.progress_sentinel.stop()
+
+    def on_finished(self, msg):
+        self.thread.quit()
+        self.thread.wait()
 
     def terminate_background_thread(self):
         if self.thread.isRunning():
@@ -59,38 +99,12 @@ class SimulationOverview(uicls, basecls):
             self.thread.wait()
             print('Worker terminated.')
 
-    def update_progress(self, progresses):
-        model = self.tv_sim_tree.model()
-        row_count = model.rowCount()
-        for row_idx in range(row_count):
-            progress_item = model.item(row_idx, 2)
-            progress_value = progress_item.data(Qt.UserRole+1000)
-            if progress_value >= 100:
-                self.progress_sentinel.break_loop = True
-            progress_item.setData(progress_value+2, Qt.UserRole+1000)
-
-    def insert_data(self, data):
-        delegate = ProgressDelegate(self.tv_sim_tree)
-        self.tv_sim_tree.setItemDelegateForColumn(2, delegate)
-        model = QStandardItemModel(0, 3)
-        model.setHorizontalHeaderLabels(["Simulation name", "User", "Progress"])
-        for sim_name, user, progress_value in data:
-            sim_name_item = QStandardItem(sim_name)
-            user_item = QStandardItem(user)
-            progress_item = QStandardItem()
-            progress_item.setData(progress_value, Qt.UserRole+1000)
-            model.appendRow([sim_name_item, user_item, progress_item])
-        self.tv_sim_tree.setModel(model)
-
-    def on_finished(self, msg):
-        self.thread.quit()
-        self.thread.wait()
-
 
 class ProgressSentinel(QObject):
     """Worker object that will be moved to a separate thread and will check progresses of the running simulations."""
     thread_finished = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
+    DELAY = 2.5
 
     def __init__(self, api_client):
         super(QObject, self).__init__()
@@ -106,7 +120,7 @@ class ProgressSentinel(QObject):
             while self.thread_active:
                 self.progresses = tc.all_simulations_progress()
                 self.progresses_fetched.emit(self.progresses)
-                sleep(2.5)
+                sleep(self.DELAY)
             self.thread_finished.emit("Simulations finished!")
         except ApiException as e:
             error = str(e)
