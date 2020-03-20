@@ -34,7 +34,6 @@ class LogInDialog(uicls_log, basecls_log):
         self.pb_load_web.clicked.connect(self.show_log_widget)
         self.pb_log_in.clicked.connect(self.log_in_threedi)
         self.pb_next.clicked.connect(self.show_load_widget)
-        #self.models_lv.currentIndexChanged.connect()
         self.pb_load.clicked.connect(self.load_model)
         self.pb_cancel.clicked.connect(self.reject)
         self.pb_cancel_action.clicked.connect(self.reject)

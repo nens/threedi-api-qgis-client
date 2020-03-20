@@ -177,7 +177,7 @@
        </widget>
       </item>
       <item row="1" column="2">
-       <widget class="QPushButton" name="pb_set">
+       <widget class="QPushButton" name="pb_csv">
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -185,7 +185,7 @@
          </font>
         </property>
         <property name="text">
-         <string>SET</string>
+         <string>FROM CSV</string>
         </property>
        </widget>
       </item>

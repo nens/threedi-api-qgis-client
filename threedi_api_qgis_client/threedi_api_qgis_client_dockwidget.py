@@ -21,10 +21,11 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         super(ThreediQgisClientDockWidget, self).__init__(parent)
         self.setupUi(self)
         self.iface = iface
-        self.communication = UICommunication(self.iface, "3Di MI")
+        self.communication = UICommunication(self.iface, "3Di MI", self.lv_log)
         self.api_client = None
         self.threedi_models = None
         self.current_model = None
+        self.organisation = None
         self.log_in_dlg = None
         self._simulate_overview_dlg = None
         self.simulate_overview_dlg = None
@@ -33,6 +34,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btn_log_out.clicked.connect(self.log_out)
         self.btn_change_repo.clicked.connect(self.change_repository)
         self.btn_simulate.clicked.connect(self.show_simulate_overview)
+        self.btn_clear_log.clicked.connect(self.clear_log)
         set_icon(self.btn_build, 'build.svg')
         set_icon(self.btn_check, 'check.svg')
         set_icon(self.btn_upload, 'upload.svg')
@@ -92,8 +94,11 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.simulate_overview_dlg.label_user.setText(self.log_in_dlg.user)
             repo_slug = self.current_model.repository_slug
             repository = self.log_in_dlg.repositories[repo_slug]
-            organisation = self.log_in_dlg.organisations[repository.organisation]
-            self.simulate_overview_dlg.label_organisation.setText(organisation.name)
+            self.organisation = self.log_in_dlg.organisations[repository.organisation]
+            self.simulate_overview_dlg.label_organisation.setText(self.organisation.name)
             self.simulate_overview_dlg.exec_()
         else:
             self.simulate_overview_dlg.show()
+
+    def clear_log(self):
+        self.lv_log.model().clear()

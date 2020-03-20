@@ -5,25 +5,12 @@ from time import sleep
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from qgis.PyQt.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionProgressBar, QStyle
+from qgis.PyQt.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionProgressBar, QStyle, QMessageBox
 from ..api_calls.threedi_calls import ThreediCalls, ApiException
 from ..widgets.wizard import SimulationWizard
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'sim_overview.ui'))
-
-
-class ProgressDelegate(QStyledItemDelegate):
-    def paint(self, painter, option, index):
-        pvalue = index.data(Qt.UserRole+1000)
-        pbar = QStyleOptionProgressBar()
-        pbar.rect = option.rect
-        pbar.minimum = 0
-        pbar.maximum = 100
-        pbar.progress = pvalue
-        pbar.text = f"{pvalue}%"
-        pbar.textVisible = True
-        QApplication.style().drawControl(QStyle.CE_ProgressBar, pbar, painter)
 
 
 class SimulationOverview(uicls, basecls):
@@ -36,7 +23,8 @@ class SimulationOverview(uicls, basecls):
         self.threedi_models = self.parent_dock.threedi_models if self.parent_dock.threedi_models is not None else []
         self.user = self.parent_dock.label_user.text()
         self.simulation_wizard = None
-        self.simulation_keys = {}
+        self.simulations_keys = {}
+        self.simulations_finished = set()
         self.tv_model = None
         self.setup_view_model()
         self.thread = QThread()
@@ -46,13 +34,8 @@ class SimulationOverview(uicls, basecls):
         self.progress_sentinel.thread_finished.connect(self.on_finished)
         self.thread.started.connect(self.progress_sentinel.run)
         self.pb_new_sim.clicked.connect(self.new_simulation)
+        self.pb_stop_sim.clicked.connect(self.stop_simulation)
         self.thread.start()
-
-    def new_simulation(self):
-        self.simulation_wizard = SimulationWizard()
-        models = [m.name for m in self.threedi_models]
-        self.simulation_wizard.p1.main_widget.cbo_db.addItems(models)
-        self.simulation_wizard.exec_()
 
     def setup_view_model(self):
         delegate = ProgressDelegate(self.tv_sim_tree)
@@ -63,9 +46,9 @@ class SimulationOverview(uicls, basecls):
 
     def update_progress(self, progresses):
         for sim_id, (sim, progress) in progresses.items():
-            if progress.percentage == 0 and progress.time == 0:
+            if progress.percentage == 0 or progress.percentage == 100:
                 continue
-            if sim_id not in self.simulation_keys:
+            if sim_id not in self.simulations_keys:
                 sim_name_item = QStandardItem(sim.name)
                 sim_name_item.setData(sim_id, Qt.UserRole)
                 user_item = QStandardItem(self.user)
@@ -73,31 +56,58 @@ class SimulationOverview(uicls, basecls):
                 new_progress_value = int(progress.percentage)
                 progress_item.setData(new_progress_value, Qt.UserRole + 1000)
                 self.tv_model.appendRow([sim_name_item, user_item, progress_item])
-                self.simulation_keys[sim_id] = sim
+                self.simulations_keys[sim_id] = sim
 
         row_count = self.tv_model.rowCount()
         for row_idx in range(row_count):
             name_item = self.tv_model.item(row_idx, 0)
             sim_id = name_item.data(Qt.UserRole)
+            if sim_id in self.simulations_finished:
+                continue
             progress_item = self.tv_model.item(row_idx, 2)
             sim, new_progress = progresses[sim_id]
             new_progress_value = int(new_progress.percentage)
             progress_item.setData(new_progress_value, Qt.UserRole + 1000)
+            if new_progress_value == 100:
+                self.simulations_finished.add(sim_id)
+                self.parent_dock.communication.bar_info(f"Simulation {sim.name} finished!")
+
+    def stop_simulation(self):
+        index = self.tv_sim_tree.currentIndex()
+        if not index.isValid():
+            return
+        title = "Warning"
+        question = "This simulation is now running.\nAre you sure you want to stop it?"
+        answer = self.parent_dock.communication.ask(self, title, question, QMessageBox.Warning)
+        if answer is True:
+            name_item = self.tv_model.item(index.row(), 0)
+            sim_id = name_item.data(Qt.UserRole)
+            tc = ThreediCalls(self.parent_dock.api_client)
+            tc.make_action_on_simulation(sim_id, name='shutdown')
+            self.parent_dock.communication.bar_info(f"Simulation {name_item.text()} stopped!")
 
     def stop_fetching_progress(self):
         self.progress_sentinel.stop()
 
     def on_finished(self, msg):
+        self.parent_dock.communication.bar_info(msg)
         self.thread.quit()
         self.thread.wait()
 
     def terminate_background_thread(self):
         if self.thread.isRunning():
-            print('Terminating thread.')
+            self.parent_dock.communication.bar_info('Terminating thread.')
             self.thread.terminate()
-            print('Waiting for thread termination.')
+            self.parent_dock.communication.bar_info('Waiting for thread termination.')
             self.thread.wait()
-            print('Worker terminated.')
+            self.parent_dock.communication.bar_info('Worker terminated.')
+
+    def new_simulation(self):
+        self.simulation_wizard = SimulationWizard(self.parent_dock)
+        models = [(m.name, m.id) for m in self.threedi_models]
+        for model in models:
+            self.simulation_wizard.p1.main_widget.cbo_db.addItem(*model)
+        self.simulation_wizard.exec_()
 
 
 class ProgressSentinel(QObject):
@@ -114,17 +124,29 @@ class ProgressSentinel(QObject):
 
     @pyqtSlot()
     def run(self):
-        error = ''
+        stop_message = "Checking running simulation stopped."
         try:
             tc = ThreediCalls(self.api_client)
             while self.thread_active:
                 self.progresses = tc.all_simulations_progress()
                 self.progresses_fetched.emit(self.progresses)
                 sleep(self.DELAY)
-            self.thread_finished.emit("Simulations finished!")
         except ApiException as e:
-            error = str(e)
-        self.thread_finished.emit(error)
+            stop_message = str(e)
+        self.thread_finished.emit(stop_message)
 
     def stop(self):
         self.thread_active = False
+
+
+class ProgressDelegate(QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        pvalue = index.data(Qt.UserRole + 1000)
+        pbar = QStyleOptionProgressBar()
+        pbar.rect = option.rect
+        pbar.minimum = 0
+        pbar.maximum = 100
+        pbar.progress = pvalue
+        pbar.text = f"{pvalue}%"
+        pbar.textVisible = True
+        QApplication.style().drawControl(QStyle.CE_ProgressBar, pbar, painter)

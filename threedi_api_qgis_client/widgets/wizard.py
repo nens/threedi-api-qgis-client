@@ -1,22 +1,26 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
-import json
+import csv
 from datetime import datetime
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
-
-from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QInputDialog
+from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
 from ..deps.custom_imports import pg, relativedelta
-from ..utils import icon_path
-
+from ..utils import icon_path, mmh_to_ms
+from ..api_calls.threedi_calls import ThreediCalls, ApiException
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_p1, basecls_p1 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page1.ui'))
 uicls_p2, basecls_p2 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page2.ui'))
 uicls_p3, basecls_p3 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page3.ui'))
 uicls_p4, basecls_p4 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page4.ui'))
+
+CONSTANT_RAIN = "Constant"
+CUSTOM_RAIN = "Custom"
+DESIGN_RAIN = "Design"
 
 
 def set_widget_background_color(widget, hex_color='#F0F0F0'):
@@ -66,7 +70,7 @@ class SimulationDurationWidget(uicls_p2, basecls_p2):
             start, end = self.to_datetime()
             delta = end - start
             return delta.total_seconds()
-        except ValueError as e:
+        except ValueError:
             self.label_total_time.setText('Invalid datetime format!')
             return 0.0
 
@@ -95,10 +99,10 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.current_units = 's'
         self.duration = 0
         self.total_precipitation = 0
-        self.custom_time_series = [[0, 200], [300, 300], [600, 400], [900, 200], [1200, 50]]
+        self.custom_time_series = []
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
-        self.plot_widget.setMaximumHeight(60)
+        self.plot_widget.setMaximumHeight(80)
         self.plot_bar_graph = None
         self.plot_ticks = None
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
@@ -116,7 +120,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.start_after_design_u.currentIndexChanged.connect(self.sync_units)
         self.cbo_prec_type.currentIndexChanged.connect(self.precipitation_changed)
         self.le_intensity.textChanged.connect(self.plot_precipitation)
-        self.pb_set.clicked.connect(self.set_custom_time_series)
+        self.pb_csv.clicked.connect(self.set_custom_time_series)
         self.sp_start_after_constant.valueChanged.connect(self.plot_precipitation)
         self.sp_stop_after_constant.valueChanged.connect(self.plot_precipitation)
         self.sp_start_after_custom.valueChanged.connect(self.plot_precipitation)
@@ -125,30 +129,33 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
 
     def sync_units(self, idx):
         current_text = self.cbo_prec_type.currentText()
-        if current_text == 'Constant':
+        if current_text == CONSTANT_RAIN:
             if self.start_after_constant_u.currentIndex != idx:
                 self.start_after_constant_u.setCurrentIndex(idx)
             if self.stop_after_constant_u.currentIndex != idx:
                 self.stop_after_constant_u.setCurrentIndex(idx)
             self.current_units = self.start_after_constant_u.currentText()
-        elif current_text == 'Custom':
+        elif current_text == CUSTOM_RAIN:
             if self.start_after_custom_u.currentIndex != idx:
                 self.start_after_custom_u.setCurrentIndex(idx)
             if self.stop_after_custom_u.currentIndex != idx:
                 self.stop_after_custom_u.setCurrentIndex(idx)
             self.current_units = self.start_after_custom_u.currentText()
-        elif current_text == 'Design':
+        elif current_text == DESIGN_RAIN:
             self.current_units = self.start_after_design_u.currentText()
         self.plot_precipitation()
 
     def refresh_current_units(self):
         current_text = self.cbo_prec_type.currentText()
-        if current_text == 'Constant':
+        if current_text == CONSTANT_RAIN:
             self.current_units = self.start_after_constant_u.currentText()
-        elif current_text == 'Custom':
+        elif current_text == CUSTOM_RAIN:
             self.current_units = self.start_after_custom_u.currentText()
-        elif current_text == 'Design':
+        elif current_text == DESIGN_RAIN:
             self.current_units = self.start_after_design_u.currentText()
+
+    def refresh_duration(self):
+        self.duration = self.parent_page.parent_wizard.p2.main_widget.calculate_duration()
 
     def precipitation_changed(self, idx):
         if idx == 1:
@@ -170,20 +177,25 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.refresh_current_units()
         self.plot_precipitation()
 
-    def refresh_duration(self):
-        self.duration = self.parent_page.parent_wizard.p2.main_widget.calculate_duration()
-
     def duration_in_units(self):
         unit_divider = self.UNITS_DIVIDERS[self.current_units]
         duration_in_units = int(self.duration / unit_divider)
         return duration_in_units
 
-    def get_intensity(self):
-        try:
-            intensity = float(self.le_intensity.text())
-        except ValueError:
-            return 0.0
-        return intensity
+    def set_custom_time_series(self):
+        last_folder = QSettings().value("threedi/last_folder", os.path.expanduser("~"), type=str)
+        file_filter = "CSV (*.csv );;All Files (*)"
+        filename, __ = QFileDialog.getOpenFileName(self, "Precipitation Time Series", last_folder, file_filter)
+        if len(filename) == 0:
+            return
+        QSettings().setValue("threedi/last_folder", os.path.dirname(filename))
+        time_series = []
+        with open(filename) as rain_file:
+            rain_reader = csv.reader(rain_file)
+            for row in rain_reader:
+                time_series.append([float(v) for v in row])
+        self.custom_time_series = time_series
+        self.plot_precipitation()
 
     def constant_values(self):
         x_values, y_values = [], []
@@ -225,29 +237,17 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         #  TODO: Add handling for Design
         return x_values, y_values
 
-    def set_custom_time_series(self):
-        text_ts = json.dumps(self.custom_time_series) if self.custom_time_series else ''
-        text, ok = QInputDialog.getMultiLineText(None, 'Precipitation Time Series', '', text=text_ts)
-        if ok is False:
-            return
-        try:
-            time_series = json.loads(text)
-        except json.JSONDecodeError as e:
-            return
-        self.custom_time_series = time_series
-        self.plot_precipitation()
-
     def plot_precipitation(self):
         self.refresh_duration()
         self.plot_widget.clear()
         self.plot_bar_graph = None
         self.plot_ticks = None
         current_text = self.cbo_prec_type.currentText()
-        if current_text == 'Constant':
+        if current_text == CONSTANT_RAIN:
             x_values, y_values = self.constant_values()
-        elif current_text == 'Custom':
+        elif current_text == CUSTOM_RAIN:
             x_values, y_values = self.custom_values()
-        elif current_text == 'Design':
+        elif current_text == DESIGN_RAIN:
             x_values, y_values = self.design_values()
         else:
             return
@@ -263,12 +263,68 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.plot_bar_graph = pg.BarGraphItem(x=x_values, height=y_values, width=time_interval, brush=QColor('#1883D7'))
         self.plot_widget.addItem(self.plot_bar_graph)
         unit_multiplier = self.UNITS_MULTIPLIERS[self.current_units]
-        if current_text == 'Constant':
+        if current_text == CONSTANT_RAIN:
             precipitation_values = y_values[:-1]
         else:
             precipitation_values = y_values
         self.total_precipitation = sum(v/unit_multiplier * time_interval for v in precipitation_values)
         #  self.plot_widget.setXRange(0, duration_in_units)
+
+    def get_intensity(self, ):
+        try:
+            intensity = float(self.le_intensity.text())
+        except ValueError:
+            return 0.0
+        return intensity
+
+    def get_precipitation_offset(self):
+        current_text = self.cbo_prec_type.currentText()
+        units_multiplier = self.UNITS_DIVIDERS[self.current_units]
+        if current_text == CONSTANT_RAIN:
+            start = self.sp_start_after_constant.value()
+        elif current_text == CUSTOM_RAIN:
+            start = self.sp_start_after_custom.value()
+        else:
+            return 0.0
+        offset = start * units_multiplier
+        return offset
+
+    def get_precipitation_duration(self):
+        current_text = self.cbo_prec_type.currentText()
+        units_multiplier = self.UNITS_DIVIDERS[self.current_units]
+        if current_text == CONSTANT_RAIN:
+            start = self.sp_start_after_constant.value()
+            end = self.sp_stop_after_constant.value()
+        elif current_text == CUSTOM_RAIN:
+            start = self.sp_start_after_custom.value()
+            end = self.sp_stop_after_custom.value()
+        else:
+            return self.duration
+        if start == 0 and end == 0:
+            duration = self.duration
+        else:
+            duration = (end * units_multiplier) - (start * units_multiplier)
+        return duration
+
+    def get_precipitation_values(self):
+        current_text = self.cbo_prec_type.currentText()
+        if current_text == CONSTANT_RAIN:
+            values = mmh_to_ms(self.get_intensity())
+        elif current_text == CUSTOM_RAIN:
+            unit_multiplier = self.UNITS_MULTIPLIERS[self.current_units]
+            values = [[t*unit_multiplier, mmh_to_ms(v)] for t, v in self.custom_time_series]
+        else:
+            values = []
+        return values
+
+    def get_precipitation_data(self):
+        precipitation_type = self.cbo_prec_type.currentText()
+        offset = self.get_precipitation_offset()
+        duration = self.get_precipitation_duration()
+        units = "m/s"
+        values = self.get_precipitation_values()
+        print(values)
+        return precipitation_type, offset, duration, units, values
 
 
 class SummaryWidget(uicls_p4, basecls_p4):
@@ -346,9 +402,10 @@ class Page4(QWizardPage):
 
 
 class SimulationWizard(QWizard):
-    def __init__(self, parent=None):
+    def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
         self.setWizardStyle(QWizard.ClassicStyle)
+        self.parent_dock = parent_dock
         self.p1 = Page1(self)
         self.p2 = Page2(self)
         self.p3 = Page3(self)
@@ -358,6 +415,8 @@ class SimulationWizard(QWizard):
         self.addPage(self.p3)
         self.addPage(self.p4)
         self.currentIdChanged.connect(self.page_changed)
+        self.finish_btn = self.button(QWizard.FinishButton)
+        self.finish_btn.clicked.connect(self.run_new_simulation)
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -390,3 +449,24 @@ class SimulationWizard(QWizard):
         total_precipitation = self.p3.main_widget.total_precipitation
         self.p4.main_widget.sim_prec_type.setText(precipitation_type)
         self.p4.main_widget.sim_prec_total.setText(f"{int(total_precipitation)} mm")
+
+    def run_new_simulation(self):
+        name = self.p1.main_widget.le_sim_name.text()
+        threedimodel = self.p1.main_widget.cbo_db.currentData()
+        organisation = self.parent_dock.organisation.unique_id
+        start_datetime = datetime.utcnow()
+        duration = self.p3.main_widget.duration
+        try:
+            tc = ThreediCalls(self.parent_dock.api_client)
+            new_simulation = tc.new_simulation(name=name, threedimodel=threedimodel, start_datetime=start_datetime,
+                                               organisation=organisation, duration=duration)
+            sim_id = new_simulation.id
+            ptype, poffset, pduration, punits, pvalues = self.p3.main_widget.get_precipitation_data()
+            if ptype == CONSTANT_RAIN:
+                tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset)
+            elif ptype == CUSTOM_RAIN:
+                tc.add_custom_precipitation(sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset)
+            tc.make_action_on_simulation(sim_id, name='start')
+            self.parent_dock.communication.bar_info(f"Simulation {new_simulation.name} started!")
+        except ApiException as e:
+            self.parent_dock.communication.bar_error(e.body)

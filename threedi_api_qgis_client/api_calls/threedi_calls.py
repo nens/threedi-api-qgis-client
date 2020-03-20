@@ -19,6 +19,8 @@ def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiCl
 
 
 class ThreediCalls:
+    FETCH_LIMIT = 1000
+
     """Class to do all the communication with the 3Di API."""
     def __init__(self, api_client: ApiClient) -> None:
         self.api_client = api_client
@@ -32,7 +34,7 @@ class ThreediCalls:
     def fetch_simulations(self) -> List[Simulation]:
         """Fetch all simulations available for current user."""
         api = SimulationsApi(self.api_client)
-        simulations_list = api.simulations_list().results
+        simulations_list = api.simulations_list(limit=self.FETCH_LIMIT).results
         return simulations_list
 
     def new_simulation(self, **simulation_data) -> Simulation:
@@ -103,12 +105,6 @@ class ThreediCalls:
         api = RevisionsApi(self.api_client)
         revision_models_list = api.revisions_threedimodels(rev_id)
         return revision_models_list
-
-    def fetch_organisation(self, unique_id) -> Organisation:
-        """Fetch Organisation with given id."""
-        api = OrganisationsApi(self.api_client)
-        organisation = api.organisations_read(unique_id)
-        return organisation
 
     def fetch_organisations(self) -> List[Organisation]:
         """Fetch all Organisations available for current user."""
