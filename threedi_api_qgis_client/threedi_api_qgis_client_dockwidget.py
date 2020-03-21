@@ -47,6 +47,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         event.accept()
 
     def log_in(self):
+        """Method for logging in 3Di API."""
         self.log_in_dlg = LogInDialog(self)
         self.log_in_dlg.exec_()
         self.api_client = self.log_in_dlg.api_client
@@ -64,6 +65,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.label_db.setText(self.current_model.model_ini)
 
     def log_out(self):
+        """Logging out."""
         if self._simulate_overview_dlg is not None:
             self._simulate_overview_dlg.terminate_background_thread()
         if self.simulate_overview_dlg is not None:
@@ -78,6 +80,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btn_simulate.setDisabled(True)
 
     def change_repository(self):
+        """Changing current repository."""
         if self.log_in_dlg is None:
             self.log_in()
         else:
@@ -89,6 +92,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.label_db.setText(self.current_model.model_ini)
 
     def show_simulate_overview(self):
+        """Showing Simulation Overview with running simulations progresses."""
         if self.simulate_overview_dlg is None:
             self.simulate_overview_dlg = SimulationOverview(self)
             self.simulate_overview_dlg.label_user.setText(self.log_in_dlg.user)
@@ -101,4 +105,5 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.simulate_overview_dlg.show()
 
     def clear_log(self):
+        """Clearing message log box."""
         self.lv_log.model().clear()

@@ -7,7 +7,7 @@ from qgis.core import QgsMessageLog, Qgis
 
 
 class UICommunication(object):
-
+    """Class with methods for handling messages using QGIS interface and logging list view."""
     def __init__(self, iface, context, list_view):
         self.iface = iface
         self.context = context
@@ -17,6 +17,7 @@ class UICommunication(object):
         self.message_bar = self.iface.messageBar()
 
     def show_info(self, msg, parent=None, context=None):
+        """Showing info dialog."""
         if self.iface is not None:
             parent = parent if parent is not None else self.iface.mainWindow()
             context = self.context if context is None else context
@@ -25,6 +26,7 @@ class UICommunication(object):
             print(msg)
 
     def show_warn(self, msg, parent=None, context=None):
+        """Showing warning dialog."""
         if self.iface is not None:
             parent = parent if parent is not None else self.iface.mainWindow()
             context = self.context if context is None else context
@@ -33,6 +35,7 @@ class UICommunication(object):
             print(msg)
 
     def show_error(self, msg, parent=None, context=None):
+        """Showing error dialog."""
         if self.iface is not None:
             parent = parent if parent is not None else self.iface.mainWindow()
             context = self.context if context is None else context
@@ -41,6 +44,7 @@ class UICommunication(object):
             print(msg)
 
     def bar_info(self, msg, dur=5):
+        """Showing info message bar."""
         if self.iface is not None:
             self.message_bar.pushMessage(self.context, msg, level=Qgis.Info, duration=dur)
             self.model.appendRow([QStandardItem(msg)])
@@ -49,6 +53,7 @@ class UICommunication(object):
             print(msg)
 
     def bar_warn(self, msg, dur=5):
+        """Showing warning message bar."""
         if self.iface is not None:
             self.message_bar.pushMessage(self.context, msg, level=Qgis.Warning, duration=dur)
             self.model.appendRow([QStandardItem(msg)])
@@ -56,6 +61,7 @@ class UICommunication(object):
             print(msg)
 
     def bar_error(self, msg, dur=5):
+        """Showing error message bar."""
         if self.iface is not None:
             self.message_bar.pushMessage(self.context, msg, level=Qgis.Critical, duration=dur)
             self.model.appendRow([QStandardItem(msg)])
@@ -73,7 +79,6 @@ class UICommunication(object):
         msg_box.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
         msg_box.setDefaultButton(QMessageBox.No)
         res = msg_box.exec_()
-
         if res == QMessageBox.No:
             return False
         else:

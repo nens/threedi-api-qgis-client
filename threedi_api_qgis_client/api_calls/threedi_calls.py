@@ -19,9 +19,9 @@ def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiCl
 
 
 class ThreediCalls:
+    """Class with methods used for the communication with the 3Di API."""
     FETCH_LIMIT = 1000
 
-    """Class to do all the communication with the 3Di API."""
     def __init__(self, api_client: ApiClient) -> None:
         self.api_client = api_client
 
