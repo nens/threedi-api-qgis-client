@@ -323,7 +323,6 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         duration = self.get_precipitation_duration()
         units = "m/s"
         values = self.get_precipitation_values()
-        print(values)
         return precipitation_type, offset, duration, units, values
 
 
