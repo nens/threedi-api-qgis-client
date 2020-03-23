@@ -3,7 +3,7 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
-from .threedi_api_qgis_client_dockwidget import ThreediQgisClientDockWidget
+from .deps.custom_imports import patch_wheel_imports
 import os.path
 
 
@@ -163,6 +163,8 @@ class ThreediQgisClient:
 
     def run(self):
         """Run method that loads and starts the plugin"""
+        patch_wheel_imports()
+        from .threedi_api_qgis_client_dockwidget import ThreediQgisClientDockWidget
         if not self.pluginIsActive:
             self.pluginIsActive = True
             if self.dockwidget is None:

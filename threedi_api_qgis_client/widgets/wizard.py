@@ -2,15 +2,17 @@
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
 import csv
+import pyqtgraph as pg
+from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
-from ..deps.custom_imports import pg, relativedelta
 from ..utils import icon_path, set_widget_background_color, mmh_to_ms
 from ..api_calls.threedi_calls import ThreediCalls, ApiException
+
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_p1, basecls_p1 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page1.ui'))
