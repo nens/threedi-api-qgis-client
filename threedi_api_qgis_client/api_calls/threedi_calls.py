@@ -1,11 +1,12 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from threedi_api_client import ThreediApiClient
 from openapi_client.exceptions import ApiException
-from openapi_client import (ApiClient, RepositoriesApi, Repository, SimulationsApi, Simulation, Action,
-                            Progress, RevisionsApi, Revision, ThreediModel, ConstantRain, TimeseriesRain)
+from openapi_client import (ApiClient, RepositoriesApi, Repository, SimulationsApi, Simulation, Action, Progress,
+                            RevisionsApi, Revision, ThreediModel, ConstantRain, TimeseriesRain, OrganisationsApi,
+                            Organisation, CurrentStatus)
 
 
 def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiClient:
@@ -18,7 +19,9 @@ def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiCl
 
 
 class ThreediCalls:
-    """Class to do all the communication with the 3Di API."""
+    """Class with methods used for the communication with the 3Di API."""
+    FETCH_LIMIT = 1000
+
     def __init__(self, api_client: ApiClient) -> None:
         self.api_client = api_client
 
@@ -31,7 +34,7 @@ class ThreediCalls:
     def fetch_simulations(self) -> List[Simulation]:
         """Fetch all simulations available for current user."""
         api = SimulationsApi(self.api_client)
-        simulations_list = api.simulations_list().results
+        simulations_list = api.simulations_list(limit=self.FETCH_LIMIT).results
         return simulations_list
 
     def new_simulation(self, **simulation_data) -> Simulation:
@@ -53,8 +56,8 @@ class ThreediCalls:
         simulations_progress = api.simulations_progress_list(str(simulation_pk))
         return simulations_progress
 
-    def all_simulations_progress(self) -> Dict[int, Progress]:
-        """Get all simulations progresses."""
+    def all_simulations_progress(self) -> Dict[int, Tuple[Simulation, Progress]]:
+        """Get all simulations with progresses."""
         api = SimulationsApi(self.api_client)
         progresses = {}
         for sim in self.fetch_simulations():
@@ -63,11 +66,21 @@ class ThreediCalls:
                 sim_progress = api.simulations_progress_list(str(spk))
             except ApiException as e:
                 if e.status == 404:
-                    sim_progress = Progress(percentage=0, time=0)
+                    current_status = api.simulations_status_list(str(spk))
+                    if current_status.name == "finished":
+                        sim_progress = Progress(percentage=100, time=current_status.time)
+                    else:
+                        sim_progress = Progress(percentage=0, time=0)
                 else:
                     raise
-            progresses[spk] = sim_progress
+            progresses[spk] = (sim, sim_progress)
         return progresses
+
+    def simulation_current_status(self, simulation_pk: int) -> CurrentStatus:
+        """Get a given simulation current status."""
+        api = SimulationsApi(self.api_client)
+        current_status = api.simulations_status_list(str(simulation_pk))
+        return current_status
 
     def add_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
         """Add ConstantRain to the given simulation."""
@@ -92,3 +105,9 @@ class ThreediCalls:
         api = RevisionsApi(self.api_client)
         revision_models_list = api.revisions_threedimodels(rev_id)
         return revision_models_list
+
+    def fetch_organisations(self) -> List[Organisation]:
+        """Fetch all Organisations available for current user."""
+        api = OrganisationsApi(self.api_client)
+        organisations = api.organisations_list().results
+        return organisations

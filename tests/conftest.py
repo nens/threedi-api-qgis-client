@@ -173,3 +173,11 @@ MODEL_DATA_LIST = [
         'url': 'https://testapi/threedimodels/15/'
     }
 ]
+
+CURRENT_STATUS_DATA = {
+    'created': datetime.datetime.utcnow(),
+    'id': 1201,
+    'name': 'finished',
+    'paused': None,
+    'time': 72000.0
+}

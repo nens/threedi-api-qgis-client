@@ -4,12 +4,12 @@
 import pytest
 from unittest.mock import Mock, patch
 from openapi_client import (ApiException, Repository, Simulation, Revision, Action, Progress, ConstantRain,
-                            TimeseriesRain, ThreediModel)
+                            TimeseriesRain, ThreediModel, CurrentStatus)
 from threedi_api_qgis_client.api_calls.threedi_calls import (get_api_client, ThreediCalls, RepositoriesApi,
                                                              SimulationsApi, RevisionsApi)
 from .conftest import (TEST_API_PARAMETERS, REPO_DATA_LIST, SIM_DATA_LIST, SINGLE_SIM_DATA, BAD_SIM_DATA,
                        ACTION_DATA, PROGRESS_DATA, CONSTANT_RAIN_DATA, TIME_SERIES_RAIN_DATA, REVISION_DATA_LIST,
-                       MODEL_DATA_LIST)
+                       MODEL_DATA_LIST, CURRENT_STATUS_DATA)
 
 
 @patch.object(RepositoriesApi, 'repositories_list')
@@ -74,17 +74,24 @@ def test_simulations_progress(mock_simulations_progress_list):
 
 @patch.object(SimulationsApi, 'simulations_list')
 @patch.object(SimulationsApi, 'simulations_progress_list')
-def test_all_simulations_progress(mock_simulations_progress_list, mock_simulations_list):
+@patch.object(SimulationsApi, 'simulations_status_list')
+def test_all_simulations_progress(mock_simulations_status_list, mock_simulations_progress_list, mock_simulations_list):
+    mock_simulations_status_list.return_value = CurrentStatus(**CURRENT_STATUS_DATA)
     sims = [Simulation(**data) for data in SIM_DATA_LIST]
     mock_simulations_list.return_value = Mock(results=sims)
-    mock_simulations_progress_list.side_effect = [Progress(**PROGRESS_DATA),  ApiException(404), ApiException(500)]
+    sim1, sim2 = sims
+    prog1 = Progress(**PROGRESS_DATA)
+    mock_simulations_progress_list.side_effect = [prog1,  ApiException(404), ApiException(500)]
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
     progress_dict = tc.all_simulations_progress()
-    sim1, sim2 = sims
     assert all(s.id in progress_dict for s in sims)
-    assert progress_dict[sim1.id].to_dict() == PROGRESS_DATA
-    assert progress_dict[sim2.id].to_dict() == {'percentage': 0, 'time': 0}
+    s1, p1 = progress_dict[sim1.id]
+    s2, p2 = progress_dict[sim2.id]
+    assert s1 == sim1
+    assert p1.to_dict() == PROGRESS_DATA
+    assert s2 == sim2
+    assert p2.to_dict() == {'percentage': 100, 'time': 72000}
     mock_simulations_list.return_value = Mock(results=[Simulation(**BAD_SIM_DATA)])
     with pytest.raises(ApiException):
         tc.all_simulations_progress()
