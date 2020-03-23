@@ -21,6 +21,30 @@ def patch_wheel_imports():
         sys.path.append(deps_path)
 
     try:
+        import urllib3
+    except ImportError:
+        deps_path = os.path.join(main_dir, "urllib3-1.25.8-py2.py3-none-any.whl")
+        sys.path.append(deps_path)
+
+    try:
+        import six
+    except ImportError:
+        deps_path = os.path.join(main_dir, "six-1.14.0-py2.py3-none-any.whl")
+        sys.path.append(deps_path)
+
+    try:
+        import certifi
+    except ImportError:
+        deps_path = os.path.join(main_dir, "certifi-2019.11.28-py2.py3-none-any.whl")
+        sys.path.append(deps_path)
+
+    try:
+        import jwt
+    except ImportError:
+        deps_path = os.path.join(main_dir, "PyJWT-1.7.1-py2.py3-none-any.whl")
+        sys.path.append(deps_path)
+
+    try:
         import threedi_api_client
         import openapi_client
     except ImportError:
