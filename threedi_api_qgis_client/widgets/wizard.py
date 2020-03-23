@@ -23,6 +23,49 @@ uicls_p4, basecls_p4 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page4.ui'))
 CONSTANT_RAIN = "Constant"
 CUSTOM_RAIN = "Custom"
 DESIGN_RAIN = "Design"
+AREA_WIDE_RAIN = {
+    '0': [0.0],
+    '1': [0.0],
+    '2': [0.0],
+    '3': [0.30, 0.60, 0.90, 1.50, 2.10, 2.10, 1.50, 1.20,
+          1.05, 0.90, 0.75, 0.60, 0.45, 0.30, 0.15],
+    '4': [0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.05, 1.20,
+          1.50, 2.10, 2.10, 1.50, 0.90, 0.60, 0.30],
+    '5': [0.30, 0.60, 1.50, 2.70, 2.70, 2.10, 1.50, 1.20,
+          1.05, 0.90, 0.75, 0.60, 0.45, 0.30, 0.15],
+    '6': [0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.05, 1.20,
+          1.50, 2.10, 2.70, 2.70, 1.50, 0.60, 0.30],
+    '7': [0.6, 1.2, 2.1, 3.3, 3.3, 2.7, 2.1, 1.5, 1.2, 0.9, 0.6, 0.3],
+    '8': [0.3, 0.6, 0.9, 1.2, 1.5, 2.1, 2.7, 3.3, 3.3, 2.1, 1.2, 0.6],
+    '9': [1.5, 2.7, 4.8, 4.8, 4.2, 3.3, 2.7, 2.1, 1.5, 0.9, 0.6, 0.3],
+    '10': [1.8, 3.6, 6.3, 6.3, 5.7, 4.8, 3.6, 2.4, 1.2],
+    '11': [5.833333333] * 12,   # DPRA lokaal T100
+    '12': [7.5] * 12,           # DPRA lokaal T250
+    '13': [6.666666667] * 24,   # DPRA lokaal T1000
+    '14': [0.208333333] * 576,  # DPRA regionaal T100
+    '15': [0.225694444] * 576,  # DPRA regionaal T250
+    '16': [0.277777778] * 576   # DPRA regionaal T1000
+}
+
+RAIN_LOOKUP = {
+    '0': ('', ''),
+    '1': ('0.25', 'v'),
+    '2': ('0.25', 'a'),
+    '3': ('0.50', 'v'),
+    '4': ('0.50', 'a'),
+    '5': ('1.00', 'v'),
+    '6': ('1.00', 'a'),
+    '7': ('2.00', 'v'),
+    '8': ('2.00', 'a'),
+    '9': ('5.00', 'v'),
+    '10': ('10.00', 'v'),
+    '11': ('100.00', 'c'),
+    '12': ('250.00', 'c'),
+    '13': ('1000.00', 'c'),
+    '14': ('100.00', 'c'),
+    '15': ('250.00', 'c'),
+    '16': ('1000.00', 'c')
+}
 
 
 class SourceWidget(uicls_p1, basecls_p1):
@@ -87,8 +130,8 @@ class SimulationDurationWidget(uicls_p2, basecls_p2):
 
 class PrecipitationWidget(uicls_p3, basecls_p3):
     """Widget for Precipitation page."""
-    UNITS_DIVIDERS = {'s': 1, 'mins': 60, 'hrs': 3600}
-    UNITS_MULTIPLIERS = {'s': 3600, 'mins': 60, 'hrs': 1}
+    SECONDS_MULTIPLIERS = {'s': 1, 'mins': 60, 'hrs': 3600}
+    HOURS_MULTIPLIERS = {'s': 3600, 'mins': 60, 'hrs': 1}
 
     def __init__(self, parent_page):
         super(PrecipitationWidget, self).__init__()
@@ -98,10 +141,12 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.svg_lout.addWidget(self.svg_widget)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
-        self.current_units = 's'
+        self.current_units = 'hrs'
         self.duration = 0
         self.total_precipitation = 0
         self.custom_time_series = []
+        self.design_time_series = []
+        self.cbo_design.addItems([str(i) for i in range(len(RAIN_LOOKUP))])
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
         self.plot_widget.setMaximumHeight(80)
@@ -129,6 +174,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.sp_start_after_custom.valueChanged.connect(self.plot_precipitation)
         self.sp_stop_after_custom.valueChanged.connect(self.plot_precipitation)
         self.sp_start_after_design.valueChanged.connect(self.plot_precipitation)
+        self.cbo_design.currentIndexChanged.connect(self.set_design_time_series)
 
     def precipitation_changed(self, idx):
         """Changing widgets looks based on currently selected precipitation type."""
@@ -186,7 +232,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
 
     def duration_in_units(self):
         """Calculating duration in currently selected units."""
-        unit_divider = self.UNITS_DIVIDERS[self.current_units]
+        unit_divider = self.SECONDS_MULTIPLIERS[self.current_units]
         duration_in_units = int(self.duration / unit_divider)
         return duration_in_units
 
@@ -202,8 +248,26 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         with open(filename) as rain_file:
             rain_reader = csv.reader(rain_file)
             for row in rain_reader:
-                time_series.append([float(v) for v in row])
+                time_series.append([float(v)*60 for v in row])
         self.custom_time_series = time_series
+        self.plot_precipitation()
+
+    def set_design_time_series(self):
+        """Setting time series based on selected design number."""
+        design_id = self.cbo_design.currentText()
+        series = AREA_WIDE_RAIN[design_id]
+        period_txt, type_txt = RAIN_LOOKUP[design_id]
+        if type_txt == "c":
+            type_full_text = "Constant"
+        elif type_txt == "v":
+            type_full_text = "Peak at start"
+        elif type_txt == "a":
+            type_full_text = "Peak at end"
+        else:
+            type_full_text = type_txt
+        self.return_period_lbl.setText(period_txt)
+        self.type_lbl.setText(type_full_text)
+        self.design_time_series = [[t, v] for t, v in zip(range(0, len(series)*300, 300), series)]
         self.plot_precipitation()
 
     def get_intensity(self):
@@ -217,32 +281,37 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
     def get_precipitation_offset(self):
         """Calculating precipitation offset in seconds."""
         current_text = self.cbo_prec_type.currentText()
-        units_multiplier = self.UNITS_DIVIDERS[self.current_units]
+        to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
         if current_text == CONSTANT_RAIN:
             start = self.sp_start_after_constant.value()
         elif current_text == CUSTOM_RAIN:
             start = self.sp_start_after_custom.value()
+        elif current_text == DESIGN_RAIN:
+            start = self.sp_start_after_design.value()
         else:
             return 0.0
-        offset = start * units_multiplier
+        offset = start * to_seconds_multiplier
         return offset
 
     def get_precipitation_duration(self):
         """Calculating precipitation duration in seconds."""
         current_text = self.cbo_prec_type.currentText()
-        units_multiplier = self.UNITS_DIVIDERS[self.current_units]
+        to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
         if current_text == CONSTANT_RAIN:
             start = self.sp_start_after_constant.value()
             end = self.sp_stop_after_constant.value()
         elif current_text == CUSTOM_RAIN:
             start = self.sp_start_after_custom.value()
             end = self.sp_stop_after_custom.value()
+        elif current_text == DESIGN_RAIN:
+            start = self.sp_start_after_design.value()
+            end = self.duration_in_units()
         else:
             return self.duration
         if start == 0 and end == 0:
             duration = self.duration
         else:
-            duration = (end * units_multiplier) - (start * units_multiplier)
+            duration = (end * to_seconds_multiplier) - (start * to_seconds_multiplier)
         return duration
 
     def get_precipitation_values(self):
@@ -251,8 +320,9 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         if current_text == CONSTANT_RAIN:
             values = mmh_to_ms(self.get_intensity())
         elif current_text == CUSTOM_RAIN:
-            unit_multiplier = self.UNITS_MULTIPLIERS[self.current_units]
-            values = [[t*unit_multiplier, mmh_to_ms(v)] for t, v in self.custom_time_series]
+            values = [[t, mmh_to_ms(v)] for t, v in self.custom_time_series]
+        elif current_text == DESIGN_RAIN:
+            values = [[t, mmh_to_ms(v)] for t, v in self.design_time_series]
         else:
             values = []
         return values
@@ -287,6 +357,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         """Getting plot values for the Custom precipitation."""
         x_values, y_values = [], []
         duration_in_units = self.duration_in_units()
+        units_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
         start = self.sp_start_after_custom.value()
         end = self.sp_stop_after_custom.value()
         if start < 0:
@@ -296,8 +367,9 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         for x, y in self.custom_time_series:
             if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
                 return [], []
-            if start <= x <= end:
-                x_values.append(x)
+            x_in_units = x / units_multiplier
+            if start <= x_in_units <= end:
+                x_values.append(x_in_units)
                 y_values.append(y)
             else:
                 continue
@@ -306,7 +378,19 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
     def design_values(self):
         """Getting plot values for the Design precipitation."""
         x_values, y_values = [], []
-        #  TODO: Add handling for Design
+        duration_in_units = self.duration_in_units()
+        units_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
+        start = self.sp_start_after_design.value()
+        end = duration_in_units
+        if start < 0:
+            start = 0
+        for x, y in self.design_time_series:
+            x_in_units = x / units_multiplier
+            if start <= x_in_units <= end:
+                x_values.append(x_in_units)
+                y_values.append(y)
+            else:
+                continue
         return x_values, y_values
 
     def plot_precipitation(self):
@@ -329,18 +413,18 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         # Bar width as time series interval value
         time_interval = x_values[1] - x_values[0]
         # Adding ticks in minutes
-        dx = [(value, f"{value} ({self.current_units})") for value in x_values]
+        dx = [(value, f"{value:.2f} ({self.current_units})") for value in x_values]
         self.plot_ticks = [[dx[0], dx[-1]]]
         ax = self.plot_widget.getAxis('bottom')
         ax.setTicks(self.plot_ticks)
         self.plot_bar_graph = pg.BarGraphItem(x=x_values, height=y_values, width=time_interval, brush=QColor('#1883D7'))
         self.plot_widget.addItem(self.plot_bar_graph)
-        unit_multiplier = self.UNITS_MULTIPLIERS[self.current_units]
+        to_hours_multiplier = self.HOURS_MULTIPLIERS[self.current_units]
         if current_text == CONSTANT_RAIN:
             precipitation_values = y_values[:-1]
         else:
             precipitation_values = y_values
-        self.total_precipitation = sum(v/unit_multiplier * time_interval for v in precipitation_values)
+        self.total_precipitation = sum(v/to_hours_multiplier * time_interval for v in precipitation_values)
         #  self.plot_widget.setXRange(0, duration_in_units)
 
 
@@ -494,7 +578,7 @@ class SimulationWizard(QWizard):
             ptype, poffset, pduration, punits, pvalues = self.p3.main_widget.get_precipitation_data()
             if ptype == CONSTANT_RAIN:
                 tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset)
-            elif ptype == CUSTOM_RAIN:
+            elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
                 tc.add_custom_precipitation(sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset)
             tc.make_action_on_simulation(sim_id, name='start')
             self.parent_dock.communication.bar_info(f"Simulation {new_simulation.name} started!")
