@@ -10,7 +10,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
-from ..utils import icon_path, set_widget_background_color, mmh_to_ms
+from ..utils import icon_path, set_widget_background_color, mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh
 from ..api_calls.threedi_calls import ThreediCalls, ApiException
 
 
@@ -131,7 +131,6 @@ class SimulationDurationWidget(uicls_p2, basecls_p2):
 class PrecipitationWidget(uicls_p3, basecls_p3):
     """Widget for Precipitation page."""
     SECONDS_MULTIPLIERS = {'s': 1, 'mins': 60, 'hrs': 3600}
-    HOURS_MULTIPLIERS = {'s': 3600, 'mins': 60, 'hrs': 1}
 
     def __init__(self, parent_page):
         super(PrecipitationWidget, self).__init__()
@@ -247,8 +246,9 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         time_series = []
         with open(filename) as rain_file:
             rain_reader = csv.reader(rain_file)
-            for row in rain_reader:
-                time_series.append([float(v)*60 for v in row])
+            for time, rain in rain_reader:
+                # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
+                time_series.append([float(time)*60, float(rain)])
         self.custom_time_series = time_series
         self.plot_precipitation()
 
@@ -267,6 +267,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
             type_full_text = type_txt
         self.return_period_lbl.setText(period_txt)
         self.type_lbl.setText(type_full_text)
+        # Design precipitation timestep is 300 seconds.
         self.design_time_series = [[t, v] for t, v in zip(range(0, len(series)*300, 300), series)]
         self.plot_precipitation()
 
@@ -320,7 +321,12 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         if current_text == CONSTANT_RAIN:
             values = mmh_to_ms(self.get_intensity())
         elif current_text == CUSTOM_RAIN:
-            values = [[t, mmh_to_ms(v)] for t, v in self.custom_time_series]
+            ts = self.custom_time_series
+            if self.cbo_units.currentText() == 'mm/h':
+                values = [[t, mmh_to_ms(v)] for t, v in ts]
+            else:
+                timestep = ts[1][0] - ts[0][0] if len(ts) > 1 else 1
+                values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, timestep))] for t, v in ts]
         elif current_text == DESIGN_RAIN:
             values = [[t, mmh_to_ms(v)] for t, v in self.design_time_series]
         else:
@@ -411,20 +417,24 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         if len(x_values) < 2:
             return
         # Bar width as time series interval value
-        time_interval = x_values[1] - x_values[0]
+        timestep = x_values[1] - x_values[0]
         # Adding ticks in minutes
         dx = [(value, f"{value:.2f} ({self.current_units})") for value in x_values]
         self.plot_ticks = [[dx[0], dx[-1]]]
         ax = self.plot_widget.getAxis('bottom')
         ax.setTicks(self.plot_ticks)
-        self.plot_bar_graph = pg.BarGraphItem(x=x_values, height=y_values, width=time_interval, brush=QColor('#1883D7'))
+        self.plot_bar_graph = pg.BarGraphItem(x=x_values, height=y_values, width=timestep, brush=QColor('#1883D7'))
         self.plot_widget.addItem(self.plot_bar_graph)
-        to_hours_multiplier = self.HOURS_MULTIPLIERS[self.current_units]
         if current_text == CONSTANT_RAIN:
             precipitation_values = y_values[:-1]
         else:
             precipitation_values = y_values
-        self.total_precipitation = sum(v/to_hours_multiplier * time_interval for v in precipitation_values)
+        if current_text == CUSTOM_RAIN and self.cbo_units.currentText() == 'mm/h':
+            self.total_precipitation = sum(mmh_to_mmtimestep(v, timestep, self.current_units)
+                                           for v in precipitation_values)
+        else:
+            # This is for 'mm/timestep'
+            self.total_precipitation = sum(precipitation_values)
         #  self.plot_widget.setXRange(0, duration_in_units)
 
 

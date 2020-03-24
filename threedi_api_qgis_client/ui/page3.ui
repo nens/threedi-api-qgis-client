@@ -244,6 +244,11 @@
         </property>
         <item>
          <property name="text">
+          <string>mm/timestep</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>mm/h</string>
          </property>
         </item>
