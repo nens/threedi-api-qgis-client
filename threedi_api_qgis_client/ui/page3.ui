@@ -244,6 +244,11 @@
         </property>
         <item>
          <property name="text">
+          <string>mm/timestep</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>mm/h</string>
          </property>
         </item>
@@ -271,7 +276,7 @@
         </property>
         <item>
          <property name="text">
-          <string>s</string>
+          <string>hrs</string>
          </property>
         </item>
         <item>
@@ -281,7 +286,7 @@
         </item>
         <item>
          <property name="text">
-          <string>hrs</string>
+          <string>s</string>
          </property>
         </item>
        </widget>
@@ -308,7 +313,7 @@
         </property>
         <item>
          <property name="text">
-          <string>s</string>
+          <string>hrs</string>
          </property>
         </item>
         <item>
@@ -318,7 +323,7 @@
         </item>
         <item>
          <property name="text">
-          <string>hrs</string>
+          <string>s</string>
          </property>
         </item>
        </widget>
@@ -510,7 +515,7 @@
         </property>
         <item>
          <property name="text">
-          <string>s</string>
+          <string>hrs</string>
          </property>
         </item>
         <item>
@@ -520,7 +525,7 @@
         </item>
         <item>
          <property name="text">
-          <string>hrs</string>
+          <string>s</string>
          </property>
         </item>
        </widget>
@@ -547,7 +552,7 @@
         </property>
         <item>
          <property name="text">
-          <string>s</string>
+          <string>hrs</string>
          </property>
         </item>
         <item>
@@ -557,7 +562,7 @@
         </item>
         <item>
          <property name="text">
-          <string>hrs</string>
+          <string>s</string>
          </property>
         </item>
        </widget>
@@ -717,95 +722,6 @@
       <property name="rightMargin">
        <number>0</number>
       </property>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_9">
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Start after:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_13">
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Design number:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_10">
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Return period (years):</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <spacer name="horizontalSpacer_4">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="2">
-       <widget class="QComboBox" name="start_after_design_u">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-        </property>
-        <property name="frame">
-         <bool>false</bool>
-        </property>
-        <item>
-         <property name="text">
-          <string>s</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>mins</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>hrs</string>
-         </property>
-        </item>
-       </widget>
-      </item>
       <item row="1" column="3">
        <widget class="QLabel" name="label_14">
         <property name="sizePolicy">
@@ -831,122 +747,66 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1" colspan="2">
-       <widget class="QComboBox" name="cbo_return_period">
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_13">
         <property name="font">
          <font>
           <family>Segoe UI</family>
           <pointsize>10</pointsize>
          </font>
         </property>
-        <property name="styleSheet">
-         <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+        <property name="text">
+         <string>Design number:</string>
         </property>
-        <property name="editable">
-         <bool>true</bool>
-        </property>
-        <property name="currentIndex">
-         <number>-1</number>
-        </property>
-        <property name="frame">
-         <bool>false</bool>
-        </property>
-        <item>
-         <property name="text">
-          <string>0.25</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>4</string>
-         </property>
-        </item>
        </widget>
       </item>
-      <item row="2" column="1" colspan="2">
-       <widget class="QComboBox" name="cbo_design">
+      <item row="0" column="3">
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_9">
         <property name="font">
          <font>
           <family>Segoe UI</family>
           <pointsize>10</pointsize>
          </font>
         </property>
-        <property name="styleSheet">
-         <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+        <property name="text">
+         <string>Start after:</string>
         </property>
-        <property name="editable">
-         <bool>true</bool>
-        </property>
-        <property name="currentIndex">
-         <number>-1</number>
-        </property>
-        <property name="frame">
-         <bool>false</bool>
-        </property>
-        <item>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>3</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>4</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>5</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>6</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>7</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>8</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>9</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10</string>
-         </property>
-        </item>
        </widget>
       </item>
-      <item row="1" column="4">
-       <widget class="QComboBox" name="cbo_type">
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Return period (years):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QComboBox" name="start_after_design_u">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -956,25 +816,22 @@
         <property name="styleSheet">
          <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
         </property>
-        <property name="editable">
-         <bool>true</bool>
-        </property>
         <property name="frame">
          <bool>false</bool>
         </property>
         <item>
          <property name="text">
-          <string>Constant</string>
+          <string>hrs</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>Peak at end</string>
+          <string>mins</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>Peak at start</string>
+          <string>s</string>
          </property>
         </item>
        </widget>
@@ -1010,6 +867,61 @@
         </property>
         <property name="maximum">
          <number>999999999</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1" colspan="2">
+       <widget class="QComboBox" name="cbo_design">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+        </property>
+        <property name="editable">
+         <bool>true</bool>
+        </property>
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
+        <property name="frame">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" colspan="2">
+       <widget class="QLabel" name="return_period_lbl">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="4">
+       <widget class="QLabel" name="type_lbl">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string/>
         </property>
        </widget>
       </item>
