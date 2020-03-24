@@ -39,12 +39,12 @@ AREA_WIDE_RAIN = {
     '8': [0.3, 0.6, 0.9, 1.2, 1.5, 2.1, 2.7, 3.3, 3.3, 2.1, 1.2, 0.6],
     '9': [1.5, 2.7, 4.8, 4.8, 4.2, 3.3, 2.7, 2.1, 1.5, 0.9, 0.6, 0.3],
     '10': [1.8, 3.6, 6.3, 6.3, 5.7, 4.8, 3.6, 2.4, 1.2],
-    '11': [5.833333333] * 12,   # DPRA lokaal T100
-    '12': [7.5] * 12,           # DPRA lokaal T250
-    '13': [6.666666667] * 24,   # DPRA lokaal T1000
-    '14': [0.208333333] * 576,  # DPRA regionaal T100
-    '15': [0.225694444] * 576,  # DPRA regionaal T250
-    '16': [0.277777778] * 576   # DPRA regionaal T1000
+    '11': [5.833333333] * 12,
+    '12': [7.5] * 12,
+    '13': [6.666666667] * 24,
+    '14': [0.208333333] * 576,
+    '15': [0.225694444] * 576,
+    '16': [0.277777778] * 576
 }
 
 RAIN_LOOKUP = {
@@ -435,7 +435,6 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         else:
             # This is for 'mm/timestep'
             self.total_precipitation = sum(precipitation_values)
-        #  self.plot_widget.setXRange(0, duration_in_units)
 
 
 class SummaryWidget(uicls_p4, basecls_p4):
