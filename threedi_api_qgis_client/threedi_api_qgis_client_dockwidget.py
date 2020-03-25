@@ -5,7 +5,7 @@ from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
 from .widgets.log_in import LogInDialog
 from .widgets.simulation_overview import SimulationOverview
-from .utils import set_icon
+from .ui_utils import set_icon
 from .communication import UICommunication
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(

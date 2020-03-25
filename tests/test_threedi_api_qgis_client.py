@@ -1,6 +1,5 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
-
 import pytest
 from unittest.mock import Mock, patch
 from openapi_client import (ApiException, Repository, Simulation, Revision, Action, Progress, ConstantRain,
@@ -84,7 +83,7 @@ def test_all_simulations_progress(mock_simulations_status_list, mock_simulations
     mock_simulations_progress_list.side_effect = [prog1,  ApiException(404), ApiException(500)]
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
-    progress_dict = tc.all_simulations_progress()
+    progress_dict = tc.all_simulations_progress([])
     assert all(s.id in progress_dict for s in sims)
     s1, p1 = progress_dict[sim1.id]
     s2, p2 = progress_dict[sim2.id]
@@ -94,7 +93,7 @@ def test_all_simulations_progress(mock_simulations_status_list, mock_simulations
     assert p2.to_dict() == {'percentage': 100, 'time': 72000}
     mock_simulations_list.return_value = Mock(results=[Simulation(**BAD_SIM_DATA)])
     with pytest.raises(ApiException):
-        tc.all_simulations_progress()
+        tc.all_simulations_progress([])
 
 
 @patch.object(SimulationsApi, 'simulations_events_rain_constant_create',

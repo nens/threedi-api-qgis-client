@@ -45,26 +45,30 @@ class SimulationOverview(uicls, basecls):
         self.tv_model.setHorizontalHeaderLabels(["Simulation name", "User", "Progress"])
         self.tv_sim_tree.setModel(self.tv_model)
 
+    def add_simulation_to_model(self, simulation, progress=None):
+        """Method for adding simulation to the model."""
+        sim_id = simulation.id
+        sim_name_item = QStandardItem(f"{simulation.name} [{sim_id}]")
+        sim_name_item.setData(sim_id, Qt.UserRole)
+        user_item = QStandardItem(self.user)
+        progress_item = QStandardItem()
+        new_progress_value = progress.percentage if progress is not None else 0
+        progress_item.setData(new_progress_value, Qt.UserRole + 1000)
+        self.tv_model.appendRow([sim_name_item, user_item, progress_item])
+        self.simulations_keys[sim_id] = simulation
+
     def update_progress(self, progresses):
         """Updating progress bars in the running simulations list."""
         for sim_id, (sim, progress) in progresses.items():
             if progress.percentage == 0 or progress.percentage == 100:
                 continue
             if sim_id not in self.simulations_keys:
-                sim_name_item = QStandardItem(sim.name)
-                sim_name_item.setData(sim_id, Qt.UserRole)
-                user_item = QStandardItem(self.user)
-                progress_item = QStandardItem()
-                new_progress_value = int(progress.percentage)
-                progress_item.setData(new_progress_value, Qt.UserRole + 1000)
-                self.tv_model.appendRow([sim_name_item, user_item, progress_item])
-                self.simulations_keys[sim_id] = sim
-
+                self.add_simulation_to_model(sim, progress)
         row_count = self.tv_model.rowCount()
         for row_idx in range(row_count):
             name_item = self.tv_model.item(row_idx, 0)
             sim_id = name_item.data(Qt.UserRole)
-            if sim_id in self.simulations_finished:
+            if sim_id in self.simulations_finished or sim_id not in progresses:
                 continue
             progress_item = self.tv_model.item(row_idx, 2)
             sim, new_progress = progresses[sim_id]
@@ -81,6 +85,9 @@ class SimulationOverview(uicls, basecls):
         for model in models:
             self.simulation_wizard.p1.main_widget.cbo_db.addItem(*model)
         self.simulation_wizard.exec_()
+        new_simulation = self.simulation_wizard.new_simulation
+        if new_simulation is not None:
+            self.add_simulation_to_model(new_simulation)
 
     def stop_simulation(self):
         """Sending request to shutdown currently selected simulation."""
@@ -91,11 +98,14 @@ class SimulationOverview(uicls, basecls):
         question = "This simulation is now running.\nAre you sure you want to stop it?"
         answer = self.parent_dock.communication.ask(self, title, question, QMessageBox.Warning)
         if answer is True:
-            name_item = self.tv_model.item(index.row(), 0)
-            sim_id = name_item.data(Qt.UserRole)
-            tc = ThreediCalls(self.parent_dock.api_client)
-            tc.make_action_on_simulation(sim_id, name='shutdown')
-            self.parent_dock.communication.bar_info(f"Simulation {name_item.text()} stopped!")
+            try:
+                name_item = self.tv_model.item(index.row(), 0)
+                sim_id = name_item.data(Qt.UserRole)
+                tc = ThreediCalls(self.parent_dock.api_client)
+                tc.make_action_on_simulation(sim_id, name='shutdown')
+                self.parent_dock.communication.bar_info(f"Simulation {name_item.text()} stopped!")
+            except ApiException as e:
+                self.parent_dock.communication.show_error(e.body)
 
     def stop_fetching_progress(self):
         """Changing 'thread_active' flag inside background task that is fetching simulations progresses."""
@@ -121,11 +131,14 @@ class ProgressSentinel(QObject):
     """Worker object that will be moved to a separate thread and will check progresses of the running simulations."""
     thread_finished = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
-    DELAY = 2.5
+    DELAY = 5
+    SIMULATIONS_REFRESH_TIME = 300
 
     def __init__(self, api_client):
         super(QObject, self).__init__()
         self.api_client = api_client
+        self.simulations_list = []
+        self.refresh_at_step = int(self.SIMULATIONS_REFRESH_TIME / self.DELAY)
         self.progresses = None
         self.thread_active = True
 
@@ -135,10 +148,15 @@ class ProgressSentinel(QObject):
         stop_message = "Checking running simulation stopped."
         try:
             tc = ThreediCalls(self.api_client)
+            counter = 0
             while self.thread_active:
-                self.progresses = tc.all_simulations_progress()
+                if counter == self.refresh_at_step:
+                    del self.simulations_list[:]
+                    counter -= self.refresh_at_step
+                self.progresses = tc.all_simulations_progress(self.simulations_list)
                 self.progresses_fetched.emit(self.progresses)
                 sleep(self.DELAY)
+                counter += 1
         except ApiException as e:
             stop_message = e.body
         self.thread_finished.emit(stop_message)

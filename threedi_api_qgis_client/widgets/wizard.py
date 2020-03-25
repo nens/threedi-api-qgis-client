@@ -10,7 +10,8 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
-from ..utils import icon_path, set_widget_background_color, mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh
+from ..ui_utils import icon_path, set_widget_background_color
+from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh
 from ..api_calls.threedi_calls import ThreediCalls, ApiException
 
 
@@ -449,7 +450,7 @@ class SummaryWidget(uicls_p4, basecls_p4):
         set_widget_background_color(self)
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
-        self.plot_widget.setMaximumHeight(60)
+        self.plot_widget.setMaximumHeight(80)
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
 
     def plot_overview_precipitation(self):
@@ -534,6 +535,7 @@ class SimulationWizard(QWizard):
         self.currentIdChanged.connect(self.page_changed)
         self.finish_btn = self.button(QWizard.FinishButton)
         self.finish_btn.clicked.connect(self.run_new_simulation)
+        self.new_simulation = None
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -590,6 +592,8 @@ class SimulationWizard(QWizard):
             elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
                 tc.add_custom_precipitation(sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset)
             tc.make_action_on_simulation(sim_id, name='start')
+            self.new_simulation = new_simulation
             self.parent_dock.communication.bar_info(f"Simulation {new_simulation.name} started!")
         except ApiException as e:
+            self.new_simulation = None
             self.parent_dock.communication.bar_error(e.body)

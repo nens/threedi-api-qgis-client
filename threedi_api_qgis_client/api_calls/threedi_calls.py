@@ -1,6 +1,7 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
+from datetime import datetime, timedelta
 from typing import List, Dict, Tuple
 from threedi_api_client import ThreediApiClient
 from openapi_client.exceptions import ApiException
@@ -20,7 +21,8 @@ def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiCl
 
 class ThreediCalls:
     """Class with methods used for the communication with the 3Di API."""
-    FETCH_LIMIT = 10000
+    FETCH_LIMIT = 1000
+    TIME_FRAME = datetime.now() - timedelta(days=10)
 
     def __init__(self, api_client: ApiClient) -> None:
         self.api_client = api_client
@@ -34,7 +36,8 @@ class ThreediCalls:
     def fetch_simulations(self) -> List[Simulation]:
         """Fetch all simulations available for current user."""
         api = SimulationsApi(self.api_client)
-        simulations_list = api.simulations_list(limit=self.FETCH_LIMIT).results
+        created__date__gt = self.TIME_FRAME.strftime('%Y-%m-%d')
+        simulations_list = api.simulations_list(created__date__gt=created__date__gt, limit=self.FETCH_LIMIT).results
         return simulations_list
 
     def new_simulation(self, **simulation_data) -> Simulation:
@@ -56,11 +59,13 @@ class ThreediCalls:
         simulations_progress = api.simulations_progress_list(str(simulation_pk))
         return simulations_progress
 
-    def all_simulations_progress(self) -> Dict[int, Tuple[Simulation, Progress]]:
+    def all_simulations_progress(self, simulations_list: List[Simulation]) -> Dict[int, Tuple[Simulation, Progress]]:
         """Get all simulations with progresses."""
         api = SimulationsApi(self.api_client)
         progresses = {}
-        for sim in self.fetch_simulations():
+        if not simulations_list:
+            simulations_list = self.fetch_simulations()
+        for sim in simulations_list:
             spk = sim.id
             try:
                 sim_progress = api.simulations_progress_list(str(spk))

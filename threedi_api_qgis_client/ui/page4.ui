@@ -32,22 +32,6 @@
    <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="7" column="3" colspan="2">
-    <widget class="QCheckBox" name="sim_email">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="layoutDirection">
-      <enum>Qt::RightToLeft</enum>
-     </property>
-     <property name="text">
-      <string>Send me an email when simulation is done</string>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="3">
     <widget class="QLabel" name="sim_prec_type_l">
      <property name="font">
@@ -88,31 +72,26 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
-    <spacer name="verticalSpacer_2">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+   <item row="2" column="4">
+    <widget class="QLabel" name="sim_prec_total">
+     <property name="font">
+      <font>
+       <pointsize>9</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
+     <property name="text">
+      <string>600mm</string>
      </property>
-    </spacer>
+    </widget>
    </item>
-   <item row="1" column="2">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+   <item row="6" column="0" colspan="5">
+    <layout class="QGridLayout" name="lout_plot">
+     <property name="bottomMargin">
+      <number>10</number>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
+    </layout>
    </item>
    <item row="3" column="0">
     <widget class="QLabel" name="sim_duration_l">
@@ -127,33 +106,18 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
-    <widget class="QLabel" name="sim_duration">
-     <property name="font">
-      <font>
-       <pointsize>9</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
+   <item row="4" column="0">
+    <spacer name="verticalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
      </property>
-     <property name="text">
-      <string>3600 seconds</string>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
      </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
-    <widget class="QLabel" name="sim_name">
-     <property name="font">
-      <font>
-       <pointsize>9</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Test Simulation</string>
-     </property>
-    </widget>
+    </spacer>
    </item>
    <item row="5" column="0">
     <widget class="QLabel" name="label_11">
@@ -174,6 +138,34 @@
      </property>
     </widget>
    </item>
+   <item row="1" column="4">
+    <widget class="QLabel" name="sim_prec_type">
+     <property name="font">
+      <font>
+       <pointsize>9</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Design</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QLabel" name="sim_name">
+     <property name="font">
+      <font>
+       <pointsize>9</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Test Simulation</string>
+     </property>
+    </widget>
+   </item>
    <item row="2" column="3">
     <widget class="QLabel" name="sim_prec_total_l">
      <property name="font">
@@ -187,12 +179,32 @@
      </property>
     </widget>
    </item>
-   <item row="6" column="0" colspan="5">
-    <layout class="QGridLayout" name="lout_plot">
-     <property name="bottomMargin">
-      <number>10</number>
+   <item row="3" column="1">
+    <widget class="QLabel" name="sim_duration">
+     <property name="font">
+      <font>
+       <pointsize>9</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
      </property>
-    </layout>
+     <property name="text">
+      <string>3600 seconds</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
    </item>
    <item row="1" column="0">
     <widget class="QLabel" name="sim_name_l">
@@ -204,34 +216,6 @@
      </property>
      <property name="text">
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Simulation name:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="4">
-    <widget class="QLabel" name="sim_prec_total">
-     <property name="font">
-      <font>
-       <pointsize>9</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>600mm</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="4">
-    <widget class="QLabel" name="sim_prec_type">
-     <property name="font">
-      <font>
-       <pointsize>9</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Design</string>
      </property>
     </widget>
    </item>
