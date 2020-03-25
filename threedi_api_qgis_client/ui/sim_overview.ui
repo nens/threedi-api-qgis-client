@@ -69,7 +69,11 @@
     </widget>
    </item>
    <item row="2" column="0" colspan="3">
-    <widget class="QTreeView" name="tv_sim_tree"/>
+    <widget class="QTreeView" name="tv_sim_tree">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+    </widget>
    </item>
    <item row="2" column="4">
     <widget class="QPushButton" name="pb_new_sim">

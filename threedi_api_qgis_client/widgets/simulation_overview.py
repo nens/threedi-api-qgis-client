@@ -68,7 +68,7 @@ class SimulationOverview(uicls, basecls):
         for row_idx in range(row_count):
             name_item = self.tv_model.item(row_idx, 0)
             sim_id = name_item.data(Qt.UserRole)
-            if sim_id in self.simulations_finished:
+            if sim_id in self.simulations_finished or sim_id not in progresses:
                 continue
             progress_item = self.tv_model.item(row_idx, 2)
             sim, new_progress = progresses[sim_id]
@@ -98,11 +98,14 @@ class SimulationOverview(uicls, basecls):
         question = "This simulation is now running.\nAre you sure you want to stop it?"
         answer = self.parent_dock.communication.ask(self, title, question, QMessageBox.Warning)
         if answer is True:
-            name_item = self.tv_model.item(index.row(), 0)
-            sim_id = name_item.data(Qt.UserRole)
-            tc = ThreediCalls(self.parent_dock.api_client)
-            tc.make_action_on_simulation(sim_id, name='shutdown')
-            self.parent_dock.communication.bar_info(f"Simulation {name_item.text()} stopped!")
+            try:
+                name_item = self.tv_model.item(index.row(), 0)
+                sim_id = name_item.data(Qt.UserRole)
+                tc = ThreediCalls(self.parent_dock.api_client)
+                tc.make_action_on_simulation(sim_id, name='shutdown')
+                self.parent_dock.communication.bar_info(f"Simulation {name_item.text()} stopped!")
+            except ApiException as e:
+                self.parent_dock.communication.show_error(e.body)
 
     def stop_fetching_progress(self):
         """Changing 'thread_active' flag inside background task that is fetching simulations progresses."""
@@ -128,11 +131,14 @@ class ProgressSentinel(QObject):
     """Worker object that will be moved to a separate thread and will check progresses of the running simulations."""
     thread_finished = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
-    DELAY = 2.5
+    DELAY = 5
+    SIMULATIONS_REFRESH_TIME = 300
 
     def __init__(self, api_client):
         super(QObject, self).__init__()
         self.api_client = api_client
+        self.simulations_list = []
+        self.refresh_at_step = int(self.SIMULATIONS_REFRESH_TIME / self.DELAY)
         self.progresses = None
         self.thread_active = True
 
@@ -142,10 +148,15 @@ class ProgressSentinel(QObject):
         stop_message = "Checking running simulation stopped."
         try:
             tc = ThreediCalls(self.api_client)
+            counter = 0
             while self.thread_active:
-                self.progresses = tc.all_simulations_progress()
+                if counter == self.refresh_at_step:
+                    del self.simulations_list[:]
+                    counter -= self.refresh_at_step
+                self.progresses = tc.all_simulations_progress(self.simulations_list)
                 self.progresses_fetched.emit(self.progresses)
                 sleep(self.DELAY)
+                counter += 1
         except ApiException as e:
             stop_message = e.body
         self.thread_finished.emit(stop_message)

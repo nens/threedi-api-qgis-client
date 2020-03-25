@@ -24,6 +24,7 @@ class LogInDialog(uicls_log, basecls_log):
         self.api_client = None
         self.repositories = None
         self.organisations = None
+        self.simulations = None
         self.revisions = None
         self.threedi_models = None
         self.model = None
@@ -84,6 +85,12 @@ class LogInDialog(uicls_log, basecls_log):
         repositories = tc.fetch_repositories()
         return repositories
 
+    def fetch_simulations(self):
+        """Fetching simulations list."""
+        tc = ThreediCalls(self.api_client)
+        running_simulations = tc.fetch_simulations()
+        return running_simulations
+
     def fetch_revisions(self):
         """Fetching revisions list."""
         tc = ThreediCalls(self.api_client)
@@ -137,8 +144,9 @@ class LogInDialog(uicls_log, basecls_log):
             self.wait_widget.update()
             self.log_pbar.setValue(40)
             self.repositories = {rep.slug: rep for rep in self.fetch_repositories()}
-            self.log_pbar.setValue(50)
             self.organisations = {org.unique_id: org for org in self.fetch_organisations()}
+            self.log_pbar.setValue(50)
+            self.simulations = self.fetch_simulations()
             self.log_pbar.setValue(60)
             self.revisions = {rev.hash: rev for rev in self.fetch_revisions()}
             self.log_pbar.setValue(80)
@@ -150,7 +158,7 @@ class LogInDialog(uicls_log, basecls_log):
             self.show_action_widget()
         except ApiException as e:
             self.close()
-            self.communication.show_error(e.reason)
+            self.communication.show_error(e.body)
         except ValueError as e:
             self.close()
             self.communication.show_error(str(e))
