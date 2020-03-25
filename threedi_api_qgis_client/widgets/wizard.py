@@ -10,7 +10,8 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
-from ..utils import icon_path, set_widget_background_color, mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh
+from ..ui_utils import icon_path, set_widget_background_color
+from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh
 from ..api_calls.threedi_calls import ThreediCalls, ApiException
 
 
