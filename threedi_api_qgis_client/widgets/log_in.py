@@ -24,7 +24,6 @@ class LogInDialog(uicls_log, basecls_log):
         self.api_client = None
         self.repositories = None
         self.organisations = None
-        self.simulations = None
         self.revisions = None
         self.threedi_models = None
         self.model = None
@@ -85,12 +84,6 @@ class LogInDialog(uicls_log, basecls_log):
         repositories = tc.fetch_repositories()
         return repositories
 
-    def fetch_simulations(self):
-        """Fetching simulations list."""
-        tc = ThreediCalls(self.api_client)
-        running_simulations = tc.fetch_simulations()
-        return running_simulations
-
     def fetch_revisions(self):
         """Fetching revisions list."""
         tc = ThreediCalls(self.api_client)
@@ -144,9 +137,8 @@ class LogInDialog(uicls_log, basecls_log):
             self.wait_widget.update()
             self.log_pbar.setValue(40)
             self.repositories = {rep.slug: rep for rep in self.fetch_repositories()}
-            self.organisations = {org.unique_id: org for org in self.fetch_organisations()}
             self.log_pbar.setValue(50)
-            self.simulations = self.fetch_simulations()
+            self.organisations = {org.unique_id: org for org in self.fetch_organisations()}
             self.log_pbar.setValue(60)
             self.revisions = {rev.hash: rev for rev in self.fetch_revisions()}
             self.log_pbar.setValue(80)

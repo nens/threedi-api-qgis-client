@@ -45,21 +45,25 @@ class SimulationOverview(uicls, basecls):
         self.tv_model.setHorizontalHeaderLabels(["Simulation name", "User", "Progress"])
         self.tv_sim_tree.setModel(self.tv_model)
 
+    def add_simulation_to_model(self, simulation, progress=None):
+        """Method for adding simulation to the model."""
+        sim_id = simulation.id
+        sim_name_item = QStandardItem(f"{simulation.name} [{sim_id}]")
+        sim_name_item.setData(sim_id, Qt.UserRole)
+        user_item = QStandardItem(self.user)
+        progress_item = QStandardItem()
+        new_progress_value = progress.percentage if progress is not None else 0
+        progress_item.setData(new_progress_value, Qt.UserRole + 1000)
+        self.tv_model.appendRow([sim_name_item, user_item, progress_item])
+        self.simulations_keys[sim_id] = simulation
+
     def update_progress(self, progresses):
         """Updating progress bars in the running simulations list."""
         for sim_id, (sim, progress) in progresses.items():
             if progress.percentage == 0 or progress.percentage == 100:
                 continue
             if sim_id not in self.simulations_keys:
-                sim_name_item = QStandardItem(sim.name)
-                sim_name_item.setData(sim_id, Qt.UserRole)
-                user_item = QStandardItem(self.user)
-                progress_item = QStandardItem()
-                new_progress_value = int(progress.percentage)
-                progress_item.setData(new_progress_value, Qt.UserRole + 1000)
-                self.tv_model.appendRow([sim_name_item, user_item, progress_item])
-                self.simulations_keys[sim_id] = sim
-
+                self.add_simulation_to_model(sim, progress)
         row_count = self.tv_model.rowCount()
         for row_idx in range(row_count):
             name_item = self.tv_model.item(row_idx, 0)
@@ -81,6 +85,9 @@ class SimulationOverview(uicls, basecls):
         for model in models:
             self.simulation_wizard.p1.main_widget.cbo_db.addItem(*model)
         self.simulation_wizard.exec_()
+        new_simulation = self.simulation_wizard.new_simulation
+        if new_simulation is not None:
+            self.add_simulation_to_model(new_simulation)
 
     def stop_simulation(self):
         """Sending request to shutdown currently selected simulation."""

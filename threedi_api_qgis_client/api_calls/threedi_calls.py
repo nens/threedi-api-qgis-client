@@ -1,6 +1,7 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
+import datetime
 from typing import List, Dict, Tuple
 from threedi_api_client import ThreediApiClient
 from openapi_client.exceptions import ApiException
@@ -20,7 +21,8 @@ def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiCl
 
 class ThreediCalls:
     """Class with methods used for the communication with the 3Di API."""
-    FETCH_LIMIT = 10000
+    FETCH_LIMIT = 250
+    TIME_FRAME = datetime.datetime.now() - datetime.timedelta(days=10)
 
     def __init__(self, api_client: ApiClient) -> None:
         self.api_client = api_client
@@ -34,7 +36,8 @@ class ThreediCalls:
     def fetch_simulations(self) -> List[Simulation]:
         """Fetch all simulations available for current user."""
         api = SimulationsApi(self.api_client)
-        simulations_list = api.simulations_list(limit=self.FETCH_LIMIT).results
+        created__date__gt = self.TIME_FRAME.strftime('%Y-%m-%d')
+        simulations_list = api.simulations_list(created__date__gt=created__date__gt, limit=self.FETCH_LIMIT).results
         return simulations_list
 
     def new_simulation(self, **simulation_data) -> Simulation:
