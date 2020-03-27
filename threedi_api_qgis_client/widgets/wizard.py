@@ -77,11 +77,11 @@ class SourceWidget(uicls_p1, basecls_p1):
         self.setupUi(self)
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path('sim_wizard_p1.svg'))
+        self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
-        line_edit = self.cbo_db.lineEdit()
-        line_edit.setPlaceholderText('Choose database')
 
 
 class SimulationDurationWidget(uicls_p2, basecls_p2):
@@ -91,6 +91,8 @@ class SimulationDurationWidget(uicls_p2, basecls_p2):
         self.setupUi(self)
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path('sim_wizard_p2.svg'))
+        self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
@@ -139,6 +141,8 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.setupUi(self)
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path('sim_wizard_p3.svg'))
+        self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
@@ -150,7 +154,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.cbo_design.addItems([str(i) for i in range(len(RAIN_LOOKUP))])
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
-        self.plot_widget.setMaximumHeight(80)
+        self.plot_widget.setFixedHeight(80)
         self.plot_bar_graph = None
         self.plot_ticks = None
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
@@ -420,6 +424,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
             return
         # Bar width as time series interval value
         timestep = x_values[1] - x_values[0]
+        last_time = x_values[-1]
         # Adding ticks in minutes
         dx = [(value, f"{value:.2f} ({self.current_units})") for value in x_values]
         self.plot_ticks = [[dx[0], dx[-1]]]
@@ -437,6 +442,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         else:
             # This is for 'mm/timestep'
             self.total_precipitation = sum(precipitation_values)
+        self.plot_widget.setXRange(0, last_time)
 
 
 class SummaryWidget(uicls_p4, basecls_p4):
@@ -446,12 +452,14 @@ class SummaryWidget(uicls_p4, basecls_p4):
         self.setupUi(self)
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path('sim_wizard_p4.svg'))
+        self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
-        self.plot_widget.setMaximumHeight(80)
+        self.plot_widget.setFixedHeight(80)
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
 
     def plot_overview_precipitation(self):
@@ -465,6 +473,8 @@ class SummaryWidget(uicls_p4, basecls_p4):
         ax = self.plot_widget.getAxis('bottom')
         ax.setTicks(plot_ticks)
         self.plot_widget.addItem(new_bar_graph)
+        last_time = plot_ticks[-1][-1][0]
+        self.plot_widget.setXRange(0, last_time)
 
 
 class Page1(QWizardPage):
@@ -534,6 +544,7 @@ class SimulationWizard(QWizard):
         self.addPage(self.p3)
         self.addPage(self.p4)
         self.currentIdChanged.connect(self.page_changed)
+        self.setButtonText(QWizard.FinishButton, "Start Simulation")
         self.finish_btn = self.button(QWizard.FinishButton)
         self.finish_btn.clicked.connect(self.run_new_simulation)
         self.new_simulation = None
@@ -561,7 +572,7 @@ class SimulationWizard(QWizard):
 
     def set_overview_database(self):
         """Setting up database name label in the summary page."""
-        database = self.p1.main_widget.cbo_db.currentText()
+        database = self.parent_dock.current_model.name
         self.p4.main_widget.sim_database.setText(database)
 
     def set_overview_duration(self):
@@ -579,14 +590,14 @@ class SimulationWizard(QWizard):
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
         name = self.p1.main_widget.le_sim_name.text()
-        threedimodel = self.p1.main_widget.cbo_db.currentData()
-        organisation = self.parent_dock.organisation.unique_id
+        threedimodel_id = self.parent_dock.current_model.id
+        organisation_uuid = self.parent_dock.organisation.unique_id
         start_datetime = datetime.utcnow()
         duration = self.p3.main_widget.duration
         try:
             tc = ThreediCalls(self.parent_dock.api_client)
-            new_simulation = tc.new_simulation(name=name, threedimodel=threedimodel, start_datetime=start_datetime,
-                                               organisation=organisation, duration=duration)
+            new_simulation = tc.new_simulation(name=name, threedimodel=threedimodel_id, start_datetime=start_datetime,
+                                               organisation=organisation_uuid, duration=duration)
             current_status = tc.simulation_current_status(new_simulation.id)
             sim_id = new_simulation.id
             ptype, poffset, pduration, punits, pvalues = self.p3.main_widget.get_precipitation_data()

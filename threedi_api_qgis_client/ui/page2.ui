@@ -9,12 +9,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>743</width>
-    <height>437</height>
+    <width>720</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>

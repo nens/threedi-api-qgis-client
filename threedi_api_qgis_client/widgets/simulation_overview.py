@@ -89,9 +89,6 @@ class SimulationOverview(uicls, basecls):
     def new_simulation(self):
         """Opening a wizard which allows defining and running new simulations."""
         self.simulation_wizard = SimulationWizard(self.parent_dock)
-        models = [(m.name, m.id) for m in self.threedi_models]
-        for model in models:
-            self.simulation_wizard.p1.main_widget.cbo_db.addItem(*model)
         self.simulation_wizard.exec_()
         new_simulation = self.simulation_wizard.new_simulation
         if new_simulation is not None:
@@ -182,15 +179,16 @@ class ProgressDelegate(QStyledItemDelegate):
     def paint(self, painter, option, index):
         status, progress = index.data(PROGRESS_ROLE)
         status_name = status.name
+        new_percentage = progress.percentage
         pbar = QStyleOptionProgressBar()
         pbar.rect = option.rect
         pbar.minimum = 0
         pbar.maximum = 100
         default_color = QColor(0, 140, 255)
-        new_percentage = progress.percentage
+
         if status_name == "created" or status_name == "starting":
             pbar_color = default_color
-            ptext = "starting up simulation .."
+            ptext = "Starting up simulation .."
         elif status_name == "initialized" or status_name == "postprocessing":
             pbar_color = default_color
             ptext = f"{new_percentage}%"
