@@ -76,16 +76,12 @@ class ThreediCalls:
             current_status = api.simulations_status_list(str(spk))
             status_name = current_status.name
             status_time = current_status.time
-            if status_name == "created" or status_name == "starting" or status_name == "queued":
-                sim_progress = Progress(percentage=0, time=status_time)
-            elif status_name == "initialized":
+            if status_name == "initialized":
                 sim_progress = api.simulations_progress_list(str(spk))
             elif status_name == "postprocessing" or status_name == "finished":
                 sim_progress = Progress(percentage=100, time=status_time)
-            elif status_name == "ended" or status_name == "crashed":
-                sim_progress = Progress(percentage=0, time=status_time)
             else:
-                continue
+                sim_progress = Progress(percentage=0, time=status_time)
             progresses[spk] = (sim, current_status, sim_progress)
         return progresses
 
