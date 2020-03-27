@@ -174,10 +174,19 @@ MODEL_DATA_LIST = [
     }
 ]
 
-CURRENT_STATUS_DATA = {
-    'created': datetime.datetime.utcnow(),
-    'id': 1201,
-    'name': 'finished',
-    'paused': None,
-    'time': 72000.0
-}
+CURRENT_STATUSES_LIST = [
+    {
+        'created': datetime.datetime.utcnow(),
+        'id': 1201,
+        'name': 'initialized',
+        'paused': None,
+        'time': 18000.0
+    },
+    {
+        'created': datetime.datetime.utcnow(),
+        'id': 1202,
+        'name': 'finished',
+        'paused': None,
+        'time': 72000.0
+    },
+]

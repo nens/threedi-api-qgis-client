@@ -10,9 +10,10 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
+from openapi_client import ApiException
 from ..ui_utils import icon_path, set_widget_background_color
 from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh
-from ..api_calls.threedi_calls import ThreediCalls, ApiException
+from ..api_calls.threedi_calls import ThreediCalls
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -536,6 +537,7 @@ class SimulationWizard(QWizard):
         self.finish_btn = self.button(QWizard.FinishButton)
         self.finish_btn.clicked.connect(self.run_new_simulation)
         self.new_simulation = None
+        self.new_simulation_status = None
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -585,6 +587,7 @@ class SimulationWizard(QWizard):
             tc = ThreediCalls(self.parent_dock.api_client)
             new_simulation = tc.new_simulation(name=name, threedimodel=threedimodel, start_datetime=start_datetime,
                                                organisation=organisation, duration=duration)
+            current_status = tc.simulation_current_status(new_simulation.id)
             sim_id = new_simulation.id
             ptype, poffset, pduration, punits, pvalues = self.p3.main_widget.get_precipitation_data()
             if ptype == CONSTANT_RAIN:
@@ -593,7 +596,9 @@ class SimulationWizard(QWizard):
                 tc.add_custom_precipitation(sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset)
             tc.make_action_on_simulation(sim_id, name='start')
             self.new_simulation = new_simulation
+            self.new_simulation_status = current_status
             self.parent_dock.communication.bar_info(f"Simulation {new_simulation.name} started!")
         except ApiException as e:
             self.new_simulation = None
+            self.new_simulation_status = None
             self.parent_dock.communication.bar_error(e.body)

@@ -5,7 +5,8 @@ from time import sleep
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from ..api_calls.threedi_calls import get_api_client, ThreediCalls, ApiException
+from openapi_client import ApiException
+from ..api_calls.threedi_calls import get_api_client, ThreediCalls
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, 'ui', 'sim_log_in.ui'))
@@ -137,6 +138,8 @@ class LogInDialog(uicls_log, basecls_log):
             self.done_msg.hide()
             username = self.le_user.text()
             password = self.le_pass.text()
+            self.le_user.setText('')
+            self.le_pass.setText('')
             self.log_pbar.setValue(20)
             self.api_client = get_api_client(self.API_HOST, username, password)
             self.user = username

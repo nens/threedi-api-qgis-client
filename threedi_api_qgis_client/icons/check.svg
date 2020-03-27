@@ -7,9 +7,9 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="37.5"
-   height="37.5"
-   viewBox="0 0 37.5 37.5"
+   width="60"
+   height="40"
+   viewBox="0 0 60 40"
    version="1.1"
    id="svg15"
    sodipodi:docname="check.svg"
@@ -22,6 +22,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -41,7 +42,7 @@
      id="namedview17"
      showgrid="false"
      inkscape:zoom="6.2933333"
-     inkscape:cx="18.75"
+     inkscape:cx="-12.552966"
      inkscape:cy="18.75"
      inkscape:window-x="-8"
      inkscape:window-y="-8"
@@ -50,70 +51,59 @@
   <g
      id="Group_1"
      data-name="Group 1"
-     transform="translate(-1623.5 -416.5)"
-     opacity="0.44"
-     style="fill:none;stroke:#000000;stroke-opacity:1;opacity:1">
+     transform="translate(-1608.5,-415)"
+     style="opacity:1;fill:none;stroke:#000000;stroke-opacity:1">
     <line
        id="Line_16"
        data-name="Line 16"
        y2="37.5"
-       transform="translate(1642.25 416.5)"
-       fill="none"
-       stroke="#616161"
-       stroke-width="1.5"
-       style="fill:none;stroke:#000000;stroke-opacity:1" />
+       transform="translate(1642.25,416.5)"
+       style="fill:none;stroke:#000000;stroke-width:1.5;stroke-opacity:1"
+       x1="0"
+       y1="0"
+       x2="0" />
     <line
        id="Line_17"
        data-name="Line 17"
        y2="37.5"
-       transform="translate(1661 435.25) rotate(90)"
-       fill="none"
-       stroke="#616161"
-       stroke-width="1.5"
-       style="fill:none;stroke:#000000;stroke-opacity:1" />
+       transform="rotate(90,612.875,1048.125)"
+       style="fill:none;stroke:#000000;stroke-width:1.5;stroke-opacity:1"
+       x1="0"
+       y1="0"
+       x2="0" />
     <g
        id="Ellipse_8"
        data-name="Ellipse 8"
-       transform="translate(1634 427)"
-       fill="none"
-       stroke="#616161"
-       stroke-width="1.5"
-       style="fill:none;stroke:#000000;stroke-opacity:1">
+       transform="translate(1634,427)"
+       style="fill:none;stroke:#000000;stroke-width:1.5;stroke-opacity:1">
       <circle
          cx="8.5"
          cy="8.5"
          r="8.5"
-         stroke="none"
          id="circle4"
          style="fill:none;stroke:#000000;stroke-opacity:1" />
       <circle
          cx="8.5"
          cy="8.5"
          r="7.75"
-         fill="none"
          id="circle6"
          style="fill:none;stroke:#000000;stroke-opacity:1" />
     </g>
     <g
        id="Ellipse_9"
        data-name="Ellipse 9"
-       transform="translate(1627.167 420.167)"
-       fill="none"
-       stroke="#616161"
-       stroke-width="1.5"
-       style="fill:none;stroke:#000000;stroke-opacity:1">
+       transform="translate(1627.167,420.167)"
+       style="fill:none;stroke:#000000;stroke-width:1.5;stroke-opacity:1">
       <circle
          cx="15.083"
          cy="15.083"
          r="15.083"
-         stroke="none"
          id="circle9"
          style="fill:none;stroke:#000000;stroke-opacity:1" />
       <circle
          cx="15.083"
          cy="15.083"
          r="14.333"
-         fill="none"
          id="circle11"
          style="fill:none;stroke:#000000;stroke-opacity:1" />
     </g>
