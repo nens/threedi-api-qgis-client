@@ -116,7 +116,10 @@ class SimulationDurationWidget(uicls_p2, basecls_p2):
         try:
             start, end = self.to_datetime()
             delta = end - start
-            return delta.total_seconds()
+            delta_in_seconds = delta.total_seconds()
+            if delta_in_seconds < 0:
+                delta_in_seconds = 0.0
+            return delta_in_seconds
         except ValueError:
             self.label_total_time.setText('Invalid datetime format!')
             return 0.0
@@ -125,6 +128,8 @@ class SimulationDurationWidget(uicls_p2, basecls_p2):
         """Updating label with simulation duration showed in the human readable format."""
         try:
             start, end = self.to_datetime()
+            if start > end:
+                start = end
             rel_delta = relativedelta(end, start)
             duration = (rel_delta.years, rel_delta.months, rel_delta.days, rel_delta.hours, rel_delta.minutes)
             self.label_total_time.setText('{} years, {} months, {} days, {} hours, {} minutes'.format(*duration))
@@ -172,8 +177,8 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.stop_after_custom_u.currentIndexChanged.connect(self.sync_units)
         self.start_after_design_u.currentIndexChanged.connect(self.sync_units)
         self.cbo_prec_type.currentIndexChanged.connect(self.precipitation_changed)
-        self.le_intensity.textChanged.connect(self.plot_precipitation)
         self.pb_csv.clicked.connect(self.set_custom_time_series)
+        self.sp_intensity.valueChanged.connect(self.plot_precipitation)
         self.sp_start_after_constant.valueChanged.connect(self.plot_precipitation)
         self.sp_stop_after_constant.valueChanged.connect(self.plot_precipitation)
         self.sp_start_after_custom.valueChanged.connect(self.plot_precipitation)
@@ -279,10 +284,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
 
     def get_intensity(self):
         """Getting intensity value for the Constant precipitation type."""
-        try:
-            intensity = float(self.le_intensity.text())
-        except ValueError:
-            return 0.0
+        intensity = self.sp_intensity.value()
         return intensity
 
     def get_precipitation_offset(self):
@@ -487,6 +489,7 @@ class Page1(QWizardPage):
         layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.registerField("simulation_name*", self.main_widget.le_sim_name)
         self.adjustSize()
 
 
