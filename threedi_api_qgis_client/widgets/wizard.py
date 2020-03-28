@@ -425,8 +425,10 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         if len(x_values) < 2:
             return
         # Bar width as time series interval value
-        timestep = x_values[1] - x_values[0]
+        first_time = x_values[0]
+        second_time = x_values[1]
         last_time = x_values[-1]
+        timestep = second_time - first_time
         # Adding ticks in minutes
         dx = [(value, f"{value:.2f} ({self.current_units})") for value in x_values]
         self.plot_ticks = [[dx[0], dx[-1]]]
@@ -444,7 +446,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         else:
             # This is for 'mm/timestep'
             self.total_precipitation = sum(precipitation_values)
-        self.plot_widget.setXRange(0, last_time)
+        self.plot_widget.setXRange(first_time, last_time)
 
 
 class SummaryWidget(uicls_p4, basecls_p4):
@@ -475,8 +477,9 @@ class SummaryWidget(uicls_p4, basecls_p4):
         ax = self.plot_widget.getAxis('bottom')
         ax.setTicks(plot_ticks)
         self.plot_widget.addItem(new_bar_graph)
-        last_time = plot_ticks[-1][-1][0]
-        self.plot_widget.setXRange(0, last_time)
+        ticks = plot_ticks[0]
+        first_tick_value, last_tick_value = ticks[0][0], ticks[-1][0]
+        self.plot_widget.setXRange(first_tick_value, last_tick_value)
 
 
 class Page1(QWizardPage):
