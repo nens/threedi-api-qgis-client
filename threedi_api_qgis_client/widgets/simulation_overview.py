@@ -84,7 +84,8 @@ class SimulationOverview(uicls, basecls):
                 progress_item.setData((new_status, new_progress), PROGRESS_ROLE)
             if status_name == "finished":
                 self.simulations_without_progress.add(sim_id)
-                self.parent_dock.communication.bar_info(f"Simulation {sim.name} finished!")
+                msg = f"Simulation {sim.name} finished!"
+                self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
 
     def new_simulation(self):
         """Opening a wizard which allows defining and running new simulations."""
@@ -110,9 +111,13 @@ class SimulationOverview(uicls, basecls):
                 sim_id = name_item.data(Qt.UserRole)
                 tc = ThreediCalls(self.parent_dock.api_client)
                 tc.make_action_on_simulation(sim_id, name='shutdown')
-                self.parent_dock.communication.bar_info(f"Simulation {name_item.text()} stopped!")
+                msg = f"Simulation {name_item.text()} stopped!"
+                self.parent_dock.communication.bar_info(msg)
             except ApiException as e:
-                self.parent_dock.communication.show_error(e.body)
+                error_body = e.body
+                error_details = error_body["details"] if "details" in error_body else error_body
+                error_msg = f"Error: {error_details}"
+                self.parent_dock.communication.show_error(error_msg)
 
     def stop_fetching_progress(self):
         """Changing 'thread_active' flag inside background task that is fetching simulations progresses."""
@@ -165,7 +170,10 @@ class ProgressSentinel(QObject):
                 sleep(self.DELAY)
                 counter += 1
         except ApiException as e:
-            stop_message = e.body
+            error_body = e.body
+            error_details = error_body["details"] if "details" in error_body else error_body
+            error_msg = f"Error: {error_details}"
+            stop_message = error_msg
         self.thread_finished.emit(stop_message)
 
     def stop(self):

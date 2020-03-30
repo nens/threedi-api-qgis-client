@@ -8,7 +8,7 @@ from datetime import datetime
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
 from openapi_client import ApiException
 from ..ui_utils import icon_path, set_widget_background_color
@@ -614,8 +614,12 @@ class SimulationWizard(QWizard):
             tc.make_action_on_simulation(sim_id, name='start')
             self.new_simulation = new_simulation
             self.new_simulation_status = current_status
-            self.parent_dock.communication.bar_info(f"Simulation {new_simulation.name} started!")
+            msg = f"Simulation {new_simulation.name} started!"
+            self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
         except ApiException as e:
             self.new_simulation = None
             self.new_simulation_status = None
-            self.parent_dock.communication.bar_error(e.body)
+            error_body = e.body
+            error_details = error_body["details"] if "details" in error_body else error_body
+            error_msg = f"Error: {error_details}"
+            self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
