@@ -583,7 +583,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Loggin you in..</string>
+            <string>Logging you in..</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>

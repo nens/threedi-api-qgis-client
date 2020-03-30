@@ -136,7 +136,6 @@ class ThreediQgisClient:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
         icon_path = ':/plugins/threedi_api_qgis_client/icon.png'
         self.add_action(
             icon_path,
@@ -146,7 +145,6 @@ class ThreediQgisClient:
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
-
         # disconnects
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
         self.pluginIsActive = False
