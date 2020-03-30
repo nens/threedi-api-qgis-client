@@ -4,13 +4,16 @@ import os
 from time import sleep
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QPalette, QColor
 from qgis.PyQt.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionProgressBar, QStyle, QMessageBox
-from ..api_calls.threedi_calls import ThreediCalls, ApiException
+from openapi_client import ApiException, Progress
+from ..api_calls.threedi_calls import ThreediCalls
 from ..widgets.wizard import SimulationWizard
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'sim_overview.ui'))
+
+PROGRESS_ROLE = Qt.UserRole + 1000
 
 
 class SimulationOverview(uicls, basecls):
@@ -24,7 +27,8 @@ class SimulationOverview(uicls, basecls):
         self.user = self.parent_dock.label_user.text()
         self.simulation_wizard = None
         self.simulations_keys = {}
-        self.simulations_finished = set()
+        self.last_progresses = {}
+        self.simulations_without_progress = set()
         self.tv_model = None
         self.setup_view_model()
         self.thread = QThread()
@@ -45,49 +49,52 @@ class SimulationOverview(uicls, basecls):
         self.tv_model.setHorizontalHeaderLabels(["Simulation name", "User", "Progress"])
         self.tv_sim_tree.setModel(self.tv_model)
 
-    def add_simulation_to_model(self, simulation, progress=None):
+    def add_simulation_to_model(self, simulation, status, progress):
         """Method for adding simulation to the model."""
         sim_id = simulation.id
-        sim_name_item = QStandardItem(f"{simulation.name} [{sim_id}]")
+        sim_name_item = QStandardItem(f"{simulation.name} ({sim_id})")
         sim_name_item.setData(sim_id, Qt.UserRole)
-        user_item = QStandardItem(self.user)
+        user_item = QStandardItem(simulation.user)
         progress_item = QStandardItem()
-        new_progress_value = progress.percentage if progress is not None else 0
-        progress_item.setData(new_progress_value, Qt.UserRole + 1000)
+        progress_item.setData((status, progress), PROGRESS_ROLE)
         self.tv_model.appendRow([sim_name_item, user_item, progress_item])
         self.simulations_keys[sim_id] = simulation
 
     def update_progress(self, progresses):
         """Updating progress bars in the running simulations list."""
-        for sim_id, (sim, progress) in progresses.items():
-            if progress.percentage == 0 or progress.percentage == 100:
+        for sim_id, (sim, status, progress) in progresses.items():
+            if status.name != "initialized":
                 continue
             if sim_id not in self.simulations_keys:
-                self.add_simulation_to_model(sim, progress)
+                self.add_simulation_to_model(sim, status, progress)
         row_count = self.tv_model.rowCount()
         for row_idx in range(row_count):
             name_item = self.tv_model.item(row_idx, 0)
             sim_id = name_item.data(Qt.UserRole)
-            if sim_id in self.simulations_finished or sim_id not in progresses:
+            if sim_id in self.simulations_without_progress or sim_id not in progresses:
                 continue
             progress_item = self.tv_model.item(row_idx, 2)
-            sim, new_progress = progresses[sim_id]
-            new_progress_value = int(new_progress.percentage)
-            progress_item.setData(new_progress_value, Qt.UserRole + 1000)
-            if new_progress_value == 100:
-                self.simulations_finished.add(sim_id)
+            sim, new_status, new_progress = progresses[sim_id]
+            status_name = new_status.name
+            if status_name == "stopped" or status_name == "crashed":
+                old_status, old_progress = progress_item.data(PROGRESS_ROLE)
+                progress_item.setData((new_status, old_progress), PROGRESS_ROLE)
+                self.simulations_without_progress.add(sim_id)
+            else:
+                progress_item.setData((new_status, new_progress), PROGRESS_ROLE)
+            if status_name == "finished":
+                self.simulations_without_progress.add(sim_id)
                 self.parent_dock.communication.bar_info(f"Simulation {sim.name} finished!")
 
     def new_simulation(self):
         """Opening a wizard which allows defining and running new simulations."""
         self.simulation_wizard = SimulationWizard(self.parent_dock)
-        models = [(m.name, m.id) for m in self.threedi_models]
-        for model in models:
-            self.simulation_wizard.p1.main_widget.cbo_db.addItem(*model)
         self.simulation_wizard.exec_()
         new_simulation = self.simulation_wizard.new_simulation
         if new_simulation is not None:
-            self.add_simulation_to_model(new_simulation)
+            initial_status = self.simulation_wizard.new_simulation_status
+            initial_progress = Progress(percentage=0, time=new_simulation.duration)
+            self.add_simulation_to_model(new_simulation, initial_status, initial_progress)
 
     def stop_simulation(self):
         """Sending request to shutdown currently selected simulation."""
@@ -168,13 +175,40 @@ class ProgressSentinel(QObject):
 
 class ProgressDelegate(QStyledItemDelegate):
     """Class with definition of custom progress bar item that can be inserted into the model."""
+
     def paint(self, painter, option, index):
-        pvalue = index.data(Qt.UserRole + 1000)
+        status, progress = index.data(PROGRESS_ROLE)
+        status_name = status.name
+        new_percentage = progress.percentage
         pbar = QStyleOptionProgressBar()
         pbar.rect = option.rect
         pbar.minimum = 0
         pbar.maximum = 100
-        pbar.progress = pvalue
-        pbar.text = f"{pvalue}%"
+        default_color = QColor(0, 140, 255)
+
+        if status_name == "created" or status_name == "starting":
+            pbar_color = default_color
+            ptext = "Starting up simulation .."
+        elif status_name == "initialized" or status_name == "postprocessing":
+            pbar_color = default_color
+            ptext = f"{new_percentage}%"
+        elif status_name == "finished":
+            pbar_color = QColor(10, 180, 40)
+            ptext = f"{new_percentage}%"
+        elif status_name == "ended":
+            pbar_color = Qt.gray
+            ptext = f"{new_percentage}% (stopped)"
+        elif status_name == "crashed":
+            pbar_color = Qt.red
+            ptext = f"{new_percentage}% (crashed)"
+        else:
+            pbar_color = Qt.lightGray
+            ptext = f"{status_name}"
+
+        pbar.progress = new_percentage
+        pbar.text = ptext
         pbar.textVisible = True
+        palette = pbar.palette
+        palette.setColor(QPalette.Highlight, pbar_color)
+        pbar.palette = palette
         QApplication.style().drawControl(QStyle.CE_ProgressBar, pbar, painter)

@@ -4,7 +4,6 @@ import os
 from datetime import datetime, timedelta
 from typing import List, Dict, Tuple
 from threedi_api_client import ThreediApiClient
-from openapi_client.exceptions import ApiException
 from openapi_client import (ApiClient, RepositoriesApi, Repository, SimulationsApi, Simulation, Action, Progress,
                             RevisionsApi, Revision, ThreediModel, ConstantRain, TimeseriesRain, OrganisationsApi,
                             Organisation, CurrentStatus)
@@ -53,39 +52,38 @@ class ThreediCalls:
         action = api.simulations_actions_create(str(simulation_pk), action_data)
         return action
 
+    def simulation_current_status(self, simulation_pk: int) -> CurrentStatus:
+        """Get a given simulation current status."""
+        api = SimulationsApi(self.api_client)
+        current_status = api.simulations_status_list(str(simulation_pk))
+        return current_status
+
     def simulations_progress(self, simulation_pk: int) -> Progress:
         """Get a given simulation progress. Available only if simulation was already started."""
         api = SimulationsApi(self.api_client)
         simulations_progress = api.simulations_progress_list(str(simulation_pk))
         return simulations_progress
 
-    def all_simulations_progress(self, simulations_list: List[Simulation]) -> Dict[int, Tuple[Simulation, Progress]]:
-        """Get all simulations with progresses."""
+    def all_simulations_progress(self, simulations_list: List[Simulation]
+                                 ) -> Dict[int, Tuple[Simulation, CurrentStatus, Progress]]:
+        """Get all simulations with statuses and progresses."""
         api = SimulationsApi(self.api_client)
         progresses = {}
         if not simulations_list:
             simulations_list = self.fetch_simulations()
         for sim in simulations_list:
             spk = sim.id
-            try:
+            current_status = api.simulations_status_list(str(spk))
+            status_name = current_status.name
+            status_time = current_status.time
+            if status_name == "initialized":
                 sim_progress = api.simulations_progress_list(str(spk))
-            except ApiException as e:
-                if e.status == 404:
-                    current_status = api.simulations_status_list(str(spk))
-                    if current_status.name == "finished":
-                        sim_progress = Progress(percentage=100, time=current_status.time)
-                    else:
-                        sim_progress = Progress(percentage=0, time=0)
-                else:
-                    raise
-            progresses[spk] = (sim, sim_progress)
+            elif status_name == "postprocessing" or status_name == "finished":
+                sim_progress = Progress(percentage=100, time=status_time)
+            else:
+                sim_progress = Progress(percentage=0, time=status_time)
+            progresses[spk] = (sim, current_status, sim_progress)
         return progresses
-
-    def simulation_current_status(self, simulation_pk: int) -> CurrentStatus:
-        """Get a given simulation current status."""
-        api = SimulationsApi(self.api_client)
-        current_status = api.simulations_status_list(str(simulation_pk))
-        return current_status
 
     def add_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
         """Add ConstantRain to the given simulation."""

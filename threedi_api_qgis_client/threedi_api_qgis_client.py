@@ -164,7 +164,7 @@ class ThreediQgisClient:
     def run(self):
         """Run method that loads and starts the plugin"""
         patch_wheel_imports()
-        from .threedi_api_qgis_client_dockwidget import ThreediQgisClientDockWidget
+        from threedi_api_qgis_client.widgets.threedi_api_qgis_client_dockwidget import ThreediQgisClientDockWidget
         if not self.pluginIsActive:
             self.pluginIsActive = True
             if self.dockwidget is None:

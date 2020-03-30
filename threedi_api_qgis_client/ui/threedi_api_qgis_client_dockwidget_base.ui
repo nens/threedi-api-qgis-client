@@ -62,8 +62,8 @@
       </property>
       <property name="iconSize">
        <size>
-        <width>36</width>
-        <height>36</height>
+        <width>80</width>
+        <height>40</height>
        </size>
       </property>
       <property name="toolButtonStyle">
@@ -136,8 +136,8 @@
       </property>
       <property name="iconSize">
        <size>
-        <width>36</width>
-        <height>36</height>
+        <width>80</width>
+        <height>40</height>
        </size>
       </property>
       <property name="toolButtonStyle">
@@ -175,12 +175,12 @@
       </property>
       <property name="icon">
        <iconset>
-        <normaloff>icons/build.svg</normaloff>icons/build.svg</iconset>
+        <normaloff>../icons/build.svg</normaloff>../icons/build.svg</iconset>
       </property>
       <property name="iconSize">
        <size>
-        <width>36</width>
-        <height>36</height>
+        <width>80</width>
+        <height>40</height>
        </size>
       </property>
       <property name="toolButtonStyle">
@@ -219,8 +219,8 @@
       </property>
       <property name="iconSize">
        <size>
-        <width>36</width>
-        <height>36</height>
+        <width>80</width>
+        <height>40</height>
        </size>
       </property>
       <property name="toolButtonStyle">
@@ -509,8 +509,8 @@
       </property>
       <property name="iconSize">
        <size>
-        <width>36</width>
-        <height>36</height>
+        <width>80</width>
+        <height>40</height>
        </size>
       </property>
       <property name="toolButtonStyle">

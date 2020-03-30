@@ -3,13 +3,13 @@
 import os
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
-from .widgets.log_in import LogInDialog
-from .widgets.simulation_overview import SimulationOverview
-from .ui_utils import set_icon
-from .communication import UICommunication
+from .log_in import LogInDialog
+from .simulation_overview import SimulationOverview
+from ..ui_utils import set_icon
+from ..communication import UICommunication
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'threedi_api_qgis_client_dockwidget_base.ui'))
+base_dir = os.path.dirname(os.path.dirname(__file__))
+FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, 'ui', 'threedi_api_qgis_client_dockwidget_base.ui'))
 
 
 class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):

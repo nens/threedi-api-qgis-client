@@ -48,7 +48,6 @@ class UICommunication(object):
         if self.iface is not None:
             self.message_bar.pushMessage(self.context, msg, level=Qgis.Info, duration=dur)
             self.model.appendRow([QStandardItem(msg)])
-
         else:
             print(msg)
 
