@@ -2,7 +2,7 @@
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QMessageBox
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
 from qgis.core import QgsMessageLog, Qgis
 
 
@@ -43,27 +43,33 @@ class UICommunication(object):
         else:
             print(msg)
 
-    def bar_info(self, msg, dur=5):
+    def bar_info(self, msg, dur=5, log_text_color=QColor(Qt.black)):
         """Showing info message bar."""
         if self.iface is not None:
             self.message_bar.pushMessage(self.context, msg, level=Qgis.Info, duration=dur)
-            self.model.appendRow([QStandardItem(msg)])
+            item = QStandardItem(msg)
+            item.setForeground(QBrush(log_text_color))
+            self.model.appendRow([item])
         else:
             print(msg)
 
-    def bar_warn(self, msg, dur=5):
+    def bar_warn(self, msg, dur=5, log_text_color=QColor(Qt.black)):
         """Showing warning message bar."""
         if self.iface is not None:
             self.message_bar.pushMessage(self.context, msg, level=Qgis.Warning, duration=dur)
-            self.model.appendRow([QStandardItem(msg)])
+            item = QStandardItem(msg)
+            item.setForeground(QBrush(log_text_color))
+            self.model.appendRow([item])
         else:
             print(msg)
 
-    def bar_error(self, msg, dur=5):
+    def bar_error(self, msg, dur=5, log_text_color=QColor(Qt.black)):
         """Showing error message bar."""
         if self.iface is not None:
             self.message_bar.pushMessage(self.context, msg, level=Qgis.Critical, duration=dur)
-            self.model.appendRow([QStandardItem(msg)])
+            item = QStandardItem(msg)
+            item.setForeground(QBrush(log_text_color))
+            self.model.appendRow([item])
         else:
             print(msg)
 

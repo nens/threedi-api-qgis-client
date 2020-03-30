@@ -170,7 +170,10 @@ class LogInDialog(uicls_log, basecls_log):
             self.show_action_widget()
         except ApiException as e:
             self.close()
-            self.communication.show_error(e.body)
+            error_body = e.body
+            error_details = error_body["details"] if "details" in error_body else error_body
+            error_msg = f"Error: {error_details}"
+            self.communication.show_error(error_msg)
         except ValueError as e:
             self.close()
-            self.communication.show_error(str(e))
+            self.communication.show_error(f"Error: {e}")
