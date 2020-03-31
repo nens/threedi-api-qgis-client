@@ -261,7 +261,10 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
             units_multiplier = self.SECONDS_MULTIPLIERS['mins']
             for time, rain in rain_reader:
                 # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
-                time_series.append([float(time)*units_multiplier, float(rain)])
+                try:
+                    time_series.append([float(time)*units_multiplier, float(rain)])
+                except ValueError:
+                    continue
         self.custom_time_series = time_series
         self.plot_precipitation()
 
