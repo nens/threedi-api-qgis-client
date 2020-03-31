@@ -172,20 +172,20 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
 
     def connect_signals(self):
         """Connecting widgets signals."""
+        self.cbo_prec_type.currentIndexChanged.connect(self.precipitation_changed)
+        self.sp_intensity.valueChanged.connect(self.plot_precipitation)
         self.start_after_constant_u.currentIndexChanged.connect(self.sync_units)
         self.stop_after_constant_u.currentIndexChanged.connect(self.sync_units)
-        self.start_after_custom_u.currentIndexChanged.connect(self.sync_units)
-        self.stop_after_custom_u.currentIndexChanged.connect(self.sync_units)
-        self.start_after_design_u.currentIndexChanged.connect(self.sync_units)
-        self.cbo_prec_type.currentIndexChanged.connect(self.precipitation_changed)
-        self.pb_csv.clicked.connect(self.set_custom_time_series)
-        self.sp_intensity.valueChanged.connect(self.plot_precipitation)
         self.sp_start_after_constant.valueChanged.connect(self.plot_precipitation)
         self.sp_stop_after_constant.valueChanged.connect(self.plot_precipitation)
+        self.pb_csv.clicked.connect(self.set_custom_time_series)
+        self.start_after_custom_u.currentIndexChanged.connect(self.sync_units)
+        self.stop_after_custom_u.currentIndexChanged.connect(self.sync_units)
         self.sp_start_after_custom.valueChanged.connect(self.plot_precipitation)
         self.sp_stop_after_custom.valueChanged.connect(self.plot_precipitation)
-        self.sp_start_after_design.valueChanged.connect(self.plot_precipitation)
         self.cbo_design.currentIndexChanged.connect(self.set_design_time_series)
+        self.start_after_design_u.currentIndexChanged.connect(self.sync_units)
+        self.sp_start_after_design.valueChanged.connect(self.plot_precipitation)
 
     def precipitation_changed(self, idx):
         """Changing widgets looks based on currently selected precipitation type."""
@@ -261,7 +261,10 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
             units_multiplier = self.SECONDS_MULTIPLIERS['mins']
             for time, rain in rain_reader:
                 # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
-                time_series.append([float(time)*units_multiplier, float(rain)])
+                try:
+                    time_series.append([float(time)*units_multiplier, float(rain)])
+                except ValueError:
+                    continue
         self.custom_time_series = time_series
         self.plot_precipitation()
 
