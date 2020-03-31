@@ -70,10 +70,10 @@ RAIN_LOOKUP = {
 }
 
 
-class SourceWidget(uicls_p1, basecls_p1):
-    """Widget for Source page."""
+class NameWidget(uicls_p1, basecls_p1):
+    """Widget for Name page."""
     def __init__(self, parent_page):
-        super(SourceWidget, self).__init__()
+        super(NameWidget, self).__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path('sim_wizard_p1.svg'))
@@ -488,12 +488,12 @@ class SummaryWidget(uicls_p4, basecls_p4):
         self.plot_widget.setXRange(first_tick_value, last_tick_value)
 
 
-class Page1(QWizardPage):
-    """Source definition page."""
+class NamePage(QWizardPage):
+    """Simulation name definition page."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
-        self.main_widget = SourceWidget(self)
+        self.main_widget = NameWidget(self)
         layout = QGridLayout()
         layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
@@ -502,7 +502,7 @@ class Page1(QWizardPage):
         self.adjustSize()
 
 
-class Page2(QWizardPage):
+class SimulationDurationPage(QWizardPage):
     """Simulation duration definition page."""
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -515,7 +515,7 @@ class Page2(QWizardPage):
         self.adjustSize()
 
 
-class Page3(QWizardPage):
+class PrecipitationPage(QWizardPage):
     """Precipitation definition page."""
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -528,7 +528,7 @@ class Page3(QWizardPage):
         self.adjustSize()
 
 
-class Page4(QWizardPage):
+class SummaryPage(QWizardPage):
     """New simulation summary page."""
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -547,10 +547,10 @@ class SimulationWizard(QWizard):
         super().__init__(parent)
         self.setWizardStyle(QWizard.ClassicStyle)
         self.parent_dock = parent_dock
-        self.p1 = Page1(self)
-        self.p2 = Page2(self)
-        self.p3 = Page3(self)
-        self.p4 = Page4(self)
+        self.p1 = NamePage(self)
+        self.p2 = SimulationDurationPage(self)
+        self.p3 = PrecipitationPage(self)
+        self.p4 = SummaryPage(self)
         self.addPage(self.p1)
         self.addPage(self.p2)
         self.addPage(self.p3)
