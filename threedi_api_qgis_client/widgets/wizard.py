@@ -339,7 +339,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
                 timestep = ts[1][0] - ts[0][0] if len(ts) > 1 else 1
                 values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, timestep))] for t, v in ts]
         elif current_text == DESIGN_RAIN:
-            values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, 300))] for t, v in self.design_time_series]
+            values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, self.DESIGN_TIMESTEP))] for t, v in self.design_time_series]
         else:
             values = []
         return values
