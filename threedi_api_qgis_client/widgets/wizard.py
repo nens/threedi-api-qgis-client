@@ -140,6 +140,7 @@ class SimulationDurationWidget(uicls_p2, basecls_p2):
 class PrecipitationWidget(uicls_p3, basecls_p3):
     """Widget for Precipitation page."""
     SECONDS_MULTIPLIERS = {'s': 1, 'mins': 60, 'hrs': 3600}
+    DESIGN_TIMESTEP = 300
 
     def __init__(self, parent_page):
         super(PrecipitationWidget, self).__init__()
@@ -257,9 +258,10 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         time_series = []
         with open(filename) as rain_file:
             rain_reader = csv.reader(rain_file)
+            units_multiplier = self.SECONDS_MULTIPLIERS['mins']
             for time, rain in rain_reader:
                 # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
-                time_series.append([float(time)*60, float(rain)])
+                time_series.append([float(time)*units_multiplier, float(rain)])
         self.custom_time_series = time_series
         self.plot_precipitation()
 
@@ -279,7 +281,8 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.return_period_lbl.setText(period_txt)
         self.type_lbl.setText(type_full_text)
         # Design precipitation timestep is 300 seconds.
-        self.design_time_series = [[t, v] for t, v in zip(range(0, len(series)*300, 300), series)]
+        timestep = self.DESIGN_TIMESTEP
+        self.design_time_series = [[t, v] for t, v in zip(range(0, len(series)*timestep, timestep), series)]
         self.plot_precipitation()
 
     def get_intensity(self):
