@@ -311,11 +311,12 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         if current_text == CONSTANT_RAIN:
             to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
             end = self.sp_stop_after_constant.value()
-            if end == 0:
-                precipitation_duration = self.parent_page.parent_wizard.p2.main_widget.calculate_simulation_duration()
-            else:
-                end_in_seconds = end * to_seconds_multiplier
+            end_in_seconds = end * to_seconds_multiplier
+            simulation_duration = self.parent_page.parent_wizard.p2.main_widget.calculate_simulation_duration()
+            if simulation_duration > end_in_seconds > 0:
                 precipitation_duration = end_in_seconds
+            else:
+                precipitation_duration = simulation_duration
         elif current_text == CUSTOM_RAIN:
             end_in_seconds = self.custom_time_series[-1][0] if self.custom_time_series else 0
             precipitation_duration = end_in_seconds
