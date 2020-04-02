@@ -196,6 +196,32 @@
       <property name="rightMargin">
        <number>0</number>
       </property>
+      <item row="2" column="7">
+       <widget class="QComboBox" name="cbo_units">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+        </property>
+        <property name="frame">
+         <bool>false</bool>
+        </property>
+        <item>
+         <property name="text">
+          <string>mm/timestep</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>mm/h</string>
+         </property>
+        </item>
+       </widget>
+      </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_7">
         <property name="font">
@@ -209,8 +235,8 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="2">
-       <widget class="QPushButton" name="pb_csv">
+      <item row="2" column="5">
+       <widget class="QLabel" name="label_12">
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -218,7 +244,7 @@
          </font>
         </property>
         <property name="text">
-         <string>FROM CSV</string>
+         <string>Units:</string>
         </property>
        </widget>
       </item>
@@ -259,92 +285,11 @@
         </item>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_6">
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Start after:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="7">
-       <widget class="QComboBox" name="cbo_units">
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-        </property>
-        <property name="frame">
-         <bool>false</bool>
-        </property>
-        <item>
-         <property name="text">
-          <string>mm/timestep</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>mm/h</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="1" column="5">
-       <widget class="QLabel" name="label_5">
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Stop after:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="5">
-       <widget class="QLabel" name="label_12">
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Units:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <spacer name="horizontalSpacer_6">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Minimum</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>60</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
       <item row="1" column="2">
        <widget class="QSpinBox" name="sp_start_after_custom">
         <property name="minimumSize">
          <size>
-          <width>106</width>
+          <width>125</width>
           <height>21</height>
          </size>
         </property>
@@ -368,6 +313,32 @@
         </property>
         <property name="maximum">
          <number>999999999</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Start after:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QPushButton" name="pb_csv">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>FROM CSV</string>
         </property>
        </widget>
       </item>
@@ -384,73 +355,21 @@
         </property>
        </spacer>
       </item>
-      <item row="1" column="7">
-       <widget class="QSpinBox" name="sp_stop_after_custom">
-        <property name="minimumSize">
+      <item row="1" column="1">
+       <spacer name="horizontalSpacer_6">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Minimum</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
          <size>
-          <width>106</width>
-          <height>21</height>
+          <width>60</width>
+          <height>20</height>
          </size>
         </property>
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QSpinBox {background-color: white;}</string>
-        </property>
-        <property name="frame">
-         <bool>false</bool>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-        <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::NoButtons</enum>
-        </property>
-        <property name="maximum">
-         <number>999999999</number>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="8">
-       <widget class="QComboBox" name="stop_after_custom_u">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-        </property>
-        <property name="frame">
-         <bool>false</bool>
-        </property>
-        <item>
-         <property name="text">
-          <string>hrs</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>mins</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>s</string>
-         </property>
-        </item>
-       </widget>
+       </spacer>
       </item>
      </layout>
     </widget>

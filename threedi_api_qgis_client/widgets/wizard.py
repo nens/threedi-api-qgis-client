@@ -111,17 +111,18 @@ class SimulationDurationWidget(uicls_p2, basecls_p2):
         end = datetime.strptime(f"{date_to} {time_to}", '%Y-%m-%d %H:%M')
         return start, end
 
-    def calculate_duration(self):
+    def calculate_simulation_duration(self):
         """Method for simulation duration calculations."""
         try:
             start, end = self.to_datetime()
+            if start > end:
+                start = end
             delta = end - start
             delta_in_seconds = delta.total_seconds()
             if delta_in_seconds < 0:
                 delta_in_seconds = 0.0
             return delta_in_seconds
         except ValueError:
-            self.label_total_time.setText('Invalid datetime format!')
             return 0.0
 
     def update_time_difference(self):
@@ -153,7 +154,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.current_units = 'hrs'
-        self.duration = 0
+        self.precipitation_duration = 0
         self.total_precipitation = 0
         self.custom_time_series = []
         self.design_time_series = []
@@ -180,9 +181,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.sp_stop_after_constant.valueChanged.connect(self.plot_precipitation)
         self.pb_csv.clicked.connect(self.set_custom_time_series)
         self.start_after_custom_u.currentIndexChanged.connect(self.sync_units)
-        self.stop_after_custom_u.currentIndexChanged.connect(self.sync_units)
         self.sp_start_after_custom.valueChanged.connect(self.plot_precipitation)
-        self.sp_stop_after_custom.valueChanged.connect(self.plot_precipitation)
         self.cbo_design.currentIndexChanged.connect(self.set_design_time_series)
         self.start_after_design_u.currentIndexChanged.connect(self.sync_units)
         self.sp_start_after_design.valueChanged.connect(self.plot_precipitation)
@@ -218,10 +217,6 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
                 self.stop_after_constant_u.setCurrentIndex(idx)
             self.current_units = self.start_after_constant_u.currentText()
         elif current_text == CUSTOM_RAIN:
-            if self.start_after_custom_u.currentIndex != idx:
-                self.start_after_custom_u.setCurrentIndex(idx)
-            if self.stop_after_custom_u.currentIndex != idx:
-                self.stop_after_custom_u.setCurrentIndex(idx)
             self.current_units = self.start_after_custom_u.currentText()
         elif current_text == DESIGN_RAIN:
             self.current_units = self.start_after_design_u.currentText()
@@ -239,12 +234,12 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
 
     def refresh_duration(self):
         """Refreshing precipitation duration in seconds."""
-        self.duration = self.parent_page.parent_wizard.p2.main_widget.calculate_duration()
+        self.precipitation_duration = self.get_precipitation_duration()
 
     def duration_in_units(self):
         """Calculating duration in currently selected units."""
         unit_divider = self.SECONDS_MULTIPLIERS[self.current_units]
-        duration_in_units = int(self.duration / unit_divider)
+        duration_in_units = int(self.precipitation_duration / unit_divider)
         return duration_in_units
 
     def set_custom_time_series(self):
@@ -271,7 +266,9 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
     def set_design_time_series(self):
         """Setting time series based on selected design number."""
         design_id = self.cbo_design.currentText()
-        series = AREA_WIDE_RAIN[design_id]
+        # Make copy of the values and add 0.0 value at the end of series
+        series = AREA_WIDE_RAIN[design_id][:]
+        series.append(0.0)
         period_txt, type_txt = RAIN_LOOKUP[design_id]
         if type_txt == "c":
             type_full_text = "Constant"
@@ -311,23 +308,23 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
     def get_precipitation_duration(self):
         """Calculating precipitation duration in seconds."""
         current_text = self.cbo_prec_type.currentText()
-        to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
         if current_text == CONSTANT_RAIN:
-            start = self.sp_start_after_constant.value()
+            to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
             end = self.sp_stop_after_constant.value()
+            if end == 0:
+                precipitation_duration = self.parent_page.parent_wizard.p2.main_widget.calculate_simulation_duration()
+            else:
+                end_in_seconds = end * to_seconds_multiplier
+                precipitation_duration = end_in_seconds
         elif current_text == CUSTOM_RAIN:
-            start = self.sp_start_after_custom.value()
-            end = self.sp_stop_after_custom.value()
+            end_in_seconds = self.custom_time_series[-1][0] if self.custom_time_series else 0
+            precipitation_duration = end_in_seconds
         elif current_text == DESIGN_RAIN:
-            start = self.sp_start_after_design.value()
-            end = self.duration_in_units()
+            end_in_seconds = self.design_time_series[-1][0] if self.design_time_series else 0
+            precipitation_duration = end_in_seconds
         else:
-            return self.duration
-        if start == 0 and end == 0:
-            duration = self.duration
-        else:
-            duration = (end * to_seconds_multiplier) - (start * to_seconds_multiplier)
-        return duration
+            precipitation_duration = 0.0
+        return precipitation_duration
 
     def get_precipitation_values(self):
         """Calculating precipitation values in 'm/s'."""
@@ -363,54 +360,28 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         if intensity <= 0:
             return x_values, y_values
         duration_in_units = self.duration_in_units()
-        start = self.sp_start_after_constant.value()
-        end = self.sp_stop_after_constant.value()
-        if start < 0:
-            start = 0
-        if end > duration_in_units or end == 0:
-            end = duration_in_units
-        x_values += [x for x in list(range(duration_in_units + 1)) if start <= x <= end]
+        x_values += [x for x in list(range(duration_in_units + 1))]
         y_values += [intensity] * len(x_values)
         return x_values, y_values
 
     def custom_values(self):
         """Getting plot values for the Custom precipitation."""
         x_values, y_values = [], []
-        duration_in_units = self.duration_in_units()
         units_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
-        start = self.sp_start_after_custom.value()
-        end = self.sp_stop_after_custom.value()
-        if start < 0:
-            start = 0
-        if end > duration_in_units or end == 0:
-            end = duration_in_units
         for x, y in self.custom_time_series:
-            if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
-                return [], []
             x_in_units = x / units_multiplier
-            if start <= x_in_units <= end:
-                x_values.append(x_in_units)
-                y_values.append(y)
-            else:
-                continue
+            x_values.append(x_in_units)
+            y_values.append(y)
         return x_values, y_values
 
     def design_values(self):
         """Getting plot values for the Design precipitation."""
         x_values, y_values = [], []
-        duration_in_units = self.duration_in_units()
         units_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
-        start = self.sp_start_after_design.value()
-        end = duration_in_units
-        if start < 0:
-            start = 0
         for x, y in self.design_time_series:
             x_in_units = x / units_multiplier
-            if start <= x_in_units <= end:
-                x_values.append(x_in_units)
-                y_values.append(y)
-            else:
-                continue
+            x_values.append(x_in_units)
+            y_values.append(y)
         return x_values, y_values
 
     def plot_precipitation(self):
@@ -446,13 +417,16 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
             precipitation_values = y_values[:-1]
         else:
             precipitation_values = y_values
-        if current_text == CUSTOM_RAIN and self.cbo_units.currentText() == 'mm/h':
+        if current_text == CONSTANT_RAIN:
+            self.total_precipitation = sum(mmh_to_mmtimestep(v, 1, self.current_units) for v in precipitation_values)
+        elif current_text == CUSTOM_RAIN and self.cbo_units.currentText() == 'mm/h':
             self.total_precipitation = sum(mmh_to_mmtimestep(v, timestep, self.current_units)
                                            for v in precipitation_values)
         else:
             # This is for 'mm/timestep'
             self.total_precipitation = sum(precipitation_values)
         self.plot_widget.setXRange(first_time, last_time)
+        self.plot_widget.setYRange(first_time, max(precipitation_values))
 
 
 class SummaryWidget(uicls_p4, basecls_p4):
@@ -479,6 +453,7 @@ class SummaryWidget(uicls_p4, basecls_p4):
         plot_ticks = self.parent_page.parent_wizard.p3.main_widget.plot_ticks
         if plot_bar_graph is None:
             return
+        height = plot_bar_graph.opts['height']
         new_bar_graph = pg.BarGraphItem(**plot_bar_graph.opts)
         ax = self.plot_widget.getAxis('bottom')
         ax.setTicks(plot_ticks)
@@ -486,6 +461,7 @@ class SummaryWidget(uicls_p4, basecls_p4):
         ticks = plot_ticks[0]
         first_tick_value, last_tick_value = ticks[0][0], ticks[-1][0]
         self.plot_widget.setXRange(first_tick_value, last_tick_value)
+        self.plot_widget.setYRange(first_tick_value, max(height))
 
 
 class NamePage(QWizardPage):
@@ -597,7 +573,7 @@ class SimulationWizard(QWizard):
         precipitation_type = self.p3.main_widget.cbo_prec_type.currentText()
         total_precipitation = self.p3.main_widget.total_precipitation
         self.p4.main_widget.sim_prec_type.setText(precipitation_type)
-        self.p4.main_widget.sim_prec_total.setText(f"{int(total_precipitation)} mm")
+        self.p4.main_widget.sim_prec_total.setText(f"{round(total_precipitation)} mm")
 
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
@@ -605,7 +581,7 @@ class SimulationWizard(QWizard):
         threedimodel_id = self.parent_dock.current_model.id
         organisation_uuid = self.parent_dock.organisation.unique_id
         start_datetime = datetime.utcnow()
-        duration = self.p3.main_widget.duration
+        duration = self.p2.main_widget.calculate_simulation_duration()
         try:
             tc = ThreediCalls(self.parent_dock.api_client)
             new_simulation = tc.new_simulation(name=name, threedimodel=threedimodel_id, start_datetime=start_datetime,
