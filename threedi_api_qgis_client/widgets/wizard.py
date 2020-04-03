@@ -310,13 +310,18 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         current_text = self.cbo_prec_type.currentText()
         if current_text == CONSTANT_RAIN:
             to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
+            start = self.sp_start_after_constant.value()
             end = self.sp_stop_after_constant.value()
+            start_in_seconds = start * to_seconds_multiplier
             end_in_seconds = end * to_seconds_multiplier
             simulation_duration = self.parent_page.parent_wizard.p2.main_widget.calculate_simulation_duration()
-            if simulation_duration > end_in_seconds > 0:
-                precipitation_duration = end_in_seconds
-            else:
-                precipitation_duration = simulation_duration
+            if start_in_seconds > simulation_duration:
+                start_in_seconds = simulation_duration
+            if end_in_seconds == 0 or end_in_seconds > simulation_duration:
+                end_in_seconds = simulation_duration
+            precipitation_duration = end_in_seconds - start_in_seconds
+            if precipitation_duration < 0:
+                precipitation_duration = 0
         elif current_text == CUSTOM_RAIN:
             end_in_seconds = self.custom_time_series[-1][0] if self.custom_time_series else 0
             precipitation_duration = end_in_seconds
@@ -324,7 +329,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
             end_in_seconds = self.design_time_series[-1][0] if self.design_time_series else 0
             precipitation_duration = end_in_seconds
         else:
-            precipitation_duration = 0.0
+            precipitation_duration = 0
         return precipitation_duration
 
     def get_precipitation_values(self):
