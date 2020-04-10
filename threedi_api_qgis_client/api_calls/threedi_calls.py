@@ -76,6 +76,8 @@ class ThreediCalls:
             current_status = api.simulations_status_list(str(spk))
             status_name = current_status.name
             status_time = current_status.time
+            if status_time is None:
+                status_time = 0
             if status_name == "initialized":
                 sim_progress = api.simulations_progress_list(str(spk))
             elif status_name == "postprocessing" or status_name == "finished":
