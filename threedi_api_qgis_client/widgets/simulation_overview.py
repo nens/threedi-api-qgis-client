@@ -22,7 +22,6 @@ class SimulationOverview(uicls, basecls):
         self.setupUi(self)
         self.parent_dock = parent_dock
         self.api_client = self.parent_dock.api_client
-        self.threedi_models = self.parent_dock.threedi_models if self.parent_dock.threedi_models is not None else []
         self.user = self.parent_dock.label_user.text()
         self.simulation_wizard = None
         self.simulations_keys = {}

@@ -1,7 +1,7 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Tuple
 from threedi_api_client import ThreediApiClient
 from openapi_client import (ApiClient, RepositoriesApi, Repository, SimulationsApi, Simulation, Action, Progress,
@@ -21,7 +21,7 @@ def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiCl
 class ThreediCalls:
     """Class with methods used for the communication with the 3Di API."""
     FETCH_LIMIT = 1000
-    TIME_FRAME = datetime.now() - timedelta(days=10)
+    TIME_FRAME = datetime.now(timezone.utc) - timedelta(days=10)
 
     def __init__(self, api_client: ApiClient) -> None:
         self.api_client = api_client
@@ -86,6 +86,12 @@ class ThreediCalls:
                 sim_progress = Progress(percentage=0, time=status_time)
             progresses[spk] = (sim, current_status, sim_progress)
         return progresses
+
+    def fetch_simulation_results(self, simulation_pk: int):
+        """Fetch simulation results."""
+        api = SimulationsApi(self.api_client)
+        results_files = api.simulations_results_files_list(str(simulation_pk))
+        return results_files
 
     def add_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
         """Add ConstantRain to the given simulation."""
