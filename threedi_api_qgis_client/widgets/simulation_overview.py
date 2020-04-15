@@ -29,7 +29,7 @@ class SimulationOverview(uicls, basecls):
         self.simulations_without_progress = set()
         self.tv_model = None
         self.setup_view_model()
-        self.parent_dock.progress_sentinel.progresses_fetched.connect(self.update_progress)
+        self.parent_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_progress)
         self.pb_new_sim.clicked.connect(self.new_simulation)
         self.pb_stop_sim.clicked.connect(self.stop_simulation)
 

@@ -244,12 +244,12 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
 
     def set_custom_time_series(self):
         """Selecting and setting up rain time series from CSV format."""
-        last_folder = QSettings().value("threedi/last_folder", os.path.expanduser("~"), type=str)
+        last_folder = QSettings().value("threedi/last_precipitation_folder", os.path.expanduser("~"), type=str)
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Precipitation Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return
-        QSettings().setValue("threedi/last_folder", os.path.dirname(filename))
+        QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
         time_series = []
         with open(filename) as rain_file:
             rain_reader = csv.reader(rain_file)

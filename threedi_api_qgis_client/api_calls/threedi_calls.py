@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple
 from threedi_api_client import ThreediApiClient
 from openapi_client import (ApiClient, RepositoriesApi, Repository, SimulationsApi, Simulation, Action, Progress,
                             RevisionsApi, Revision, ThreediModel, ConstantRain, TimeseriesRain, OrganisationsApi,
-                            Organisation, CurrentStatus)
+                            Organisation, CurrentStatus, ResultFile, Download)
 
 
 def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiClient:
@@ -87,11 +87,22 @@ class ThreediCalls:
             progresses[spk] = (sim, current_status, sim_progress)
         return progresses
 
-    def fetch_simulation_results(self, simulation_pk: int):
-        """Fetch simulation results."""
+    def fetch_simulation_results(self, simulation_pk: int) -> List[ResultFile]:
+        """Fetch simulation results list."""
         api = SimulationsApi(self.api_client)
-        results_files = api.simulations_results_files_list(str(simulation_pk))
-        return results_files
+        results_list = api.simulations_results_files_list(str(simulation_pk), limit=self.FETCH_LIMIT).results
+        return results_list
+
+    def fetch_simulation_downloads(self, simulation_pk: int) -> List[Tuple[ResultFile, Download]]:
+        """Fetch simulation downloads list."""
+        api = SimulationsApi(self.api_client)
+        sim_pk_str = str(simulation_pk)
+        downloads = []
+        results_list = api.simulations_results_files_list(sim_pk_str, limit=self.FETCH_LIMIT).results
+        for result_file in results_list:
+            download = api.simulations_results_files_download(result_file.id, sim_pk_str)
+            downloads.append((result_file, download))
+        return downloads
 
     def add_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
         """Add ConstantRain to the given simulation."""

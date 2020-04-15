@@ -1,12 +1,14 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
+import os
+import requests
 from time import sleep
 from qgis.PyQt.QtCore import QObject, pyqtSignal, pyqtSlot
 from openapi_client import ApiException
 from .api_calls.threedi_calls import ThreediCalls
 
 
-class ProgressSentinel(QObject):
+class SimulationsProgressesSentinel(QObject):
     """Worker object that will be moved to a separate thread and will check progresses of the running simulations."""
     thread_finished = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
@@ -46,3 +48,34 @@ class ProgressSentinel(QObject):
     def stop(self):
         """Changing 'thread_active' flag to False."""
         self.thread_active = False
+
+
+class DownloadProgressWorker(QObject):
+    """Worker object responsible for downloading simulations results."""
+    thread_finished = pyqtSignal(str)
+    file_downloaded = pyqtSignal(str)
+
+    def __init__(self, simulation_pk, downloads, directory):
+        super(QObject, self).__init__()
+        self.simulation_pk = simulation_pk
+        self.downloads = downloads
+        self.directory = directory
+
+    @pyqtSlot()
+    def run(self):
+        """Downloading simulation results files."""
+        stop_message = f"Downloading results for {self.simulation_pk} finished!"
+        for result_file, download in self.downloads:
+            filename = result_file.filename
+            filename_path = os.path.join(self.directory, filename)
+            with open(filename_path, 'wb') as f:
+                try:
+                    file_data = requests.get(download.get_url)
+                    f.write(file_data.content)
+                    self.file_downloaded.emit(filename)
+                except requests.RequestException as e:
+                    error_details = e.response
+                    error_msg = f"Error: {error_details}"
+                    stop_message = error_msg
+                    break
+        self.thread_finished.emit(stop_message)

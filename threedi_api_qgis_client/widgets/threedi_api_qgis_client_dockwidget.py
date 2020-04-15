@@ -8,7 +8,7 @@ from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
 from ..ui_utils import set_icon
 from ..communication import UICommunication
-from ..workers import ProgressSentinel
+from ..workers import SimulationsProgressesSentinel
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, 'ui', 'threedi_api_qgis_client_dockwidget_base.ui'))
@@ -24,8 +24,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.setupUi(self)
         self.iface = iface
         self.communication = UICommunication(self.iface, "3Di MI", self.lv_log)
-        self.thread = QThread()
-        self.progress_sentinel = None
+        self.simulations_progresses_thread = None
+        self.simulations_progresses_sentinel = None
         self.api_client = None
         self.threedi_models = None
         self.current_model = None
@@ -69,14 +69,14 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         revision = self.log_in_dlg.revisions[self.current_model.revision_hash]
         self.label_rev.setText(f"{revision.number}")
         self.label_db.setText(self.current_model.model_ini)
-        self.initialize_background_thread()
+        self.initialize_simulations_progresses_thread()
         self.initialize_simulation_overview()
         self.initialize_simulation_results()
 
     def log_out(self):
         """Logging out."""
-        if self.thread is not None:
-            self.stop_fetching_progress()
+        if self.simulations_progresses_thread is not None:
+            self.stop_fetching_simulations_progresses()
             self.simulation_overview_dlg = None
         self.log_in_dlg = None
         self.api_client = None
@@ -102,36 +102,40 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Clearing message log box."""
         self.lv_log.model().clear()
 
-    def initialize_background_thread(self):
+    def initialize_simulations_progresses_thread(self):
         """Initializing of the background thread."""
-        if self.thread is not None:
-            self.terminate_background_thread()
-        self.thread = QThread()
-        self.progress_sentinel = ProgressSentinel(self.api_client)
-        self.progress_sentinel.moveToThread(self.thread)
-        self.progress_sentinel.thread_finished.connect(self.on_finished)
-        self.thread.started.connect(self.progress_sentinel.run)
-        self.thread.start()
+        if self.simulations_progresses_thread is not None:
+            self.terminate_fetching_simulations_progresses_thread()
+        self.simulations_progresses_thread = QThread()
+        self.simulations_progresses_sentinel = SimulationsProgressesSentinel(self.api_client)
+        self.simulations_progresses_sentinel.moveToThread(self.simulations_progresses_thread)
+        self.simulations_progresses_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
+        self.simulations_progresses_thread.started.connect(self.simulations_progresses_sentinel.run)
+        self.simulations_progresses_thread.start()
 
-    def stop_fetching_progress(self):
+    def stop_fetching_simulations_progresses(self):
         """Changing 'thread_active' flag inside background task that is fetching simulations progresses."""
-        if self.progress_sentinel is not None:
-            self.progress_sentinel.stop()
+        if self.simulations_progresses_sentinel is not None:
+            self.simulations_progresses_sentinel.stop()
 
-    def on_finished(self, msg):
+    def on_fetching_simulations_progresses_finished(self, msg):
         """Method for cleaning up background thread after it sends 'thread_finished'."""
         self.communication.bar_info(msg)
-        self.thread.quit()
-        self.thread.wait()
+        self.simulations_progresses_thread.quit()
+        self.simulations_progresses_thread.wait()
+        self.simulations_progresses_thread = None
+        self.simulations_progresses_sentinel = None
 
-    def terminate_background_thread(self):
+    def terminate_fetching_simulations_progresses_thread(self):
         """Forcing termination of background thread if it's still running."""
-        if self.thread.isRunning():
-            self.communication.bar_info('Terminating thread.')
-            self.thread.terminate()
-            self.communication.bar_info('Waiting for thread termination.')
-            self.thread.wait()
-            self.communication.bar_info('Worker terminated.')
+        if self.simulations_progresses_thread.isRunning():
+            self.communication.bar_info('Terminating fetching simulations progresses thread.')
+            self.simulations_progresses_thread.terminate()
+            self.communication.bar_info('Waiting for fetching simulations progresses thread termination.')
+            self.simulations_progresses_thread.wait()
+            self.communication.bar_info('Fetching simulations progresses worker terminated.')
+            self.simulations_progresses_thread = None
+            self.simulations_progresses_sentinel = None
 
     def initialize_simulation_overview(self):
         """Initialization of the Simulation Overview window."""
