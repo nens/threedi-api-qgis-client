@@ -29,7 +29,7 @@ class ThreediCalls:
     def fetch_repositories(self) -> List[Repository]:
         """Fetch all repositories available for current user."""
         api = RepositoriesApi(self.api_client)
-        repositories_list = api.repositories_list().results
+        repositories_list = api.repositories_list(limit=self.FETCH_LIMIT).results
         return repositories_list
 
     def fetch_simulations(self) -> List[Simulation]:
@@ -55,13 +55,13 @@ class ThreediCalls:
     def simulation_current_status(self, simulation_pk: int) -> CurrentStatus:
         """Get a given simulation current status."""
         api = SimulationsApi(self.api_client)
-        current_status = api.simulations_status_list(str(simulation_pk))
+        current_status = api.simulations_status_list(str(simulation_pk), limit=self.FETCH_LIMIT)
         return current_status
 
     def simulations_progress(self, simulation_pk: int) -> Progress:
         """Get a given simulation progress. Available only if simulation was already started."""
         api = SimulationsApi(self.api_client)
-        simulations_progress = api.simulations_progress_list(str(simulation_pk))
+        simulations_progress = api.simulations_progress_list(str(simulation_pk), limit=self.FETCH_LIMIT)
         return simulations_progress
 
     def all_simulations_progress(self, simulations_list: List[Simulation]
@@ -73,13 +73,13 @@ class ThreediCalls:
             simulations_list = self.fetch_simulations()
         for sim in simulations_list:
             spk = sim.id
-            current_status = api.simulations_status_list(str(spk))
+            current_status = api.simulations_status_list(str(spk), limit=self.FETCH_LIMIT)
             status_name = current_status.name
             status_time = current_status.time
             if status_time is None:
                 status_time = 0
             if status_name == "initialized":
-                sim_progress = api.simulations_progress_list(str(spk))
+                sim_progress = api.simulations_progress_list(str(spk), limit=self.FETCH_LIMIT)
             elif status_name == "postprocessing" or status_name == "finished":
                 sim_progress = Progress(percentage=100, time=status_time)
             else:
@@ -102,7 +102,7 @@ class ThreediCalls:
     def fetch_revisions(self) -> List[Revision]:
         """Fetch all Revisions available for current user."""
         api = RevisionsApi(self.api_client)
-        revisions_list = api.revisions_list().results
+        revisions_list = api.revisions_list(limit=self.FETCH_LIMIT).results
         return revisions_list
 
     def fetch_revision_3di_models(self, rev_id: int) -> List[ThreediModel]:
@@ -114,5 +114,5 @@ class ThreediCalls:
     def fetch_organisations(self) -> List[Organisation]:
         """Fetch all Organisations available for current user."""
         api = OrganisationsApi(self.api_client)
-        organisations = api.organisations_list().results
+        organisations = api.organisations_list(limit=self.FETCH_LIMIT).results
         return organisations
