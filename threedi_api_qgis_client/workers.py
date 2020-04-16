@@ -53,7 +53,10 @@ class SimulationsProgressesSentinel(QObject):
 class DownloadProgressWorker(QObject):
     """Worker object responsible for downloading simulations results."""
     thread_finished = pyqtSignal(str)
-    file_downloaded = pyqtSignal(str)
+    download_progress = pyqtSignal(int)
+    NOT_STARTED = -1
+    FINISHED = 100
+    FAILED = 101
 
     def __init__(self, simulation_pk, downloads, directory):
         super(QObject, self).__init__()
@@ -65,17 +68,25 @@ class DownloadProgressWorker(QObject):
     def run(self):
         """Downloading simulation results files."""
         stop_message = f"Downloading results for {self.simulation_pk} finished!"
-        for result_file, download in self.downloads:
+        percentage_step = int(100 / len(self.downloads))
+        self.download_progress.emit(0)
+        success = True
+        for i, (result_file, download) in enumerate(self.downloads):
             filename = result_file.filename
             filename_path = os.path.join(self.directory, filename)
             with open(filename_path, 'wb') as f:
                 try:
+                    self.download_progress.emit(int(percentage_step * i))
                     file_data = requests.get(download.get_url)
                     f.write(file_data.content)
-                    self.file_downloaded.emit(filename)
+                    self.download_progress.emit(int(percentage_step * i))
                 except requests.RequestException as e:
+                    self.download_progress.emit(self.FAILED)
                     error_details = e.response
                     error_msg = f"Error: {error_details}"
                     stop_message = error_msg
+                    success = False
                     break
+        if success is True:
+            self.download_progress.emit(self.FINISHED)
         self.thread_finished.emit(stop_message)

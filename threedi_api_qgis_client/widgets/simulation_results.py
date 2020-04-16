@@ -1,24 +1,24 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
-import requests
 from dateutil.relativedelta import relativedelta
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QSettings, QThread
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QPalette, QColor
-from qgis.PyQt.QtWidgets import QFileDialog, QApplication, QStyledItemDelegate, QStyleOptionProgressBar, QStyle
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from qgis.PyQt.QtWidgets import QFileDialog
 from openapi_client import ApiException
+from .custom_items import DownloadProgressDelegate
 from ..api_calls.threedi_calls import ThreediCalls
 from ..workers import DownloadProgressWorker
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'sim_results.ui'))
 
-PROGRESS_ROLE = Qt.UserRole + 1000
-
 
 class SimulationResults(uicls, basecls):
     """Dialog with methods for handling simulations results."""
+    PROGRESS_COLUMN_IDX = 3
+
     def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -37,8 +37,10 @@ class SimulationResults(uicls, basecls):
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
-        self.tv_model = QStandardItemModel(0, 3)
-        self.tv_model.setHorizontalHeaderLabels(["Simulation name", "User", "Expires"])
+        self.tv_model = QStandardItemModel(0, 4)
+        delegate = DownloadProgressDelegate(self.tv_finished_sim_tree)
+        self.tv_finished_sim_tree.setItemDelegateForColumn(self.PROGRESS_COLUMN_IDX, delegate)
+        self.tv_model.setHorizontalHeaderLabels(["Simulation name", "User", "Expires", "Download progress"])
         self.tv_finished_sim_tree.setModel(self.tv_model)
 
     def toggle_download_results(self):
@@ -56,9 +58,11 @@ class SimulationResults(uicls, basecls):
         sim_name_item = QStandardItem(f"{simulation.name} ({sim_id})")
         sim_name_item.setData(sim_id, Qt.UserRole)
         user_item = QStandardItem(simulation.user)
-        delta = relativedelta(status.created, ThreediCalls.TIME_FRAME)
+        delta = relativedelta(status.created, ThreediCalls.EXPIRATION_TIME)
         expires_item = QStandardItem(f"{delta.days} day(s)")
-        self.tv_model.appendRow([sim_name_item, user_item, expires_item])
+        progress_item = QStandardItem()
+        progress_item.setData(-1,  Qt.UserRole)
+        self.tv_model.appendRow([sim_name_item, user_item, expires_item, progress_item])
         self.finished_simulations[sim_id] = simulation
 
     def update_finished_list(self, progresses):
@@ -70,11 +74,16 @@ class SimulationResults(uicls, basecls):
             if sim_id not in self.finished_simulations:
                 self.add_finished_simulation_to_model(sim, status)
 
-    def on_file_downloaded(self, msg):
-        self.parent_dock.communication.bar_info(msg)
+    def on_download_progress_update(self, percentage):
+        """Update download progress bar."""
+        index = self.tv_finished_sim_tree.currentIndex()
+        row_index = index.row()
+        progress_item = self.tv_model.item(row_index, self.PROGRESS_COLUMN_IDX)
+        progress_item.setData(percentage, Qt.UserRole)
 
     def on_download_finished(self, msg):
-        self.parent_dock.communication.bar_info(msg)
+        """Reporting status and closing download thread."""
+        self.parent_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
         self.download_results_thread.quit()
         self.download_results_thread.wait()
         self.download_results_thread = None
@@ -103,11 +112,12 @@ class SimulationResults(uicls, basecls):
             error_msg = f"Error: {error_details}"
             self.parent_dock.communication.show_error(error_msg)
             return
+
         self.pb_download.setDisabled(True)
         self.download_results_thread = QThread()
         self.download_worker = DownloadProgressWorker(sim_id, downloads, directory)
         self.download_worker.moveToThread(self.download_results_thread)
         self.download_worker.thread_finished.connect(self.on_download_finished)
-        self.download_worker.file_downloaded.connect(self.on_file_downloaded)
+        self.download_worker.download_progress.connect(self.on_download_progress_update)
         self.download_results_thread.started.connect(self.download_worker.run)
         self.download_results_thread.start()

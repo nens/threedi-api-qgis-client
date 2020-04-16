@@ -3,20 +3,21 @@
 import os
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QPalette, QColor
-from qgis.PyQt.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionProgressBar, QStyle, QMessageBox
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
+from qgis.PyQt.QtWidgets import QMessageBox
 from openapi_client import ApiException, Progress
+from .wizard import SimulationWizard
+from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
 from ..api_calls.threedi_calls import ThreediCalls
-from ..widgets.wizard import SimulationWizard
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'sim_overview.ui'))
 
-PROGRESS_ROLE = Qt.UserRole + 1000
-
 
 class SimulationOverview(uicls, basecls):
     """Dialog with methods for handling running simulations."""
+    PROGRESS_COLUMN_IDX = 2
+
     def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -35,8 +36,8 @@ class SimulationOverview(uicls, basecls):
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
-        delegate = ProgressDelegate(self.tv_sim_tree)
-        self.tv_sim_tree.setItemDelegateForColumn(2, delegate)
+        delegate = SimulationProgressDelegate(self.tv_sim_tree)
+        self.tv_sim_tree.setItemDelegateForColumn(self.PROGRESS_COLUMN_IDX, delegate)
         self.tv_model = QStandardItemModel(0, 3)
         self.tv_model.setHorizontalHeaderLabels(["Simulation name", "User", "Progress"])
         self.tv_sim_tree.setModel(self.tv_model)
@@ -66,7 +67,7 @@ class SimulationOverview(uicls, basecls):
             sim_id = name_item.data(Qt.UserRole)
             if sim_id in self.simulations_without_progress or sim_id not in progresses:
                 continue
-            progress_item = self.tv_model.item(row_idx, 2)
+            progress_item = self.tv_model.item(row_idx, self.PROGRESS_COLUMN_IDX)
             sim, new_status, new_progress = progresses[sim_id]
             status_name = new_status.name
             if status_name == "stopped" or status_name == "crashed":
@@ -111,44 +112,3 @@ class SimulationOverview(uicls, basecls):
                 error_details = error_body["details"] if "details" in error_body else error_body
                 error_msg = f"Error: {error_details}"
                 self.parent_dock.communication.show_error(error_msg)
-
-
-class ProgressDelegate(QStyledItemDelegate):
-    """Class with definition of custom progress bar item that can be inserted into the model."""
-
-    def paint(self, painter, option, index):
-        status, progress = index.data(PROGRESS_ROLE)
-        status_name = status.name
-        new_percentage = progress.percentage
-        pbar = QStyleOptionProgressBar()
-        pbar.rect = option.rect
-        pbar.minimum = 0
-        pbar.maximum = 100
-        default_color = QColor(0, 140, 255)
-
-        if status_name == "created" or status_name == "starting":
-            pbar_color = default_color
-            ptext = "Starting up simulation .."
-        elif status_name == "initialized" or status_name == "postprocessing":
-            pbar_color = default_color
-            ptext = f"{new_percentage}%"
-        elif status_name == "finished":
-            pbar_color = QColor(10, 180, 40)
-            ptext = f"{new_percentage}%"
-        elif status_name == "ended":
-            pbar_color = Qt.gray
-            ptext = f"{new_percentage}% (stopped)"
-        elif status_name == "crashed":
-            pbar_color = Qt.red
-            ptext = f"{new_percentage}% (crashed)"
-        else:
-            pbar_color = Qt.lightGray
-            ptext = f"{status_name}"
-
-        pbar.progress = new_percentage
-        pbar.text = ptext
-        pbar.textVisible = True
-        palette = pbar.palette
-        palette.setColor(QPalette.Highlight, pbar_color)
-        pbar.palette = palette
-        QApplication.style().drawControl(QStyle.CE_ProgressBar, pbar, painter)

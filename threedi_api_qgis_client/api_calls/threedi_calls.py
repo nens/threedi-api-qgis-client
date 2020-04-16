@@ -21,7 +21,7 @@ def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiCl
 class ThreediCalls:
     """Class with methods used for the communication with the 3Di API."""
     FETCH_LIMIT = 1000
-    TIME_FRAME = datetime.now(timezone.utc) - timedelta(days=10)
+    EXPIRATION_TIME = datetime.now(timezone.utc) - timedelta(days=7)
 
     def __init__(self, api_client: ApiClient) -> None:
         self.api_client = api_client
@@ -35,7 +35,7 @@ class ThreediCalls:
     def fetch_simulations(self) -> List[Simulation]:
         """Fetch all simulations available for current user."""
         api = SimulationsApi(self.api_client)
-        created__date__gt = self.TIME_FRAME.strftime('%Y-%m-%d')
+        created__date__gt = self.EXPIRATION_TIME.strftime('%Y-%m-%d')
         simulations_list = api.simulations_list(created__date__gt=created__date__gt, limit=self.FETCH_LIMIT).results
         return simulations_list
 
