@@ -56,5 +56,5 @@ def patch_wheel_imports():
     try:
         import requests
     except ImportError:
-        deps_path = os.path.join(main_dir, "trequests-2.23.0-py2.py3-none-any.whl")
+        deps_path = os.path.join(main_dir, "requests-2.23.0-py2.py3-none-any.whl")
         sys.path.append(deps_path)

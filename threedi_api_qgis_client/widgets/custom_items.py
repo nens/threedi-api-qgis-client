@@ -58,6 +58,7 @@ class DownloadProgressDelegate(QStyledItemDelegate):
         pbar.minimum = 0
         pbar.maximum = 100
         default_color = QColor(0, 140, 255)
+
         if new_percentage < 0:
             new_percentage = 0
             pbar_color = Qt.lightGray
@@ -72,6 +73,7 @@ class DownloadProgressDelegate(QStyledItemDelegate):
             new_percentage = 100
             pbar_color = Qt.red
             ptext = f"Download failed"
+
         pbar.progress = new_percentage
         pbar.text = ptext
         pbar.textVisible = True
