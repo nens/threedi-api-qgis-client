@@ -128,7 +128,7 @@ class SimulationResults(uicls, basecls):
             name_item = self.tv_model.item(self.last_download_index.row(), 0)
             sim_id = name_item.data(Qt.UserRole)
             simulation = self.finished_simulations[sim_id]
-            simulation_name = simulation.name
+            simulation_name = simulation.name.replace(' ', '_')
             simulation_subdirectory = os.path.join(directory, f"sim_{sim_id}_{simulation_name}")
             tc = ThreediCalls(self.parent_dock.api_client)
             downloads = tc.fetch_simulation_downloads(sim_id)
