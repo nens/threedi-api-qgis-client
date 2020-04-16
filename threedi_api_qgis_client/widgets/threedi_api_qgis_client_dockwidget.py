@@ -2,11 +2,13 @@
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
 from qgis.PyQt import QtWidgets, uic
-from qgis.PyQt.QtCore import pyqtSignal
+from qgis.PyQt.QtCore import Qt, QThread, pyqtSignal
 from .log_in import LogInDialog
 from .simulation_overview import SimulationOverview
+from .simulation_results import SimulationResults
 from ..ui_utils import set_icon
 from ..communication import UICommunication
+from ..workers import SimulationsProgressesSentinel
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, 'ui', 'threedi_api_qgis_client_dockwidget_base.ui'))
@@ -22,18 +24,21 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.setupUi(self)
         self.iface = iface
         self.communication = UICommunication(self.iface, "3Di MI", self.lv_log)
+        self.simulations_progresses_thread = None
+        self.simulations_progresses_sentinel = None
         self.api_client = None
         self.threedi_models = None
         self.current_model = None
         self.organisation = None
         self.log_in_dlg = None
-        self._simulate_overview_dlg = None
-        self.simulate_overview_dlg = None
+        self.simulation_overview_dlg = None
+        self.simulation_results_dlg = None
         self.widget_authorized.hide()
         self.btn_start.clicked.connect(self.log_in)
         self.btn_log_out.clicked.connect(self.log_out)
         self.btn_change_repo.clicked.connect(self.change_repository)
-        self.btn_simulate.clicked.connect(self.show_simulate_overview)
+        self.btn_simulate.clicked.connect(self.show_simulation_overview)
+        self.btn_results.clicked.connect(self.show_simulation_results)
         self.btn_clear_log.clicked.connect(self.clear_log)
         set_icon(self.btn_build, 'build.svg')
         set_icon(self.btn_check, 'check.svg')
@@ -58,26 +63,31 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.widget_unauthorized.hide()
         self.widget_authorized.show()
         self.btn_simulate.setEnabled(True)
+        self.btn_results.setEnabled(True)
         self.label_user.setText(self.log_in_dlg.user)
         self.label_repo.setText(self.current_model.repository_slug)
         revision = self.log_in_dlg.revisions[self.current_model.revision_hash]
         self.label_rev.setText(f"{revision.number}")
         self.label_db.setText(self.current_model.model_ini)
+        self.initialize_simulations_progresses_thread()
+        self.initialize_simulation_overview()
+        self.initialize_simulation_results()
 
     def log_out(self):
         """Logging out."""
-        if self._simulate_overview_dlg is not None:
-            self._simulate_overview_dlg.terminate_background_thread()
-        if self.simulate_overview_dlg is not None:
-            self.simulate_overview_dlg.stop_fetching_progress()
-            self._simulate_overview_dlg = self.simulate_overview_dlg
-            self.simulate_overview_dlg = None
+        if self.simulations_progresses_thread is not None:
+            self.stop_fetching_simulations_progresses()
+            self.simulation_overview_dlg = None
+        if self.simulation_results_dlg is not None:
+            self.simulation_results_dlg.terminate_download_thread()
+            self.simulation_results_dlg = None
         self.log_in_dlg = None
         self.api_client = None
         self.current_model = None
         self.widget_unauthorized.show()
         self.widget_authorized.hide()
         self.btn_simulate.setDisabled(True)
+        self.btn_results.setDisabled(True)
 
     def change_repository(self):
         """Changing current repository."""
@@ -91,19 +101,75 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.label_rev.setText(f"{revision.number}")
             self.label_db.setText(self.current_model.model_ini)
 
-    def show_simulate_overview(self):
-        """Showing Simulation Overview with running simulations progresses."""
-        if self.simulate_overview_dlg is None:
-            self.simulate_overview_dlg = SimulationOverview(self)
-            self.simulate_overview_dlg.label_user.setText(self.log_in_dlg.user)
-            repo_slug = self.current_model.repository_slug
-            repository = self.log_in_dlg.repositories[repo_slug]
-            self.organisation = self.log_in_dlg.organisations[repository.organisation]
-            self.simulate_overview_dlg.label_organisation.setText(self.organisation.name)
-            self.simulate_overview_dlg.exec_()
-        else:
-            self.simulate_overview_dlg.show()
-
     def clear_log(self):
         """Clearing message log box."""
         self.lv_log.model().clear()
+
+    def initialize_simulations_progresses_thread(self):
+        """Initializing of the background thread."""
+        if self.simulations_progresses_thread is not None:
+            self.terminate_fetching_simulations_progresses_thread()
+        self.simulations_progresses_thread = QThread()
+        self.simulations_progresses_sentinel = SimulationsProgressesSentinel(self.api_client)
+        self.simulations_progresses_sentinel.moveToThread(self.simulations_progresses_thread)
+        self.simulations_progresses_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
+        self.simulations_progresses_sentinel.thread_failed.connect(self.on_fetching_simulations_progresses_failed)
+        self.simulations_progresses_thread.started.connect(self.simulations_progresses_sentinel.run)
+        self.simulations_progresses_thread.start()
+
+    def stop_fetching_simulations_progresses(self):
+        """Changing 'thread_active' flag inside background task that is fetching simulations progresses."""
+        if self.simulations_progresses_sentinel is not None:
+            self.simulations_progresses_sentinel.stop()
+
+    def on_fetching_simulations_progresses_finished(self, msg):
+        """Method for cleaning up background thread after it sends 'thread_finished'."""
+        self.communication.bar_info(msg)
+        self.simulations_progresses_thread.quit()
+        self.simulations_progresses_thread.wait()
+        self.simulations_progresses_thread = None
+        self.simulations_progresses_sentinel = None
+
+    def on_fetching_simulations_progresses_failed(self, msg):
+        """Reporting fetching progresses failure."""
+        self.communication.bar_error(msg, log_text_color=Qt.red)
+
+    def terminate_fetching_simulations_progresses_thread(self):
+        """Forcing termination of background thread if it's still running."""
+        if self.simulations_progresses_thread is not None and self.simulations_progresses_thread.isRunning():
+            self.communication.bar_info('Terminating fetching simulations progresses thread.')
+            self.simulations_progresses_thread.terminate()
+            self.communication.bar_info('Waiting for fetching simulations progresses thread termination.')
+            self.simulations_progresses_thread.wait()
+            self.communication.bar_info('Fetching simulations progresses worker terminated.')
+            self.simulations_progresses_thread = None
+            self.simulations_progresses_sentinel = None
+
+    def initialize_simulation_overview(self):
+        """Initialization of the Simulation Overview window."""
+        self.simulation_overview_dlg = SimulationOverview(self)
+        self.simulation_overview_dlg.label_user.setText(self.log_in_dlg.user)
+        repo_slug = self.current_model.repository_slug
+        repository = self.log_in_dlg.repositories[repo_slug]
+        self.organisation = self.log_in_dlg.organisations[repository.organisation]
+        self.simulation_overview_dlg.label_organisation.setText(self.organisation.name)
+
+    def show_simulation_overview(self):
+        """Showing Simulation Overview with running simulations progresses."""
+        if self.simulation_overview_dlg is None:
+            self.initialize_simulation_overview()
+        self.simulation_overview_dlg.show()
+
+    def initialize_simulation_results(self):
+        """Initialization of the Simulations Results window."""
+        self.simulation_results_dlg = SimulationResults(self)
+        repo_slug = self.current_model.repository_slug
+        repository = self.log_in_dlg.repositories[repo_slug]
+        self.organisation = self.log_in_dlg.organisations[repository.organisation]
+        self.simulation_results_dlg.label_organisation.setText(self.organisation.name)
+
+    def show_simulation_results(self):
+        """Showing finished simulations."""
+        if self.simulation_results_dlg is None:
+            self.initialize_simulation_results()
+        self.simulation_results_dlg.show()
