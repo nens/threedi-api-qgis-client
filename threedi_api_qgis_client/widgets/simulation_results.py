@@ -130,8 +130,12 @@ class SimulationResults(uicls, basecls):
             simulation = self.finished_simulations[sim_id]
             simulation_name = simulation.name.replace(' ', '_')
             simulation_subdirectory = os.path.join(directory, f"sim_{sim_id}_{simulation_name}")
+            simulation_model_id = int(simulation.threedimodel_id)
             tc = ThreediCalls(self.parent_dock.api_client)
             downloads = tc.fetch_simulation_downloads(sim_id)
+            gridadmin_downloads = tc.fetch_gridadmin_download(simulation_model_id)
+            downloads.append(gridadmin_downloads)
+            downloads.sort(key=lambda x: x[-1].size)
         except ApiException as e:
             error_body = e.body
             error_details = error_body["details"] if "details" in error_body else error_body

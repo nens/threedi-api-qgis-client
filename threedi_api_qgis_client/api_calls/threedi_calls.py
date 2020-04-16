@@ -4,9 +4,9 @@ import os
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Tuple
 from threedi_api_client import ThreediApiClient
-from openapi_client import (ApiClient, RepositoriesApi, Repository, SimulationsApi, Simulation, Action, Progress,
-                            RevisionsApi, Revision, ThreediModel, ConstantRain, TimeseriesRain, OrganisationsApi,
-                            Organisation, CurrentStatus, ResultFile, Download)
+from openapi_client import (ApiClient, RepositoriesApi, SimulationsApi, RevisionsApi, OrganisationsApi,
+                            ThreedimodelsApi, Repository, Simulation, Action, Progress, Revision, ThreediModel,
+                            ConstantRain, TimeseriesRain, Organisation, CurrentStatus, ResultFile, Download)
 
 
 def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiClient:
@@ -121,6 +121,13 @@ class ThreediCalls:
             download = api.simulations_results_files_download(result_file.id, spk_str)
             downloads.append((result_file, download))
         return downloads
+
+    def fetch_gridadmin_download(self, threedimodel_id: int) -> Tuple[ResultFile, Download]:
+        """Fetch simulation model gridadmin file."""
+        api = ThreedimodelsApi(self.api_client)
+        result_file = ResultFile(filename="gridadmin.h5", created=datetime.utcnow())
+        download = api.threedimodels_gridadmin_download(threedimodel_id)
+        return result_file, download
 
     def add_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
         """Add ConstantRain to the given simulation."""
