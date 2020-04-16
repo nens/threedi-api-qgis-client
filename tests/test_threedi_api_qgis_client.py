@@ -14,7 +14,7 @@ from .conftest import (TEST_API_PARAMETERS, REPO_DATA_LIST, SIM_DATA_LIST, SINGL
 @patch.object(RepositoriesApi, 'repositories_list')
 def test_fetch_repositories(mock_repositories_list):
     repos = [Repository(**data) for data in REPO_DATA_LIST]
-    mock_repositories_list.return_value = Mock(results=repos)
+    mock_repositories_list.return_value = Mock(results=repos, count=len(repos))
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
     results = tc.fetch_repositories()
@@ -29,7 +29,7 @@ def test_fetch_repositories(mock_repositories_list):
 @patch.object(SimulationsApi, 'simulations_list')
 def test_fetch_simulations(mock_simulations_list):
     sims = [Simulation(**data) for data in SIM_DATA_LIST]
-    mock_simulations_list.return_value = Mock(results=sims)
+    mock_simulations_list.return_value = Mock(results=sims, count=len(sims))
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
     results = tc.fetch_simulations()
@@ -78,7 +78,7 @@ def test_all_simulations_progress(mock_simulations_status_list, mock_simulations
     statuses = [CurrentStatus(**data) for data in CURRENT_STATUSES_LIST]
     mock_simulations_status_list.side_effect = statuses + [ApiException(500)]
     sims = [Simulation(**data) for data in SIM_DATA_LIST]
-    mock_simulations_list.return_value = Mock(results=sims)
+    mock_simulations_list.return_value = Mock(results=sims, count=len(sims))
     sim1, sim2 = sims
     stat1, stat2 = statuses
     prog1 = Progress(**PROGRESS_DATA)
@@ -95,7 +95,8 @@ def test_all_simulations_progress(mock_simulations_status_list, mock_simulations
     assert s2 == sim2
     assert cs2 == stat2
     assert p2.to_dict() == {'percentage': 100, 'time': 72000}
-    mock_simulations_list.return_value = Mock(results=[Simulation(**BAD_SIM_DATA)])
+    bad_results = [Simulation(**BAD_SIM_DATA)]
+    mock_simulations_list.return_value = Mock(results=bad_results, count=len(bad_results))
     with pytest.raises(ApiException):
         tc.all_simulations_progress([])
 
@@ -125,7 +126,7 @@ def test_add_custom_precipitation():
 @patch.object(RevisionsApi, 'revisions_list')
 def test_fetch_revisions(mock_revisions_list):
     revs = [Revision(**data) for data in REVISION_DATA_LIST]
-    mock_revisions_list.return_value = Mock(results=revs)
+    mock_revisions_list.return_value = Mock(results=revs, count=len(revs))
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
     results = tc.fetch_revisions()

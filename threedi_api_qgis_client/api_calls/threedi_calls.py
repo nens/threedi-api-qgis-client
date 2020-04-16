@@ -29,14 +29,22 @@ class ThreediCalls:
     def fetch_repositories(self) -> List[Repository]:
         """Fetch all repositories available for current user."""
         api = RepositoriesApi(self.api_client)
-        repositories_list = api.repositories_list(limit=self.FETCH_LIMIT).results
+        response = api.repositories_list(limit=self.FETCH_LIMIT)
+        response_count = response.count
+        if response_count > self.FETCH_LIMIT:
+            response = api.repositories_list(limit=response_count)
+        repositories_list = response.results
         return repositories_list
 
     def fetch_simulations(self) -> List[Simulation]:
         """Fetch all simulations available for current user."""
         api = SimulationsApi(self.api_client)
         created__date__gt = self.EXPIRATION_TIME.strftime('%Y-%m-%d')
-        simulations_list = api.simulations_list(created__date__gt=created__date__gt, limit=self.FETCH_LIMIT).results
+        response = api.simulations_list(created__date__gt=created__date__gt, limit=self.FETCH_LIMIT)
+        response_count = response.count
+        if response_count > self.FETCH_LIMIT:
+            response = api.simulations_list(created__date__gt=created__date__gt, limit=response_count)
+        simulations_list = response.results
         return simulations_list
 
     def new_simulation(self, **simulation_data) -> Simulation:
@@ -73,13 +81,14 @@ class ThreediCalls:
             simulations_list = self.fetch_simulations()
         for sim in simulations_list:
             spk = sim.id
-            current_status = api.simulations_status_list(str(spk), limit=self.FETCH_LIMIT)
+            spk_str = str(spk)
+            current_status = api.simulations_status_list(spk_str, limit=self.FETCH_LIMIT)
             status_name = current_status.name
             status_time = current_status.time
             if status_time is None:
                 status_time = 0
             if status_name == "initialized":
-                sim_progress = api.simulations_progress_list(str(spk), limit=self.FETCH_LIMIT)
+                sim_progress = api.simulations_progress_list(spk_str, limit=self.FETCH_LIMIT)
             elif status_name == "postprocessing" or status_name == "finished":
                 sim_progress = Progress(percentage=100, time=status_time)
             else:
@@ -90,17 +99,26 @@ class ThreediCalls:
     def fetch_simulation_results(self, simulation_pk: int) -> List[ResultFile]:
         """Fetch simulation results list."""
         api = SimulationsApi(self.api_client)
-        results_list = api.simulations_results_files_list(str(simulation_pk), limit=self.FETCH_LIMIT).results
+        spk_str = str(simulation_pk)
+        response = api.simulations_results_files_list(spk_str, limit=self.FETCH_LIMIT)
+        response_count = response.count
+        if response_count > self.FETCH_LIMIT:
+            response = api.simulations_results_files_list(spk_str, limit=response_count)
+        results_list = response.results
         return results_list
 
     def fetch_simulation_downloads(self, simulation_pk: int) -> List[Tuple[ResultFile, Download]]:
         """Fetch simulation downloads list."""
         api = SimulationsApi(self.api_client)
-        sim_pk_str = str(simulation_pk)
+        spk_str = str(simulation_pk)
         downloads = []
-        results_list = api.simulations_results_files_list(sim_pk_str, limit=self.FETCH_LIMIT).results
+        response = api.simulations_results_files_list(spk_str, limit=self.FETCH_LIMIT)
+        response_count = response.count
+        if response_count > self.FETCH_LIMIT:
+            response = api.simulations_results_files_list(spk_str, limit=response_count)
+        results_list = response.results
         for result_file in results_list:
-            download = api.simulations_results_files_download(result_file.id, sim_pk_str)
+            download = api.simulations_results_files_download(result_file.id, spk_str)
             downloads.append((result_file, download))
         return downloads
 
@@ -119,7 +137,11 @@ class ThreediCalls:
     def fetch_revisions(self) -> List[Revision]:
         """Fetch all Revisions available for current user."""
         api = RevisionsApi(self.api_client)
-        revisions_list = api.revisions_list(limit=self.FETCH_LIMIT).results
+        response = api.revisions_list(limit=self.FETCH_LIMIT)
+        response_count = response.count
+        if response_count > self.FETCH_LIMIT:
+            response = api.revisions_list(limit=response_count)
+        revisions_list = response.results
         return revisions_list
 
     def fetch_revision_3di_models(self, rev_id: int) -> List[ThreediModel]:
@@ -131,5 +153,9 @@ class ThreediCalls:
     def fetch_organisations(self) -> List[Organisation]:
         """Fetch all Organisations available for current user."""
         api = OrganisationsApi(self.api_client)
-        organisations = api.organisations_list(limit=self.FETCH_LIMIT).results
+        response = api.organisations_list(limit=self.FETCH_LIMIT)
+        response_count = response.count
+        if response_count > self.FETCH_LIMIT:
+            response = api.organisations_list(limit=response_count)
+        organisations = response.results
         return organisations
