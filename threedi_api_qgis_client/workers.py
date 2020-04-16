@@ -75,9 +75,10 @@ class DownloadProgressWorker(QObject):
             finished_message = f"Downloading results of {self.simulation.name} ({self.simulation.id}) finished!"
         else:
             finished_message = "Nothing to download!"
-        total_size = sum(download.size for result_file, download in self.downloads)
         success = True
-        self.download_progress.emit(0)
+        total_size = sum(download.size for result_file, download in self.downloads)
+        size = 0
+        self.download_progress.emit(size)
         for result_file, download in self.downloads:
             filename = result_file.filename
             filename_path = os.path.join(self.directory, filename)
@@ -86,7 +87,8 @@ class DownloadProgressWorker(QObject):
                 with open(filename_path, 'wb') as f:
                     file_data = requests.get(download.get_url)
                     f.write(file_data.content)
-                    self.download_progress.emit(download.size / total_size * 100)
+                    size += download.size
+                    self.download_progress.emit(size / total_size * 100)
                     continue
             except requests.RequestException as e:
                 error_details = e.response
