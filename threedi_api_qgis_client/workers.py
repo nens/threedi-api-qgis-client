@@ -67,6 +67,7 @@ class DownloadProgressWorker(QObject):
         self.simulation = simulation
         self.downloads = downloads
         self.directory = directory
+        self.success = True
 
     @pyqtSlot()
     def run(self):
@@ -75,7 +76,6 @@ class DownloadProgressWorker(QObject):
             finished_message = f"Downloading results of {self.simulation.name} ({self.simulation.id}) finished!"
         else:
             finished_message = "Nothing to download!"
-        success = True
         total_size = sum(download.size for result_file, download in self.downloads)
         size = 0
         self.download_progress.emit(size)
@@ -97,8 +97,8 @@ class DownloadProgressWorker(QObject):
                 error_msg = f"Error: {e}"
             self.download_progress.emit(self.FAILED)
             self.download_failed.emit(error_msg)
-            success = False
+            self.success = False
             break
-        if success is True:
+        if self.success is True:
             self.download_progress.emit(self.FINISHED)
             self.thread_finished.emit(finished_message)
