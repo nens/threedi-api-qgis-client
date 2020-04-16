@@ -136,7 +136,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def terminate_fetching_simulations_progresses_thread(self):
         """Forcing termination of background thread if it's still running."""
-        if self.simulations_progresses_thread.isRunning():
+        if self.simulations_progresses_thread is not None and self.simulations_progresses_thread.isRunning():
             self.communication.bar_info('Terminating fetching simulations progresses thread.')
             self.simulations_progresses_thread.terminate()
             self.communication.bar_info('Waiting for fetching simulations progresses thread termination.')
