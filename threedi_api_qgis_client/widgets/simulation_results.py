@@ -28,12 +28,12 @@ class SimulationResults(uicls, basecls):
         self.download_worker = None
         self.finished_simulations = {}
         self.tv_model = None
+        self.last_download_index = None
         self.setup_view_model()
         self.parent_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_finished_list)
         self.pb_cancel.clicked.connect(self.close)
         self.pb_download.clicked.connect(self.download_results)
         self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_download_results)
-        self.resize(500, 500)
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
@@ -76,13 +76,16 @@ class SimulationResults(uicls, basecls):
 
     def on_download_progress_update(self, percentage):
         """Update download progress bar."""
-        index = self.tv_finished_sim_tree.currentIndex()
-        row_index = index.row()
+        row_index = self.last_download_index.row()
         progress_item = self.tv_model.item(row_index, self.PROGRESS_COLUMN_IDX)
         progress_item.setData(percentage, Qt.UserRole)
+        if percentage == 0:
+            name_text = self.tv_model.item(row_index, 0).text()
+            msg = f"Downloading results of {name_text} started!"
+            self.parent_dock.communication.bar_info(msg)
 
-    def on_download_finished(self, msg):
-        """Reporting status and closing download thread."""
+    def on_download_finished_success(self, msg):
+        """Reporting finish successfully status and closing download thread."""
         self.parent_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
         self.download_results_thread.quit()
         self.download_results_thread.wait()
@@ -90,10 +93,30 @@ class SimulationResults(uicls, basecls):
         self.download_worker = None
         self.toggle_download_results()
 
+    def on_download_finished_failed(self, msg):
+        """Reporting failure and closing download thread."""
+        self.parent_dock.communication.bar_error(msg, log_text_color=Qt.red)
+        self.download_results_thread.quit()
+        self.download_results_thread.wait()
+        self.download_results_thread = None
+        self.download_worker = None
+        self.toggle_download_results()
+
+    def terminate_download_thread(self):
+        """Forcing termination of download background thread."""
+        if self.download_results_thread is not None and self.download_results_thread.isRunning():
+            self.parent_dock.communication.bar_info('Terminating download thread.')
+            self.download_results_thread.terminate()
+            self.parent_dock.communication.bar_info('Waiting for download thread termination.')
+            self.download_results_thread.wait()
+            self.parent_dock.communication.bar_info('Download worker terminated.')
+            self.download_results_thread = None
+            self.download_worker = None
+
     def download_results(self):
         """Download simulation results files."""
-        index = self.tv_finished_sim_tree.currentIndex()
-        if not index.isValid():
+        self.last_download_index = self.tv_finished_sim_tree.currentIndex()
+        if not self.last_download_index.isValid():
             return
         last_folder = QSettings().value("threedi/last_results_folder", os.path.expanduser("~"), type=str)
         directory = QFileDialog.getExistingDirectory(self, "Select Results Directory", last_folder)
@@ -102,8 +125,11 @@ class SimulationResults(uicls, basecls):
         QSettings().setValue("threedi/last_results_folder", directory)
 
         try:
-            name_item = self.tv_model.item(index.row(), 0)
+            name_item = self.tv_model.item(self.last_download_index.row(), 0)
             sim_id = name_item.data(Qt.UserRole)
+            simulation = self.finished_simulations[sim_id]
+            simulation_name = simulation.name
+            simulation_subdirectory = os.path.join(directory, f"sim_{sim_id}_{simulation_name}")
             tc = ThreediCalls(self.parent_dock.api_client)
             downloads = tc.fetch_simulation_downloads(sim_id)
         except ApiException as e:
@@ -115,9 +141,10 @@ class SimulationResults(uicls, basecls):
 
         self.pb_download.setDisabled(True)
         self.download_results_thread = QThread()
-        self.download_worker = DownloadProgressWorker(sim_id, downloads, directory)
+        self.download_worker = DownloadProgressWorker(simulation, downloads, simulation_subdirectory)
         self.download_worker.moveToThread(self.download_results_thread)
-        self.download_worker.thread_finished.connect(self.on_download_finished)
+        self.download_worker.thread_finished.connect(self.on_download_finished_success)
+        self.download_worker.download_failed.connect(self.on_download_finished_failed)
         self.download_worker.download_progress.connect(self.on_download_progress_update)
         self.download_results_thread.started.connect(self.download_worker.run)
         self.download_results_thread.start()

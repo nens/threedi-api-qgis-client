@@ -52,7 +52,7 @@ class DownloadProgressDelegate(QStyledItemDelegate):
     """Class with definition of the custom downloading results progress bar item that can be inserted into the model."""
 
     def paint(self, painter, option, index):
-        new_percentage = index.data(Qt.UserRole)
+        new_percentage = int(index.data(Qt.UserRole))
         pbar = QStyleOptionProgressBar()
         pbar.rect = option.rect
         pbar.minimum = 0

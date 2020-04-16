@@ -11,7 +11,9 @@ from .api_calls.threedi_calls import ThreediCalls
 class SimulationsProgressesSentinel(QObject):
     """Worker object that will be moved to a separate thread and will check progresses of the running simulations."""
     thread_finished = pyqtSignal(str)
+    thread_failed = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
+
     DELAY = 5
     SIMULATIONS_REFRESH_TIME = 300
 
@@ -42,7 +44,7 @@ class SimulationsProgressesSentinel(QObject):
             error_body = e.body
             error_details = error_body["details"] if "details" in error_body else error_body
             error_msg = f"Error: {error_details}"
-            stop_message = error_msg
+            self.thread_failed.emit(error_msg)
         self.thread_finished.emit(stop_message)
 
     def stop(self):
@@ -53,40 +55,48 @@ class SimulationsProgressesSentinel(QObject):
 class DownloadProgressWorker(QObject):
     """Worker object responsible for downloading simulations results."""
     thread_finished = pyqtSignal(str)
-    download_progress = pyqtSignal(int)
+    download_failed = pyqtSignal(str)
+    download_progress = pyqtSignal(float)
+
     NOT_STARTED = -1
     FINISHED = 100
     FAILED = 101
 
-    def __init__(self, simulation_pk, downloads, directory):
+    def __init__(self, simulation, downloads, directory):
         super(QObject, self).__init__()
-        self.simulation_pk = simulation_pk
+        self.simulation = simulation
         self.downloads = downloads
         self.directory = directory
 
     @pyqtSlot()
     def run(self):
         """Downloading simulation results files."""
-        stop_message = f"Downloading results for {self.simulation_pk} finished!"
-        percentage_step = int(100 / len(self.downloads))
-        self.download_progress.emit(0)
+        if self.downloads:
+            finished_message = f"Downloading results of {self.simulation.name} ({self.simulation.id}) finished!"
+        else:
+            finished_message = "Nothing to download!"
+        total_size = sum(download.size for result_file, download in self.downloads)
         success = True
-        for i, (result_file, download) in enumerate(self.downloads):
+        self.download_progress.emit(0)
+        for result_file, download in self.downloads:
             filename = result_file.filename
             filename_path = os.path.join(self.directory, filename)
-            with open(filename_path, 'wb') as f:
-                try:
-                    self.download_progress.emit(int(percentage_step * i))
+            try:
+                os.makedirs(self.directory, exist_ok=True)
+                with open(filename_path, 'wb') as f:
                     file_data = requests.get(download.get_url)
                     f.write(file_data.content)
-                    self.download_progress.emit(int(percentage_step * i))
-                except requests.RequestException as e:
-                    self.download_progress.emit(self.FAILED)
-                    error_details = e.response
-                    error_msg = f"Error: {error_details}"
-                    stop_message = error_msg
-                    success = False
-                    break
+                    self.download_progress.emit(download.size / total_size * 100)
+                    continue
+            except requests.RequestException as e:
+                error_details = e.response
+                error_msg = f"Error: {error_details}"
+            except (OSError, PermissionError) as e:
+                error_msg = f"Error: {e}"
+            self.download_progress.emit(self.FAILED)
+            self.download_failed.emit(error_msg)
+            success = False
+            break
         if success is True:
             self.download_progress.emit(self.FINISHED)
-        self.thread_finished.emit(stop_message)
+            self.thread_finished.emit(finished_message)

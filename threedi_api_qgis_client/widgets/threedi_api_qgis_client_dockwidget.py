@@ -2,7 +2,7 @@
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
 from qgis.PyQt import QtWidgets, uic
-from qgis.PyQt.QtCore import QThread, pyqtSignal
+from qgis.PyQt.QtCore import Qt, QThread, pyqtSignal
 from .log_in import LogInDialog
 from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
@@ -78,6 +78,9 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulations_progresses_thread is not None:
             self.stop_fetching_simulations_progresses()
             self.simulation_overview_dlg = None
+        if self.simulation_results_dlg is not None:
+            self.simulation_results_dlg.terminate_download_thread()
+            self.simulation_results_dlg = None
         self.log_in_dlg = None
         self.api_client = None
         self.current_model = None
@@ -110,6 +113,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulations_progresses_sentinel = SimulationsProgressesSentinel(self.api_client)
         self.simulations_progresses_sentinel.moveToThread(self.simulations_progresses_thread)
         self.simulations_progresses_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
+        self.simulations_progresses_sentinel.thread_failed.connect(self.on_fetching_simulations_progresses_failed)
         self.simulations_progresses_thread.started.connect(self.simulations_progresses_sentinel.run)
         self.simulations_progresses_thread.start()
 
@@ -125,6 +129,10 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulations_progresses_thread.wait()
         self.simulations_progresses_thread = None
         self.simulations_progresses_sentinel = None
+
+    def on_fetching_simulations_progresses_failed(self, msg):
+        """Reporting fetching progresses failure."""
+        self.communication.bar_error(msg, log_text_color=Qt.red)
 
     def terminate_fetching_simulations_progresses_thread(self):
         """Forcing termination of background thread if it's still running."""
