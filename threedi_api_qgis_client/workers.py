@@ -62,6 +62,7 @@ class DownloadProgressWorker(QObject):
     download_progress = pyqtSignal(float)
 
     CHUNK_SIZE = 1024**2
+
     NOT_STARTED = -1
     FINISHED = 100
     FAILED = 101
