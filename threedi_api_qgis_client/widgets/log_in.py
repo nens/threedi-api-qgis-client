@@ -174,6 +174,7 @@ class LogInDialog(uicls_log, basecls_log):
             error_details = error_body["details"] if "details" in error_body else error_body
             error_msg = f"Error: {error_details}"
             self.communication.show_error(error_msg)
-        except ValueError as e:
+        except Exception as e:
             self.close()
-            self.communication.show_error(f"Error: {e}")
+            error_msg = f"Error: {e}"
+            self.communication.show_error(error_msg)

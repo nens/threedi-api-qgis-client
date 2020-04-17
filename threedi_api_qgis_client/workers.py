@@ -45,6 +45,9 @@ class SimulationsProgressesSentinel(QObject):
             error_details = error_body["details"] if "details" in error_body else error_body
             error_msg = f"Error: {error_details}"
             self.thread_failed.emit(error_msg)
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.thread_failed.emit(error_msg)
         self.thread_finished.emit(stop_message)
 
     def stop(self):
@@ -58,6 +61,7 @@ class DownloadProgressWorker(QObject):
     download_failed = pyqtSignal(str)
     download_progress = pyqtSignal(float)
 
+    CHUNK_SIZE = 1024**2
     NOT_STARTED = -1
     FINISHED = 100
     FAILED = 101
@@ -84,16 +88,15 @@ class DownloadProgressWorker(QObject):
             filename_path = os.path.join(self.directory, filename)
             try:
                 os.makedirs(self.directory, exist_ok=True)
+                file_data = requests.get(download.get_url, stream=True, timeout=15)
                 with open(filename_path, 'wb') as f:
-                    file_data = requests.get(download.get_url)
-                    f.write(file_data.content)
-                    size += download.size
-                    self.download_progress.emit(size / total_size * 100)
+                    for chunk in file_data.iter_content(chunk_size=self.CHUNK_SIZE):
+                        if chunk:
+                            f.write(chunk)
+                            size += len(chunk)
+                            self.download_progress.emit(size / total_size * 100)
                     continue
-            except requests.RequestException as e:
-                error_details = e.response
-                error_msg = f"Error: {error_details}"
-            except (OSError, PermissionError) as e:
+            except Exception as e:
                 error_msg = f"Error: {e}"
             self.download_progress.emit(self.FAILED)
             self.download_failed.emit(error_msg)

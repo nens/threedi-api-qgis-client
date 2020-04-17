@@ -142,6 +142,10 @@ class SimulationResults(uicls, basecls):
             error_msg = f"Error: {error_details}"
             self.parent_dock.communication.show_error(error_msg)
             return
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.parent_dock.communication.show_error(error_msg)
+            return
 
         self.pb_download.setDisabled(True)
         self.download_results_thread = QThread()

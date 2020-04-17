@@ -611,3 +611,8 @@ class SimulationWizard(QWizard):
             error_details = error_body["details"] if "details" in error_body else error_body
             error_msg = f"Error: {error_details}"
             self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+        except Exception as e:
+            self.new_simulation = None
+            self.new_simulation_status = None
+            error_msg = f"Error: {e}"
+            self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
