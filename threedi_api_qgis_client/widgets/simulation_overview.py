@@ -52,6 +52,8 @@ class SimulationOverview(uicls, basecls):
         progress_item.setData((status, progress), PROGRESS_ROLE)
         self.tv_model.appendRow([sim_name_item, user_item, progress_item])
         self.simulations_keys[sim_id] = simulation
+        for i in range(self.PROGRESS_COLUMN_IDX):
+            self.tv_sim_tree.resizeColumnToContents(i)
 
     def update_progress(self, progresses):
         """Updating progress bars in the running simulations list."""

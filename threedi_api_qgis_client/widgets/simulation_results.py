@@ -64,6 +64,8 @@ class SimulationResults(uicls, basecls):
         progress_item.setData(-1,  Qt.UserRole)
         self.tv_model.insertRow(0, [sim_name_item, user_item, expires_item, progress_item])
         self.finished_simulations[sim_id] = simulation
+        for i in range(self.PROGRESS_COLUMN_IDX):
+            self.tv_finished_sim_tree.resizeColumnToContents(i)
 
     def update_finished_list(self, progresses):
         """Update finished simulations list."""
