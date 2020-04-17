@@ -112,3 +112,6 @@ class SimulationOverview(uicls, basecls):
                 error_details = error_body["details"] if "details" in error_body else error_body
                 error_msg = f"Error: {error_details}"
                 self.parent_dock.communication.show_error(error_msg)
+            except Exception as e:
+                error_msg = f"Error: {e}"
+                self.parent_dock.communication.show_error(error_msg)
