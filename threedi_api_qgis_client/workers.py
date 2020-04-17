@@ -95,7 +95,7 @@ class DownloadProgressWorker(QObject):
                             f.write(chunk)
                             size += len(chunk)
                             self.download_progress.emit(size / total_size * 100)
-                    continue
+                continue
             except Exception as e:
                 error_msg = f"Error: {e}"
             self.download_progress.emit(self.FAILED)
