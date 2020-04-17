@@ -62,11 +62,8 @@ class SimulationResults(uicls, basecls):
         expires_item = QStandardItem(f"{delta.days} day(s)")
         progress_item = QStandardItem()
         progress_item.setData(-1,  Qt.UserRole)
-        self.tv_model.appendRow([sim_name_item, user_item, expires_item, progress_item])
+        self.tv_model.insertRow(0, [sim_name_item, user_item, expires_item, progress_item])
         self.finished_simulations[sim_id] = simulation
-        row_count = self.tv_model.rowCount()
-        last_index = self.tv_model.item(row_count - 1).index()
-        self.tv_finished_sim_tree.scrollTo(last_index)
 
     def update_finished_list(self, progresses):
         """Update finished simulations list."""
