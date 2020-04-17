@@ -28,7 +28,7 @@ class SimulationResults(uicls, basecls):
         self.download_worker = None
         self.finished_simulations = {}
         self.tv_model = None
-        self.last_download_index = None
+        self.last_progress_item = None
         self.setup_view_model()
         self.parent_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_finished_list)
         self.pb_cancel.clicked.connect(self.close)
@@ -64,6 +64,9 @@ class SimulationResults(uicls, basecls):
         progress_item.setData(-1,  Qt.UserRole)
         self.tv_model.appendRow([sim_name_item, user_item, expires_item, progress_item])
         self.finished_simulations[sim_id] = simulation
+        row_count = self.tv_model.rowCount()
+        last_index = self.tv_model.item(row_count - 1).index()
+        self.tv_finished_sim_tree.scrollTo(last_index)
 
     def update_finished_list(self, progresses):
         """Update finished simulations list."""
@@ -76,11 +79,10 @@ class SimulationResults(uicls, basecls):
 
     def on_download_progress_update(self, percentage):
         """Update download progress bar."""
-        row_index = self.last_download_index.row()
-        progress_item = self.tv_model.item(row_index, self.PROGRESS_COLUMN_IDX)
-        progress_item.setData(percentage, Qt.UserRole)
+        self.last_progress_item.setData(percentage, Qt.UserRole)
         if percentage == 0:
-            name_text = self.tv_model.item(row_index, 0).text()
+            row = self.last_progress_item.index().row()
+            name_text = self.tv_model.item(row, 0).text()
             msg = f"Downloading results of {name_text} started!"
             self.parent_dock.communication.bar_info(msg)
 
@@ -115,17 +117,17 @@ class SimulationResults(uicls, basecls):
 
     def download_results(self):
         """Download simulation results files."""
-        self.last_download_index = self.tv_finished_sim_tree.currentIndex()
-        if not self.last_download_index.isValid():
+        current_index = self.tv_finished_sim_tree.currentIndex()
+        if not current_index.isValid():
             return
         last_folder = QSettings().value("threedi/last_results_folder", os.path.expanduser("~"), type=str)
         directory = QFileDialog.getExistingDirectory(self, "Select Results Directory", last_folder)
         if len(directory) == 0:
             return
         QSettings().setValue("threedi/last_results_folder", directory)
-
         try:
-            name_item = self.tv_model.item(self.last_download_index.row(), 0)
+            current_row = current_index.row()
+            name_item = self.tv_model.item(current_row, 0)
             sim_id = name_item.data(Qt.UserRole)
             simulation = self.finished_simulations[sim_id]
             simulation_name = simulation.name.replace(' ', '_')
@@ -136,6 +138,7 @@ class SimulationResults(uicls, basecls):
             gridadmin_downloads = tc.fetch_gridadmin_download(simulation_model_id)
             downloads.append(gridadmin_downloads)
             downloads.sort(key=lambda x: x[-1].size)
+            self.last_progress_item = self.tv_model.item(current_row, self.PROGRESS_COLUMN_IDX)
         except ApiException as e:
             error_body = e.body
             error_details = error_body["details"] if "details" in error_body else error_body
@@ -146,7 +149,6 @@ class SimulationResults(uicls, basecls):
             error_msg = f"Error: {e}"
             self.parent_dock.communication.show_error(error_msg)
             return
-
         self.pb_download.setDisabled(True)
         self.download_results_thread = QThread()
         self.download_worker = DownloadProgressWorker(simulation, downloads, simulation_subdirectory)
