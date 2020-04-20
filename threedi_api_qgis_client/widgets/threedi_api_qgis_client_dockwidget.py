@@ -20,7 +20,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def __init__(self, iface, parent=None):
         """Constructor."""
-        super(ThreediQgisClientDockWidget, self).__init__(parent)
+        super().__init__(parent)
         self.setupUi(self)
         self.iface = iface
         self.communication = UICommunication(self.iface, "3Di MI", self.lv_log)

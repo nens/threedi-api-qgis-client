@@ -73,7 +73,7 @@ RAIN_LOOKUP = {
 class NameWidget(uicls_p1, basecls_p1):
     """Widget for Name page."""
     def __init__(self, parent_page):
-        super(NameWidget, self).__init__()
+        super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path('sim_wizard_p1.svg'))
@@ -87,7 +87,7 @@ class NameWidget(uicls_p1, basecls_p1):
 class SimulationDurationWidget(uicls_p2, basecls_p2):
     """Widget for Simulation Duration page."""
     def __init__(self, parent_page):
-        super(SimulationDurationWidget, self).__init__()
+        super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path('sim_wizard_p2.svg'))
@@ -144,7 +144,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
     DESIGN_TIMESTEP = 300
 
     def __init__(self, parent_page):
-        super(PrecipitationWidget, self).__init__()
+        super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path('sim_wizard_p3.svg'))
@@ -438,7 +438,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
 class SummaryWidget(uicls_p4, basecls_p4):
     """Widget for Summary page."""
     def __init__(self, parent_page):
-        super(SummaryWidget, self).__init__()
+        super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path('sim_wizard_p4.svg'))

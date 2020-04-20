@@ -18,7 +18,7 @@ class SimulationsProgressesSentinel(QObject):
     SIMULATIONS_REFRESH_TIME = 300
 
     def __init__(self, api_client):
-        super(QObject, self).__init__()
+        super().__init__()
         self.api_client = api_client
         self.simulations_list = []
         self.refresh_at_step = int(self.SIMULATIONS_REFRESH_TIME / self.DELAY)
@@ -68,7 +68,7 @@ class DownloadProgressWorker(QObject):
     FAILED = 101
 
     def __init__(self, simulation, downloads, directory):
-        super(QObject, self).__init__()
+        super().__init__()
         self.simulation = simulation
         self.downloads = downloads
         self.directory = directory
