@@ -25,6 +25,7 @@ class LogInDialog(uicls_log, basecls_log):
         self.api_client = None
         self.repositories = None
         self.organisations = None
+        self.organisation = None
         self.simulations = None
         self.revisions = None
         self.threedi_models = None
@@ -35,10 +36,12 @@ class LogInDialog(uicls_log, basecls_log):
         self.wait_widget.hide()
         self.action_widget.hide()
         self.load_widget.hide()
+        self.organisation_widget.hide()
         self.pb_load_web.clicked.connect(self.show_log_widget)
         self.pb_log_in.clicked.connect(self.log_in_threedi)
         self.pb_next.clicked.connect(self.show_load_widget)
         self.pb_load.clicked.connect(self.load_model)
+        self.pb_organisation.clicked.connect(self.set_organisation)
         self.pb_cancel.clicked.connect(self.reject)
         self.pb_cancel_action.clicked.connect(self.reject)
         self.pb_cancel_load.clicked.connect(self.reject)
@@ -68,6 +71,7 @@ class LogInDialog(uicls_log, basecls_log):
     def show_action_widget(self):
         """Showing widget with actions choice."""
         self.wait_widget.hide()
+        self.organisation_widget.hide()
         self.action_widget.show()
         self.setWindowTitle("Choose actions - web")
         for sim_model in self.threedi_models:
@@ -75,6 +79,14 @@ class LogInDialog(uicls_log, basecls_log):
             item.setData(sim_model, role=Qt.UserRole)
             self.lv_model.appendRow([item])
         self.toggle_load_model()
+
+    def show_organisation_widget(self):
+        """Showing widget with organisation choice"""
+        self.wait_widget.hide()
+        self.organisation_widget.show()
+        self.setWindowTitle("Choose organisation")
+        for org in self.organisations.values():
+            self.organisations_box.addItem(org.name, org)
 
     def show_load_widget(self):
         """Showing widget with 3Di models available to load."""
@@ -167,7 +179,11 @@ class LogInDialog(uicls_log, basecls_log):
             self.wait_widget.update()
             self.log_pbar.setValue(100)
             sleep(1.5)
-            self.show_action_widget()
+            if len(self.organisations) > 1:
+                self.show_organisation_widget()
+            else:
+                self.organisation = self.organisations[0]
+                self.show_action_widget()
         except ApiException as e:
             self.close()
             error_body = e.body
@@ -178,3 +194,7 @@ class LogInDialog(uicls_log, basecls_log):
             self.close()
             error_msg = f"Error: {e}"
             self.communication.show_error(error_msg)
+
+    def set_organisation(self):
+        self.organisation = self.organisations_box.currentData()
+        self.show_action_widget()

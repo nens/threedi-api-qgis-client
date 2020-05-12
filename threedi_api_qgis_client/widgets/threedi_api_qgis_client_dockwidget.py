@@ -149,9 +149,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Initialization of the Simulation Overview window."""
         self.simulation_overview_dlg = SimulationOverview(self)
         self.simulation_overview_dlg.label_user.setText(self.log_in_dlg.user)
-        repo_slug = self.current_model.repository_slug
-        repository = self.log_in_dlg.repositories[repo_slug]
-        self.organisation = self.log_in_dlg.organisations[repository.organisation]
+        self.organisation = self.log_in_dlg.organisation
         self.simulation_overview_dlg.label_organisation.setText(self.organisation.name)
 
     def show_simulation_overview(self):
