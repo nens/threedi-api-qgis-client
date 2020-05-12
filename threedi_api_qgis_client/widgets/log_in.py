@@ -182,7 +182,7 @@ class LogInDialog(uicls_log, basecls_log):
             if len(self.organisations) > 1:
                 self.show_organisation_widget()
             else:
-                self.organisation = self.organisations[0]
+                self.organisation = next(iter(self.organisations.values()))
                 self.show_action_widget()
         except ApiException as e:
             self.close()
