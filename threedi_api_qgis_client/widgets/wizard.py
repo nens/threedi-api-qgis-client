@@ -599,10 +599,11 @@ class SimulationWizard(QWizard):
                 tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset)
             elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
                 tc.add_custom_precipitation(sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset)
-            tc.make_action_on_simulation(sim_id, name='start')
+            # tc.make_action_on_simulation(sim_id, name='start')
+            tc.make_action_on_simulation(sim_id, name='queue')
             self.new_simulation = new_simulation
             self.new_simulation_status = current_status
-            msg = f"Simulation {new_simulation.name} started!"
+            msg = f"Simulation {new_simulation.name} added to queue!"
             self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
         except ApiException as e:
             self.new_simulation = None
