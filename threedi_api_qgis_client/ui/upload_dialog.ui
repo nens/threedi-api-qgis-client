@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>upload_dialog</class>
+ <widget class="QDialog" name="upload_dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>844</width>
+    <height>483</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>844</width>
+    <height>483</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>844</width>
+    <height>483</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Upload</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="0">
+    <widget class="QLabel" name="label">
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;I made a new model&lt;/strong&gt;&lt;/li&gt;
+&lt;ul style=&quot;margin-top:20px&quot;&gt;
+&lt;li&gt;Zip your model (SQLite and Rasters) using winzip.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http&quot; style=&quot;text-decoration: none&quot;&gt;Log in&lt;/a&gt; to the Model Database with your 3Di credentials.&lt;/li&gt;
+&lt;li&gt;Select 'upload new model'&lt;/li&gt;
+&lt;li&gt;Fill in the model upload form with the correct data, and make sure to select 3Di v2 as your model type!&lt;/li&gt;
+&lt;/ul&gt;
+  &lt;p style=&quot;margin-bottom: 20px&quot;&gt;&lt;a href=&quot;http&quot; style=&quot;text-decoration: none&quot;&gt;Full documentation&lt;/a&gt; for new models.&lt;/p&gt;
+&lt;li&gt;&lt;strong&gt;I made changes to an existing model&lt;/strong&gt;&lt;/li&gt;
+&lt;ul style=&quot;margin-top:20px&quot;&gt;
+&lt;li&gt;&lt;a href=&quot;http&quot; style=&quot;text-decoration: none&quot;&gt;Install&lt;/a&gt; the TortoiseHG Workbench tool on your OS.&lt;/li&gt;
+&lt;li&gt;When changes are made, commit those changes with TortoiseHG.&lt;/li&gt;
+&lt;li&gt;Push your changes to the 3Di Model Database&lt;/li&gt;
+&lt;/ul&gt;
+  &lt;p style=&quot;margin-bottom: 20px&quot;&gt;&lt;a href=&quot;http&quot; style=&quot;text-decoration: none&quot;&gt;Full documentation&lt;/a&gt; for existing models.&lt;/p&gt;
+&lt;/ol&gt;&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" alignment="Qt::AlignRight">
+    <widget class="QPushButton" name="pb_cancel">
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>100</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Cancel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="lbl">
+     <property name="font">
+      <font>
+       <pointsize>14</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+       <family>Segoe UI</family>
+      </font>
+     </property>
+     <property name="text">
+      <string>How to uplod a new or existing model</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

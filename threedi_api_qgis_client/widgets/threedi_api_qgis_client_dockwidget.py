@@ -3,6 +3,8 @@
 import os
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QThread, pyqtSignal
+
+from threedi_api_qgis_client.widgets.upload import UploadDialog
 from .log_in import LogInDialog
 from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
@@ -33,6 +35,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.log_in_dlg = None
         self.simulation_overview_dlg = None
         self.simulation_results_dlg = None
+        self.upload_dlg = None
         self.widget_authorized.hide()
         self.btn_start.clicked.connect(self.log_in)
         self.btn_log_out.clicked.connect(self.log_out)
@@ -40,6 +43,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btn_simulate.clicked.connect(self.show_simulation_overview)
         self.btn_results.clicked.connect(self.show_simulation_results)
         self.btn_clear_log.clicked.connect(self.clear_log)
+        self.btn_upload.clicked.connect(self.show_upload_dialog)
         set_icon(self.btn_build, 'build.svg')
         set_icon(self.btn_check, 'check.svg')
         set_icon(self.btn_upload, 'upload.svg')
@@ -64,6 +68,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.widget_authorized.show()
         self.btn_simulate.setEnabled(True)
         self.btn_results.setEnabled(True)
+        self.btn_upload.setEnabled(True)
         self.label_user.setText(self.log_in_dlg.user)
         self.label_repo.setText(self.current_model.repository_slug)
         revision = self.log_in_dlg.revisions[self.current_model.revision_hash]
@@ -88,6 +93,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.widget_authorized.hide()
         self.btn_simulate.setDisabled(True)
         self.btn_results.setDisabled(True)
+        self.btn_upload.setDisabled(True)
 
     def change_repository(self):
         """Changing current repository."""
@@ -171,3 +177,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulation_results_dlg is None:
             self.initialize_simulation_results()
         self.simulation_results_dlg.show()
+
+    def show_upload_dialog(self):
+        self.upload_dlg = UploadDialog(self)
+        self.upload_dlg.exec_()
