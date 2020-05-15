@@ -538,7 +538,7 @@ class SimulationWizard(QWizard):
         self.addPage(self.p3)
         self.addPage(self.p4)
         self.currentIdChanged.connect(self.page_changed)
-        self.setButtonText(QWizard.FinishButton, "Start Simulation")
+        self.setButtonText(QWizard.FinishButton, "Add to queue")
         self.finish_btn = self.button(QWizard.FinishButton)
         self.finish_btn.clicked.connect(self.run_new_simulation)
         self.new_simulation = None
