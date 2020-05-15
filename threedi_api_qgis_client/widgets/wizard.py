@@ -538,7 +538,7 @@ class SimulationWizard(QWizard):
         self.addPage(self.p3)
         self.addPage(self.p4)
         self.currentIdChanged.connect(self.page_changed)
-        self.setButtonText(QWizard.FinishButton, "Start Simulation")
+        self.setButtonText(QWizard.FinishButton, "Add to queue")
         self.finish_btn = self.button(QWizard.FinishButton)
         self.finish_btn.clicked.connect(self.run_new_simulation)
         self.new_simulation = None
@@ -599,10 +599,10 @@ class SimulationWizard(QWizard):
                 tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset)
             elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
                 tc.add_custom_precipitation(sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset)
-            tc.make_action_on_simulation(sim_id, name='start')
+            tc.make_action_on_simulation(sim_id, name='queue')
             self.new_simulation = new_simulation
             self.new_simulation_status = current_status
-            msg = f"Simulation {new_simulation.name} started!"
+            msg = f"Simulation {new_simulation.name} added to queue!"
             self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
         except ApiException as e:
             self.new_simulation = None
