@@ -93,6 +93,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.widget_authorized.hide()
         self.btn_simulate.setDisabled(True)
         self.btn_results.setDisabled(True)
+        self.btn_upload.setDisabled(True)
 
     def change_repository(self):
         """Changing current repository."""

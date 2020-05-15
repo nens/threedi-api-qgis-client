@@ -15,6 +15,3 @@ class UploadDialog(uicls_log, basecls_log):
 
         self.pb_cancel.clicked.connect(self.close)
         self.resize(600, 350)
-
-    # def close(self):
-    #     self.close()
