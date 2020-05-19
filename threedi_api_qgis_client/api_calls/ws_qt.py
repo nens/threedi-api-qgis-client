@@ -1,27 +1,29 @@
-from qgis.PyQt import QtNetwork
-from qgis.PyQt.QtCore import QUrl, QCoreApplication, QTimer, QByteArray, QObject
+import sys
 
-from PyQt5 import QtWebSockets
+from qgis.PyQt import QtCore, QtWebSockets, QtNetwork
+from qgis.PyQt.QtCore import QUrl, QCoreApplication, QTimer
+from qgis.PyQt.QtWidgets import QApplication
 
 API_HOST = "wss://api.3di.live/v3.0"
 
 
-class ClientWS(QObject):
-    def __init__(self, parent, receive_method, jwt_token: str, bearer='Bearer'):
+class ClientWS(QtCore.QObject):
+    def __init__(self, parent, jwt_token: str, bearer='Bearer'):
         super().__init__(parent)
 
         self.bearer = bearer
         self.jwt_token = jwt_token
 
-        req = QtNetwork.QNetworkRequest(QUrl(API_HOST + "/active-simulations/"))
-        req.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(f'{self.bearer} {self.jwt_token}'))
-        self.client = QtWebSockets.QWebSocket("", QtWebSockets.QWebSocketProtocol.Version13, None)
+        req = QtNetwork.QNetworkRequest(API_HOST + "/active-simulations")
+        req.setRawHeader("authorization", f'{self.bearer} {self.jwt_token}')
+        self.client =  QtWebSockets.QWebSocket("",QtWebSockets.QWebSocketProtocol.Version13,None)
         self.client.error.connect(self.error)
 
         self.client.open(req)
+        # self.client.open(QUrl(API_HOST))
         self.client.pong.connect(self.onPong)
-        self.client.textMessageReceived.connect(receive_method)
 
+        # "/active-simulations"
     def do_ping(self):
         print("client: do_ping")
         self.client.ping(b"foo")
@@ -44,3 +46,20 @@ def quit_app():
     print("timer timeout - exiting")
     QCoreApplication.quit()
 
+# def ping():
+#     client.do_ping()
+#
+# def send_message():
+#     client.send_message()
+
+# if __name__ == '__main__':
+#     global client
+#     app = QApplication(sys.argv)
+#
+#     QTimer.singleShot(2000, ping)
+#     QTimer.singleShot(3000, send_message)
+#     QTimer.singleShot(5000, quit_app)
+#
+#     client = Client(app)
+#
+#     app.exec_()

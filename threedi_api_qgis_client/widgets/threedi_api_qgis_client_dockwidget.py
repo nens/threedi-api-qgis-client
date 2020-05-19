@@ -28,8 +28,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.communication = UICommunication(self.iface, "3Di MI", self.lv_log)
         self.simulations_progresses_thread = None
         self.simulations_progresses_sentinel = None
-        self.simulations_progresses_ws_sentinel = None
-        self.simulations_progresses_ws_thread = None
         self.api_client = None
         self.threedi_models = None
         self.current_model = None
@@ -77,9 +75,9 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.label_rev.setText(f"{revision.number}")
         self.label_db.setText(self.current_model.model_ini)
         self.initialize_simulations_progresses_thread()
-        self.initialize_simulations_ws_thread()
         self.initialize_simulation_overview()
         self.initialize_simulation_results()
+        self.initialize_simulations_ws_thread()
 
     def log_out(self):
         """Logging out."""
@@ -156,10 +154,15 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def initialize_simulations_ws_thread(self):
         """Initializing of the background thread."""
+        if self.simulations_progresses_ws_thread is not None:
+            self.terminate_fetching_simulations_progresses_thread()
+        self.simulations_progresses_ws_thread = QThread()
         self.simulations_progresses_ws_sentinel = WsProgressesSentinel(self.api_client)
+        self.simulations_progresses_ws_sentinel.moveToThread(self.simulations_progresses_ws_thread)
         self.simulations_progresses_ws_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
         self.simulations_progresses_ws_sentinel.thread_failed.connect(self.on_fetching_simulations_progresses_failed)
-        self.simulations_progresses_ws_sentinel.run()
+        self.simulations_progresses_ws_thread.started.connect(self.simulations_progresses_ws_sentinel.run)
+        self.simulations_progresses_ws_thread.start()
 
     def initialize_simulation_overview(self):
         """Initialization of the Simulation Overview window."""

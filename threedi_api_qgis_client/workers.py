@@ -1,13 +1,11 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
-import json
 import os
 import requests
 from time import sleep
 from qgis.PyQt.QtCore import QObject, pyqtSignal, pyqtSlot
-from openapi_client import ApiException, Simulation, CurrentStatus, Progress
+from openapi_client import ApiException
 
-# from threedi_api_qgis_client.api_calls.websocket_client import WebsocketClient
 from threedi_api_qgis_client.api_calls.ws_qt import ClientWS
 from .api_calls.threedi_calls import ThreediCalls
 
@@ -114,83 +112,47 @@ class DownloadProgressWorker(QObject):
 
 class WsProgressesSentinel(QObject):
     """Worker object that will be moved to a separate thread and will check progresses of the running simulations."""
-    thread_finished = pyqtSignal(str)
-    thread_failed = pyqtSignal(str)
-    progresses_fetched = pyqtSignal(dict)
+    # thread_finished = pyqtSignal(str)
+    # thread_failed = pyqtSignal(str)
+    # progresses_fetched = pyqtSignal(dict)
+    #
+    # DELAY = 5
+    # SIMULATIONS_REFRESH_TIME = 300
 
     def __init__(self, api_client):
         super().__init__()
         self.api_client = api_client
         self.simulations_list = []
+        # self.refresh_at_step = int(self.SIMULATIONS_REFRESH_TIME / self.DELAY)
         self.progresses = None
         self.thread_active = True
-        self.progresses = {}
 
     @pyqtSlot()
     def run(self):
         """Checking running simulations progresses."""
         stop_message = "Checking running simulation stopped."
-        # try:
-        token = self.api_client.configuration.access_token
-        ws_client = ClientWS(self, self.all_simulations_progress_web_socket, token)
-
-            # return ws_client.listen()
-            # while self.thread_active:
-            #     # if counter == self.refresh_at_step:
-            #     #     del self.simulations_list[:]
-            #     #     counter -= self.refresh_at_step
-            #     # self.progresses = tc.all_simulations_progress(self.simulations_list)
-            #     ws_client.listen()
-            #     self.progresses_fetched.emit(self.progresses)
-            #     sleep(self.DELAY)
-        # except ApiException as e:
-        #     error_body = e.body
-        #     error_details = error_body["details"] if "details" in error_body else error_body
-        #     error_msg = f"Error: {error_details}"
-        #     self.thread_failed.emit(error_msg)
-        # except Exception as e:
-        #     error_msg = f"Error: {e}"
-        #     self.thread_failed.emit(error_msg)
-        # self.thread_finished.emit(stop_message)
+        try:
+            token = self.api_client.configuration.access_token
+            tc = ClientWS(self, token)
+            counter = 0
+            while self.thread_active:
+                if counter == self.refresh_at_step:
+                    del self.simulations_list[:]
+                    counter -= self.refresh_at_step
+                self.progresses = tc.all_simulations_progress(self.simulations_list)
+                self.progresses_fetched.emit(self.progresses)
+                sleep(self.DELAY)
+                counter += 1
+        except ApiException as e:
+            error_body = e.body
+            error_details = error_body["details"] if "details" in error_body else error_body
+            error_msg = f"Error: {error_details}"
+            self.thread_failed.emit(error_msg)
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.thread_failed.emit(error_msg)
+        self.thread_finished.emit(stop_message)
 
     def stop(self):
         """Changing 'thread_active' flag to False."""
         self.thread_active = False
-
-    def all_simulations_progress_web_socket(self, data):  # -> Dict[int, Tuple[Simulation, CurrentStatus, Progress]]:
-        """Get all simulations with statuses and progresses."""
-        data = json.loads(data)
-        print(data)
-        # my code which demonstrate progress bar update by websocket
-        if data.get("type") == "active-simulations" or data.get("type") == "active-simulation":
-            simulations = data.get("data")
-            self.progresses.clear()
-            for id, sim in simulations.items():
-                sim = json.loads(sim)
-                print(sim)
-                simulation = Simulation(slug=sim.get("simulation_slug"), uuid=sim.get("uuid"), name=sim.get("name"),
-                                        created=sim.get("date_created"), start_datetime=sim.get("date_created"),  organisation_name=sim.get("organisation_name"), organisation=sim.get("organisation_name"),
-                                        user=sim.get("user_name"), duration=sim.get("duration"), id=id, threedimodel="xxx")
-                current_status = CurrentStatus(id, sim.get("status"), sim.get("date_created"), sim.get("duration"),
-                                               False)
-                status_name = sim.get("status")
-                status_time = sim.get("duration")
-                if status_time is None:
-                    status_time = 0
-                if status_name == "initialized":
-                    sim_progress = Progress(0, sim.get("progress"))
-                else:
-                    sim_progress = Progress(percentage=0, time=status_time)
-                self.progresses[id] = {"simulation": simulation, "current_status": current_status, "progress": sim_progress}
-        if data.get("type") == "progress":
-            self.progresses[str(data["data"]["simulation_id"])]["progress"] = Progress(0, data["data"]["progress"])
-
-        if data.get("type") == "status":
-            self.progresses[str(data["data"]["simulation_id"])]["current_status"] = CurrentStatus(data["data"]["simulation_id"], data["data"]["status"], "2.2.2020", 0, False) #data["data"]["status"]
-
-        result = dict()
-        for id, item in self.progresses.items():
-            result[id] = (item.get("simulation"), item.get("current_status"), item.get("progress"))
-        self.progresses_fetched.emit(result)
-        # end of code
-
