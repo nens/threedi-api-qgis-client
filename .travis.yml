@@ -10,19 +10,20 @@ python:
 install: pip install -U tox-travis
 
 # Command to run tests, e.g. python setup.py test
-script: tox
+script:
+  - tox
+  - python3 zip_plugin.py
 
-# Assuming you have installed the travis-ci CLI tool, after you
-# create the Github repo and add it to Travis, run the
-# following command to finish PyPI deployment setup:
-# $ travis encrypt --add deploy.password
+# Deploy uploads the "zip_plugin.py" result to https://artifacts.lizard.net, but
+# only when building a tag. It then turns up on https://plugins.lizard.net
 deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: PLEASE_REPLACE_ME
-  password:
-    secure: PLEASE_REPLACE_ME
+  provider: script
+  skip_cleanup: true
+  script: bash upload-artifact.sh
   on:
     tags: true
     repo: nens/threedi-api-qgis-client
-    python: 3.8
+    python: 3.7
+
+notifications:
+  email: false
