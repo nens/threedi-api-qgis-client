@@ -86,3 +86,6 @@ dist: clean ## builds source and wheel package
 
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
+
+zip: clean  ## builds a zip bundle for qgis
+	python3 zip_plugin.py
