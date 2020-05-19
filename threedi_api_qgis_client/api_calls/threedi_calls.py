@@ -8,6 +8,8 @@ from openapi_client import (ApiClient, RepositoriesApi, SimulationsApi, Revision
                             ThreedimodelsApi, Repository, Simulation, Action, Progress, Revision, ThreediModel,
                             ConstantRain, TimeseriesRain, Organisation, CurrentStatus, ResultFile, Download)
 
+from threedi_api_qgis_client.api_calls.wbsocket_clinet import WebsocketClient
+
 
 def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiClient:
     """Setup open_api client using username and password."""
@@ -166,3 +168,8 @@ class ThreediCalls:
             response = api.organisations_list(limit=response_count)
         organisations = response.results
         return organisations
+
+    def active_simulations(self):
+        token = self.api_client.configuration.access_token
+        ws_client = WebsocketClient(token)
+        return ws_client.listen()

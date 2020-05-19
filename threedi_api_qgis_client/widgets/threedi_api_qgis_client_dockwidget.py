@@ -10,7 +10,7 @@ from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
 from ..ui_utils import set_icon
 from ..communication import UICommunication
-from ..workers import SimulationsProgressesSentinel
+from ..workers import SimulationsProgressesSentinel, WsProgressesSentinel
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, 'ui', 'threedi_api_qgis_client_dockwidget_base.ui'))
@@ -77,6 +77,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.initialize_simulations_progresses_thread()
         self.initialize_simulation_overview()
         self.initialize_simulation_results()
+        self.initialize_simulations_ws_thread()
 
     def log_out(self):
         """Logging out."""
@@ -150,6 +151,18 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.communication.bar_info('Fetching simulations progresses worker terminated.')
             self.simulations_progresses_thread = None
             self.simulations_progresses_sentinel = None
+
+    def initialize_simulations_ws_thread(self):
+        """Initializing of the background thread."""
+        if self.simulations_progresses_ws_thread is not None:
+            self.terminate_fetching_simulations_progresses_thread()
+        self.simulations_progresses_ws_thread = QThread()
+        self.simulations_progresses_ws_sentinel = WsProgressesSentinel(self.api_client)
+        self.simulations_progresses_ws_sentinel.moveToThread(self.simulations_progresses_ws_thread)
+        self.simulations_progresses_ws_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
+        self.simulations_progresses_ws_sentinel.thread_failed.connect(self.on_fetching_simulations_progresses_failed)
+        self.simulations_progresses_ws_thread.started.connect(self.simulations_progresses_ws_sentinel.run)
+        self.simulations_progresses_ws_thread.start()
 
     def initialize_simulation_overview(self):
         """Initialization of the Simulation Overview window."""

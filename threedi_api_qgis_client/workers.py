@@ -5,6 +5,8 @@ import requests
 from time import sleep
 from qgis.PyQt.QtCore import QObject, pyqtSignal, pyqtSlot
 from openapi_client import ApiException
+
+from threedi_api_qgis_client.api_calls.ws_qt import ClientWS
 from .api_calls.threedi_calls import ThreediCalls
 
 
@@ -106,3 +108,51 @@ class DownloadProgressWorker(QObject):
         if self.success is True:
             self.download_progress.emit(self.FINISHED)
             self.thread_finished.emit(finished_message)
+
+
+class WsProgressesSentinel(QObject):
+    """Worker object that will be moved to a separate thread and will check progresses of the running simulations."""
+    # thread_finished = pyqtSignal(str)
+    # thread_failed = pyqtSignal(str)
+    # progresses_fetched = pyqtSignal(dict)
+    #
+    # DELAY = 5
+    # SIMULATIONS_REFRESH_TIME = 300
+
+    def __init__(self, api_client):
+        super().__init__()
+        self.api_client = api_client
+        self.simulations_list = []
+        # self.refresh_at_step = int(self.SIMULATIONS_REFRESH_TIME / self.DELAY)
+        self.progresses = None
+        self.thread_active = True
+
+    @pyqtSlot()
+    def run(self):
+        """Checking running simulations progresses."""
+        stop_message = "Checking running simulation stopped."
+        try:
+            token = self.api_client.configuration.access_token
+            tc = ClientWS(self, token)
+            counter = 0
+            while self.thread_active:
+                if counter == self.refresh_at_step:
+                    del self.simulations_list[:]
+                    counter -= self.refresh_at_step
+                self.progresses = tc.all_simulations_progress(self.simulations_list)
+                self.progresses_fetched.emit(self.progresses)
+                sleep(self.DELAY)
+                counter += 1
+        except ApiException as e:
+            error_body = e.body
+            error_details = error_body["details"] if "details" in error_body else error_body
+            error_msg = f"Error: {error_details}"
+            self.thread_failed.emit(error_msg)
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.thread_failed.emit(error_msg)
+        self.thread_finished.emit(stop_message)
+
+    def stop(self):
+        """Changing 'thread_active' flag to False."""
+        self.thread_active = False
