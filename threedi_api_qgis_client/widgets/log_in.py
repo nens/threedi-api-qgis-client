@@ -166,9 +166,10 @@ class LogInDialog(uicls_log, basecls_log):
             self.user = username
             self.fetch_msg.show()
             self.wait_widget.update()
+            self.log_pbar.setValue(20)
+            self.organisations = {org.unique_id: org for org in self.fetch_organisations()}
             self.log_pbar.setValue(40)
             self.repositories = {rep.slug: rep for rep in self.fetch_repositories()}
-            self.organisations = {org.unique_id: org for org in self.fetch_organisations()}
             self.log_pbar.setValue(50)
             self.simulations = self.fetch_simulations()
             self.log_pbar.setValue(60)
@@ -196,5 +197,6 @@ class LogInDialog(uicls_log, basecls_log):
             self.communication.show_error(error_msg)
 
     def set_organisation(self):
+        """Set picked organisation."""
         self.organisation = self.organisations_box.currentData()
         self.show_action_widget()

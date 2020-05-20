@@ -167,9 +167,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def initialize_simulation_results(self):
         """Initialization of the Simulations Results window."""
         self.simulation_results_dlg = SimulationResults(self)
-        repo_slug = self.current_model.repository_slug
-        repository = self.log_in_dlg.repositories[repo_slug]
-        self.organisation = self.log_in_dlg.organisations[repository.organisation]
+        self.organisation = self.log_in_dlg.organisation
         self.simulation_results_dlg.label_organisation.setText(self.organisation.name)
 
     def show_simulation_results(self):
