@@ -1,5 +1,6 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
+import json
 import os
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Tuple
@@ -7,8 +8,6 @@ from threedi_api_client import ThreediApiClient
 from openapi_client import (ApiClient, RepositoriesApi, SimulationsApi, RevisionsApi, OrganisationsApi,
                             ThreedimodelsApi, Repository, Simulation, Action, Progress, Revision, ThreediModel,
                             ConstantRain, TimeseriesRain, Organisation, CurrentStatus, ResultFile, Download)
-
-from threedi_api_qgis_client.api_calls.wbsocket_clinet import WebsocketClient
 
 
 def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiClient:
@@ -169,7 +168,32 @@ class ThreediCalls:
         organisations = response.results
         return organisations
 
-    def active_simulations(self):
-        token = self.api_client.configuration.access_token
-        ws_client = WebsocketClient(token)
-        return ws_client.listen()
+progresses = {}
+def all_simulations_progress_web_socket(data): #-> Dict[int, Tuple[Simulation, CurrentStatus, Progress]]:
+    """Get all simulations with statuses and progresses."""
+    # api = SimulationsApi(self.api_client)
+    data = json.loads(data)
+    print(data)
+    if data.get("type") == "active-simulations":
+        simulations = data.get("data")
+        for id, sim in simulations.items():
+            simulation = Simulation(slug=sim.get("simulation_slug"), uuid=sim.get("uuid"), name=sim.get("name"), created=sim.get("date_created"), organisation_name=sim.get("organisation_name"), user=sim.get("user_name"), duration=sim.get("duration"), id=id)
+            current_status = CurrentStatus(sim.get("id"), sim.get("status"), sim.get("created"), sim.get("time"), sim.get("paused"))
+            status_name = sim.get("status")
+            status_time = sim.get("duration")
+            if status_time is None:
+                status_time = 0
+            if status_name == "initialized":
+                sim_progress = Progress(0, sim.get("progress"))
+            else:
+                sim_progress = Progress(percentage=0, time=status_time)
+            progresses[id] = {"simulation": sim, "current_status": current_status, "progress": sim_progress}
+    if data.get("type") == "progress":
+        progresses[data["data"]["simulation_id"]]["progress"] = Progress(None, data["data"]["progress"])
+
+    if data.get("type") == "status":
+        progresses[data["data"]["simulation_id"]]["current_status"] = data["data"]["status"]
+
+    print(progresses)
+
+    # return progresses

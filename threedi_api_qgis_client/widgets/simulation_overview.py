@@ -31,6 +31,7 @@ class SimulationOverview(uicls, basecls):
         self.tv_model = None
         self.setup_view_model()
         self.parent_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_progress)
+        self.parent_dock.simulations_progresses_ws_sentinel.progresses_fetched.connect(self.update_progress)
         self.pb_new_sim.clicked.connect(self.new_simulation)
         self.pb_stop_sim.clicked.connect(self.stop_simulation)
 
@@ -58,6 +59,37 @@ class SimulationOverview(uicls, basecls):
     def update_progress(self, progresses):
         """Updating progress bars in the running simulations list."""
         for sim_id, (sim, status, progress) in progresses.items():
+            status_name = status.name
+            if status_name != "initialized":
+                continue
+            if sim_id not in self.simulations_keys:
+                self.add_simulation_to_model(sim, status, progress)
+        row_count = self.tv_model.rowCount()
+        for row_idx in range(row_count):
+            name_item = self.tv_model.item(row_idx, 0)
+            sim_id = name_item.data(Qt.UserRole)
+            if sim_id in self.simulations_without_progress or sim_id not in progresses:
+                continue
+            progress_item = self.tv_model.item(row_idx, self.PROGRESS_COLUMN_IDX)
+            sim, new_status, new_progress = progresses[sim_id]
+            status_name = new_status.name
+            if status_name == "stopped" or status_name == "crashed":
+                old_status, old_progress = progress_item.data(PROGRESS_ROLE)
+                progress_item.setData((new_status, old_progress), PROGRESS_ROLE)
+                self.simulations_without_progress.add(sim_id)
+            else:
+                progress_item.setData((new_status, new_progress), PROGRESS_ROLE)
+            if status_name == "finished":
+                self.simulations_without_progress.add(sim_id)
+                msg = f"Simulation {sim.name} finished!"
+                self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
+
+    def update_progress_from_ws(self, progresses):
+        """Updating progress bars in the running simulations list."""
+        for sim_id, data in progresses.items():
+            sim = data.get("simulation")
+            status = data.get("current_status")
+            progress = data.get("progress")
             status_name = status.name
             if status_name != "initialized":
                 continue
