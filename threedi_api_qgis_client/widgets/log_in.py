@@ -1,6 +1,5 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
-import asyncio
 import os
 from time import sleep
 from qgis.PyQt import uic
@@ -160,8 +159,8 @@ class LogInDialog(uicls_log, basecls_log):
             self.show_wait_widget()
             self.fetch_msg.hide()
             self.done_msg.hide()
-            self.le_user.setText('marcel.polacek')
-            self.le_pass.setText('Initial01')
+            self.le_user.setText('')
+            self.le_pass.setText('')
             username = self.le_user.text()
             password = self.le_pass.text()
             self.le_user.setText('')
@@ -190,13 +189,6 @@ class LogInDialog(uicls_log, basecls_log):
             else:
                 self.organisation = next(iter(self.organisations.values()))
                 self.show_action_widget()
-            # print("xxx")
-            # tc2 = ThreediCalls(self.api_client)
-            # # asyncio.run(tc2.active_simulations())
-            # loop = asyncio.get_event_loop()
-            # result = loop.run_until_complete(tc2.active_simulations())
-            # print("yyy")
-
         except ApiException as e:
             self.close()
             error_body = e.body
