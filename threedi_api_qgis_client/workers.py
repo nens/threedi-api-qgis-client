@@ -4,10 +4,11 @@ import json
 import os
 import requests
 from time import sleep
+
+from dateutil.parser import parse
 from qgis.PyQt.QtCore import QObject, pyqtSignal, pyqtSlot
 from openapi_client import ApiException, Simulation, CurrentStatus, Progress
 
-# from threedi_api_qgis_client.api_calls.websocket_client import WebsocketClient
 from threedi_api_qgis_client.api_calls.ws_qt import ClientWS
 from .api_calls.threedi_calls import ThreediCalls
 
@@ -121,6 +122,8 @@ class WsProgressesSentinel(QObject):
     def __init__(self, api_client):
         super().__init__()
         self.api_client = api_client
+        self.tc = ThreediCalls(self.api_client)
+
         self.simulations_list = []
         self.progresses = None
         self.thread_active = True
@@ -129,36 +132,15 @@ class WsProgressesSentinel(QObject):
     @pyqtSlot()
     def run(self):
         """Checking running simulations progresses."""
-        stop_message = "Checking running simulation stopped."
-        # try:
         token = self.api_client.configuration.access_token
         ws_client = ClientWS(self, self.all_simulations_progress_web_socket, token)
-
-            # return ws_client.listen()
-            # while self.thread_active:
-            #     # if counter == self.refresh_at_step:
-            #     #     del self.simulations_list[:]
-            #     #     counter -= self.refresh_at_step
-            #     # self.progresses = tc.all_simulations_progress(self.simulations_list)
-            #     ws_client.listen()
-            #     self.progresses_fetched.emit(self.progresses)
-            #     sleep(self.DELAY)
-        # except ApiException as e:
-        #     error_body = e.body
-        #     error_details = error_body["details"] if "details" in error_body else error_body
-        #     error_msg = f"Error: {error_details}"
-        #     self.thread_failed.emit(error_msg)
-        # except Exception as e:
-        #     error_msg = f"Error: {e}"
-        #     self.thread_failed.emit(error_msg)
-        # self.thread_finished.emit(stop_message)
 
     def stop(self):
         """Changing 'thread_active' flag to False."""
         self.thread_active = False
 
-    def all_simulations_progress_web_socket(self, data):  # -> Dict[int, Tuple[Simulation, CurrentStatus, Progress]]:
-        """Get all simulations with statuses and progresses."""
+    def all_simulations_progress_web_socket(self, data):
+        """Get all simulations progresses."""
         data = json.loads(data)
         print(data)
         # my code which demonstrate progress bar update by websocket
@@ -167,26 +149,25 @@ class WsProgressesSentinel(QObject):
             self.progresses.clear()
             for id, sim in simulations.items():
                 sim = json.loads(sim)
-                print(sim)
                 simulation = Simulation(slug=sim.get("simulation_slug"), uuid=sim.get("uuid"), name=sim.get("name"),
-                                        created=sim.get("date_created"), start_datetime=sim.get("date_created"),  organisation_name=sim.get("organisation_name"), organisation=sim.get("organisation_name"),
+                                        created=sim.get("date_created"), start_datetime=parse(sim.get("date_created")), organisation_name=sim.get("organisation_name"), organisation=sim.get("organisation_name"),
                                         user=sim.get("user_name"), duration=sim.get("duration"), id=id, threedimodel="xxx")
-                current_status = CurrentStatus(id, sim.get("status"), sim.get("date_created"), sim.get("duration"),
-                                               False)
-                status_name = sim.get("status")
-                status_time = sim.get("duration")
+
+                current_status = self.tc.simulation_current_status(id)
+                status_name = current_status.name
+                status_time = current_status.time
                 if status_time is None:
                     status_time = 0
                 if status_name == "initialized":
                     sim_progress = Progress(0, sim.get("progress"))
                 else:
                     sim_progress = Progress(percentage=0, time=status_time)
-                self.progresses[id] = {"simulation": simulation, "current_status": current_status, "progress": sim_progress}
+                self.progresses[int(id)] = {"simulation": simulation, "current_status": current_status, "progress": sim_progress}
         if data.get("type") == "progress":
-            self.progresses[str(data["data"]["simulation_id"])]["progress"] = Progress(0, data["data"]["progress"])
+            self.progresses[data["data"]["simulation_id"]]["progress"] = Progress(0, data["data"]["progress"])
 
         if data.get("type") == "status":
-            self.progresses[str(data["data"]["simulation_id"])]["current_status"] = CurrentStatus(data["data"]["simulation_id"], data["data"]["status"], "2.2.2020", 0, False) #data["data"]["status"]
+            self.progresses[data["data"]["simulation_id"]]["current_status"].name = data["data"]["status"]
 
         result = dict()
         for id, item in self.progresses.items():

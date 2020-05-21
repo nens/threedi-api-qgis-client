@@ -31,6 +31,7 @@ class SimulationResults(uicls, basecls):
         self.last_progress_item = None
         self.setup_view_model()
         self.parent_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_finished_list)
+        self.parent_dock.simulations_progresses_ws_sentinel.progresses_fetched.connect(self.update_finished_list)
         self.pb_cancel.clicked.connect(self.close)
         self.pb_download.clicked.connect(self.download_results)
         self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_download_results)
