@@ -159,8 +159,6 @@ class LogInDialog(uicls_log, basecls_log):
             self.show_wait_widget()
             self.fetch_msg.hide()
             self.done_msg.hide()
-            self.le_user.setText('')
-            self.le_pass.setText('')
             username = self.le_user.text()
             password = self.le_pass.text()
             self.le_user.setText('')
