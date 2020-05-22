@@ -7,7 +7,7 @@ from time import sleep
 
 from dateutil.parser import parse
 from qgis.PyQt.QtCore import QObject, pyqtSignal, pyqtSlot
-from openapi_client import ApiException, Simulation, CurrentStatus, Progress
+from openapi_client import ApiException, Simulation, Progress
 
 from threedi_api_qgis_client.api_calls.ws_qt import ClientWS
 from .api_calls.threedi_calls import ThreediCalls
@@ -124,26 +124,23 @@ class WsProgressesSentinel(QObject):
         self.api_client = api_client
         self.tc = ThreediCalls(self.api_client)
 
-        self.simulations_list = []
-        self.progresses = None
-        self.thread_active = True
         self.progresses = {}
+        self.ws_client = None
 
     @pyqtSlot()
     def run(self):
         """Checking running simulations progresses."""
         token = self.api_client.configuration.access_token
-        ws_client = ClientWS(self, self.all_simulations_progress_web_socket, token)
+        self.ws_client = ClientWS(self, self.all_simulations_progress_web_socket, token)
 
     def stop(self):
-        """Changing 'thread_active' flag to False."""
-        self.thread_active = False
+        """Close websocket client"""
+        if self.ws_client is not None:
+            self.ws_client.Close()
 
     def all_simulations_progress_web_socket(self, data):
-        """Get all simulations progresses."""
+        """Get all simulations progresses by websocket."""
         data = json.loads(data)
-        print(data)
-        # my code which demonstrate progress bar update by websocket
         if data.get("type") == "active-simulations" or data.get("type") == "active-simulation":
             simulations = data.get("data")
             self.progresses.clear()
@@ -173,5 +170,4 @@ class WsProgressesSentinel(QObject):
         for id, item in self.progresses.items():
             result[id] = (item.get("simulation"), item.get("current_status"), item.get("progress"))
         self.progresses_fetched.emit(result)
-        # end of code
 

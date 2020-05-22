@@ -29,7 +29,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulations_progresses_thread = None
         self.simulations_progresses_sentinel = None
         self.simulations_progresses_ws_sentinel = None
-        self.simulations_progresses_ws_thread = None
         self.api_client = None
         self.threedi_models = None
         self.current_model = None
@@ -89,6 +88,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulation_results_dlg is not None:
             self.simulation_results_dlg.terminate_download_thread()
             self.simulation_results_dlg = None
+        if self.simulations_progresses_ws_sentinel is not None:
+            self.simulations_progresses_ws_sentinel.close()
         self.log_in_dlg = None
         self.api_client = None
         self.current_model = None
