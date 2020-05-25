@@ -42,6 +42,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/nens/threedi-api-qgis-client',
-    version='1.0.0',
+    version='1.0.1.dev0',
     zip_safe=False,
 )
