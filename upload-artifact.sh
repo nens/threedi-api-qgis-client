@@ -9,9 +9,6 @@ VERSION=$(grep "^version" ./threedi_api_qgis_client/metadata.txt | cut -d= -f2)
 ARTIFACT=threedi_api_qgis_client_${VERSION}.zip
 PROJECT=threedi-api-qgis-client
 
-# Rename generated threedi_api_qgis_client.zip to include version number.
-cp threedi_api_qgis_client.zip ${ARTIFACT}
-
 curl -X POST \
      --retry 3 \
      -H "Content-Type: multipart/form-data" \
