@@ -13,3 +13,5 @@ pytest-runner==5.1
 pyqtgraph==0.10.0
 python-dateutil==2.8.1
 requests==2.23.0
+zest.releaser==6.20.1
+qgispluginreleaser==1.0
