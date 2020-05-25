@@ -22,7 +22,7 @@ if __name__ == "__main__":
     plugin_dirname = "threedi_api_qgis_client"
     plugin_path = os.path.join(this_dir, plugin_dirname)
     plugin_version = get_version(plugin_path)
-    zip_filename = f"{plugin_dirname}_{plugin_version}"
+    zip_filename = f"{plugin_dirname}.{plugin_version}"
     plugin_zip_path = os.path.join(this_dir, zip_filename)
     shutil.make_archive(plugin_zip_path, 'zip', this_dir, plugin_dirname)
     print('ZIPPING PLUGIN FINISHED')
