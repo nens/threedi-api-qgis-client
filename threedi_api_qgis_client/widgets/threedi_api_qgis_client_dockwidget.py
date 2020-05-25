@@ -10,7 +10,7 @@ from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
 from ..ui_utils import set_icon
 from ..communication import UICommunication
-from ..workers import SimulationsProgressesSentinel, WsProgressesSentinel
+from ..workers import WSProgressesSentinel
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, 'ui', 'threedi_api_qgis_client_dockwidget_base.ui'))
@@ -28,7 +28,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.communication = UICommunication(self.iface, "3Di MI", self.lv_log)
         self.simulations_progresses_thread = None
         self.simulations_progresses_sentinel = None
-        self.simulations_progresses_ws_sentinel = None
         self.api_client = None
         self.threedi_models = None
         self.current_model = None
@@ -76,7 +75,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.label_rev.setText(f"{revision.number}")
         self.label_db.setText(self.current_model.model_ini)
         self.initialize_simulations_progresses_thread()
-        self.initialize_simulations_ws_thread()
         self.initialize_simulation_overview()
         self.initialize_simulation_results()
 
@@ -88,8 +86,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulation_results_dlg is not None:
             self.simulation_results_dlg.terminate_download_thread()
             self.simulation_results_dlg = None
-        if self.simulations_progresses_ws_sentinel is not None:
-            self.simulations_progresses_ws_sentinel.close()
         self.log_in_dlg = None
         self.api_client = None
         self.current_model = None
@@ -120,7 +116,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulations_progresses_thread is not None:
             self.terminate_fetching_simulations_progresses_thread()
         self.simulations_progresses_thread = QThread()
-        self.simulations_progresses_sentinel = SimulationsProgressesSentinel(self.api_client)
+        self.simulations_progresses_sentinel = WSProgressesSentinel(self.api_client, self.current_model)
         self.simulations_progresses_sentinel.moveToThread(self.simulations_progresses_thread)
         self.simulations_progresses_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
         self.simulations_progresses_sentinel.thread_failed.connect(self.on_fetching_simulations_progresses_failed)
@@ -130,7 +126,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def stop_fetching_simulations_progresses(self):
         """Changing 'thread_active' flag inside background task that is fetching simulations progresses."""
         if self.simulations_progresses_sentinel is not None:
-            self.simulations_progresses_sentinel.stop()
+            self.simulations_progresses_sentinel.stop_listening()
 
     def on_fetching_simulations_progresses_finished(self, msg):
         """Method for cleaning up background thread after it sends 'thread_finished'."""
@@ -154,13 +150,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.communication.bar_info('Fetching simulations progresses worker terminated.')
             self.simulations_progresses_thread = None
             self.simulations_progresses_sentinel = None
-
-    def initialize_simulations_ws_thread(self):
-        """Initializing of the background thread."""
-        self.simulations_progresses_ws_sentinel = WsProgressesSentinel(self.api_client)
-        self.simulations_progresses_ws_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
-        self.simulations_progresses_ws_sentinel.thread_failed.connect(self.on_fetching_simulations_progresses_failed)
-        self.simulations_progresses_ws_sentinel.run()
 
     def initialize_simulation_overview(self):
         """Initialization of the Simulation Overview window."""

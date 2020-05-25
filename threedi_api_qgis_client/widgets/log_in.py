@@ -6,9 +6,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from openapi_client import ApiException
-
-from threedi_api_qgis_client.api_calls.ws_qt import ClientWS
-from ..api_calls.threedi_calls import get_api_client, ThreediCalls, all_simulations_progress_web_socket
+from ..api_calls.threedi_calls import get_api_client, ThreediCalls
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, 'ui', 'sim_log_in.ui'))
@@ -16,7 +14,6 @@ uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, 'ui', 'sim_log_in
 
 class LogInDialog(uicls_log, basecls_log):
     """Dialog with widgets and methods used in logging process."""
-    API_HOST = "https://api.3di.live/v3.0"
 
     def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
@@ -164,7 +161,7 @@ class LogInDialog(uicls_log, basecls_log):
             self.le_user.setText('')
             self.le_pass.setText('')
             self.log_pbar.setValue(20)
-            self.api_client = get_api_client(self.API_HOST, username, password)
+            self.api_client = get_api_client(username, password)
             self.user = username
             self.fetch_msg.show()
             self.wait_widget.update()

@@ -4,12 +4,11 @@ import json
 import os
 import requests
 from time import sleep
-
 from dateutil.parser import parse
-from qgis.PyQt.QtCore import QObject, pyqtSignal, pyqtSlot
+from qgis.PyQt import QtNetwork
+from qgis.PyQt.QtCore import QObject,  QUrl, QByteArray, pyqtSignal, pyqtSlot
+from PyQt5 import QtWebSockets
 from openapi_client import ApiException, Simulation, Progress
-
-from threedi_api_qgis_client.api_calls.ws_qt import ClientWS
 from .api_calls.threedi_calls import ThreediCalls
 
 
@@ -113,44 +112,80 @@ class DownloadProgressWorker(QObject):
             self.thread_finished.emit(finished_message)
 
 
-class WsProgressesSentinel(QObject):
-    """Worker object that will be moved to a separate thread and will check progresses of the running simulations."""
+class WSProgressesSentinel(QObject):
+    """
+    Worker object that will be moved to a separate thread and will check progresses of the running simulations.
+    This worker is fetching data through the websocket.
+    """
     thread_finished = pyqtSignal(str)
     thread_failed = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
 
-    def __init__(self, api_client):
+    WSS_HOST = "wss://api.3di.live/v3.0"
+
+    def __init__(self, api_client, current_model):
         super().__init__()
         self.api_client = api_client
-        self.tc = ThreediCalls(self.api_client)
-
-        self.progresses = {}
+        self.current_model = current_model
+        self.tc = None
         self.ws_client = None
+        self.progresses = {}
+        self.simulations_list = []
 
     @pyqtSlot()
     def run(self):
         """Checking running simulations progresses."""
-        token = self.api_client.configuration.access_token
-        self.ws_client = ClientWS(self, self.all_simulations_progress_web_socket, token)
+        try:
+            self.tc = ThreediCalls(self.api_client)
+            result = self.tc.all_simulations_progress(self.simulations_list)
+            self.progresses_fetched.emit(result)
+        except ApiException as e:
+            error_msg = f"Error: {e}"
+            self.thread_failed.emit(error_msg)
+            return
+        self.ws_client = QtWebSockets.QWebSocket("", QtWebSockets.QWebSocketProtocol.Version13, None)
+        self.ws_client.textMessageReceived.connect(self.all_simulations_progress_web_socket)
+        self.ws_client.error.connect(self.ws_error)
+        self.start_listening()
 
-    def stop(self):
-        """Close websocket client"""
+    def start_listening(self):
+        """Start listening of active simulations websocket."""
+        token = self.tc.api_client.configuration.access_token
+        req = QtNetwork.QNetworkRequest(QUrl(f"{self.WSS_HOST}/active-simulations/"))
+        req.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(f'Bearer {token}'))
+        self.ws_client.open(req)
+
+    def stop_listening(self):
+        """Close websocket client."""
         if self.ws_client is not None:
-            self.ws_client.Close()
+            self.ws_client.textMessageReceived.disconnect(self.all_simulations_progress_web_socket)
+            self.ws_client.error.disconnect(self.ws_error)
+            self.ws_client.close()
+            stop_message = "Checking running simulation stopped."
+            self.thread_finished.emit(stop_message)
+
+    def ws_error(self, error_code):
+        """Report errors from websocket."""
+        error_string = self.ws_client.errorString()
+        error_msg = f"Websocket error ({error_code}): {error_string}"
+        self.thread_failed.emit(error_msg)
 
     def all_simulations_progress_web_socket(self, data):
-        """Get all simulations progresses by websocket."""
+        """Get all simulations progresses through the websocket."""
         data = json.loads(data)
         if data.get("type") == "active-simulations" or data.get("type") == "active-simulation":
             simulations = data.get("data")
             self.progresses.clear()
-            for id, sim in simulations.items():
+            model_id = self.current_model.id
+            model_url = self.current_model.url
+            for sim_id, sim in simulations.items():
                 sim = json.loads(sim)
                 simulation = Simulation(slug=sim.get("simulation_slug"), uuid=sim.get("uuid"), name=sim.get("name"),
-                                        created=sim.get("date_created"), start_datetime=parse(sim.get("date_created")), organisation_name=sim.get("organisation_name"), organisation=sim.get("organisation_name"),
-                                        user=sim.get("user_name"), duration=sim.get("duration"), id=id, threedimodel="xxx")
-
-                current_status = self.tc.simulation_current_status(id)
+                                        created=sim.get("date_created"), start_datetime=parse(sim.get("date_created")),
+                                        organisation_name=sim.get("organisation_name"), user=sim.get("user_name"),
+                                        organisation=sim.get("organisation_name"), duration=sim.get("duration"),
+                                        threedimodel_id=model_id, threedimodel=model_url, id=sim_id)
+                current_status = self.tc.simulation_current_status(sim_id)
                 status_name = current_status.name
                 status_time = current_status.time
                 if status_time is None:
@@ -159,7 +194,8 @@ class WsProgressesSentinel(QObject):
                     sim_progress = Progress(0, sim.get("progress"))
                 else:
                     sim_progress = Progress(percentage=0, time=status_time)
-                self.progresses[int(id)] = {"simulation": simulation, "current_status": current_status, "progress": sim_progress}
+                self.progresses[int(sim_id)] = {"simulation": simulation, "current_status": current_status,
+                                                "progress": sim_progress}
         if data.get("type") == "progress":
             self.progresses[data["data"]["simulation_id"]]["progress"] = Progress(0, data["data"]["progress"])
 
@@ -167,7 +203,6 @@ class WsProgressesSentinel(QObject):
             self.progresses[data["data"]["simulation_id"]]["current_status"].name = data["data"]["status"]
 
         result = dict()
-        for id, item in self.progresses.items():
-            result[id] = (item.get("simulation"), item.get("current_status"), item.get("progress"))
+        for sim_id, item in self.progresses.items():
+            result[sim_id] = (item.get("simulation"), item.get("current_status"), item.get("progress"))
         self.progresses_fetched.emit(result)
-

@@ -592,7 +592,6 @@ class SimulationWizard(QWizard):
             tc = ThreediCalls(self.parent_dock.api_client)
             new_simulation = tc.new_simulation(name=name, threedimodel=threedimodel_id, start_datetime=start_datetime,
                                                organisation=organisation_uuid, duration=duration)
-            current_status = tc.simulation_current_status(new_simulation.id)
             sim_id = new_simulation.id
             ptype, poffset, pduration, punits, pvalues = self.p3.main_widget.get_precipitation_data()
             if ptype == CONSTANT_RAIN:
@@ -600,6 +599,7 @@ class SimulationWizard(QWizard):
             elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
                 tc.add_custom_precipitation(sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset)
             tc.make_action_on_simulation(sim_id, name='queue')
+            current_status = tc.simulation_current_status(sim_id)
             self.new_simulation = new_simulation
             self.new_simulation_status = current_status
             msg = f"Simulation {new_simulation.name} added to queue!"

@@ -31,7 +31,6 @@ class SimulationOverview(uicls, basecls):
         self.tv_model = None
         self.setup_view_model()
         self.parent_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_progress)
-        self.parent_dock.simulations_progresses_ws_sentinel.progresses_fetched.connect(self.update_progress)
         self.pb_new_sim.clicked.connect(self.new_simulation)
         self.pb_stop_sim.clicked.connect(self.stop_simulation)
 
@@ -60,7 +59,7 @@ class SimulationOverview(uicls, basecls):
         """Updating progress bars in the running simulations list."""
         for sim_id, (sim, status, progress) in progresses.items():
             status_name = status.name
-            if status_name != "initialized":
+            if status_name not in ["queued", "starting", "initialized", "postprocessing"]:
                 continue
             if sim_id not in self.simulations_keys:
                 self.add_simulation_to_model(sim, status, progress)
@@ -83,7 +82,6 @@ class SimulationOverview(uicls, basecls):
                 self.simulations_without_progress.add(sim_id)
                 msg = f"Simulation {sim.name} finished!"
                 self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
-
 
     def new_simulation(self):
         """Opening a wizard which allows defining and running new simulations."""
