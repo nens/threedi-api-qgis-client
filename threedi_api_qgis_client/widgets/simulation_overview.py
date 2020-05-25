@@ -59,7 +59,7 @@ class SimulationOverview(uicls, basecls):
         """Updating progress bars in the running simulations list."""
         for sim_id, (sim, status, progress) in progresses.items():
             status_name = status.name
-            if status_name != "initialized":
+            if status_name not in ["queued", "starting", "initialized", "postprocessing"]:
                 continue
             if sim_id not in self.simulations_keys:
                 self.add_simulation_to_model(sim, status, progress)

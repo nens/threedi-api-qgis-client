@@ -61,7 +61,7 @@ class SimulationResults(uicls, basecls):
         delta = relativedelta(status.created, ThreediCalls.EXPIRATION_TIME)
         expires_item = QStandardItem(f"{delta.days} day(s)")
         progress_item = QStandardItem()
-        progress_item.setData(-1,  Qt.UserRole)
+        progress_item.setData(-1, Qt.UserRole)
         self.tv_model.insertRow(0, [sim_name_item, user_item, expires_item, progress_item])
         self.finished_simulations[sim_id] = simulation
         for i in range(self.PROGRESS_COLUMN_IDX):

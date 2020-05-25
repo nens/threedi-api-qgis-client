@@ -9,7 +9,7 @@ from openapi_client import (ApiClient, RepositoriesApi, SimulationsApi, Revision
                             ConstantRain, TimeseriesRain, Organisation, CurrentStatus, ResultFile, Download)
 
 
-def get_api_client(api_host: str, api_username: str, api_password: str) -> ApiClient:
+def get_api_client(api_username: str, api_password: str, api_host: str = "https://api.3di.live/v3.0") -> ApiClient:
     """Setup open_api client using username and password."""
     os.environ["API_HOST"] = api_host
     os.environ["API_USERNAME"] = api_username

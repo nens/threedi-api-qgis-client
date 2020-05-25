@@ -7,7 +7,7 @@ name=3Di API Client
 qgisMinimumVersion=3.4
 qgisMaximumVersion=3.99
 description=3Di API Client for QGIS
-version=1.0.1
+version=1.0.2
 author=Lutra Consulting for 3Di Water Management
 email=info@lutraconsulting.co.uk
 
@@ -22,6 +22,7 @@ repository=https://github.com/nens/threedi-api-qgis-client
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=<p>
+ <p>1.0.2 Checking active simulations through the dedicated websocket
  <p>0.6.1 Added organizations handling and upload button screen
 
 # Tags are comma separated with spaces allowed

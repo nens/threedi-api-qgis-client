@@ -10,7 +10,7 @@ from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
 from ..ui_utils import set_icon
 from ..communication import UICommunication
-from ..workers import SimulationsProgressesSentinel
+from ..workers import WSProgressesSentinel
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, 'ui', 'threedi_api_qgis_client_dockwidget_base.ui'))
@@ -116,7 +116,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulations_progresses_thread is not None:
             self.terminate_fetching_simulations_progresses_thread()
         self.simulations_progresses_thread = QThread()
-        self.simulations_progresses_sentinel = SimulationsProgressesSentinel(self.api_client)
+        self.simulations_progresses_sentinel = WSProgressesSentinel(self.api_client, self.current_model)
         self.simulations_progresses_sentinel.moveToThread(self.simulations_progresses_thread)
         self.simulations_progresses_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
         self.simulations_progresses_sentinel.thread_failed.connect(self.on_fetching_simulations_progresses_failed)
@@ -126,7 +126,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def stop_fetching_simulations_progresses(self):
         """Changing 'thread_active' flag inside background task that is fetching simulations progresses."""
         if self.simulations_progresses_sentinel is not None:
-            self.simulations_progresses_sentinel.stop()
+            self.simulations_progresses_sentinel.stop_listening()
 
     def on_fetching_simulations_progresses_finished(self, msg):
         """Method for cleaning up background thread after it sends 'thread_finished'."""

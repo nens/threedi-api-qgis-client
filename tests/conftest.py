@@ -3,7 +3,7 @@
 import datetime
 
 
-TEST_API_PARAMETERS = ('TEST_API', 'TEST_USERNAME', 'TEST_PASSWORD')
+TEST_API_PARAMETERS = ('TEST_USERNAME', 'TEST_PASSWORD', 'TEST_API')
 REPO_DATA_LIST = [
         {
             'id': 1,
