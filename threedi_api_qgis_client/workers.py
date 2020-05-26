@@ -1,12 +1,12 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
-import json
 import os
+import json
 import requests
 from time import sleep
 from dateutil.parser import parse
-from qgis.PyQt import QtNetwork
 from qgis.PyQt.QtCore import QObject,  QUrl, QByteArray, pyqtSignal, pyqtSlot
+from qgis.PyQt import QtNetwork
 from PyQt5 import QtWebSockets
 from openapi_client import ApiException, Simulation, Progress
 from .api_calls.threedi_calls import ThreediCalls
