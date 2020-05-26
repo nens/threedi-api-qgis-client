@@ -145,26 +145,26 @@ class WSProgressesSentinel(QObject):
             return
         self.ws_client = QtWebSockets.QWebSocket("", QtWebSockets.QWebSocketProtocol.Version13, None)
         self.ws_client.textMessageReceived.connect(self.all_simulations_progress_web_socket)
-        self.ws_client.error.connect(self.ws_error)
+        self.ws_client.error.connect(self.websocket_error)
         self.start_listening()
 
     def start_listening(self):
         """Start listening of active simulations websocket."""
         token = self.tc.api_client.configuration.access_token
-        req = QtNetwork.QNetworkRequest(QUrl(f"{self.WSS_HOST}/active-simulations/"))
-        req.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(f'Bearer {token}'))
-        self.ws_client.open(req)
+        ws_request = QtNetwork.QNetworkRequest(QUrl(f"{self.WSS_HOST}/active-simulations/"))
+        ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(f'Bearer {token}'))
+        self.ws_client.open(ws_request)
 
     def stop_listening(self):
         """Close websocket client."""
         if self.ws_client is not None:
             self.ws_client.textMessageReceived.disconnect(self.all_simulations_progress_web_socket)
-            self.ws_client.error.disconnect(self.ws_error)
+            self.ws_client.error.disconnect(self.websocket_error)
             self.ws_client.close()
             stop_message = "Checking running simulation stopped."
             self.thread_finished.emit(stop_message)
 
-    def ws_error(self, error_code):
+    def websocket_error(self, error_code):
         """Report errors from websocket."""
         error_string = self.ws_client.errorString()
         error_msg = f"Websocket error ({error_code}): {error_string}"
@@ -198,10 +198,8 @@ class WSProgressesSentinel(QObject):
                                                 "progress": sim_progress}
         if data.get("type") == "progress":
             self.progresses[data["data"]["simulation_id"]]["progress"] = Progress(0, data["data"]["progress"])
-
         if data.get("type") == "status":
             self.progresses[data["data"]["simulation_id"]]["current_status"].name = data["data"]["status"]
-
         result = dict()
         for sim_id, item in self.progresses.items():
             result[sim_id] = (item.get("simulation"), item.get("current_status"), item.get("progress"))
