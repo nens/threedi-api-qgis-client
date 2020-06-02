@@ -1,11 +1,15 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
+from distutils.command.install_egg_info import install_egg_info
+
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from qgis.PyQt.QtWidgets import QMessageBox
 from openapi_client import ApiException, Progress
+
+from threedi_api_qgis_client.widgets.simulation_init import SimulationInit
 from .wizard import SimulationWizard
 from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
 from ..api_calls.threedi_calls import ThreediCalls
@@ -31,7 +35,7 @@ class SimulationOverview(uicls, basecls):
         self.tv_model = None
         self.setup_view_model()
         self.parent_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_progress)
-        self.pb_new_sim.clicked.connect(self.new_simulation)
+        self.pb_new_sim.clicked.connect(self.new_wizard_init)
         self.pb_stop_sim.clicked.connect(self.stop_simulation)
 
     def setup_view_model(self):
@@ -83,9 +87,16 @@ class SimulationOverview(uicls, basecls):
                 msg = f"Simulation {sim.name} finished!"
                 self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
 
-    def new_simulation(self):
+    def new_wizard_init(self):
+        self.simulation_init_wizard = SimulationInit(self)
+        self.simulation_init_wizard.exec_()
+        int_conditions = self.simulation_init_wizard.initial_conditions
+        if self.simulation_init_wizard.open_wizard:
+            self.new_simulation(int_conditions)
+
+    def new_simulation(self, init_conditions):
         """Opening a wizard which allows defining and running new simulations."""
-        self.simulation_wizard = SimulationWizard(self.parent_dock)
+        self.simulation_wizard = SimulationWizard(self.parent_dock, init_conditions)
         self.simulation_wizard.exec_()
         new_simulation = self.simulation_wizard.new_simulation
         if new_simulation is not None:
