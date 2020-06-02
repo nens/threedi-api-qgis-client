@@ -1,7 +1,10 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
+import json
 import os
 import csv
+import pickle
+
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
@@ -9,7 +12,7 @@ from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, Qt
-from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
+from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog, QHBoxLayout
 from openapi_client import ApiException
 from ..ui_utils import icon_path, set_widget_background_color
 from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh
@@ -21,6 +24,9 @@ uicls_p1, basecls_p1 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page1.ui'))
 uicls_p2, basecls_p2 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page2.ui'))
 uicls_p3, basecls_p3 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page3.ui'))
 uicls_p4, basecls_p4 = uic.loadUiType(os.path.join(base_dir, 'ui', 'page4.ui'))
+uicls_breaches, basecls_breaches = uic.loadUiType(os.path.join(base_dir, 'ui', 'page_breaches.ui'))
+uicls_initial_conds, basecls_initial_conds = uic.loadUiType(os.path.join(base_dir, 'ui', 'initial_conditions.ui'))
+uicls_laterals, basecls_laterals = uic.loadUiType(os.path.join(base_dir, 'ui', 'laterals_page.ui'))
 
 CONSTANT_RAIN = "Constant"
 CUSTOM_RAIN = "Custom"
@@ -76,7 +82,7 @@ class NameWidget(uicls_p1, basecls_p1):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path('sim_wizard_p1.svg'))
+        self.svg_widget = QSvgWidget(icon_path('sim_wizard_name.svg'))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
@@ -90,7 +96,7 @@ class SimulationDurationWidget(uicls_p2, basecls_p2):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path('sim_wizard_p2.svg'))
+        self.svg_widget = QSvgWidget(icon_path('sim_wizard_duration.svg'))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
@@ -147,7 +153,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path('sim_wizard_p3.svg'))
+        self.svg_widget = QSvgWidget(icon_path('sim_wizard_precipitation.svg'))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
@@ -441,7 +447,7 @@ class SummaryWidget(uicls_p4, basecls_p4):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path('sim_wizard_p4.svg'))
+        self.svg_widget = QSvgWidget(icon_path('sim_wizard_initation.svg'))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
@@ -451,6 +457,8 @@ class SummaryWidget(uicls_p4, basecls_p4):
         self.plot_widget.setBackground(None)
         self.plot_widget.setFixedHeight(80)
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
+        self.template_widget.hide()
+        self.cb_save_template.stateChanged.connect(self.save_tamplate_state_changed)
 
     def plot_overview_precipitation(self):
         """Setting up precipitation plot."""
@@ -468,6 +476,150 @@ class SummaryWidget(uicls_p4, basecls_p4):
         first_tick_value, last_tick_value = ticks[0][0], ticks[-1][0]
         self.plot_widget.setXRange(first_tick_value, last_tick_value)
         self.plot_widget.setYRange(first_tick_value, max(height))
+
+    def save_tamplate_state_changed(self, value):
+        if value == 0:
+            self.template_widget.hide()
+        if value == 2:
+            self.template_widget.show()
+
+
+class BreachesWidget(uicls_breaches, basecls_breaches):
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        self.svg_widget = QSvgWidget(icon_path('sim_wizard_breaches.svg'))
+        self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMinimumWidth(700)
+        self.svg_lout.addWidget(self.svg_widget)
+        set_widget_background_color(self.svg_widget)
+        set_widget_background_color(self)
+
+
+class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
+    def __init__(self, parent_page, load_conditions=False):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        self.svg_widget = QSvgWidget(icon_path('sim_wizard_initial_cons.svg'))
+        self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMinimumWidth(700)
+        self.svg_lout.addWidget(self.svg_widget)
+        set_widget_background_color(self.svg_widget)
+        set_widget_background_color(self)
+        self.d1_widget.hide()
+        self.d2_widget.hide()
+        self.groundwater_widget.hide()
+        self.cb_1d.stateChanged.connect(self.d1_change_state)
+        self.cb_2d.stateChanged.connect(self.d2_change_state)
+        self.cb_groundwater.stateChanged.connect(self.groundwater_change_state)
+        if load_conditions:
+            self.load_conditions_widget.show()
+            self.default_init_widget.hide()
+            items = self.load_saved_templates()
+            self.cb_saved_states.addItems(items)
+        else:
+            self.load_conditions_widget.hide()
+            self.default_init_widget.show()
+
+    def d1_change_state(self, value):
+        if value == 0:
+            self.d1_widget.hide()
+        if value == 2:
+            self.d1_widget.show()
+
+    def load_saved_templates(self):
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "templates.json")
+        items = []
+        with open(path, 'a'):
+            os.utime(path, None)
+        with open(path, 'r+') as json_file:
+            data = []
+            if os.path.getsize(path):
+                data = json.load(json_file)
+            for name, temp in data.items():
+                items.append(name)
+        return items
+
+    def d2_change_state(self, value):
+        if value == 0:
+            self.d2_widget.hide()
+        if value == 2:
+            self.d2_widget.show()
+
+    def groundwater_change_state(self, value):
+        if value == 0:
+            self.groundwater_widget.hide()
+        if value == 2:
+            self.groundwater_widget.show()
+
+
+class LateralsWidget(uicls_laterals, basecls_laterals):
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        self.svg_widget = QSvgWidget(icon_path('sim_wizard_laterals.svg'))
+        self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMinimumWidth(700)
+        self.svg_lout.addWidget(self.svg_widget)
+        set_widget_background_color(self.svg_widget)
+        set_widget_background_color(self)
+        self._init_widget()
+        self._connect_signals()
+
+    def _init_widget(self):
+        self.overrule_widget.setVisible(False)
+        self.cb_type.addItem("1D")
+        self.cb_type.addItem("2D")
+
+    def _connect_signals(self):
+        self.checkBox_1.stateChanged.connect(self.overrule_value_canged)
+        self.pb_upload_1.clicked.connect(self.open_upload_dialog)
+        self.pb_add_row.clicked.connect(self.add_overule_row)
+        self.cb_type.currentIndexChanged.connect(self.selectionchange)
+
+    def selectionchange(self,index):
+        if index == 0:
+            self.laterals_layout.setText("Upload laterals for 1D:")
+        if index == 1:
+            self.laterals_layout.setText("Upload laterals for 2D:")
+
+    def open_upload_dialog(self, int):
+        last_folder = QSettings().value("threedi/last_precipitation_folder", os.path.expanduser("~"), type=str)
+        file_filter = "CSV (*.csv );;All Files (*)"
+        filename, __ = QFileDialog.getOpenFileName(self, "Precipitation Time Series", last_folder, file_filter)
+        if len(filename) == 0:
+            return
+        QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
+        time_series = []
+        with open(filename) as rain_file:
+            rain_reader = csv.reader(rain_file)
+        #     if self.cb_type.currentText() == "1D":
+        #         for row_id, id,  connection_node_id, timeseries in rain_reader:
+        #             # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
+        #             try:
+        #                 time_series.append([float(id) * units_multiplier, float(rain)])
+        #             except ValueError:
+        #                 continue
+        #     if self.cb_type.currentText() == "2D":
+        #         for x, y,  type, id, timeseries in rain_reader:
+        #             # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
+        #             try:
+        #                 time_series.append([float(time) * units_multiplier, float(rain)])
+        #             except ValueError:
+        #                 continue
+        # # self.custom_time_series = time_series
+
+    def overrule_value_canged(self, value):
+        if value == 0:
+            self.overrule_widget.setVisible(False)
+        if value == 2:
+            self.overrule_widget.setVisible(True)
+
+    def add_overule_row(self):
+        hl = QHBoxLayout()
 
 
 class NamePage(QWizardPage):
@@ -523,19 +675,68 @@ class SummaryPage(QWizardPage):
         self.adjustSize()
 
 
+class BreachesPage(QWizardPage):
+    """New simulation summary page."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = BreachesWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+
+class InitialConditionsPage(QWizardPage):
+    """New simulation summary page."""
+    def __init__(self, parent=None, load_conditions=False):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = InitialConditionsWidget(self, load_conditions=load_conditions)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+
+class LateralsPage(QWizardPage):
+    """New simulation summary page."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = LateralsWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+
 class SimulationWizard(QWizard):
     """New simulation wizard."""
-    def __init__(self, parent_dock, parent=None):
+    def __init__(self, parent_dock, init_conditions, parent=None):
         super().__init__(parent)
         self.setWizardStyle(QWizard.ClassicStyle)
         self.parent_dock = parent_dock
         self.p1 = NamePage(self)
         self.p2 = SimulationDurationPage(self)
-        self.p3 = PrecipitationPage(self)
         self.p4 = SummaryPage(self)
         self.addPage(self.p1)
         self.addPage(self.p2)
-        self.addPage(self.p3)
+        if init_conditions.include_initial_conditions:
+            self.init_conditions_page = InitialConditionsPage(self, load_conditions=init_conditions.load_from_saved_state)
+            self.addPage(self.init_conditions_page)
+        if init_conditions.include_laterals:
+            self.laterals_page = LateralsPage(self)
+            self.addPage(self.laterals_page)
+        if init_conditions.include_breanches:
+            self.breaches_page = BreachesPage(self)
+            self.addPage(self.breaches_page)
+        if init_conditions.include_precipitations:
+            self.p3 = PrecipitationPage(self)
+            self.addPage(self.p3)
         self.addPage(self.p4)
         self.currentIdChanged.connect(self.page_changed)
         self.setButtonText(QWizard.FinishButton, "Add to queue")
@@ -547,12 +748,13 @@ class SimulationWizard(QWizard):
         self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.resize(750, 500)
+        self.init_conditions = init_conditions
 
     def page_changed(self, page_id):
         """Extra pre-processing triggered by changes of the wizard pages."""
-        if page_id == 2:
+        if page_id == 2 and self.init_conditions.include_precipitations:
             self.p3.main_widget.plot_precipitation()
-        elif page_id == 3:
+        elif page_id == 3 and self.init_conditions.include_precipitations:
             self.p4.main_widget.plot_overview_precipitation()
             self.set_overview_name()
             self.set_overview_database()
@@ -589,12 +791,41 @@ class SimulationWizard(QWizard):
         start_datetime = datetime.utcnow()
         duration = self.p2.main_widget.calculate_simulation_duration()
         try:
+            ptype, poffset, pduration, punits, pvalues = None, None, None, None, None
+            if hasattr(self, 'p3'):
+                ptype, poffset, pduration, punits, pvalues = self.p3.main_widget.get_precipitation_data()
+            if self.p4.main_widget.cb_save_template:
+                template_name = self.p4.main_widget.template_name.text()
+                simulation_template = {}
+                simulation_template["template_name"] = template_name
+                simulation_template["name"] = name
+                simulation_template["threedimodel"] = threedimodel_id
+                simulation_template["organisation"] = organisation_uuid
+                simulation_template["ptype"] = ptype
+                simulation_template["poffset"] = poffset
+                simulation_template["pduration"] = pduration
+                simulation_template["punits"] = punits
+                simulation_template["pvalues"] = pvalues
+                path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "templates.json")
+
+                with open(path, 'a'):
+                    os.utime(path, None)
+                with open(path, 'r+') as json_file:
+                    data = {}
+                    if os.path.getsize(path):
+                        data = json.load(json_file)
+                    data[template_name] = simulation_template
+                    jsonf = json.dumps(data)
+                    json_file.seek(0)
+                    json_file.write(jsonf)
+                    json_file.truncate()
+
             tc = ThreediCalls(self.parent_dock.api_client)
             new_simulation = tc.new_simulation(name=name, threedimodel=threedimodel_id, start_datetime=start_datetime,
                                                organisation=organisation_uuid, duration=duration)
+
             current_status = tc.simulation_current_status(new_simulation.id)
             sim_id = new_simulation.id
-            ptype, poffset, pduration, punits, pvalues = self.p3.main_widget.get_precipitation_data()
             if ptype == CONSTANT_RAIN:
                 tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset)
             elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
