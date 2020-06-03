@@ -6,7 +6,8 @@ from typing import List, Dict, Tuple
 from threedi_api_client import ThreediApiClient
 from openapi_client import (ApiClient, RepositoriesApi, SimulationsApi, RevisionsApi, OrganisationsApi,
                             ThreedimodelsApi, Repository, Simulation, Action, Progress, Revision, ThreediModel,
-                            ConstantRain, TimeseriesRain, Organisation, CurrentStatus, ResultFile, Download)
+                            ConstantRain, TimeseriesRain, Organisation, CurrentStatus, ResultFile, Download, Breach,
+                            TimeseriesLateral, ArrivalTimePostProcessing, BasicPostProcessing, DamagePostProcessing)
 
 
 def get_api_client(api_username: str, api_password: str, api_host: str = "https://api.3di.live/v3.0") -> ApiClient:
@@ -140,6 +141,43 @@ class ThreediCalls:
         api = SimulationsApi(self.api_client)
         time_series_rain = api.simulations_events_rain_timeseries_create((str(simulation_pk)), rain_data)
         return time_series_rain
+
+    def add_breaches(self, simulation_pk: int, **data) -> Breach:
+        """Add Breach to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        breach = api.simulations_events_breaches_create((str(simulation_pk)), data)
+        return breach
+
+    def add_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
+        """Add lateral_timeseries to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        lateral_timeseries = api.simulations_events_lateral_timeseries_create((str(simulation_pk)), data)
+        return lateral_timeseries
+
+    def add_postprocessing_in_lizard_arrival(self, simulation_pk: int, **data) -> ArrivalTimePostProcessing:
+        """Add add_postprocessing_in_lizard_arrival to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        arrivalTimePostProcessing = api.simulations_results_post_processing_lizard_arrival_create((str(simulation_pk)), data)
+        return arrivalTimePostProcessing
+
+    def add_post_processing_lizard_basic(self, simulation_pk: int, **data) -> BasicPostProcessing:
+        """Add add_post_processing_lizard_basic to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        basicPostProcessing = api.simulations_results_post_processing_lizard_basic_create((str(simulation_pk)), data)
+        return basicPostProcessing
+
+    def add_post_processing_lizard_damage(self, simulation_pk: int, **data) -> DamagePostProcessing:
+        """Add add_post_processing_lizard_damage to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        basicPostProcessing = api.simulations_results_post_processing_lizard_damage_create((str(simulation_pk)), data)
+        return basicPostProcessing
+
+    def generate_saved_state_after_simulation(self, simulation_pk: int, **data) -> DamagePostProcessing:
+        """Add generate_saved_state_after_simulation to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        # todo call right api call simulations_create_saved_states_timed_create vs simulations_create_saved_states_stable_threshold_create
+        basicPostProcessing = api.simulations_create_saved_states_timed_create((str(simulation_pk)), data)
+        return basicPostProcessing
 
     def fetch_revisions(self) -> List[Revision]:
         """Fetch all Revisions available for current user."""

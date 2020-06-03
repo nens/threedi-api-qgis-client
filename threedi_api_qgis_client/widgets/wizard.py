@@ -595,6 +595,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
         time_series = []
         with open(filename) as rain_file:
+            # todo parse csv
             rain_reader = csv.reader(rain_file)
         #     if self.cb_type.currentText() == "1D":
         #         for row_id, id,  connection_node_id, timeseries in rain_reader:
@@ -826,6 +827,18 @@ class SimulationWizard(QWizard):
 
             current_status = tc.simulation_current_status(new_simulation.id)
             sim_id = new_simulation.id
+            if self.init_conditions.basic_processed_results:
+                # todo set input params
+                tc.add_post_processing_lizard_basic(sim_id, simulation=sim_id, scenario_name=None, process_basic_results=None, result_uuid=None)
+            if self.init_conditions.arrival_time_map:
+                # todo set input params
+                tc.add_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=None)
+            if self.init_conditions.damage_estimation:
+                # todo set input params
+                tc.add_post_processing_lizard_damage(sim_id, basic_post_processing=None, cost_type=None, flood_month=None, inundation_period=None, repair_time_infrastructure=None, repair_time_buildings=None)
+            if self.init_conditions.generate_saved_state:
+                # todo pass input params
+                tc.generate_saved_state_after_simulation(sim_id, )
             if ptype == CONSTANT_RAIN:
                 tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset)
             elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
