@@ -29,7 +29,13 @@ class SimulationInit(uicls, basecls):
         self.cb_damage_estimation.stateChanged.connect(self.damage_estimation_changed)
         self.pb_next.clicked.connect(self.start_wizard)
         self.pb_cancel.clicked.connect(self.close)
+        self.fill_comboboxes()
 
+    def fill_comboboxes(self):
+        self.dd_cost_type.addItems(["min", "avg", "max"])
+        self.dd_flood_month.addItems(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"])
+        self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
+        self.dd_simulation_difference.addItems(["precipitation", "breaches"])
 
     def multiple_simulations_changed(self, int):
         if int:
@@ -63,10 +69,10 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.include_initial_conditions = self.cb_conditions.isChecked()
         self.initial_conditions.load_from_saved_state = self.cb_load_saved_state.isChecked()
         self.initial_conditions.include_laterals = self.cb_laterals.isChecked()
-        self.initial_conditions.include_breanches = self.cb_breanches.isChecked()
+        self.initial_conditions.include_breaches = self.cb_breanches.isChecked()
         self.initial_conditions.include_precipitations = self.cb_precipitation.isChecked()
         self.initial_conditions.multiple_simulations = self.cb_multiple_simulations.isChecked()
-        self.initial_conditions.number_of_simulations = self.dd_number_of_simulation.currentText()
+        self.initial_conditions.number_of_simulations = int(self.dd_number_of_simulation.currentText())
         self.initial_conditions.simulations_difference = self.dd_simulation_difference.currentText()
 
         self.initial_conditions.generate_saved_state = self.cb_generate.isChecked()
@@ -88,7 +94,7 @@ class SimulationInitObject():
         self.include_initial_conditions = False
         self.load_from_saved_state = False
         self.include_laterals = False
-        self.include_breanches = False
+        self.include_breaches = False
         self.include_precipitations = False
         self.multiple_simulations = False
         self.number_of_simulations = 1

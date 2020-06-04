@@ -149,7 +149,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
     SECONDS_MULTIPLIERS = {'s': 1, 'mins': 60, 'hrs': 3600}
     DESIGN_TIMESTEP = 300
 
-    def __init__(self, parent_page):
+    def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
@@ -175,7 +175,14 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.widget_custom.hide()
         self.widget_design.hide()
         self.connect_signals()
+        self.values = dict()
         self.plot_precipitation()
+        if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "precipitation":
+            self.dd_simulation.addItems(["Simulation"+str(i) for i in range(1, initial_conditions.number_of_simulations + 1)])
+            self.simulation_widget.show()
+        else:
+            self.dd_simulation.addItem("Simulation1")
+            self.simulation_widget.hide()
 
     def connect_signals(self):
         """Connecting widgets signals."""
@@ -191,6 +198,64 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.cbo_design.currentIndexChanged.connect(self.set_design_time_series)
         self.start_after_design_u.currentIndexChanged.connect(self.sync_units)
         self.sp_start_after_design.valueChanged.connect(self.plot_precipitation)
+        self.dd_simulation.activated.connect(self.simulation_changed)
+
+    def write_values_into_dict(self):
+        simulation = self.dd_simulation.currentText()
+        precipitation_type = self.cbo_prec_type.currentText()
+        if precipitation_type == "Constant":
+            start_after = self.sp_start_after_constant.value()
+            start_after_units = self.start_after_constant_u.currentText()
+            stop_after = self.sp_stop_after_constant.value()
+            stop_after_units = self.stop_after_constant_u.currentText()
+            intensity = self.sp_intensity.value()
+            self.values[simulation] = {"precipitation_type": precipitation_type,
+                                  "start_after": start_after,
+                                  "start_after_units": start_after_units,
+                                  "stop_after": stop_after,
+                                  "stop_after_units": stop_after_units,
+                                  "intensity": intensity}
+        elif precipitation_type == "Custom":
+            start_after = self.sp_start_after_custom.value()
+            start_after_units = self.start_after_custom_u.currentText()
+            units = self.cbo_units.currentText()
+            time_series = self.custom_time_series
+            self.values[simulation] = {"precipitation_type": precipitation_type,
+                                       "start_after": start_after,
+                                       "start_after_units": start_after_units,
+                                       "units": units,
+                                       "time_series": time_series}
+        elif precipitation_type == "Design":
+            start_after = self.sp_start_after_design.value()
+            start_after_units = self.start_after_design_u.currentText()
+            design_number = self.cbo_design.currentText()
+            self.values[simulation] = {"precipitation_type": precipitation_type,
+                                       "start_after": start_after,
+                                       "start_after_units": start_after_units,
+                                       "design_number": design_number,
+                                       "time_series": self.design_time_series}
+
+    def simulation_changed(self):
+        vals = self.values.get(self.dd_simulation.currentText())
+        if vals and vals.get("precipitation_type") == "Constant":
+            self.cbo_prec_type.setCurrentText(vals.get("precipitation_type"))
+            self.sp_start_after_constant.setValue(vals.get("start_after"))
+            self.start_after_constant_u.setCurrentText(vals.get("start_after_units"))
+            self.sp_stop_after_constant.setValue(vals.get("stop_after"))
+            self.stop_after_constant_u.setCurrentText(vals.get("stop_after_units"))
+            self.sp_intensity.setValue(vals.get("intensity"))
+        elif vals and vals.get("precipitation_type") == "Custom":
+            self.cbo_prec_type.setCurrentText(vals.get("precipitation_type"))
+            self.sp_start_after_custom.setValue(vals.get("start_after"))
+            self.start_after_custom_u.setCurrentText(vals.get("start_after_units"))
+            self.cbo_units.setCurrentText(vals.get("units"))
+            self.custom_time_series = vals.get("time_series")
+        elif vals and vals.get("precipitation_type") == "Design":
+            self.cbo_prec_type.setCurrentText(vals.get("precipitation_type"))
+            self.sp_start_after_design.setValue(vals.get("start_after"))
+            self.start_after_design_u.setCurrentText(vals.get("start_after_units"))
+            self.cbo_design.setCurrentText(vals.get("design_number"))
+        self.plot_precipitation()
 
     def precipitation_changed(self, idx):
         """Changing widgets looks based on currently selected precipitation type."""
@@ -240,7 +305,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
 
     def refresh_duration(self):
         """Refreshing precipitation duration in seconds."""
-        self.precipitation_duration = self.get_precipitation_duration()
+        self.precipitation_duration = self.get_precipitation_duration(None)
 
     def duration_in_units(self):
         """Calculating duration in currently selected units."""
@@ -296,79 +361,82 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         intensity = self.sp_intensity.value()
         return intensity
 
-    def get_precipitation_offset(self):
+    def get_precipitation_offset(self, simulation):
         """Calculating precipitation offset in seconds."""
-        current_text = self.cbo_prec_type.currentText()
         to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
-        if current_text == CONSTANT_RAIN:
-            start = self.sp_start_after_constant.value()
-        elif current_text == CUSTOM_RAIN:
-            start = self.sp_start_after_custom.value()
-        elif current_text == DESIGN_RAIN:
-            start = self.sp_start_after_design.value()
+        data = self.values.get(simulation)
+        if data:
+            start = data.get("start_after")
+            offset = start * to_seconds_multiplier
+            return offset
         else:
             return 0.0
-        offset = start * to_seconds_multiplier
-        return offset
 
-    def get_precipitation_duration(self):
+    def get_precipitation_duration(self, simulation):
         """Calculating precipitation duration in seconds."""
-        current_text = self.cbo_prec_type.currentText()
-        if current_text == CONSTANT_RAIN:
-            to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
-            start = self.sp_start_after_constant.value()
-            end = self.sp_stop_after_constant.value()
-            start_in_seconds = start * to_seconds_multiplier
-            end_in_seconds = end * to_seconds_multiplier
-            simulation_duration = self.parent_page.parent_wizard.p2.main_widget.calculate_simulation_duration()
-            if start_in_seconds > simulation_duration:
-                start_in_seconds = simulation_duration
-            if end_in_seconds == 0 or end_in_seconds > simulation_duration:
-                end_in_seconds = simulation_duration
-            precipitation_duration = end_in_seconds - start_in_seconds
-            if precipitation_duration < 0:
-                precipitation_duration = 0
-        elif current_text == CUSTOM_RAIN:
-            end_in_seconds = self.custom_time_series[-1][0] if self.custom_time_series else 0
-            precipitation_duration = end_in_seconds
-        elif current_text == DESIGN_RAIN:
-            end_in_seconds = self.design_time_series[-1][0] if self.design_time_series else 0
-            precipitation_duration = end_in_seconds
-        else:
-            precipitation_duration = 0
-        return precipitation_duration
-
-    def get_precipitation_values(self):
-        """Calculating precipitation values in 'm/s'."""
-        current_text = self.cbo_prec_type.currentText()
-        if current_text == CONSTANT_RAIN:
-            values = mmh_to_ms(self.get_intensity())
-        elif current_text == CUSTOM_RAIN:
-            ts = self.custom_time_series
-            if self.cbo_units.currentText() == 'mm/h':
-                values = [[t, mmh_to_ms(v)] for t, v in ts]
+        if not simulation:
+            simulation = self.dd_simulation.currentText()
+        data = self.values.get(simulation)
+        if data:
+            current_text = data.get("precipitation_type")
+            if current_text == CONSTANT_RAIN:
+                to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
+                start = data.get("start_after")
+                end = data.get("stop_after")
+                start_in_seconds = start * to_seconds_multiplier
+                end_in_seconds = end * to_seconds_multiplier
+                simulation_duration = self.parent_page.parent_wizard.p2.main_widget.calculate_simulation_duration()
+                if start_in_seconds > simulation_duration:
+                    start_in_seconds = simulation_duration
+                if end_in_seconds == 0 or end_in_seconds > simulation_duration:
+                    end_in_seconds = simulation_duration
+                precipitation_duration = end_in_seconds - start_in_seconds
+                if precipitation_duration < 0:
+                    precipitation_duration = 0
+            elif current_text == CUSTOM_RAIN or current_text == DESIGN_RAIN:
+                end_in_seconds = data.get("time_series")[-1][0] if data.get("time_series") else 0
+                precipitation_duration = end_in_seconds
             else:
-                timestep = ts[1][0] - ts[0][0] if len(ts) > 1 else 1
-                values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, timestep))] for t, v in ts]
-        elif current_text == DESIGN_RAIN:
-            values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, self.DESIGN_TIMESTEP))] for t, v in self.design_time_series]
+                precipitation_duration = 0
+            return precipitation_duration
         else:
-            values = []
+            return 0
+
+    def get_precipitation_values(self, simulation):
+        """Calculating precipitation values in 'm/s'."""
+        data = self.values.get(simulation)
+        values = []
+        if data:
+            current_text = data.get("precipitation_type")
+            if current_text == CONSTANT_RAIN:
+                values = mmh_to_ms(data.get("intensity"))
+            elif current_text == CUSTOM_RAIN:
+                ts = data.get("time_series")
+                if data.get("units") == 'mm/h':
+                    values = [[t, mmh_to_ms(v)] for t, v in ts]
+                else:
+                    timestep = ts[1][0] - ts[0][0] if len(ts) > 1 else 1
+                    values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, timestep))] for t, v in ts]
+            elif current_text == DESIGN_RAIN:
+                values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, self.DESIGN_TIMESTEP))] for t, v in data.get("time_series")]
         return values
 
-    def get_precipitation_data(self):
+    def get_precipitation_data(self, simulation):
         """Getting all needed data for adding precipitation to the simulation."""
         precipitation_type = self.cbo_prec_type.currentText()
-        offset = self.get_precipitation_offset()
-        duration = self.get_precipitation_duration()
+        offset = self.get_precipitation_offset(simulation)
+        duration = self.get_precipitation_duration(simulation)
         units = "m/s"
-        values = self.get_precipitation_values()
+        values = self.get_precipitation_values(simulation)
         return precipitation_type, offset, duration, units, values
 
-    def constant_values(self):
+    def constant_values(self, simulation):
         """Getting plot values for the Constant precipitation."""
         x_values, y_values = [], []
-        intensity = self.get_intensity()
+        data = self.values.get(simulation)
+        intensity = 0
+        if data:
+            intensity = data.get("intensity")
         if intensity <= 0:
             return x_values, y_values
         duration_in_units = self.duration_in_units()
@@ -396,15 +464,22 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
             y_values.append(y)
         return x_values, y_values
 
-    def plot_precipitation(self):
+    def plot_precipitation(self, i=0, simulation=None):
         """Setting up precipitation plot."""
+        self.write_values_into_dict()
         self.refresh_duration()
         self.plot_widget.clear()
         self.plot_bar_graph = None
         self.plot_ticks = None
-        current_text = self.cbo_prec_type.currentText()
+
+        current_text = ""
+        if not simulation:
+            simulation = self.dd_simulation.currentText()
+        data = self.values.get(simulation)
+        if data:
+            current_text = data.get("precipitation_type")
         if current_text == CONSTANT_RAIN:
-            x_values, y_values = self.constant_values()
+            x_values, y_values = self.constant_values(simulation)
         elif current_text == CUSTOM_RAIN:
             x_values, y_values = self.custom_values()
         elif current_text == DESIGN_RAIN:
@@ -431,7 +506,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
             precipitation_values = y_values
         if current_text == CONSTANT_RAIN:
             self.total_precipitation = sum(mmh_to_mmtimestep(v, 1, self.current_units) for v in precipitation_values)
-        elif current_text == CUSTOM_RAIN and self.cbo_units.currentText() == 'mm/h':
+        elif current_text == CUSTOM_RAIN and data.get("units") == 'mm/h':
             self.total_precipitation = sum(mmh_to_mmtimestep(v, timestep, self.current_units)
                                            for v in precipitation_values)
         else:
@@ -443,7 +518,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
 
 class SummaryWidget(uicls_p4, basecls_p4):
     """Widget for Summary page."""
-    def __init__(self, parent_page):
+    def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
@@ -459,10 +534,39 @@ class SummaryWidget(uicls_p4, basecls_p4):
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
         self.template_widget.hide()
         self.cb_save_template.stateChanged.connect(self.save_tamplate_state_changed)
+        self.dd_simulation.activated.connect(self.simulation_change)
+        self.initial_conditions = initial_conditions
+        if initial_conditions.multiple_simulations:
+            self.simulation_widget.show()
+            self.dd_simulation.addItems(["Simulation"+str(i) for i in range(1, initial_conditions.number_of_simulations + 1)])
+        else:
+            self.dd_simulation.addItem("Simulation1")
+            self.simulation_widget.hide()
+
+    def simulation_change(self):
+        if self.initial_conditions.simulations_difference == "precipitation" and self.initial_conditions.include_precipitations:
+            data = self.parent_page.parent_wizard.p3.main_widget.values.get(self.dd_simulation.currentText())
+            self.plot_overview_precipitation()
+            if data:
+                type = data.get("precipitation_type")
+                total_prec = self.parent_page.parent_wizard.p3.main_widget.total_precipitation
+                self.sim_prec_type.setText(type)
+                self.sim_prec_total.setText(str(total_prec))
+        elif self.initial_conditions.multiple_simulations == "breaches" and self.initial_conditions.include_breaches:
+            data = self.parent_page.parent_wizard.breaches_page.main_widget.values.get(self.dd_simulation.currentText())
+            if data:
+                breache_id = data.get("breache_id")
+                duration = data.get("duration")
+                self.sim_prec_type.setText(breache_id)
+                self.sim_prec_total.setText(str(duration))
+
+        if not self.parent_page.parent_wizard.p3:
+            return
 
     def plot_overview_precipitation(self):
         """Setting up precipitation plot."""
         self.plot_widget.clear()
+        self.parent_page.parent_wizard.p3.main_widget.plot_precipitation(simulation=self.dd_simulation.currentText())
         plot_bar_graph = self.parent_page.parent_wizard.p3.main_widget.plot_bar_graph
         plot_ticks = self.parent_page.parent_wizard.p3.main_widget.plot_ticks
         if plot_bar_graph is None:
@@ -485,7 +589,7 @@ class SummaryWidget(uicls_p4, basecls_p4):
 
 
 class BreachesWidget(uicls_breaches, basecls_breaches):
-    def __init__(self, parent_page):
+    def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
@@ -495,7 +599,37 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.svg_lout.addWidget(self.svg_widget)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
+        self.values = dict()
+        self.dd_breache_id.activated.connect(self.write_values_into_dict)
+        self.dd_simulation.activated.connect(self.simulation_changed)
+        self.dd_units.activated.connect(self.write_values_into_dict)
+        self.sb_duration.valueChanged.connect(self.write_values_into_dict)
+        self.sb_width.valueChanged.connect(self.write_values_into_dict)
+        if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
+            self.dd_simulation.addItems(["Simulation"+str(i) for i in range(1, initial_conditions.number_of_simulations + 1)])
+            self.simulation_widget.show()
+        else:
+            self.dd_simulation.addItem("Simulation1")
+            self.simulation_widget.hide()
 
+    def write_values_into_dict(self, i):
+        simulation = self.dd_simulation.currentText()
+        breache_id = self.dd_breache_id.currentText()
+        duration = self.sb_duration.value()
+        width = self.sb_width.value()
+        units = self.dd_units.currentText()
+        self.values[simulation] = {"breache_id": breache_id,
+                              "width": width,
+                              "duration": duration,
+                              "units": units}
+
+    def simulation_changed(self):
+        vals = self.values.get(self.dd_simulation.currentText())
+        if vals:
+            self.dd_breache_id.setCurrentText(vals.get("breache_id"))
+            self.sb_duration.setValue(vals.get("duration"))
+            self.sb_width.setValue(vals.get("width"))
+            self.dd_units.setCurrentText(vals.get("units"))
 
 class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
     def __init__(self, parent_page, load_conditions=False):
@@ -652,10 +786,10 @@ class SimulationDurationPage(QWizardPage):
 
 class PrecipitationPage(QWizardPage):
     """Precipitation definition page."""
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, initial_conditions=None):
         super().__init__(parent)
         self.parent_wizard = parent
-        self.main_widget = PrecipitationWidget(self)
+        self.main_widget = PrecipitationWidget(self, initial_conditions=initial_conditions)
         layout = QGridLayout()
         layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
@@ -665,10 +799,10 @@ class PrecipitationPage(QWizardPage):
 
 class SummaryPage(QWizardPage):
     """New simulation summary page."""
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, initial_conditions=None):
         super().__init__(parent)
         self.parent_wizard = parent
-        self.main_widget = SummaryWidget(self)
+        self.main_widget = SummaryWidget(self, initial_conditions=initial_conditions)
         layout = QGridLayout()
         layout.addWidget(self.main_widget)
         self.setLayout(layout)
@@ -678,10 +812,10 @@ class SummaryPage(QWizardPage):
 
 class BreachesPage(QWizardPage):
     """New simulation summary page."""
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, initial_conditions=None):
         super().__init__(parent)
         self.parent_wizard = parent
-        self.main_widget = BreachesWidget(self)
+        self.main_widget = BreachesWidget(self, initial_conditions=initial_conditions)
         layout = QGridLayout()
         layout.addWidget(self.main_widget)
         self.setLayout(layout)
@@ -723,7 +857,7 @@ class SimulationWizard(QWizard):
         self.parent_dock = parent_dock
         self.p1 = NamePage(self)
         self.p2 = SimulationDurationPage(self)
-        self.p4 = SummaryPage(self)
+        self.p4 = SummaryPage(self, initial_conditions=init_conditions)
         self.addPage(self.p1)
         self.addPage(self.p2)
         if init_conditions.include_initial_conditions:
@@ -732,11 +866,11 @@ class SimulationWizard(QWizard):
         if init_conditions.include_laterals:
             self.laterals_page = LateralsPage(self)
             self.addPage(self.laterals_page)
-        if init_conditions.include_breanches:
-            self.breaches_page = BreachesPage(self)
+        if init_conditions.include_breaches:
+            self.breaches_page = BreachesPage(self, initial_conditions=init_conditions)
             self.addPage(self.breaches_page)
         if init_conditions.include_precipitations:
-            self.p3 = PrecipitationPage(self)
+            self.p3 = PrecipitationPage(self, initial_conditions=init_conditions)
             self.addPage(self.p3)
         self.addPage(self.p4)
         self.currentIdChanged.connect(self.page_changed)
@@ -792,63 +926,65 @@ class SimulationWizard(QWizard):
         start_datetime = datetime.utcnow()
         duration = self.p2.main_widget.calculate_simulation_duration()
         try:
-            ptype, poffset, pduration, punits, pvalues = None, None, None, None, None
-            if hasattr(self, 'p3'):
-                ptype, poffset, pduration, punits, pvalues = self.p3.main_widget.get_precipitation_data()
-            if self.p4.main_widget.cb_save_template:
-                template_name = self.p4.main_widget.template_name.text()
-                simulation_template = {}
-                simulation_template["template_name"] = template_name
-                simulation_template["name"] = name
-                simulation_template["threedimodel"] = threedimodel_id
-                simulation_template["organisation"] = organisation_uuid
-                simulation_template["ptype"] = ptype
-                simulation_template["poffset"] = poffset
-                simulation_template["pduration"] = pduration
-                simulation_template["punits"] = punits
-                simulation_template["pvalues"] = pvalues
-                path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "templates.json")
+            simulation_templates = dict()
+            for simulation in range(1, self.init_conditions.number_of_simulations + 1):
+                ptype, poffset, pduration, punits, pvalues = None, None, None, None, None
+                if hasattr(self, 'p3'):
+                    ptype, poffset, pduration, punits, pvalues = self.p3.main_widget.get_precipitation_data("Simulation" + str(simulation))
+                if self.p4.main_widget.cb_save_template.isChecked():
+                    template_name = self.p4.main_widget.template_name.text()
+                    simulation_template = {}
+                    simulation_template["template_name"] = template_name
+                    simulation_template["name"] = name
+                    simulation_template["threedimodel"] = threedimodel_id
+                    simulation_template["organisation"] = organisation_uuid
+                    simulation_template["ptype"] = ptype
+                    simulation_template["poffset"] = poffset
+                    simulation_template["pduration"] = pduration
+                    simulation_template["punits"] = punits
+                    simulation_template["pvalues"] = pvalues
+                    simulation_templates[simulation] = simulation_template
+                    path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "templates.json")
 
-                with open(path, 'a'):
-                    os.utime(path, None)
-                with open(path, 'r+') as json_file:
-                    data = {}
-                    if os.path.getsize(path):
-                        data = json.load(json_file)
-                    data[template_name] = simulation_template
-                    jsonf = json.dumps(data)
-                    json_file.seek(0)
-                    json_file.write(jsonf)
-                    json_file.truncate()
+                    with open(path, 'a'):
+                        os.utime(path, None)
+                    with open(path, 'r+') as json_file:
+                        data = {}
+                        if os.path.getsize(path):
+                            data = json.load(json_file)
+                        data[template_name] = simulation_templates
+                        jsonf = json.dumps(data)
+                        json_file.seek(0)
+                        json_file.write(jsonf)
+                        json_file.truncate()
 
-            tc = ThreediCalls(self.parent_dock.api_client)
-            new_simulation = tc.new_simulation(name=name, threedimodel=threedimodel_id, start_datetime=start_datetime,
-                                               organisation=organisation_uuid, duration=duration)
+                tc = ThreediCalls(self.parent_dock.api_client)
+                new_simulation = tc.new_simulation(name=name, threedimodel=threedimodel_id, start_datetime=start_datetime,
+                                                   organisation=organisation_uuid, duration=duration)
 
-            current_status = tc.simulation_current_status(new_simulation.id)
-            sim_id = new_simulation.id
-            if self.init_conditions.basic_processed_results:
-                # todo set input params
-                tc.add_post_processing_lizard_basic(sim_id, simulation=sim_id, scenario_name=None, process_basic_results=None, result_uuid=None)
-            if self.init_conditions.arrival_time_map:
-                # todo set input params
-                tc.add_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=None)
-            if self.init_conditions.damage_estimation:
-                # todo set input params
-                tc.add_post_processing_lizard_damage(sim_id, basic_post_processing=None, cost_type=None, flood_month=None, inundation_period=None, repair_time_infrastructure=None, repair_time_buildings=None)
-            if self.init_conditions.generate_saved_state:
-                # todo pass input params
-                tc.generate_saved_state_after_simulation(sim_id, )
-            if ptype == CONSTANT_RAIN:
-                tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset)
-            elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
-                tc.add_custom_precipitation(sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset)
-            tc.make_action_on_simulation(sim_id, name='queue')
-            current_status = tc.simulation_current_status(sim_id)
-            self.new_simulation = new_simulation
-            self.new_simulation_status = current_status
-            msg = f"Simulation {new_simulation.name} added to queue!"
-            self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
+                current_status = tc.simulation_current_status(new_simulation.id)
+                sim_id = new_simulation.id
+                if self.init_conditions.basic_processed_results:
+                    # todo set input params
+                    tc.add_post_processing_lizard_basic(sim_id, simulation=sim_id, scenario_name=None, process_basic_results=None, result_uuid=None)
+                if self.init_conditions.arrival_time_map:
+                    # todo set input params
+                    tc.add_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=None)
+                if self.init_conditions.damage_estimation:
+                    # todo set input params
+                    tc.add_post_processing_lizard_damage(sim_id, basic_post_processing=None, cost_type=None, flood_month=None, inundation_period=None, repair_time_infrastructure=None, repair_time_buildings=None)
+                if self.init_conditions.generate_saved_state:
+                    # todo pass input params
+                    tc.generate_saved_state_after_simulation(sim_id, )
+                if ptype == CONSTANT_RAIN:
+                    tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset)
+                elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
+                    tc.add_custom_precipitation(sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset)
+                tc.make_action_on_simulation(sim_id, name='queue')
+                self.new_simulation = new_simulation
+                self.new_simulation_status = current_status
+                msg = f"Simulation {new_simulation.name} added to queue!"
+                self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
         except ApiException as e:
             self.new_simulation = None
             self.new_simulation_status = None
