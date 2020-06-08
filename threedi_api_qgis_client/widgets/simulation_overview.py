@@ -98,11 +98,12 @@ class SimulationOverview(uicls, basecls):
         """Opening a wizard which allows defining and running new simulations."""
         self.simulation_wizard = SimulationWizard(self.parent_dock, init_conditions)
         self.simulation_wizard.exec_()
-        new_simulation = self.simulation_wizard.new_simulation
-        if new_simulation is not None:
-            initial_status = self.simulation_wizard.new_simulation_status
-            initial_progress = Progress(percentage=0, time=new_simulation.duration)
-            self.add_simulation_to_model(new_simulation, initial_status, initial_progress)
+        new_simulations = self.simulation_wizard.new_simulations
+        if new_simulations is not None:
+            for sim in new_simulations:
+                initial_status = self.simulation_wizard.new_simulation_statuses.get(sim.id)
+                initial_progress = Progress(percentage=0, time=sim.duration)
+                self.add_simulation_to_model(sim, initial_status, initial_progress)
 
     def stop_simulation(self):
         """Sending request to shutdown currently selected simulation."""

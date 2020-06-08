@@ -148,6 +148,11 @@ class ThreediCalls:
         breach = api.simulations_events_breaches_create((str(simulation_pk)), data)
         return breach
 
+    def get_breaches_list(self, threedimodel_id):
+        api = ThreedimodelsApi(self.api_client)
+        breaches = api.threedimodels_potentialbreaches_list(threedimodel_id)
+        return breaches
+
     def add_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
         """Add lateral_timeseries to the given simulation."""
         api = SimulationsApi(self.api_client)

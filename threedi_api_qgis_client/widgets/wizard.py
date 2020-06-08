@@ -195,7 +195,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.pb_csv.clicked.connect(self.set_custom_time_series)
         self.start_after_custom_u.currentIndexChanged.connect(self.sync_units)
         self.sp_start_after_custom.valueChanged.connect(self.plot_precipitation)
-        self.cbo_design.currentIndexChanged.connect(self.set_design_time_series)
+        self.cbo_design.currentIndexChanged.connect(self.plot_precipitation)
         self.start_after_design_u.currentIndexChanged.connect(self.sync_units)
         self.sp_start_after_design.valueChanged.connect(self.plot_precipitation)
         self.dd_simulation.activated.connect(self.simulation_changed)
@@ -334,9 +334,12 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         self.custom_time_series = time_series
         self.plot_precipitation()
 
-    def set_design_time_series(self):
+    def set_design_time_series(self, i=0, simulation=None):
         """Setting time series based on selected design number."""
-        design_id = self.cbo_design.currentText()
+        if not simulation:
+            simulation = self.dd_simulation.currentText()
+        data = self.values.get(simulation)
+        design_id = data.get("design_number")
         # Make copy of the values and add 0.0 value at the end of series
         series = AREA_WIDE_RAIN[design_id][:]
         series.append(0.0)
@@ -354,12 +357,6 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
         # Design precipitation timestep is 300 seconds.
         timestep = self.DESIGN_TIMESTEP
         self.design_time_series = [[t, v] for t, v in zip(range(0, len(series)*timestep, timestep), series)]
-        self.plot_precipitation()
-
-    def get_intensity(self):
-        """Getting intensity value for the Constant precipitation type."""
-        intensity = self.sp_intensity.value()
-        return intensity
 
     def get_precipitation_offset(self, simulation):
         """Calculating precipitation offset in seconds."""
@@ -423,7 +420,10 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
 
     def get_precipitation_data(self, simulation):
         """Getting all needed data for adding precipitation to the simulation."""
-        precipitation_type = self.cbo_prec_type.currentText()
+        data = self.values.get(simulation)
+        precipitation_type = None
+        if data:
+            precipitation_type = data.get("precipitation_type")
         offset = self.get_precipitation_offset(simulation)
         duration = self.get_precipitation_duration(simulation)
         units = "m/s"
@@ -484,6 +484,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
             x_values, y_values = self.custom_values()
         elif current_text == DESIGN_RAIN:
             x_values, y_values = self.design_values()
+            self.set_design_time_series(simulation=simulation)
         else:
             return
         if len(x_values) < 2:
@@ -560,9 +561,6 @@ class SummaryWidget(uicls_p4, basecls_p4):
                 self.sim_prec_type.setText(breache_id)
                 self.sim_prec_total.setText(str(duration))
 
-        if not self.parent_page.parent_wizard.p3:
-            return
-
     def plot_overview_precipitation(self):
         """Setting up precipitation plot."""
         self.plot_widget.clear()
@@ -600,17 +598,26 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.values = dict()
+        self.breaches = dict()
         self.dd_breache_id.activated.connect(self.write_values_into_dict)
         self.dd_simulation.activated.connect(self.simulation_changed)
         self.dd_units.activated.connect(self.write_values_into_dict)
         self.sb_duration.valueChanged.connect(self.write_values_into_dict)
         self.sb_width.valueChanged.connect(self.write_values_into_dict)
+        self.fill_comboboxes()
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
             self.dd_simulation.addItems(["Simulation"+str(i) for i in range(1, initial_conditions.number_of_simulations + 1)])
             self.simulation_widget.show()
         else:
             self.dd_simulation.addItem("Simulation1")
             self.simulation_widget.hide()
+
+    def fill_comboboxes(self):
+        tc = ThreediCalls(self.parent_page.parent_wizard.parent_dock.api_client)
+        breaches = tc.get_breaches_list(self.parent_page.parent_wizard.parent_dock.current_model.id)
+        for breache in breaches.results:
+            self.breaches[breache.connected_pnt_id] = breache
+            self.dd_breache_id.addItem(str(breache.connected_pnt_id))
 
     def write_values_into_dict(self, i):
         simulation = self.dd_simulation.currentText()
@@ -619,6 +626,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         width = self.sb_width.value()
         units = self.dd_units.currentText()
         self.values[simulation] = {"breache_id": breache_id,
+                                   "breache": self.breaches.get(breache_id),
                               "width": width,
                               "duration": duration,
                               "units": units}
@@ -728,18 +736,20 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             return
         QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
         time_series = []
-        with open(filename) as rain_file:
+        with open(filename) as lateral_file:
             # todo parse csv
-            rain_reader = csv.reader(rain_file)
-        #     if self.cb_type.currentText() == "1D":
-        #         for row_id, id,  connection_node_id, timeseries in rain_reader:
-        #             # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
-        #             try:
-        #                 time_series.append([float(id) * units_multiplier, float(rain)])
-        #             except ValueError:
-        #                 continue
+            laterals_reader = csv.reader(lateral_file)
+            if self.cb_type.currentText() == "1D":
+                values = []
+                for row_id, id,  connection_node_id, timeseries in laterals_reader:
+                    # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
+                    try:
+                        values.append([float(s) for s in timeseries.split(",")])
+                        # time_series.append([float(id) * units_multiplier, float(rain)])
+                    except ValueError:
+                        continue
         #     if self.cb_type.currentText() == "2D":
-        #         for x, y,  type, id, timeseries in rain_reader:
+        #         for x, y,  type, id, timeseries in laterals_reader:
         #             # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
         #             try:
         #                 time_series.append([float(time) * units_multiplier, float(rain)])
@@ -877,8 +887,8 @@ class SimulationWizard(QWizard):
         self.setButtonText(QWizard.FinishButton, "Add to queue")
         self.finish_btn = self.button(QWizard.FinishButton)
         self.finish_btn.clicked.connect(self.run_new_simulation)
-        self.new_simulation = None
-        self.new_simulation_status = None
+        self.new_simulations = None
+        self.new_simulation_statuses = None
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -895,6 +905,10 @@ class SimulationWizard(QWizard):
             self.set_overview_database()
             self.set_overview_duration()
             self.set_overview_precipitation()
+        elif page_id == 3 and not self.init_conditions.include_precipitations and self.init_conditions.include_breaches:
+            self.set_overview_name()
+            self.set_overview_database()
+            self.set_overview_breaches()
 
     def set_overview_name(self):
         """Setting up simulation name label in the summary page."""
@@ -913,10 +927,19 @@ class SimulationWizard(QWizard):
 
     def set_overview_precipitation(self):
         """Setting up precipitation labels in the summary page."""
-        precipitation_type = self.p3.main_widget.cbo_prec_type.currentText()
+        precipitation_type = self.p3.main_widget.values.get("Simulation1").get("precipitation_type")
         total_precipitation = self.p3.main_widget.total_precipitation
         self.p4.main_widget.sim_prec_type.setText(precipitation_type)
         self.p4.main_widget.sim_prec_total.setText(f"{round(total_precipitation)} mm")
+
+    def set_overview_breaches(self):
+        self.p4.main_widget.sim_prec_type_l.setText("Breach ID")
+        self.p4.main_widget.sim_prec_total_l.setText("Duration breach")
+        breach_id = self.breaches_page.main_widget.values.get("Simulation1").get("breache_id")
+        duration_of_breache = self.breaches_page.main_widget.values.get("Simulation1").get("duration")
+        self.p4.main_widget.sim_prec_type.setText(breach_id)
+        self.p4.main_widget.sim_prec_total.setText(str(duration_of_breache))
+
 
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
@@ -927,6 +950,8 @@ class SimulationWizard(QWizard):
         duration = self.p2.main_widget.calculate_simulation_duration()
         try:
             simulation_templates = dict()
+            self.new_simulations = []
+            self.new_simulation_statuses = {}
             for simulation in range(1, self.init_conditions.number_of_simulations + 1):
                 ptype, poffset, pduration, punits, pvalues = None, None, None, None, None
                 if hasattr(self, 'p3'):
@@ -976,24 +1001,30 @@ class SimulationWizard(QWizard):
                 if self.init_conditions.generate_saved_state:
                     # todo pass input params
                     tc.generate_saved_state_after_simulation(sim_id, )
+                if self.init_conditions.include_breaches:
+                   # todo set input params
+                    tc.add_breaches(sim_id, url=None, potential_breach=None, line_id=None, duration_till_max_depth=None, maximum_breach_depth=None, levee_material=None, initial_width=None, discharge_coefficient_positive=None, discharge_coefficient_negative=None, simulation=None, offset=None, id=None, uid=None)
+                if self.init_conditions.include_laterals:
+                    # todo set input params
+                    tc.add_lateral_timeseries(sim_id, url=None, simulation=None, offset=None, interpolate=None, values=None, units=None, point=None, connection_node=None, state=None, state_detail=None, grid_id=None, id=None, uid=None)
                 if ptype == CONSTANT_RAIN:
                     tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset)
                 elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
                     tc.add_custom_precipitation(sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset)
                 tc.make_action_on_simulation(sim_id, name='queue')
-                self.new_simulation = new_simulation
-                self.new_simulation_status = current_status
+                self.new_simulations.append(new_simulation)
+                self.new_simulation_statuses[new_simulation.id] = current_status
                 msg = f"Simulation {new_simulation.name} added to queue!"
                 self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
         except ApiException as e:
-            self.new_simulation = None
-            self.new_simulation_status = None
+            self.new_simulations = None
+            self.new_simulation_statuses = None
             error_body = e.body
             error_details = error_body["details"] if "details" in error_body else error_body
             error_msg = f"Error: {error_details}"
             self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         except Exception as e:
-            self.new_simulation = None
-            self.new_simulation_status = None
+            self.new_simulations = None
+            self.new_simulation_statuses = None
             error_msg = f"Error: {e}"
             self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
