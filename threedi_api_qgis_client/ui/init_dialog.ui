@@ -170,7 +170,7 @@
               </font>
              </property>
              <property name="text">
-              <string>Period</string>
+              <string>Inundation period</string>
              </property>
             </widget>
            </item>
@@ -187,12 +187,6 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
-            <widget class="QComboBox" name="dd_period"/>
-           </item>
-           <item row="3" column="1">
-            <widget class="QComboBox" name="dd_infrastructure_time"/>
-           </item>
            <item row="4" column="0">
             <widget class="QLabel" name="label_9">
              <property name="font">
@@ -206,8 +200,44 @@
              </property>
             </widget>
            </item>
+           <item row="3" column="1">
+            <widget class="QSpinBox" name="sb_repair_infrastructure">
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::NoButtons</enum>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>240</number>
+             </property>
+            </widget>
+           </item>
            <item row="4" column="1">
-            <widget class="QComboBox" name="dd_buildings_time"/>
+            <widget class="QSpinBox" name="sb_repair_building">
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::NoButtons</enum>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>240</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QDoubleSpinBox" name="sb_period">
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::NoButtons</enum>
+             </property>
+             <property name="decimals">
+              <number>1</number>
+             </property>
+             <property name="minimum">
+              <double>1.000000000000000</double>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>

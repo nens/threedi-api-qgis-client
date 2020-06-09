@@ -13,7 +13,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog, QHBoxLayout
-from openapi_client import ApiException
+from openapi_client import ApiException, TimeseriesLateral
 from ..ui_utils import icon_path, set_widget_background_color
 from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh
 from ..api_calls.threedi_calls import ThreediCalls
@@ -182,6 +182,7 @@ class PrecipitationWidget(uicls_p3, basecls_p3):
             self.simulation_widget.show()
         else:
             self.dd_simulation.addItem("Simulation1")
+            self.write_values_into_dict()
             self.simulation_widget.hide()
 
     def connect_signals(self):
@@ -587,6 +588,8 @@ class SummaryWidget(uicls_p4, basecls_p4):
 
 
 class BreachesWidget(uicls_breaches, basecls_breaches):
+    SECONDS_MULTIPLIERS = {'s': 1, 'mins': 60, 'hrs': 3600}
+
     def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
         self.setupUi(self)
@@ -604,13 +607,13 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.dd_units.activated.connect(self.write_values_into_dict)
         self.sb_duration.valueChanged.connect(self.write_values_into_dict)
         self.sb_width.valueChanged.connect(self.write_values_into_dict)
-        self.fill_comboboxes()
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
             self.dd_simulation.addItems(["Simulation"+str(i) for i in range(1, initial_conditions.number_of_simulations + 1)])
             self.simulation_widget.show()
         else:
             self.dd_simulation.addItem("Simulation1")
             self.simulation_widget.hide()
+        self.fill_comboboxes()
 
     def fill_comboboxes(self):
         tc = ThreediCalls(self.parent_page.parent_wizard.parent_dock.api_client)
@@ -618,15 +621,16 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         for breache in breaches.results:
             self.breaches[breache.connected_pnt_id] = breache
             self.dd_breache_id.addItem(str(breache.connected_pnt_id))
+        self.write_values_into_dict()
 
-    def write_values_into_dict(self, i):
+    def write_values_into_dict(self, i=0):
         simulation = self.dd_simulation.currentText()
         breache_id = self.dd_breache_id.currentText()
         duration = self.sb_duration.value()
         width = self.sb_width.value()
         units = self.dd_units.currentText()
         self.values[simulation] = {"breache_id": breache_id,
-                                   "breache": self.breaches.get(breache_id),
+                                   "breache": self.breaches.get(int(breache_id)),
                               "width": width,
                               "duration": duration,
                               "units": units}
@@ -638,6 +642,10 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             self.sb_duration.setValue(vals.get("duration"))
             self.sb_width.setValue(vals.get("width"))
             self.dd_units.setCurrentText(vals.get("units"))
+
+    def get_breaches_data(self, simulation):
+        data = self.values.get(simulation)
+        return data.get("breache_id"), data.get("breache"), data.get("width"), int(data.get("duration")) * self.SECONDS_MULTIPLIERS[data.get("units")]
 
 class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
     def __init__(self, parent_page, load_conditions=False):
@@ -656,11 +664,15 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.cb_1d.stateChanged.connect(self.d1_change_state)
         self.cb_2d.stateChanged.connect(self.d2_change_state)
         self.cb_groundwater.stateChanged.connect(self.groundwater_change_state)
+        self.cb_saved_states.activated.connect(self.saved_state_changed)
         if load_conditions:
             self.load_conditions_widget.show()
             self.default_init_widget.hide()
-            items = self.load_saved_templates()
-            self.cb_saved_states.addItems(items)
+            tc = ThreediCalls(self.parent_page.parent_wizard.parent_dock.api_client)
+            states = tc.get_saved_states_list(self.parent_page.parent_wizard.parent_dock.current_model.id)
+            for state in states.results:
+                self.breaches[state.connected_pnt_id] = state
+                self.cb_saved_states.addItem(str(state.connected_pnt_id))
         else:
             self.load_conditions_widget.hide()
             self.default_init_widget.show()
@@ -670,6 +682,9 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.d1_widget.hide()
         if value == 2:
             self.d1_widget.show()
+
+    def saved_state_changed(self):
+        state = self.cb_saved_states.currentText()
 
     def load_saved_templates(self):
         path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "templates.json")
@@ -708,6 +723,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.svg_lout.addWidget(self.svg_widget)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
+        self.laterals_timeseries = {}
         self._init_widget()
         self._connect_signals()
 
@@ -715,47 +731,73 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.overrule_widget.setVisible(False)
         self.cb_type.addItem("1D")
         self.cb_type.addItem("2D")
+        self.dd_units.addItem("s")
 
     def _connect_signals(self):
         self.checkBox_1.stateChanged.connect(self.overrule_value_canged)
         self.pb_upload_1.clicked.connect(self.open_upload_dialog)
-        self.pb_add_row.clicked.connect(self.add_overule_row)
+        self.pb_save.clicked.connect(self.save_laterals)
         self.cb_type.currentIndexChanged.connect(self.selectionchange)
+        self.cb_laterals.activated.connect(self.laterals_change)
 
-    def selectionchange(self,index):
+    def laterals_change(self):
+        lat_id = self.cb_laterals.currentText()
+        lat =self.laterals_timeseries.get(lat_id)
+        self.il_location.setText(" ,".join(str(a) for a in lat.values[0]))
+        self.il_discharge.setText(" ,".join(str(a) for a in lat.values[1]))
+        self.sb_offset.setValue(lat.offset)
+
+    def save_laterals(self):
+        lat = self.laterals_timeseries.get(self.cb_laterals.currentText())
+        lat.values[0] = [float(f) for f in self.il_location.text().split(",")]
+        lat.values[1] = [float(f) for f in self.il_discharge.text().split(",")]
+        lat.offset(self.sb_offset.value())
+
+    def selectionchange(self, index):
         if index == 0:
             self.laterals_layout.setText("Upload laterals for 1D:")
         if index == 1:
             self.laterals_layout.setText("Upload laterals for 2D:")
 
-    def open_upload_dialog(self, int):
+    def open_upload_dialog(self, param):
         last_folder = QSettings().value("threedi/last_precipitation_folder", os.path.expanduser("~"), type=str)
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Precipitation Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return
         QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
-        time_series = []
         with open(filename) as lateral_file:
             # todo parse csv
             laterals_reader = csv.reader(lateral_file)
             if self.cb_type.currentText() == "1D":
-                values = []
+                values = {}
                 for row_id, id,  connection_node_id, timeseries in laterals_reader:
-                    # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
+                    if timeseries == "timeseries":
+                        continue
                     try:
-                        values.append([float(s) for s in timeseries.split(",")])
-                        # time_series.append([float(id) * units_multiplier, float(rain)])
+                        timeseries_parsed = [float(f) for f in timeseries.split("\n")[0].split(",")]
+                        discharge = [float(f) for f in timeseries.split("\n")[1].split(",")]
+                        lateral = TimeseriesLateral(values=[timeseries_parsed, discharge], units="m3/s", point=None, connection_node=int(connection_node_id), id=int(id), offset=0)
+                        values[id] = lateral
                     except ValueError:
                         continue
-        #     if self.cb_type.currentText() == "2D":
-        #         for x, y,  type, id, timeseries in laterals_reader:
-        #             # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
-        #             try:
-        #                 time_series.append([float(time) * units_multiplier, float(rain)])
-        #             except ValueError:
-        #                 continue
-        # # self.custom_time_series = time_series
+            if self.cb_type.currentText() == "2D":
+                for x, y,  type, id, timeseries in laterals_reader:
+                    if timeseries == "timeseries":
+                        continue
+                    try:
+                        timeseries_parsed = [float(f) for f in timeseries.split("\n")[0].split(",")]
+                        discharge = [float(f) for f in timeseries.split("\n")[1].split(",")]
+                        point = {"type": "point",
+                                 "coordinates": [float(x), float(y)]}
+                        lateral = TimeseriesLateral(values=[timeseries_parsed, discharge], units="m3/s", point=point, id=int(id), offset=0)
+                        values[id] = lateral
+                    except ValueError:
+                        continue
+        self.laterals_timeseries = values
+        print(len(values))
+        for lat in self.laterals_timeseries.keys():
+            self.cb_laterals.addItem(lat)
 
     def overrule_value_canged(self, value):
         if value == 0:
@@ -763,9 +805,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if value == 2:
             self.overrule_widget.setVisible(True)
 
-    def add_overule_row(self):
-        hl = QHBoxLayout()
-
+    def get_laterals_data(self):
+        return self.laterals_timeseries
 
 class NamePage(QWizardPage):
     """Simulation name definition page."""
@@ -952,10 +993,17 @@ class SimulationWizard(QWizard):
             simulation_templates = dict()
             self.new_simulations = []
             self.new_simulation_statuses = {}
-            for simulation in range(1, self.init_conditions.number_of_simulations + 1):
+            for simulation in range(1, (self.init_conditions.number_of_simulations + 1)):
                 ptype, poffset, pduration, punits, pvalues = None, None, None, None, None
+                breache_id, breache, width, d_duration = None, None, None, None
+                laterals = []
                 if hasattr(self, 'p3'):
                     ptype, poffset, pduration, punits, pvalues = self.p3.main_widget.get_precipitation_data("Simulation" + str(simulation))
+                if hasattr(self, "breaches_page"):
+                    breache_id, breache, width, d_duration = self.breaches_page.main_widget.get_breaches_data("Simulation" + str(simulation))
+                if hasattr(self, "laterals_page"):
+                    laterals = self.laterals_page.main_widget.get_laterals_data()
+
                 if self.p4.main_widget.cb_save_template.isChecked():
                     template_name = self.p4.main_widget.template_name.text()
                     simulation_template = {}
@@ -990,23 +1038,19 @@ class SimulationWizard(QWizard):
                 current_status = tc.simulation_current_status(new_simulation.id)
                 sim_id = new_simulation.id
                 if self.init_conditions.basic_processed_results:
-                    # todo set input params
-                    tc.add_post_processing_lizard_basic(sim_id, simulation=sim_id, scenario_name=None, process_basic_results=None, result_uuid=None)
+                    tc.add_post_processing_lizard_basic(sim_id, scenario_name=name, process_basic_results=True)
                 if self.init_conditions.arrival_time_map:
-                    # todo set input params
-                    tc.add_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=None)
+                    tc.add_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=True)
                 if self.init_conditions.damage_estimation:
-                    # todo set input params
-                    tc.add_post_processing_lizard_damage(sim_id, basic_post_processing=None, cost_type=None, flood_month=None, inundation_period=None, repair_time_infrastructure=None, repair_time_buildings=None)
+                    tc.add_post_processing_lizard_damage(sim_id, basic_post_processing=True, cost_type=self.init_conditions.cost_type, flood_month=self.init_conditions.flood_month, inundation_period=self.init_conditions.period, repair_time_infrastructure=self.init_conditions.repair_time_infrastructure, repair_time_buildings=self.init_conditions.repair_time_buildings)
                 if self.init_conditions.generate_saved_state:
-                    # todo pass input params
-                    tc.generate_saved_state_after_simulation(sim_id, )
+                    # todo find out what is time param
+                    tc.generate_saved_state_after_simulation(sim_id, time=0)
                 if self.init_conditions.include_breaches:
-                   # todo set input params
-                    tc.add_breaches(sim_id, url=None, potential_breach=None, line_id=None, duration_till_max_depth=None, maximum_breach_depth=None, levee_material=None, initial_width=None, discharge_coefficient_positive=None, discharge_coefficient_negative=None, simulation=None, offset=None, id=None, uid=None)
+                    tc.add_breaches(sim_id, potential_breach=breache.url, duration_till_max_depth=d_duration, initial_width=width, offset=0)
                 if self.init_conditions.include_laterals:
-                    # todo set input params
-                    tc.add_lateral_timeseries(sim_id, url=None, simulation=None, offset=None, interpolate=None, values=None, units=None, point=None, connection_node=None, state=None, state_detail=None, grid_id=None, id=None, uid=None)
+                    for lateral in laterals.values():
+                        tc.add_lateral_timeseries(sim_id, offset=lateral.offset, values=lateral.values, units=lateral.units, point=lateral.point, connection_node=lateral.connection_node, id=lateral.id)
                 if ptype == CONSTANT_RAIN:
                     tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset)
                 elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:

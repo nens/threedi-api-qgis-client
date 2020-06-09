@@ -72,7 +72,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox_2"/>
+         <widget class="QComboBox" name="cb_laterals"/>
         </item>
        </layout>
       </item>
@@ -128,7 +128,7 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QLineEdit" name="lineEdit"/>
+         <widget class="QLineEdit" name="il_location"/>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -136,14 +136,14 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QSpinBox" name="spinBox">
+           <widget class="QSpinBox" name="sb_offset">
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::NoButtons</enum>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="comboBox">
+           <widget class="QComboBox" name="dd_units">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -155,7 +155,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_2"/>
+         <widget class="QLineEdit" name="il_discharge"/>
         </item>
         <item>
          <widget class="QLabel" name="label_7">
@@ -188,17 +188,17 @@
        </layout>
       </item>
       <item alignment="Qt::AlignLeft">
-       <widget class="QPushButton" name="pb_add_row">
+       <widget class="QPushButton" name="pb_save">
         <property name="font">
          <font>
           <family>Segoe UI</family>
           <pointsize>12</pointsize>
-          <weight>75</weight>
-          <bold>true</bold>
+          <weight>50</weight>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
-         <string>+</string>
+         <string>Save</string>
         </property>
        </widget>
       </item>

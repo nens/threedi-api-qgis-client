@@ -153,6 +153,11 @@ class ThreediCalls:
         breaches = api.threedimodels_potentialbreaches_list(threedimodel_id)
         return breaches
 
+    def get_saved_states_list(self, threedimodel_id):
+        api = ThreedimodelsApi(self.api_client)
+        states = api.threedimodels_saved_states_list(threedimodel_id)
+        return states
+
     def add_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
         """Add lateral_timeseries to the given simulation."""
         api = SimulationsApi(self.api_client)
@@ -180,9 +185,8 @@ class ThreediCalls:
     def generate_saved_state_after_simulation(self, simulation_pk: int, **data) -> DamagePostProcessing:
         """Add generate_saved_state_after_simulation to the given simulation."""
         api = SimulationsApi(self.api_client)
-        # todo call right api call simulations_create_saved_states_timed_create vs simulations_create_saved_states_stable_threshold_create
-        basicPostProcessing = api.simulations_create_saved_states_timed_create((str(simulation_pk)), data)
-        return basicPostProcessing
+        saved_state = api.simulations_create_saved_states_timed_create((str(simulation_pk)), data)
+        return saved_state
 
     def fetch_revisions(self) -> List[Revision]:
         """Fetch all Revisions available for current user."""

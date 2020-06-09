@@ -72,7 +72,8 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.include_breaches = self.cb_breanches.isChecked()
         self.initial_conditions.include_precipitations = self.cb_precipitation.isChecked()
         self.initial_conditions.multiple_simulations = self.cb_multiple_simulations.isChecked()
-        self.initial_conditions.number_of_simulations = int(self.dd_number_of_simulation.currentText())
+        if self.initial_conditions.multiple_simulations:
+            self.initial_conditions.number_of_simulations = int(self.dd_number_of_simulation.currentText())
         self.initial_conditions.simulations_difference = self.dd_simulation_difference.currentText()
 
         self.initial_conditions.generate_saved_state = self.cb_generate.isChecked()
@@ -82,9 +83,9 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.damage_estimation = self.cb_damage_estimation.isChecked()
         self.initial_conditions.cost_type = self.dd_cost_type.currentText()
         self.initial_conditions.flood_month = self.dd_flood_month.currentText()
-        self.initial_conditions.period = self.dd_period.currentText()
-        self.initial_conditions.repair_time_infrastructure = self.dd_infrastructure_time.currentText()
-        self.initial_conditions.repair_time_buildings = self.dd_buildings_time.currentText()
+        self.initial_conditions.period = self.sb_period.value()
+        self.initial_conditions.repair_time_infrastructure = self.sb_repair_infrastructure.value()
+        self.initial_conditions.repair_time_buildings = self.sb_repair_building.value()
         self.open_wizard = True
         self.close()
 
