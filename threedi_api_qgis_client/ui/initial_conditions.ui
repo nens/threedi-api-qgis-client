@@ -10,6 +10,48 @@
     <height>500</height>
    </rect>
   </property>
+  <property name="palette">
+   <palette>
+    <active>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </active>
+    <inactive>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </inactive>
+    <disabled>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </disabled>
+   </palette>
+  </property>
+  <property name="font">
+   <font>
+    <family>Segoe UI</family>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
@@ -120,8 +162,20 @@
           <height>0</height>
          </size>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
+        <layout class="QGridLayout" name="gridLayout_6">
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item row="0" column="2">
+          <widget class="QComboBox" name="dd_1d">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+            </font>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
           <widget class="QLabel" name="label_2">
            <property name="font">
             <font>
@@ -134,16 +188,72 @@
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QComboBox" name="dd_1d"/>
+         <item row="1" column="1" colspan="2">
+          <widget class="QWidget" name="global_value_1d_widget" native="true">
+           <property name="baseSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_9">
+              <property name="font">
+               <font>
+                <family>Segoe UI</family>
+               </font>
+              </property>
+              <property name="text">
+               <string>       1D (Global vlue:)</string>
+              </property>
+              <property name="margin">
+               <number>0</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="le_1d_global_value">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <family>Segoe UI</family>
+               </font>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
          </item>
         </layout>
        </widget>
       </item>
       <item row="2" column="0" colspan="2">
        <widget class="QWidget" name="d2_widget" native="true">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+         </font>
+        </property>
         <layout class="QGridLayout" name="gridLayout_2">
-         <item row="0" column="0">
+         <item row="1" column="0">
           <widget class="QLabel" name="label_3">
            <property name="font">
             <font>
@@ -156,7 +266,7 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
+         <item row="2" column="0">
           <widget class="QLabel" name="label_4">
            <property name="font">
             <font>
@@ -166,15 +276,37 @@
             </font>
            </property>
            <property name="text">
-            <string>      2D (Raster):</string>
+            <string>      2D (Global value):</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QComboBox" name="dd_2d"/>
-         </item>
          <item row="1" column="1">
-          <widget class="QComboBox" name="dd_2d_raster"/>
+          <widget class="QComboBox" name="dd_2d">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+            </font>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="le_2d_global_value">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -210,7 +342,10 @@
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QLineEdit" name="il_groundwater">
+          <widget class="QLineEdit" name="le_gwater_global_value">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -223,10 +358,21 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+            </font>
+           </property>
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QComboBox" name="dd_groundwater"/>
+          <widget class="QComboBox" name="dd_groundwater">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+            </font>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -265,7 +411,13 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QComboBox" name="cb_saved_states"/>
+       <widget class="QComboBox" name="cb_saved_states">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+         </font>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

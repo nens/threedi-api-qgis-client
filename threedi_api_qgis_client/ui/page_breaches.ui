@@ -10,6 +10,43 @@
     <height>500</height>
    </rect>
   </property>
+  <property name="palette">
+   <palette>
+    <active>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </active>
+    <inactive>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </inactive>
+    <disabled>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </disabled>
+   </palette>
+  </property>
   <property name="font">
    <font>
     <family>Segoe UI</family>
@@ -92,6 +129,9 @@
            <pointsize>10</pointsize>
           </font>
          </property>
+         <property name="buttonSymbols">
+          <enum>QAbstractSpinBox::NoButtons</enum>
+         </property>
         </widget>
        </item>
        <item alignment="Qt::AlignRight">
@@ -146,7 +186,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QComboBox" name="dd_breache_id">
+        <widget class="QComboBox" name="dd_breach_id">
          <property name="enabled">
           <bool>true</bool>
          </property>

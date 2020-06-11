@@ -10,6 +10,43 @@
     <height>500</height>
    </rect>
   </property>
+  <property name="palette">
+   <palette>
+    <active>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </active>
+    <inactive>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </inactive>
+    <disabled>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </disabled>
+   </palette>
+  </property>
   <property name="font">
    <font>
     <family>Segoe UI</family>
@@ -67,7 +104,7 @@
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>Latera to overrrule:</string>
+           <string>Lateral to overrrule:</string>
           </property>
          </widget>
         </item>
@@ -81,6 +118,13 @@
         <property name="bottomMargin">
          <number>0</number>
         </property>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item>
          <widget class="QLabel" name="label_5">
           <property name="font">
@@ -90,45 +134,19 @@
            </font>
           </property>
           <property name="text">
-           <string>Location</string>
+           <string>Location:</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label_4">
-          <property name="font">
-           <font>
-            <family>Segoe UI</family>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Starts after</string>
+         <widget class="QLineEdit" name="il_location">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
          </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_3">
-          <property name="font">
-           <font>
-            <family>Segoe UI</family>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Discharge</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
-        <item>
-         <widget class="QLineEdit" name="il_location"/>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -136,26 +154,19 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QSpinBox" name="sb_offset">
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::NoButtons</enum>
+           <widget class="QPushButton" name="pb_use_csv">
+            <property name="font">
+             <font>
+              <family>Segoe UI</family>
+              <pointsize>12</pointsize>
+             </font>
             </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="dd_units">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+            <property name="text">
+             <string>Use CSV</string>
             </property>
            </widget>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="il_discharge"/>
         </item>
         <item>
          <widget class="QLabel" name="label_7">
@@ -168,39 +179,11 @@
            </font>
           </property>
           <property name="text">
-           <string>or</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton">
-          <property name="font">
-           <font>
-            <family>Segoe UI</family>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Use CSV</string>
+           <string/>
           </property>
          </widget>
         </item>
        </layout>
-      </item>
-      <item alignment="Qt::AlignLeft">
-       <widget class="QPushButton" name="pb_save">
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>12</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Save</string>
-        </property>
-       </widget>
       </item>
      </layout>
     </widget>
@@ -232,7 +215,44 @@
     </spacer>
    </item>
    <item row="8" column="0">
-    <widget class="QCheckBox" name="checkBox_1">
+    <widget class="QCheckBox" name="cb_overrule">
+     <property name="palette">
+      <palette>
+       <active>
+        <colorrole role="Button">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>255</red>
+           <green>255</green>
+           <blue>255</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </active>
+       <inactive>
+        <colorrole role="Button">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>255</red>
+           <green>255</green>
+           <blue>255</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </inactive>
+       <disabled>
+        <colorrole role="Button">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>255</red>
+           <green>255</green>
+           <blue>255</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </disabled>
+      </palette>
+     </property>
      <property name="font">
       <font>
        <family>Segoe UI</family>

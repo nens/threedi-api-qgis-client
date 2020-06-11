@@ -37,28 +37,28 @@ class SimulationInit(uicls, basecls):
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
         self.dd_simulation_difference.addItems(["precipitation", "breaches"])
 
-    def multiple_simulations_changed(self, int):
-        if int:
+    def multiple_simulations_changed(self, i):
+        if i:
             self.multiple_simulations_widget.show()
         else:
             self.multiple_simulations_widget.hide()
 
-    def load_saved_state_changed(self, int):
-        if int:
+    def load_saved_state_changed(self, i):
+        if i:
             self.load_state_widget.show()
         else:
             self.load_state_widget.hide()
 
-    def postprocessing_state_changed(self, int):
-        if int:
+    def postprocessing_state_changed(self, i):
+        if i:
             self.postprocessing_widget.show()
             self.cb_basec_results.setChecked(True)
         else:
             self.postprocessing_widget.hide()
             self.cb_basec_results.setChecked(False)
 
-    def damage_estimation_changed(self, int):
-        if int:
+    def damage_estimation_changed(self, i):
+        if i:
             self.damage_estimation_widget.show()
         else:
             self.damage_estimation_widget.hide()
