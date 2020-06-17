@@ -29,6 +29,26 @@
    <string>Simulation overview</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="9" column="1">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>184</width>
+       <height>22</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="9" column="2">
+    <widget class="QPushButton" name="pb_stop_sim">
+     <property name="text">
+      <string>Stop Simulation</string>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="font">
@@ -44,7 +64,7 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="3" rowspan="4">
+   <item row="0" column="3" rowspan="10">
     <widget class="Line" name="line">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
@@ -57,10 +77,10 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label_user">
-     <property name="text">
-      <string>TextLabel</string>
+   <item row="4" column="0" colspan="3">
+    <widget class="QTreeView" name="tv_sim_tree">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
      </property>
     </widget>
    </item>
@@ -77,40 +97,14 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="3">
-    <widget class="QTreeView" name="tv_sim_tree">
-     <property name="editTriggers">
-      <set>QAbstractItemView::NoEditTriggers</set>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="4">
-    <widget class="QPushButton" name="pb_new_sim">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>30</height>
-      </size>
-     </property>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_user">
      <property name="text">
-      <string>New Simulation</string>
+      <string>TextLabel</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="2">
-    <widget class="QPushButton" name="pb_stop_sim">
-     <property name="text">
-      <string>Stop Simulation</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="4">
+   <item row="9" column="5">
     <spacer name="horizontalSpacer_2">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -126,18 +120,43 @@
      </property>
     </spacer>
    </item>
-   <item row="3" column="1">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
+   <item row="4" column="5">
+    <widget class="QWidget" name="widget" native="true">
+     <property name="baseSize">
       <size>
-       <width>184</width>
-       <height>22</height>
+       <width>0</width>
+       <height>10</height>
       </size>
      </property>
-    </spacer>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QPushButton" name="pb_new_sim">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>New Simulation</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="pb_load_template">
+        <property name="text">
+         <string>Load template</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </item>
   </layout>
  </widget>
