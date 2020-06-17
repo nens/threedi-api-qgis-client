@@ -981,6 +981,18 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+        </property>
+        <property name="frame">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
      </layout>

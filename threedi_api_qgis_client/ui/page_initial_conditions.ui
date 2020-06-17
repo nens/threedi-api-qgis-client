@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>720</width>
-    <height>500</height>
+    <height>497</height>
    </rect>
   </property>
   <property name="palette">
@@ -171,7 +171,14 @@
            <property name="font">
             <font>
              <family>Segoe UI</family>
+             <pointsize>10</pointsize>
             </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -211,6 +218,7 @@
               <property name="font">
                <font>
                 <family>Segoe UI</family>
+                <pointsize>12</pointsize>
                </font>
               </property>
               <property name="text">
@@ -235,7 +243,17 @@
               <property name="font">
                <font>
                 <family>Segoe UI</family>
+                <pointsize>10</pointsize>
                </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QLineEdit {background-color: white;}</string>
+              </property>
+              <property name="frame">
+               <bool>false</bool>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
               </property>
              </widget>
             </item>
@@ -291,7 +309,14 @@
            <property name="font">
             <font>
              <family>Segoe UI</family>
+             <pointsize>10</pointsize>
             </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -305,6 +330,20 @@
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLineEdit {background-color: white;}</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -361,7 +400,17 @@
            <property name="font">
             <font>
              <family>Segoe UI</family>
+             <pointsize>10</pointsize>
             </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLineEdit {background-color: white;}</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -370,7 +419,14 @@
            <property name="font">
             <font>
              <family>Segoe UI</family>
+             <pointsize>10</pointsize>
             </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -406,7 +462,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Usinjg the saved state for initial conditions</string>
+         <string>Using the saved state for initial conditions</string>
         </property>
        </widget>
       </item>
@@ -415,7 +471,14 @@
         <property name="font">
          <font>
           <family>Segoe UI</family>
+          <pointsize>10</pointsize>
          </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+        </property>
+        <property name="frame">
+         <bool>false</bool>
         </property>
        </widget>
       </item>

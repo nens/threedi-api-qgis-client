@@ -150,22 +150,27 @@ class ThreediCalls:
         breach = api.simulations_events_breaches_create((str(simulation_pk)), data)
         return breach
 
-    def get_breaches_list(self, threedimodel_id):
+    def get_breaches_list(self, threedimodel_id: str):
         """Fetch breaches list."""
         api = ThreedimodelsApi(self.api_client)
-        breaches = api.threedimodels_potentialbreaches_list(threedimodel_id)
+        response = api.threedimodels_potentialbreaches_list(threedimodel_id)
+        breaches = response.results
         return breaches
 
-    def get_raster_list(self, threedimodel_id):
+    def get_raster_list(self, threedimodel_id: str):
         """Fetch raster list."""
         api = ThreedimodelsApi(self.api_client)
         rasters = api.threedimodels_rasters_list(threedimodel_id)
         return rasters
 
-    def get_saved_states_list(self, threedimodel_id):
+    def get_saved_states_list(self, threedimodel_id: str):
         """Fetch saved states list."""
         api = ThreedimodelsApi(self.api_client)
-        states = api.threedimodels_saved_states_list(threedimodel_id)
+        try:
+            response = api.threedimodels_saved_states_list(threedimodel_id)
+            states = response.results
+        except TypeError as e:
+            states = []
         return states
 
     def add_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:

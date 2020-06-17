@@ -1,8 +1,5 @@
 import os
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QSettings, QThread
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from qgis.PyQt.QtWidgets import QFileDialog
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'init_dialog.ui'))
@@ -11,6 +8,8 @@ uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'init_dialog.ui'))
 class SimulationInit(uicls, basecls):
     """Dialog with methods for handling running simulations."""
     PROGRESS_COLUMN_IDX = 2
+    COST_TYPES = ["min", "avg", "max"]
+    MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
 
     def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
@@ -32,8 +31,8 @@ class SimulationInit(uicls, basecls):
         self.fill_comboboxes()
 
     def fill_comboboxes(self):
-        self.dd_cost_type.addItems(["min", "avg", "max"])
-        self.dd_flood_month.addItems(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"])
+        self.dd_cost_type.addItems(self.COST_TYPES)
+        self.dd_flood_month.addItems(self.MONTHS)
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
         self.dd_simulation_difference.addItems(["precipitation", "breaches"])
 
@@ -89,7 +88,8 @@ class SimulationInit(uicls, basecls):
         self.open_wizard = True
         self.close()
 
-class SimulationInitObject():
+
+class SimulationInitObject:
     def __init__(self):
         self.include_boundary_conditions = False
         self.include_initial_conditions = False
