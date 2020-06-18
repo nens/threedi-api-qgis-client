@@ -9,7 +9,7 @@ from openapi_client import (ApiClient, RepositoriesApi, SimulationsApi, Revision
                             ConstantRain, TimeseriesRain, Organisation, CurrentStatus, ResultFile, Download, Breach,
                             TimeseriesLateral, ArrivalTimePostProcessing, BasicPostProcessing, DamagePostProcessing,
                             OneDWaterLevel, TwoDWaterLevel, OneDWaterLevelPredefined, TwoDWaterRaster, GroundWaterLevel,
-                            GroundWaterRaster)
+                            GroundWaterRaster, TimedSavedStateUpdate)
 
 
 def get_api_client(api_username: str, api_password: str, api_host: str = "https://api.3di.live/v3.0") -> ApiClient:
@@ -197,7 +197,7 @@ class ThreediCalls:
         basicPostProcessing = api.simulations_results_post_processing_lizard_damage_create((str(simulation_pk)), data)
         return basicPostProcessing
 
-    def generate_saved_state_after_simulation(self, simulation_pk: int, **data) -> DamagePostProcessing:
+    def generate_saved_state_after_simulation(self, simulation_pk: int, **data) -> TimedSavedStateUpdate:
         """Add generate_saved_state_after_simulation to the given simulation."""
         api = SimulationsApi(self.api_client)
         saved_state = api.simulations_create_saved_states_timed_create((str(simulation_pk)), data)

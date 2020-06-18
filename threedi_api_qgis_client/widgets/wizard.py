@@ -275,14 +275,13 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def _connect_signals(self):
         self.cb_overrule.stateChanged.connect(self.overrule_value_changed)
-        self.pb_upload_1.clicked.connect(self.load_csv)
+        self.pb_upload.clicked.connect(self.load_csv)
         self.pb_use_csv.clicked.connect(self.overrule_with_csv)
         self.cb_type.currentIndexChanged.connect(self.selection_changed)
         self.cb_laterals.activated.connect(self.laterals_change)
 
     def laterals_change(self):
         lat_id = self.cb_laterals.currentText()
-        lat = self.laterals_timeseries.get(lat_id)
         self.il_location.setText(lat_id)
 
     def save_laterals(self):
@@ -298,13 +297,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.laterals_layout.setText("Upload laterals for 2D:")
 
     def load_csv(self):
-        values = self.open_upload_dialog()
+        values, filename = self.open_upload_dialog()
+        self.il_upload.setText(filename)
         self.laterals_timeseries = values
         for lat in self.laterals_timeseries.keys():
             self.cb_laterals.addItem(lat)
 
     def overrule_with_csv(self):
-        values = self.open_upload_dialog()
+        values, filename = self.open_upload_dialog()
         laterals = self.laterals_timeseries.get(self.cb_laterals.currentText())
         for lat in values.values():
             laterals.values = lat.values
@@ -324,7 +324,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Precipitation Time Series", last_folder, file_filter)
         if len(filename) == 0:
-            return
+            return None, None
         QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
         values = {}
         with open(filename) as lateral_file:
@@ -353,7 +353,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                         self.last_uploaded_laterals = lateral
                     except ValueError:
                         continue
-        return values
+        return values, filename
 
 
 class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
@@ -751,7 +751,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.sb_duration.valueChanged.connect(self.write_values_into_dict)
         self.sb_width.valueChanged.connect(self.write_values_into_dict)
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
-            self.dd_simulation.addItems(["Simulation"+str(i) for i in range(1, initial_conditions.number_of_simulations + 1)])
+            self.dd_simulation.addItems([f"Simulation{i}" for i in range(1, initial_conditions.number_of_simulations + 1)])
             self.simulation_widget.show()
         else:
             self.dd_simulation.addItem("Simulation1")
@@ -774,9 +774,9 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         units = self.dd_units.currentText()
         self.values[simulation] = {"breach_id": breach_id,
                                    "breach": self.breaches.get(int(breach_id)),
-                                    "width": width,
-                                    "duration": duration,
-                                    "units": units}
+                                   "width": width,
+                                   "duration": duration,
+                                   "units": units}
 
     def simulation_changed(self):
         vals = self.values.get(self.dd_simulation.currentText())
@@ -788,7 +788,12 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
 
     def get_breaches_data(self, simulation):
         data = self.values.get(simulation)
-        return data.get("breach_id"), data.get("breach"), data.get("width"), int(data.get("duration")) * self.SECONDS_MULTIPLIERS[data.get("units")]
+        if data:
+            breach_data = (data.get("breach_id"), data.get("breach"), data.get("width"),
+                           int(data.get("duration")) * self.SECONDS_MULTIPLIERS[data.get("units")])
+        else:
+            breach_data = (None,) * 4
+        return breach_data
 
 
 class SummaryWidget(uicls_summary_page, basecls_summary_page):
@@ -815,7 +820,7 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         self.initial_conditions = initial_conditions
         if initial_conditions.multiple_simulations:
             self.simulation_widget.show()
-            self.dd_simulation.addItems(["Simulation"+str(i) for i in range(1, initial_conditions.number_of_simulations + 1)])
+            self.dd_simulation.addItems([f"Simulation{i}" for i in range(1, initial_conditions.number_of_simulations + 1)])
         else:
             self.dd_simulation.addItem("Simulation1")
             self.simulation_widget.hide()
@@ -987,7 +992,7 @@ class SimulationWizard(QWizard):
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.resize(750, 500)
+        self.resize(800, 500)
         self.init_conditions = init_conditions
 
     def page_changed(self, page_id):
@@ -1026,7 +1031,7 @@ class SimulationWizard(QWizard):
             precipitation_type = self.precipitation_page.main_widget.values.get("Simulation1").get("precipitation_type")
             total_precipitation = self.precipitation_page.main_widget.total_precipitation
             self.summary_page.main_widget.sim_prec_type.setText(precipitation_type)
-            self.summary_page.main_widget.sim_prec_total.setText(f"{round(total_precipitation)} mm")
+            self.summary_page.main_widget.sim_prec_total.setText(f"{round(total_precipitation, 2)} mm")
 
     def set_overview_breaches(self):
         if self.breaches_page.main_widget.values.get("Simulation1"):
@@ -1043,10 +1048,10 @@ class SimulationWizard(QWizard):
         organisation_uuid = self.parent_dock.organisation.unique_id
         duration = self.duration_page.main_widget.calculate_simulation_duration()
 
-        dropdown_1D, global_value_1d, raster_2d, global_value_2d, raster_groundwater, global_value_groundwater = (None,) * 6
+        value_1d, global_value_1d, raster_2d, global_value_2d, raster_groundwater, global_value_groundwater = (None,) * 6
         include_1d, include_2d, include_groundwater = False, False, False
         if hasattr(self, "init_conditions_page"):
-            dropdown_1D = self.init_conditions_page.main_widget.dd_1d
+            value_1d = self.init_conditions_page.main_widget.dd_1d.currentText()
             global_value_1d = self.init_conditions_page.main_widget.le_1d_global_value.text()
             raster_2d = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_2d.currentText()).to_dict()
             global_value_2d = self.init_conditions_page.main_widget.le_2d_global_value.text()
@@ -1064,7 +1069,7 @@ class SimulationWizard(QWizard):
         simulation_template["duration"] = duration
         simulation_template["init_cond"] = self.init_conditions.__dict__
         simulation_template["include_1d"] = include_1d
-        simulation_template["dropdown_1D"] = dropdown_1D
+        simulation_template["value_1d"] = value_1d
         simulation_template["include_2d"] = include_2d
         simulation_template["include_groundwater"] = include_groundwater
         simulation_template["global_value_1d"] = global_value_1d
@@ -1081,8 +1086,8 @@ class SimulationWizard(QWizard):
             simulation_template["laterals"] = lats
 
         for simulation in range(1, (self.init_conditions.number_of_simulations + 1)):
-            ptype, poffset, pduration, punits, pvalues = None, None, None, None, None
-            breach_id, breach, width, d_duration = None, None, None, None
+            ptype, poffset, pduration, punits, pvalues = (None,) * 5
+            breach_id, breach, width, d_duration = (None,) * 4
             if hasattr(self, 'precipitation_page'):
                 ptype, poffset, pduration, punits, pvalues = self.precipitation_page.main_widget.get_precipitation_data(
                     f"Simulation{simulation}")
@@ -1096,7 +1101,7 @@ class SimulationWizard(QWizard):
             one_simulation["pduration"] = pduration
             one_simulation["punits"] = punits
             one_simulation["pvalues"] = pvalues
-            one_simulation["breach"] = breach.to_dict()
+            one_simulation["breach_id"] = breach_id
             one_simulation["width"] = width
             one_simulation["d_duration"] = d_duration
             simulation_template[f"Simulation{simulation}"] = one_simulation
@@ -1148,12 +1153,14 @@ class SimulationWizard(QWizard):
                     laterals = self.laterals_page.main_widget.get_laterals_data()
 
                 tc = ThreediCalls(self.parent_dock.api_client)
-                new_simulation = tc.new_simulation(name=name, threedimodel=threedimodel_id, start_datetime=start_datetime,
-                                                   organisation=organisation_uuid, duration=duration)
+                sim_name = f"{name}_{simulation}" if simulation > 1 else name
+                new_simulation = tc.new_simulation(name=sim_name, threedimodel=threedimodel_id,
+                                                   start_datetime=start_datetime, organisation=organisation_uuid,
+                                                   duration=duration)
                 current_status = tc.simulation_current_status(new_simulation.id)
                 sim_id = new_simulation.id
                 if self.init_conditions.basic_processed_results:
-                    tc.add_post_processing_lizard_basic(sim_id, scenario_name=name, process_basic_results=True)
+                    tc.add_post_processing_lizard_basic(sim_id, scenario_name=sim_name, process_basic_results=True)
                 if self.init_conditions.arrival_time_map:
                     tc.add_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=True)
                 if self.init_conditions.damage_estimation:
