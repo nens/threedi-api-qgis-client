@@ -165,8 +165,7 @@ class ThreediCalls:
 
     def get_initial_waterlevels(self, threedimodel_id: str):
         api = ThreedimodelsApi(self.api_client)
-        response = api.threedimodels_initial_waterlevels_list(threedimodel_id)
-        waterlevels = response.results
+        waterlevels = api.threedimodels_initial_waterlevels_list(threedimodel_id)
         return waterlevels
 
     def get_saved_states_list(self, threedimodel_id: str):

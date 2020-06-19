@@ -456,20 +456,24 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
 
     def simulation_changed(self):
         vals = self.values.get(self.dd_simulation.currentText())
-        if vals and vals.get("precipitation_type") == "Constant":
+        if not vals:
+            self.cbo_prec_type.setCurrentText("None")
+            self.plot_precipitation()
+            return
+        if vals.get("precipitation_type") == "Constant":
             self.cbo_prec_type.setCurrentText(vals.get("precipitation_type"))
             self.sp_start_after_constant.setValue(vals.get("start_after"))
             self.start_after_constant_u.setCurrentText(vals.get("start_after_units"))
             self.sp_stop_after_constant.setValue(vals.get("stop_after"))
             self.stop_after_constant_u.setCurrentText(vals.get("stop_after_units"))
             self.sp_intensity.setValue(vals.get("intensity"))
-        elif vals and vals.get("precipitation_type") == "Custom":
+        elif vals.get("precipitation_type") == "Custom":
             self.cbo_prec_type.setCurrentText(vals.get("precipitation_type"))
             self.sp_start_after_custom.setValue(vals.get("start_after"))
             self.start_after_custom_u.setCurrentText(vals.get("start_after_units"))
             self.cbo_units.setCurrentText(vals.get("units"))
             self.custom_time_series = vals.get("time_series")
-        elif vals and vals.get("precipitation_type") == "Design":
+        elif vals.get("precipitation_type") == "Design":
             self.cbo_prec_type.setCurrentText(vals.get("precipitation_type"))
             self.sp_start_after_design.setValue(vals.get("start_after"))
             self.start_after_design_u.setCurrentText(vals.get("start_after_units"))
@@ -791,6 +795,11 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             self.sb_duration.setValue(vals.get("duration"))
             self.sb_width.setValue(vals.get("width"))
             self.dd_units.setCurrentText(vals.get("units"))
+        else:
+            self.dd_breach_id.setCurrentIndex(0)
+            self.sb_duration.setValue(0)
+            self.sb_width.setValue(0)
+            self.dd_units.setCurrentIndex(0)
 
     def get_breaches_data(self, simulation):
         data = self.values.get(simulation)
@@ -820,7 +829,7 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
         self.template_widget.hide()
         self.cb_save_template.stateChanged.connect(self.save_template_state_changed)
-        self.dd_simulation.activated.connect(self.simulation_change)
+        self.dd_simulation.currentIndexChanged.connect(self.simulation_change)
         self.precipitation_widget.hide()
         self.breach_widget.hide()
         self.initial_conditions = initial_conditions
@@ -836,17 +845,17 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
             data = self.parent_page.parent_wizard.precipitation_page.main_widget.values.get(self.dd_simulation.currentText())
             self.plot_overview_precipitation()
             if data:
-                type = data.get("precipitation_type")
+                ptype = data.get("precipitation_type")
                 total_prec = self.parent_page.parent_wizard.precipitation_page.main_widget.total_precipitation
-                self.sim_prec_type.setText(type)
+                self.sim_prec_type.setText(ptype)
                 self.sim_prec_total.setText(str(total_prec))
-        elif self.initial_conditions.multiple_simulations == "breaches" and self.initial_conditions.include_breaches:
+        elif self.initial_conditions.simulations_difference == "breaches" and self.initial_conditions.include_breaches:
             data = self.parent_page.parent_wizard.breaches_page.main_widget.values.get(self.dd_simulation.currentText())
             if data:
                 breach_id = data.get("breach_id")
                 duration = data.get("duration")
-                self.sim_prec_type.setText(breach_id)
-                self.sim_prec_total.setText(str(duration))
+                self.breach_id.setText(breach_id)
+                self.duration_breach.setText(str(duration))
 
     def plot_overview_precipitation(self):
         """Setting up precipitation plot."""
@@ -973,7 +982,6 @@ class SimulationWizard(QWizard):
         self.parent_dock = parent_dock
         self.name_page = NamePage(self)
         self.duration_page = SimulationDurationPage(self)
-        self.summary_page = SummaryPage(self, initial_conditions=init_conditions)
         self.addPage(self.name_page)
         self.addPage(self.duration_page)
         if init_conditions.include_initial_conditions:
@@ -988,6 +996,7 @@ class SimulationWizard(QWizard):
         if init_conditions.include_precipitations:
             self.precipitation_page = PrecipitationPage(self, initial_conditions=init_conditions)
             self.addPage(self.precipitation_page)
+        self.summary_page = SummaryPage(self, initial_conditions=init_conditions)
         self.addPage(self.summary_page)
         self.currentIdChanged.connect(self.page_changed)
         self.setButtonText(QWizard.FinishButton, "Add to queue")
@@ -1189,7 +1198,6 @@ class SimulationWizard(QWizard):
                 if self.init_conditions.include_initial_conditions:
                     if self.init_conditions_page.main_widget.cb_1d.isChecked():
                         if self.init_conditions_page.main_widget.dd_1d.currentText() == "Global value":
-                            print(global_value_1d)
                             tc.add_initial_1d_water_level_constant(sim_id, value=global_value_1d)
                         else:
                             tc.add_initial_1d_water_level_predefined(sim_id)
@@ -1198,13 +1206,13 @@ class SimulationWizard(QWizard):
                             tc.add_initial_2d_water_level_constant(sim_id, value=global_value_2d)
                         else:
                             tc.add_initial_2d_water_level_raster(sim_id, aggregation_method="mean",
-                                                                 initial_waterlevel=raster_2d.file.id)
+                                                                 initial_waterlevel=raster_2d.url)
                     if self.init_conditions_page.main_widget.cb_groundwater.isChecked():
                         if self.init_conditions_page.main_widget.dd_groundwater.currentText() == "":
                             tc.add_initial_groundwater_level_constant(sim_id, value=global_value_groundwater)
                         else:
                             tc.add_initial_groundwater_level_raster(sim_id, aggregation_method="mean",
-                                                                    initial_waterlevel=raster_groundwater.file.id)
+                                                                    initial_waterlevel=raster_groundwater.url)
 
                 if ptype == CONSTANT_RAIN:
                     tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration,
@@ -1224,8 +1232,8 @@ class SimulationWizard(QWizard):
             error_details = error_body["details"] if "details" in error_body else error_body
             error_msg = f"Error: {error_details}"
             self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
-        # except Exception as e:
-        #     self.new_simulations = None
-        #     self.new_simulation_statuses = None
-        #     error_msg = f"Error: {e}"
-        #     self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+        except Exception as e:
+            self.new_simulations = None
+            self.new_simulation_statuses = None
+            error_msg = f"Error: {e}"
+            self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
