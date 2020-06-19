@@ -9,7 +9,7 @@ from openapi_client import (ApiClient, RepositoriesApi, SimulationsApi, Revision
                             ConstantRain, TimeseriesRain, Organisation, CurrentStatus, ResultFile, Download, Breach,
                             TimeseriesLateral, ArrivalTimePostProcessing, BasicPostProcessing, DamagePostProcessing,
                             OneDWaterLevel, TwoDWaterLevel, OneDWaterLevelPredefined, TwoDWaterRaster, GroundWaterLevel,
-                            GroundWaterRaster)
+                            GroundWaterRaster, TimedSavedStateUpdate)
 
 
 def get_api_client(api_username: str, api_password: str, api_host: str = "https://api.3di.live/v3.0") -> ApiClient:
@@ -150,22 +150,29 @@ class ThreediCalls:
         breach = api.simulations_events_breaches_create((str(simulation_pk)), data)
         return breach
 
-    def get_breaches_list(self, threedimodel_id):
+    def get_breaches_list(self, threedimodel_id: str):
         """Fetch breaches list."""
         api = ThreedimodelsApi(self.api_client)
-        breaches = api.threedimodels_potentialbreaches_list(threedimodel_id)
+        response = api.threedimodels_potentialbreaches_list(threedimodel_id)
+        breaches = response.results
         return breaches
 
-    def get_raster_list(self, threedimodel_id):
+    def get_raster_list(self, threedimodel_id: str):
         """Fetch raster list."""
         api = ThreedimodelsApi(self.api_client)
         rasters = api.threedimodels_rasters_list(threedimodel_id)
         return rasters
 
-    def get_saved_states_list(self, threedimodel_id):
+    def get_initial_waterlevels(self, threedimodel_id: str):
+        api = ThreedimodelsApi(self.api_client)
+        waterlevels = api.threedimodels_initial_waterlevels_list(threedimodel_id)
+        return waterlevels
+
+    def get_saved_states_list(self, threedimodel_id: str):
         """Fetch saved states list."""
         api = ThreedimodelsApi(self.api_client)
-        states = api.threedimodels_saved_states_list(threedimodel_id)
+        response = api.threedimodels_saved_states_list(threedimodel_id)
+        states = response.results
         return states
 
     def add_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
@@ -177,22 +184,22 @@ class ThreediCalls:
     def add_postprocessing_in_lizard_arrival(self, simulation_pk: int, **data) -> ArrivalTimePostProcessing:
         """Add add_postprocessing_in_lizard_arrival to the given simulation."""
         api = SimulationsApi(self.api_client)
-        arrivalTimePostProcessing = api.simulations_results_post_processing_lizard_arrival_create((str(simulation_pk)), data)
-        return arrivalTimePostProcessing
+        time_post_processing = api.simulations_results_post_processing_lizard_arrival_create((str(simulation_pk)), data)
+        return time_post_processing
 
     def add_post_processing_lizard_basic(self, simulation_pk: int, **data) -> BasicPostProcessing:
         """Add add_post_processing_lizard_basic to the given simulation."""
         api = SimulationsApi(self.api_client)
-        basicPostProcessing = api.simulations_results_post_processing_lizard_basic_create((str(simulation_pk)), data)
-        return basicPostProcessing
+        basic_post_processing = api.simulations_results_post_processing_lizard_basic_create((str(simulation_pk)), data)
+        return basic_post_processing
 
     def add_post_processing_lizard_damage(self, simulation_pk: int, **data) -> DamagePostProcessing:
         """Add add_post_processing_lizard_damage to the given simulation."""
         api = SimulationsApi(self.api_client)
-        basicPostProcessing = api.simulations_results_post_processing_lizard_damage_create((str(simulation_pk)), data)
-        return basicPostProcessing
+        dmg_post_processing = api.simulations_results_post_processing_lizard_damage_create((str(simulation_pk)), data)
+        return dmg_post_processing
 
-    def generate_saved_state_after_simulation(self, simulation_pk: int, **data) -> DamagePostProcessing:
+    def generate_saved_state_after_simulation(self, simulation_pk: int, **data) -> TimedSavedStateUpdate:
         """Add generate_saved_state_after_simulation to the given simulation."""
         api = SimulationsApi(self.api_client)
         saved_state = api.simulations_create_saved_states_timed_create((str(simulation_pk)), data)
@@ -201,38 +208,38 @@ class ThreediCalls:
     def add_initial_1d_water_level_constant(self, simulation_pk: int, **data) -> OneDWaterLevel:
         """Add add_initial_1d_water_level_constant to the given simulation."""
         api = SimulationsApi(self.api_client)
-        water_level_1_d = api.simulations_initial1d_water_level_constant_create((str(simulation_pk)), data)
-        return water_level_1_d
+        water_level_1d_const = api.simulations_initial1d_water_level_constant_create((str(simulation_pk)), data)
+        return water_level_1d_const
 
     def add_initial_1d_water_level_predefined(self, simulation_pk: int, **data) -> OneDWaterLevelPredefined:
         """Add add_initial_1d_water_level_predefined to the given simulation."""
         api = SimulationsApi(self.api_client)
-        water_level_1_d = api.simulations_initial1d_water_level_predefined_create((str(simulation_pk)), data)
-        return water_level_1_d
+        water_level_1d_pred = api.simulations_initial1d_water_level_predefined_create((str(simulation_pk)), data)
+        return water_level_1d_pred
 
     def add_initial_2d_water_level_constant(self, simulation_pk: int, **data) -> TwoDWaterLevel:
         """Add add_initial_2d_water_level_constant to the given simulation."""
         api = SimulationsApi(self.api_client)
-        water_level_1_d = api.simulations_initial2d_water_level_constant_create((str(simulation_pk)), data)
-        return water_level_1_d
+        water_level_2d_const = api.simulations_initial2d_water_level_constant_create((str(simulation_pk)), data)
+        return water_level_2d_const
 
     def add_initial_2d_water_level_raster(self, simulation_pk: int, **data) -> TwoDWaterRaster:
         """Add add_initial_2d_water_level_raster to the given simulation."""
         api = SimulationsApi(self.api_client)
-        water_level_1_d = api.simulations_initial2d_water_level_raster_create((str(simulation_pk)), data)
-        return water_level_1_d
+        water_level_2d_raster = api.simulations_initial2d_water_level_raster_create((str(simulation_pk)), data)
+        return water_level_2d_raster
 
     def add_initial_groundwater_level_constant(self, simulation_pk: int, **data) -> GroundWaterLevel:
         """Add add_initial_groundwater_level_constant to the given simulation."""
         api = SimulationsApi(self.api_client)
-        groundwater = api.simulations_initial_groundwater_level_constant_create((str(simulation_pk)), data)
-        return groundwater
+        groundwater_const = api.simulations_initial_groundwater_level_constant_create((str(simulation_pk)), data)
+        return groundwater_const
 
     def add_initial_groundwater_level_raster(self, simulation_pk: int, **data) -> GroundWaterRaster:
         """Add add_initial_groundwater_level_raster to the given simulation."""
         api = SimulationsApi(self.api_client)
-        groundwater = api.simulations_initial_groundwater_level_raster_create((str(simulation_pk)), data)
-        return groundwater
+        groundwater_raster = api.simulations_initial_groundwater_level_raster_create((str(simulation_pk)), data)
+        return groundwater_raster
 
     def fetch_revisions(self) -> List[Revision]:
         """Fetch all Revisions available for current user."""

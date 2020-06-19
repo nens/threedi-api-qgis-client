@@ -15,7 +15,7 @@
    version="1.1"
    id="svg3767"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
-   sodipodi:docname="sim_wizard_duration.svg">
+   sodipodi:docname="sim_wizard_initial_con.svg">
   <defs
      id="defs3761" />
   <sodipodi:namedview
@@ -25,9 +25,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.959798"
-     inkscape:cx="218.13235"
-     inkscape:cy="-0.94956326"
+     inkscape:zoom="2.8"
+     inkscape:cx="280.89486"
+     inkscape:cy="10.384104"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -209,7 +209,7 @@
          id="tspan48"
          sodipodi:role="line">Precipitation</tspan></text>
     <ellipse
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke-width:0.06933074"
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke-width:0.06933074"
        id="circle3757"
        cx="77.722084"
        cy="18.666599"
@@ -242,7 +242,7 @@
        height="2.5694051"
        width="12.842525"
        id="rect61"
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.07218084;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.07218084;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <rect
        style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.07346985;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect63"
@@ -273,18 +273,18 @@
        style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.07631189;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333333px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332;"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        x="77.566597"
        y="5.7762785"
        id="text870"><tspan
          sodipodi:role="line"
          x="77.566597"
          y="5.7762785"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333333px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr;text-anchor:middle;stroke-width:0.26458332;"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
          id="tspan876">Initial</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333333px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332;text-anchor:start;text-align:start;writing-mode:lr;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI Bold';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        x="67.19828"
        y="10.114923"
        id="text882"><tspan
@@ -292,7 +292,7 @@
          id="tspan880"
          x="67.19828"
          y="10.114923"
-         style="stroke-width:0.26458332;-inkscape-font-specification:'Segoe UI, Normal';font-family:'Segoe UI';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:4.23333333px;text-anchor:start;text-align:start;writing-mode:lr;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;">Conditions</tspan></text>
+         style="stroke-width:0.26458332">Conditions</tspan></text>
     <rect
        y="17.471067"
        x="164.65131"
@@ -320,7 +320,7 @@
        height="2.5694053"
        width="16.542099"
        id="rect69-2"
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.08192041;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.08192041;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <rect
        y="17.471067"
        x="48.703766"

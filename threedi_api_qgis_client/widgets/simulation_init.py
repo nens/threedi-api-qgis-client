@@ -1,8 +1,5 @@
 import os
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QSettings, QThread
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from qgis.PyQt.QtWidgets import QFileDialog
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'init_dialog.ui'))
@@ -11,6 +8,8 @@ uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'init_dialog.ui'))
 class SimulationInit(uicls, basecls):
     """Dialog with methods for handling running simulations."""
     PROGRESS_COLUMN_IDX = 2
+    COST_TYPES = ["min", "avg", "max"]
+    MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
 
     def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
@@ -27,15 +26,38 @@ class SimulationInit(uicls, basecls):
         self.cb_conditions.stateChanged.connect(self.load_saved_state_changed)
         self.cb_postprocess.stateChanged.connect(self.postprocessing_state_changed)
         self.cb_damage_estimation.stateChanged.connect(self.damage_estimation_changed)
+        self.cb_breaches.stateChanged.connect(self.toggle_breaches)
+        self.cb_precipitation.stateChanged.connect(self.toggle_precipitation)
         self.pb_next.clicked.connect(self.start_wizard)
         self.pb_cancel.clicked.connect(self.close)
         self.fill_comboboxes()
 
     def fill_comboboxes(self):
-        self.dd_cost_type.addItems(["min", "avg", "max"])
-        self.dd_flood_month.addItems(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"])
+        self.dd_cost_type.addItems(self.COST_TYPES)
+        self.dd_flood_month.addItems(self.MONTHS)
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
-        self.dd_simulation_difference.addItems(["precipitation", "breaches"])
+
+    def toggle_breaches(self):
+        if self.cb_breaches.isChecked():
+            self.dd_simulation_difference.addItem("breaches")
+            self.cb_multiple_simulations.setEnabled(True)
+        else:
+            idx = self.dd_simulation_difference.findText("breaches")
+            self.dd_simulation_difference.removeItem(idx)
+            if not self.cb_precipitation.isChecked():
+                self.cb_multiple_simulations.setChecked(False)
+                self.cb_multiple_simulations.setDisabled(True)
+
+    def toggle_precipitation(self):
+        if self.cb_precipitation.isChecked():
+            self.dd_simulation_difference.addItem("precipitation")
+            self.cb_multiple_simulations.setEnabled(True)
+        else:
+            idx = self.dd_simulation_difference.findText("precipitation")
+            self.dd_simulation_difference.removeItem(idx)
+            if not self.cb_breaches.isChecked():
+                self.cb_multiple_simulations.setChecked(False)
+                self.cb_multiple_simulations.setDisabled(True)
 
     def multiple_simulations_changed(self, i):
         if i:
@@ -69,7 +91,7 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.include_initial_conditions = self.cb_conditions.isChecked()
         self.initial_conditions.load_from_saved_state = self.cb_load_saved_state.isChecked()
         self.initial_conditions.include_laterals = self.cb_laterals.isChecked()
-        self.initial_conditions.include_breaches = self.cb_breanches.isChecked()
+        self.initial_conditions.include_breaches = self.cb_breaches.isChecked()
         self.initial_conditions.include_precipitations = self.cb_precipitation.isChecked()
         self.initial_conditions.multiple_simulations = self.cb_multiple_simulations.isChecked()
         if self.initial_conditions.multiple_simulations:
@@ -89,7 +111,8 @@ class SimulationInit(uicls, basecls):
         self.open_wizard = True
         self.close()
 
-class SimulationInitObject():
+
+class SimulationInitObject:
     def __init__(self):
         self.include_boundary_conditions = False
         self.include_initial_conditions = False

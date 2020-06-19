@@ -9,12 +9,12 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="188.05554mm"
-   height="24.94326mm"
-   viewBox="0 0 188.05554 24.943261"
+   width="185.86446mm"
+   height="19.523979mm"
+   viewBox="0 0 185.86446 19.523979"
    version="1.1"
    id="svg3767"
-   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
    sodipodi:docname="sim_wizard_laterals.svg">
   <defs
      id="defs3761" />
@@ -25,16 +25,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.979899"
-     inkscape:cx="294.75939"
-     inkscape:cy="17.444579"
+     inkscape:zoom="3.959798"
+     inkscape:cx="482.05488"
+     inkscape:cy="-16.68217"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="2493"
-     inkscape:window-height="1385"
-     inkscape:window-x="67"
-     inkscape:window-y="27"
+     inkscape:window-width="1680"
+     inkscape:window-height="997"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
      inkscape:window-maximized="1"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -45,10 +45,9 @@
      inkscape:snap-midpoints="false"
      inkscape:snap-bbox="true"
      inkscape:bbox-paths="false"
-     inkscape:snap-bbox-edge-midpoints="false"
-     units="px">
+     inkscape:snap-bbox-edge-midpoints="false">
     <sodipodi:guide
-       position="-3.4017858,0.023623513"
+       position="-6.1220318,-4.1604373"
        orientation="0,1"
        id="guide34"
        inkscape:locked="false" />
@@ -69,284 +68,272 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-11.63697,-1.4073994)">
+     transform="translate(-14.357216,-2.6426198)">
     <rect
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.09379058;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.09430616;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect4593-2-3"
-       width="21.683273"
+       width="21.922323"
        height="2.5694051"
-       x="162.60893"
+       x="164.66957"
        y="17.626358" />
-    <circle
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke-width:0.14753447"
-       id="path3786-7-0"
-       cx="190.84352"
-       cy="18.662144"
-       r="7.4888754" />
+    <ellipse
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke-width:0.06933074"
+       id="circle3765"
+       cx="193.99753"
+       cy="18.417683"
+       rx="3.5385861"
+       ry="3.5" />
     <rect
-       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.07645229;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.07679961;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect4593"
-       width="14.407461"
-       height="2.5694051"
-       x="26.298643"
-       y="17.62636" />
+       width="14.425564"
+       height="2.5895483"
+       x="34.278202"
+       y="17.450924" />
     <rect
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.09379058;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.09430616;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect4593-2"
-       width="21.683273"
+       width="21.922323"
        height="2.5694051"
-       x="47.981911"
+       x="48.778851"
        y="17.62636" />
-    <circle
-       style="fill:#6cce86;fill-opacity:0.91764706;stroke-width:0.14753447"
+    <ellipse
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke-width:0.06873751"
        id="path3786"
-       cx="19.125845"
-       cy="18.861784"
-       r="7.4888754" />
-    <circle
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke-width:0.14753447"
-       id="path3786-7"
-       cx="76.216629"
-       cy="18.662146"
-       r="7.4888754" />
+       cx="19.348595"
+       cy="18.617321"
+       rx="3.4782891"
+       ry="3.5" />
     <rect
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.09379058;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.09430616;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect4593-2-4"
-       width="21.683273"
+       width="21.922323"
        height="2.5694051"
-       x="83.32756"
+       x="84.514168"
        y="17.626358" />
     <rect
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.09379058;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.09430616;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect4593-2-0"
-       width="21.683273"
+       width="21.922323"
        height="2.5694051"
-       x="105.01083"
+       x="106.43652"
        y="17.626358" />
     <rect
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.09379058;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.09430616;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect4593-9"
-       width="21.683271"
+       width="21.922321"
        height="2.5694051"
-       x="140.92566"
+       x="142.74725"
        y="17.626358" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="12.43072"
-       y="9.8509645"
+       x="14.018219"
+       y="10.114923"
        id="text831"><tspan
          sodipodi:role="line"
-         x="12.43072"
-         y="9.8509645"
+         x="14.018219"
+         y="10.114923"
          style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332"
          id="tspan4540">Name</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="39.261715"
-       y="9.9171104"
+       x="40.197159"
+       y="10.114923"
        id="text835"><tspan
          sodipodi:role="line"
          id="tspan833"
-         x="39.261715"
-         y="9.9171104"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">Duration</tspan></text>
+         x="40.197159"
+         y="10.114923"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">Duration</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="124.49803"
-       y="9.9367476"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333333px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332;"
+       x="126.08552"
+       y="10.114923"
        id="text839"><tspan
          sodipodi:role="line"
          id="tspan837"
-         x="124.49803"
-         y="9.9367476"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">Breaches</tspan><tspan
+         x="126.08552"
+         y="10.114923"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333333px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr;text-anchor:start;stroke-width:0.26458332;">Breaches</tspan><tspan
          sodipodi:role="line"
-         x="124.49803"
-         y="15.228414"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332"
+         x="126.08552"
+         y="15.406589"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333333px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr;text-anchor:start;stroke-width:0.26458332;"
          id="tspan52" /></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="181.68845"
-       y="9.9171104"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333333px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332;"
+       x="182.21761"
+       y="10.114923"
        id="text843"><tspan
          sodipodi:role="line"
          id="tspan841"
-         x="181.68845"
-         y="9.9171104"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">Initiation</tspan></text>
-    <circle
-       r="7.4888754"
-       cy="18.83816"
-       cx="47.745457"
+         x="182.21761"
+         y="10.114923"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333333px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr;text-anchor:start;stroke-width:0.26458332;">Initiation</tspan></text>
+    <ellipse
+       cy="18.593699"
+       cx="48.786945"
        id="circle32"
-       style="fill:#6cce86;fill-opacity:0.91764706;stroke-width:0.14753447" />
-    <g
-       id="g116">
-      <g
-         aria-label="Initial
-Conditions"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-         id="text38">
-        <path
-           d="m 72.135226,2.8678345 v 0.2976563 h -0.289388 v 2.3688475 h 0.289388 V 5.8319945 H 71.209185 V 5.5343383 h 0.289388 V 3.1654908 H 71.209185 V 2.8678345 Z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path118" />
-        <path
-           d="M 74.334575,5.8319945 H 73.995578 V 4.6248331 q 0,-0.6738606 -0.49196,-0.6738606 -0.254248,0 -0.42168,0.1922363 -0.165364,0.1901693 -0.165364,0.4816243 V 5.8319945 H 72.577576 V 3.715328 h 0.338998 v 0.3513997 h 0.0083 q 0.239779,-0.4010091 0.694531,-0.4010091 0.347266,0 0.531234,0.2253092 0.183968,0.2232422 0.183968,0.6469889 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path120" />
-        <path
-           d="m 75.148996,3.1778931 q -0.09095,0 -0.15503,-0.062012 -0.06408,-0.062012 -0.06408,-0.1570964 0,-0.095085 0.06408,-0.1570963 0.06408,-0.064079 0.15503,-0.064079 0.09302,0 0.157096,0.064079 0.06615,0.062012 0.06615,0.1570963 0,0.090951 -0.06615,0.1550293 -0.06408,0.064079 -0.157096,0.064079 z M 75.31436,5.8319945 H 74.975363 V 3.715328 h 0.338997 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path122" />
-        <path
-           d="m 76.982475,5.811324 q -0.119889,0.066146 -0.316259,0.066146 -0.556039,0 -0.556039,-0.6201172 V 4.004716 H 75.746375 V 3.715328 h 0.363802 V 3.1985637 l 0.338998,-0.109554 V 3.715328 h 0.5333 v 0.289388 h -0.5333 v 1.192692 q 0,0.2129069 0.07235,0.3038574 0.07235,0.09095 0.239778,0.09095 0.128158,0 0.221175,-0.07028 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path124" />
-        <path
-           d="m 77.612928,3.1778931 q -0.09095,0 -0.15503,-0.062012 -0.06408,-0.062012 -0.06408,-0.1570964 0,-0.095085 0.06408,-0.1570963 0.06408,-0.064079 0.15503,-0.064079 0.09302,0 0.157096,0.064079 0.06615,0.062012 0.06615,0.1570963 0,0.090951 -0.06615,0.1550293 -0.06408,0.064079 -0.157096,0.064079 z m 0.165364,2.6541014 H 77.439295 V 3.715328 h 0.338997 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path126" />
-        <path
-           d="M 79.979708,5.8319945 H 79.640711 V 5.5012654 h -0.0083 q -0.221176,0.3803385 -0.651124,0.3803385 -0.316259,0 -0.496093,-0.1674316 -0.177767,-0.1674317 -0.177767,-0.4444173 0,-0.5932454 0.698665,-0.6903971 l 0.634587,-0.088883 q 0,-0.5395019 -0.436149,-0.5395019 -0.382406,0 -0.690397,0.2604492 V 3.8641561 Q 78.82629,3.6657186 79.2335,3.6657186 q 0.746208,0 0.746208,0.7896158 z m -0.338997,-1.0707356 -0.510563,0.07028 q -0.235645,0.033073 -0.355534,0.1178222 -0.11989,0.082682 -0.11989,0.2955892 0,0.1550293 0.109554,0.254248 0.111622,0.097152 0.29559,0.097152 0.252181,0 0.415478,-0.1756998 0.165365,-0.177767 0.165365,-0.4485515 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path128" />
-        <path
-           d="M 80.961561,5.8319945 H 80.622563 V 2.6983358 h 0.338998 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path130" />
-        <path
-           d="m 68.534413,10.999637 q -0.328663,0.173633 -0.818555,0.173633 -0.63252,0 -1.012858,-0.40721 -0.380339,-0.40721 -0.380339,-1.0686685 0,-0.7110677 0.427881,-1.1492838 0.427881,-0.4382162 1.085205,-0.4382162 0.42168,0 0.698666,0.1219564 v 0.3700033 q -0.318327,-0.177767 -0.7028,-0.177767 -0.510563,0 -0.82889,0.3410645 -0.31626,0.3410644 -0.31626,0.9115722 0,0.5415691 0.29559,0.8640301 0.297656,0.320394 0.77928,0.320394 0.446484,0 0.77308,-0.198438 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path132" />
-        <path
-           d="m 69.977218,11.17327 q -0.469222,0 -0.750341,-0.295589 -0.279053,-0.297656 -0.279053,-0.787549 0,-0.5333004 0.291455,-0.8330237 0.291455,-0.2997233 0.787549,-0.2997233 0.473356,0 0.737939,0.2914551 0.266651,0.291455 0.266651,0.8082189 0,0.506429 -0.287321,0.812354 -0.285254,0.303857 -0.766879,0.303857 z m 0.02481,-1.9306311 q -0.326595,0 -0.516764,0.2232422 -0.19017,0.2211751 -0.19017,0.6118489 0,0.376204 0.192237,0.593245 0.192236,0.217041 0.514697,0.217041 0.328662,0 0.504362,-0.212906 0.177767,-0.212907 0.177767,-0.605648 0,-0.3968752 -0.177767,-0.6118492 -0.1757,-0.2149739 -0.504362,-0.2149739 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path134" />
-        <path
-           d="M 73.329985,11.123661 H 72.990987 V 9.9164995 q 0,-0.6738606 -0.491959,-0.6738606 -0.254248,0 -0.42168,0.1922363 -0.165364,0.1901693 -0.165364,0.4816243 V 11.123661 H 71.572986 V 9.0069944 h 0.338998 v 0.3513997 h 0.0083 Q 72.16003,8.957385 72.614783,8.957385 q 0.347266,0 0.531234,0.2253092 0.183968,0.2232422 0.183968,0.6469889 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path136" />
-        <path
-           d="m 75.777381,11.123661 h -0.338998 v -0.359668 h -0.0083 q -0.235644,0.409277 -0.727604,0.409277 -0.398942,0 -0.638721,-0.283187 -0.237711,-0.285253 -0.237711,-0.775146 0,-0.5250325 0.264583,-0.8412923 0.264583,-0.3162597 0.704867,-0.3162597 0.436149,0 0.634586,0.3431315 h 0.0083 V 7.9900022 h 0.338998 z M 75.438383,10.166613 V 9.8544878 q 0,-0.2563151 -0.169498,-0.434082 -0.169499,-0.1777669 -0.429948,-0.1777669 -0.310059,0 -0.487826,0.2273763 -0.177767,0.2273763 -0.177767,0.6283858 0,0.365869 0.169499,0.578776 0.171566,0.210839 0.458887,0.210839 0.283187,0 0.458886,-0.204638 0.177767,-0.204639 0.177767,-0.516765 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path138" />
-        <path
-           d="m 76.641411,8.4695595 q -0.09095,0 -0.15503,-0.062012 -0.06408,-0.062012 -0.06408,-0.1570964 0,-0.095085 0.06408,-0.1570963 0.06408,-0.064079 0.15503,-0.064079 0.09302,0 0.157096,0.064079 0.06615,0.062012 0.06615,0.1570963 0,0.090951 -0.06615,0.1550293 -0.06408,0.064079 -0.157096,0.064079 z m 0.165364,2.6541015 H 76.467778 V 9.0069944 h 0.338997 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path140" />
-        <path
-           d="m 78.47489,11.10299 q -0.119889,0.06615 -0.31626,0.06615 -0.556038,0 -0.556038,-0.620117 V 9.2963824 H 77.23879 v -0.289388 h 0.363802 V 8.4902301 L 77.941589,8.380676 v 0.6263184 h 0.533301 v 0.289388 h -0.533301 v 1.1926916 q 0,0.212907 0.07235,0.303858 0.07235,0.09095 0.239779,0.09095 0.128157,0 0.221175,-0.07028 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path142" />
-        <path
-           d="m 79.105343,8.4695595 q -0.09095,0 -0.15503,-0.062012 -0.06408,-0.062012 -0.06408,-0.1570964 0,-0.095085 0.06408,-0.1570963 0.06408,-0.064079 0.15503,-0.064079 0.09302,0 0.157096,0.064079 0.06615,0.062012 0.06615,0.1570963 0,0.090951 -0.06615,0.1550293 -0.06408,0.064079 -0.157096,0.064079 z m 0.165364,2.6541015 H 78.93171 V 9.0069944 h 0.338997 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path144" />
-        <path
-           d="m 80.841671,11.17327 q -0.469222,0 -0.750342,-0.295589 -0.279052,-0.297656 -0.279052,-0.787549 0,-0.5333004 0.291455,-0.8330237 0.291455,-0.2997233 0.787549,-0.2997233 0.473356,0 0.737939,0.2914551 0.26665,0.291455 0.26665,0.8082189 0,0.506429 -0.287321,0.812354 -0.285253,0.303857 -0.766878,0.303857 z m 0.02481,-1.9306311 q -0.326595,0 -0.516764,0.2232422 -0.19017,0.2211751 -0.19017,0.6118489 0,0.376204 0.192237,0.593245 0.192236,0.217041 0.514697,0.217041 0.328662,0 0.504362,-0.212906 0.177767,-0.212907 0.177767,-0.605648 0,-0.3968752 -0.177767,-0.6118492 -0.1757,-0.2149739 -0.504362,-0.2149739 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path146" />
-        <path
-           d="M 84.194437,11.123661 H 83.85544 V 9.9164995 q 0,-0.6738606 -0.49196,-0.6738606 -0.254248,0 -0.42168,0.1922363 -0.165364,0.1901693 -0.165364,0.4816243 V 11.123661 H 82.437439 V 9.0069944 h 0.338997 v 0.3513997 h 0.0083 q 0.239779,-0.4010091 0.694531,-0.4010091 0.347266,0 0.531234,0.2253092 0.183968,0.2232422 0.183968,0.6469889 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path148" />
-        <path
-           d="m 84.707067,11.04718 v -0.363802 q 0.276986,0.204638 0.609782,0.204638 0.446484,0 0.446484,-0.297656 0,-0.08475 -0.03927,-0.142627 -0.03721,-0.05994 -0.103353,-0.10542 -0.06408,-0.04548 -0.152962,-0.08061 -0.08682,-0.03721 -0.188102,-0.07648 -0.14056,-0.05581 -0.248047,-0.111621 -0.10542,-0.05788 -0.177767,-0.1281577 -0.07028,-0.072347 -0.107487,-0.1632975 -0.03514,-0.09095 -0.03514,-0.2129069 0,-0.1488281 0.06821,-0.2625162 0.06821,-0.1157552 0.181901,-0.1922364 0.113688,-0.078548 0.258382,-0.1178222 0.146761,-0.039274 0.301791,-0.039274 0.274918,0 0.491959,0.095085 V 9.3956011 Q 85.77987,9.2426389 85.476012,9.2426389 q -0.09508,0 -0.171565,0.022738 -0.07648,0.020671 -0.132292,0.059945 -0.05374,0.039274 -0.08475,0.095085 -0.02894,0.053744 -0.02894,0.1198893 0,0.082682 0.02894,0.1384929 0.031,0.05581 0.08888,0.099219 0.05788,0.043408 0.14056,0.078548 0.08268,0.03514 0.188102,0.076481 0.14056,0.053744 0.252181,0.111621 0.111621,0.05581 0.190169,0.128158 0.07855,0.07028 0.11989,0.163297 0.04341,0.09302 0.04341,0.221175 0,0.157097 -0.07028,0.272852 -0.06821,0.115755 -0.183968,0.192236 -0.115755,0.07648 -0.26665,0.113688 -0.150896,0.03721 -0.31626,0.03721 -0.326595,0 -0.566374,-0.12609 z"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
-           id="path150" />
-      </g>
-    </g>
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke-width:0.06933074"
+       rx="3.5385861"
+       ry="3.5" />
     <text
        id="text44"
-       y="9.9367476"
-       x="97.206619"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       y="10.114923"
+       x="98.794121"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        xml:space="preserve"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332"
-         y="9.9367476"
-         x="97.206619"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332"
+         y="10.114923"
+         x="98.794121"
          id="tspan42"
          sodipodi:role="line">Laterals</tspan><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332"
-         y="15.228414"
-         x="97.206619"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332"
+         y="15.406589"
+         x="98.794121"
          sodipodi:role="line"
          id="tspan46" /></text>
     <text
        id="text50"
-       y="9.4551239"
-       x="149.60561"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       y="10.251348"
+       x="151.19308"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333333px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332;"
        xml:space="preserve"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332"
-         y="9.4551239"
-         x="149.60561"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333333px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr;text-anchor:start;stroke-width:0.26458332;"
+         y="10.251348"
+         x="151.19308"
          id="tspan48"
          sodipodi:role="line">Precipitation</tspan></text>
-    <circle
-       style="fill:#6cce86;fill-opacity:0.91764706;stroke-width:0.14753447"
+    <ellipse
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke-width:0.06933074"
        id="circle3757"
-       cx="76.365074"
-       cy="18.91106"
-       r="7.4888754" />
-    <rect
-       y="17.626358"
-       x="169.21657"
-       height="2.5694051"
-       width="15.075635"
-       id="rect69"
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.07820501;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    <circle
-       r="7.4888754"
-       cy="18.83816"
-       cx="162.22391"
-       id="circle3763"
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke-width:0.14753447" />
-    <rect
-       y="17.62636"
-       x="54.58955"
-       height="2.5694051"
-       width="15.075635"
-       id="rect61"
-       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.07820501;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    <rect
-       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.07820501;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       id="rect63"
-       width="15.075635"
-       height="2.5694051"
-       x="83.32756"
-       y="17.626358" />
-    <rect
-       y="17.626358"
-       x="111.61847"
-       height="2.5694051"
-       width="15.075635"
-       id="rect65"
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.07820501;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    <rect
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.07820501;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       id="rect67"
-       width="15.075635"
-       height="2.5694051"
-       x="140.92566"
-       y="17.626358" />
-    <circle
-       style="fill:#ffffff;fill-opacity:0.91764706;stroke-width:0.14753447"
-       id="circle3761"
-       cx="133.60431"
-       cy="18.83816"
-       r="7.4888754" />
-    <circle
-       r="7.4888754"
-       cy="18.91106"
-       cx="104.98469"
+       cx="77.722084"
+       cy="18.666599"
+       rx="3.5385861"
+       ry="3.5" />
+    <ellipse
+       cy="18.666599"
+       cx="106.12222"
        id="circle3759"
-       style="fill:#6cce86;fill-opacity:0.91764706;stroke-width:0.14753447" />
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke-width:0.06933074"
+       rx="3.5385861"
+       ry="3.5" />
+    <ellipse
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke-width:0.06933074"
+       id="circle3761"
+       cx="135.0573"
+       cy="18.593699"
+       rx="3.5385861"
+       ry="3.5" />
+    <ellipse
+       cy="18.593697"
+       cx="163.9924"
+       id="circle3763"
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke-width:0.06933074"
+       rx="3.5385861"
+       ry="3.5" />
+    <rect
+       y="17.471067"
+       x="63.728321"
+       height="2.5694051"
+       width="12.842525"
+       id="rect61"
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.07218084;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <rect
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.07346985;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect63"
+       width="13.305305"
+       height="2.5694051"
+       x="93.112946"
+       y="17.471067" />
+    <rect
+       y="17.471067"
+       x="120.4499"
+       height="2.5694051"
+       width="14.240749"
+       id="rect65"
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.07600868;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <rect
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.07937001;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect67"
+       width="15.528135"
+       height="2.5694051"
+       x="149.12317"
+       y="17.471067" />
+    <rect
+       y="17.471067"
+       x="179.77036"
+       height="2.5694051"
+       width="14.354589"
+       id="rect69"
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.07631189;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="77.566597"
+       y="5.7762785"
+       id="text870"><tspan
+         sodipodi:role="line"
+         x="77.566597"
+         y="5.7762785"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
+         id="tspan876">Initial</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:4.23333311px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI Bold';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="67.19828"
+       y="10.114923"
+       id="text882"><tspan
+         sodipodi:role="line"
+         id="tspan880"
+         x="67.19828"
+         y="10.114923"
+         style="stroke-width:0.26458332">Conditions</tspan></text>
+    <rect
+       y="17.471067"
+       x="164.65131"
+       height="2.5694053"
+       width="15.119052"
+       id="rect69-4"
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.07831755;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <rect
+       y="17.471067"
+       x="134.69064"
+       height="2.5694053"
+       width="14.432528"
+       id="rect69-7"
+       style="fill:#ffffff;fill-opacity:0.91764706;stroke:none;stroke-width:0.07651877;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <rect
+       y="17.471067"
+       x="106.41825"
+       height="2.5694053"
+       width="14.031645"
+       id="rect69-9"
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.07544858;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <rect
+       y="17.471067"
+       x="76.570847"
+       height="2.5694053"
+       width="16.542099"
+       id="rect69-2"
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.08192041;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <rect
+       y="17.471067"
+       x="48.703766"
+       height="2.5694053"
+       width="15.024556"
+       id="rect69-90"
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.07807241;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <rect
+       y="17.450924"
+       x="18.992102"
+       height="2.5694053"
+       width="15.286098"
+       id="rect69-6"
+       style="fill:#6cce86;fill-opacity:0.91764706;stroke:none;stroke-width:0.07874901;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
   </g>
 </svg>
