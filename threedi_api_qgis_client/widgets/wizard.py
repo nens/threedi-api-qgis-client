@@ -159,15 +159,14 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.rasters = {}
         self.d1_widget.hide()
         self.d2_widget.hide()
-        self.global_value_1d_widget.hide()
         self.groundwater_widget.hide()
         self.cb_1d.stateChanged.connect(self.d1_change_state)
         self.cb_2d.stateChanged.connect(self.d2_change_state)
         self.cb_groundwater.stateChanged.connect(self.groundwater_change_state)
         self.cb_saved_states.activated.connect(self.saved_state_changed)
-        self.dd_1d.activated.connect(self.dropdown_d1_changed)
-        self.dd_2d.activated.connect(self.dropdown_d2_changed)
-        self.dd_groundwater.activated.connect(self.dropdown_groundwater_changed)
+        self.dd_1d.currentIndexChanged.connect(self.dropdown_d1_changed)
+        self.dd_2d.currentIndexChanged.connect(self.dropdown_d2_changed)
+        self.dd_groundwater.currentIndexChanged.connect(self.dropdown_groundwater_changed)
         self._fill_checkboxes()
         if load_conditions:
             self.load_conditions_widget.show()
@@ -181,42 +180,45 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.dd_2d.addItem("")
             self.dd_groundwater.addItem("")
             tc = ThreediCalls(self.parent_page.parent_wizard.parent_dock.api_client)
-            rasters = tc.get_raster_list(self.parent_page.parent_wizard.parent_dock.current_model.id)
+            rasters = tc.get_initial_waterlevels(self.parent_page.parent_wizard.parent_dock.current_model.id)
             if rasters and rasters.results:
                 for raster in rasters.results:
-                    self.rasters[raster.name] = raster
-                    self.dd_2d.addItem(str(raster.name))
-                    self.dd_groundwater.addItem(str(raster.name))
-            states = tc.get_saved_states_list(self.parent_page.parent_wizard.parent_dock.current_model.id)
-            for state in states:
-                self.cb_saved_states.addItem(str(state.name))
+                    raster_filename = raster.file.filename
+                    self.rasters[raster_filename] = raster
+                    self.dd_2d.addItem(raster_filename)
+                    self.dd_groundwater.addItem(raster_filename)
+            # states = tc.get_saved_states_list(self.parent_page.parent_wizard.parent_dock.current_model.id)
+            # for state in states:
+            #     self.cb_saved_states.addItem(str(state.name))
         except ApiException as e:
             self.new_simulations = None
             self.new_simulation_statuses = None
             error_body = e.body
             error_details = error_body["details"] if "details" in error_body else error_body
             error_msg = f"Error: {error_details}"
-            self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
-
+            self.parent_page.parent_wizard.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.parent_page.parent_wizard.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         self.dd_1d.addItems(["Predefined", "Global value"])
 
     def dropdown_d1_changed(self):
         if self.dd_1d.currentText() == "Global value":
-            self.le_1d_global_value.setDisabled(False)
+            self.sp_1d_global_value.setEnabled(True)
         else:
-            self.le_1d_global_value.setDisabled(True)
+            self.sp_1d_global_value.setDisabled(True)
 
     def dropdown_d2_changed(self):
-        if not self.dd_2d.currentText():
-            self.le_2d_global_value.setDisabled(False)
+        if self.dd_2d.currentIndex() <= 0:
+            self.sp_2d_global_value.setEnabled(True)
         else:
-            self.le_1d_global_value.setDisabled(True)
+            self.sp_2d_global_value.setDisabled(True)
 
     def dropdown_groundwater_changed(self):
-        if not self.dd_groundwater.currentText():
-            self.le_gwater_global_value.setDisabled(False)
+        if self.dd_groundwater.currentIndex() <= 0:
+            self.sp_gwater_global_value.setEnabled(True)
         else:
-            self.le_gwater_global_value.setDisabled(True)
+            self.sp_gwater_global_value.setDisabled(True)
 
     def d1_change_state(self, value):
         if value == 0:
@@ -298,6 +300,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def load_csv(self):
         values, filename = self.open_upload_dialog()
+        if not filename:
+            return
         self.il_upload.setText(filename)
         self.laterals_timeseries = values
         for lat in self.laterals_timeseries.keys():
@@ -305,6 +309,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def overrule_with_csv(self):
         values, filename = self.open_upload_dialog()
+        if not filename:
+            return
         laterals = self.laterals_timeseries.get(self.cb_laterals.currentText())
         for lat in values.values():
             laterals.values = lat.values
@@ -1052,14 +1058,16 @@ class SimulationWizard(QWizard):
         include_1d, include_2d, include_groundwater = False, False, False
         if hasattr(self, "init_conditions_page"):
             value_1d = self.init_conditions_page.main_widget.dd_1d.currentText()
-            global_value_1d = self.init_conditions_page.main_widget.le_1d_global_value.text()
-            raster_2d = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_2d.currentText()).to_dict()
-            global_value_2d = self.init_conditions_page.main_widget.le_2d_global_value.text()
-            raster_groundwater = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_groundwater.currentText()).to_dict()
-            global_value_groundwater = self.init_conditions_page.main_widget.le_gwater_global_value.text()
-            include_1d = self.init_conditions_page.main_widget.cb_1d
-            include_2d = self.init_conditions_page.main_widget.cb_2d
-            include_groundwater = self.init_conditions_page.main_widget.cb_groundwater
+            global_value_1d = self.init_conditions_page.main_widget.sp_1d_global_value.value()
+            raster_2d_obj = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_2d.currentText())
+            raster_2d = raster_2d_obj.to_dict() if raster_2d_obj is not None else None
+            global_value_2d = self.init_conditions_page.main_widget.sp_2d_global_value.value()
+            raster_groundwater_obj = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_groundwater.currentText())
+            raster_groundwater = raster_groundwater_obj.to_dict() if raster_groundwater_obj is not None else None
+            global_value_groundwater = self.init_conditions_page.main_widget.sp_gwater_global_value.value()
+            include_1d = self.init_conditions_page.main_widget.cb_1d.isChecked()
+            include_2d = self.init_conditions_page.main_widget.cb_2d.isChecked()
+            include_groundwater = self.init_conditions_page.main_widget.cb_groundwater.isChecked()
 
         simulation_template = dict()
         simulation_template["template_name"] = template_name
@@ -1128,12 +1136,11 @@ class SimulationWizard(QWizard):
         # initial conditions page attributes
         global_value_1d, raster_2d, global_value_2d, raster_groundwater, global_value_groundwater = (None,) * 5
         if self.init_conditions.include_initial_conditions:
-            global_value_1d = self.init_conditions_page.main_widget.le_1d_global_value.text()
-            raster_2d = self.init_conditions_page.main_widget.rasters.get(
-                self.init_conditions_page.main_widget.dd_2d.currentText())
-            global_value_2d = self.init_conditions_page.main_widget.le_2d_global_value.text()
+            global_value_1d = self.init_conditions_page.main_widget.sp_1d_global_value.value()
+            raster_2d = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_2d.currentText())
+            global_value_2d = self.init_conditions_page.main_widget.sp_2d_global_value.value()
             raster_groundwater = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_groundwater.currentText())
-            global_value_groundwater = self.init_conditions_page.main_widget.le_gwater_global_value.text()
+            global_value_groundwater = self.init_conditions_page.main_widget.sp_gwater_global_value.value()
 
         if self.summary_page.main_widget.cb_save_template.isChecked():
             self.save_simulation_as_template()
@@ -1180,23 +1187,24 @@ class SimulationWizard(QWizard):
                                                   units=lateral.units, point=lateral.point,
                                                   connection_node=lateral.connection_node, id=lateral.id)
                 if self.init_conditions.include_initial_conditions:
-                    if self.init_conditions_page.main_widget.cb_1d:
-                        if self.init_conditions_page.main_widget.dd_1d == "Global value":
+                    if self.init_conditions_page.main_widget.cb_1d.isChecked():
+                        if self.init_conditions_page.main_widget.dd_1d.currentText() == "Global value":
+                            print(global_value_1d)
                             tc.add_initial_1d_water_level_constant(sim_id, value=global_value_1d)
                         else:
                             tc.add_initial_1d_water_level_predefined(sim_id)
-                    if self.init_conditions_page.main_widget.cb_2d:
-                        if self.init_conditions_page.main_widget.dd_2d == "":
+                    if self.init_conditions_page.main_widget.cb_2d.isChecked():
+                        if self.init_conditions_page.main_widget.dd_2d.currentText() == "":
                             tc.add_initial_2d_water_level_constant(sim_id, value=global_value_2d)
                         else:
                             tc.add_initial_2d_water_level_raster(sim_id, aggregation_method="mean",
-                                                                 initial_waterlevel=raster_2d.id)
-                    if self.init_conditions_page.main_widget.cb_groundwater:
-                        if self.init_conditions_page.main_widget.dd_groundwater == "":
+                                                                 initial_waterlevel=raster_2d.file.id)
+                    if self.init_conditions_page.main_widget.cb_groundwater.isChecked():
+                        if self.init_conditions_page.main_widget.dd_groundwater.currentText() == "":
                             tc.add_initial_groundwater_level_constant(sim_id, value=global_value_groundwater)
                         else:
                             tc.add_initial_groundwater_level_raster(sim_id, aggregation_method="mean",
-                                                                    initial_waterlevel=raster_groundwater.id)
+                                                                    initial_waterlevel=raster_groundwater.file.id)
 
                 if ptype == CONSTANT_RAIN:
                     tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration,
@@ -1216,8 +1224,8 @@ class SimulationWizard(QWizard):
             error_details = error_body["details"] if "details" in error_body else error_body
             error_msg = f"Error: {error_details}"
             self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
-        except Exception as e:
-            self.new_simulations = None
-            self.new_simulation_statuses = None
-            error_msg = f"Error: {e}"
-            self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+        # except Exception as e:
+        #     self.new_simulations = None
+        #     self.new_simulation_statuses = None
+        #     error_msg = f"Error: {e}"
+        #     self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
