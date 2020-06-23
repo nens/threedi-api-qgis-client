@@ -4,7 +4,7 @@ import os
 import json
 from collections import OrderedDict
 
-TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "templates.json")
+TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates.json")
 
 
 def mmh_to_ms(mmh_value):
