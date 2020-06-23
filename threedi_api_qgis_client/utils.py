@@ -1,5 +1,10 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
+import os
+import json
+from collections import OrderedDict
+
+TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "templates.json")
 
 
 def mmh_to_ms(mmh_value):
@@ -42,3 +47,16 @@ def mmh_to_mmtimestep(value, timestep, units='s'):
     value_per_second = value / 3600
     mmtimestep_value = value_per_second * timestep_seconds
     return mmtimestep_value
+
+
+def load_saved_templates():
+    items = OrderedDict()
+    with open(TEMPLATE_PATH, "a"):
+        os.utime(TEMPLATE_PATH, None)
+    with open(TEMPLATE_PATH, "r+") as json_file:
+        data = []
+        if os.path.getsize(TEMPLATE_PATH):
+            data = json.load(json_file)
+        for name, parameters in sorted(data.items()):
+            items[name] = parameters
+    return items

@@ -1,7 +1,7 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox, QInputDialog
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
 from qgis.core import QgsMessageLog, Qgis
 
@@ -88,3 +88,11 @@ class UICommunication(object):
             return False
         else:
             return True
+
+    def pick_item(self, title, message, parent=None, *items):
+        """Getting item from list of items."""
+        parent = parent if parent is not None else self.iface.mainWindow()
+        item, accept = QInputDialog.getItem(parent, title, message, items, editable=False)
+        if accept is False:
+            return None
+        return item

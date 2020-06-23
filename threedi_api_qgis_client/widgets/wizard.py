@@ -7,14 +7,15 @@ import csv
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
+from collections import OrderedDict
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
 from openapi_client import ApiException, TimeseriesLateral
-from ..ui_utils import icon_path, set_widget_background_color
-from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh
+from ..ui_utils import icon_path, set_widget_background_color, scan_widgets_parameters, set_widgets_parameters
+from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, load_saved_templates, TEMPLATE_PATH
 from ..api_calls.threedi_calls import ThreediCalls
 
 
@@ -27,7 +28,6 @@ uicls_precipitation_page, basecls_precipitation_page = uic.loadUiType(os.path.jo
 uicls_breaches, basecls_breaches = uic.loadUiType(os.path.join(base_dir, 'ui', 'page_breaches.ui'))
 uicls_summary_page, basecls_summary_page = uic.loadUiType(os.path.join(base_dir, 'ui', 'page_initiation.ui'))
 
-TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "templates.json")
 
 CONSTANT_RAIN = "Constant"
 CUSTOM_RAIN = "Custom"
@@ -240,19 +240,6 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
 
     def saved_state_changed(self):
         state = self.cb_saved_states.currentText()
-
-    @staticmethod
-    def load_saved_templates():
-        items = []
-        with open(TEMPLATE_PATH, "a"):
-            os.utime(TEMPLATE_PATH, None)
-        with open(TEMPLATE_PATH, "r+") as json_file:
-            data = []
-            if os.path.getsize(TEMPLATE_PATH):
-                data = json.load(json_file)
-            for name, temp in data.items():
-                items.append(name)
-        return items
 
 
 class LateralsWidget(uicls_laterals, basecls_laterals):
@@ -976,9 +963,11 @@ class SummaryPage(QWizardPage):
 
 class SimulationWizard(QWizard):
     """New simulation wizard."""
-    def __init__(self, parent_dock, init_conditions, parent=None):
+    def __init__(self, parent_dock, init_conditions_dlg, parent=None):
         super().__init__(parent)
         self.setWizardStyle(QWizard.ClassicStyle)
+        self.init_conditions_dlg = init_conditions_dlg
+        init_conditions = self.init_conditions_dlg.initial_conditions
         self.parent_dock = parent_dock
         self.name_page = NamePage(self)
         self.duration_page = SimulationDurationPage(self)
@@ -1057,71 +1046,25 @@ class SimulationWizard(QWizard):
             self.summary_page.main_widget.duration_breach.setText(str(duration_of_breach))
 
     def save_simulation_as_template(self):
+        simulation_template = OrderedDict()
         template_name = self.summary_page.main_widget.template_name.text()
-        name = self.name_page.main_widget.le_sim_name.text()
-        threedimodel_id = self.parent_dock.current_model.id
-        organisation_uuid = self.parent_dock.organisation.unique_id
-        duration = self.duration_page.main_widget.calculate_simulation_duration()
-
-        value_1d, global_value_1d, raster_2d, global_value_2d, raster_groundwater, global_value_groundwater = (None,) * 6
-        include_1d, include_2d, include_groundwater = False, False, False
+        simulation_template["options"] = scan_widgets_parameters(self.init_conditions_dlg)
+        simulation_template["name_page"] = scan_widgets_parameters(self.name_page.main_widget)
+        simulation_template["duration_page"] = scan_widgets_parameters(self.duration_page.main_widget)
         if hasattr(self, "init_conditions_page"):
-            value_1d = self.init_conditions_page.main_widget.dd_1d.currentText()
-            global_value_1d = self.init_conditions_page.main_widget.sp_1d_global_value.value()
-            raster_2d_obj = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_2d.currentText())
-            raster_2d = raster_2d_obj.to_dict() if raster_2d_obj is not None else None
-            global_value_2d = self.init_conditions_page.main_widget.sp_2d_global_value.value()
-            raster_groundwater_obj = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_groundwater.currentText())
-            raster_groundwater = raster_groundwater_obj.to_dict() if raster_groundwater_obj is not None else None
-            global_value_groundwater = self.init_conditions_page.main_widget.sp_gwater_global_value.value()
-            include_1d = self.init_conditions_page.main_widget.cb_1d.isChecked()
-            include_2d = self.init_conditions_page.main_widget.cb_2d.isChecked()
-            include_groundwater = self.init_conditions_page.main_widget.cb_groundwater.isChecked()
-
-        simulation_template = dict()
-        simulation_template["template_name"] = template_name
-        simulation_template["name"] = name
-        simulation_template["threedimodel"] = threedimodel_id
-        simulation_template["organisation"] = organisation_uuid
-        simulation_template["duration"] = duration
-        simulation_template["init_cond"] = self.init_conditions.__dict__
-        simulation_template["include_1d"] = include_1d
-        simulation_template["value_1d"] = value_1d
-        simulation_template["include_2d"] = include_2d
-        simulation_template["include_groundwater"] = include_groundwater
-        simulation_template["global_value_1d"] = global_value_1d
-        simulation_template["raster_2d"] = raster_2d
-        simulation_template["global_value_2d"] = global_value_2d
-        simulation_template["raster_groundwater"] = raster_groundwater
-        simulation_template["global_value_groundwater"] = global_value_groundwater
-
+            simulation_template["init_conditions_page"] = scan_widgets_parameters(self.init_conditions_page.main_widget)
         if hasattr(self, "laterals_page"):
-            laterals = self.laterals_page.main_widget.get_laterals_data()
-            lats = []
-            for lat in laterals.values():
-                lats.append(lat.to_dict())
-            simulation_template["laterals"] = lats
-
-        for simulation in range(1, (self.init_conditions.number_of_simulations + 1)):
-            ptype, poffset, pduration, punits, pvalues = (None,) * 5
-            breach_id, breach, width, d_duration = (None,) * 4
-            if hasattr(self, 'precipitation_page'):
-                ptype, poffset, pduration, punits, pvalues = self.precipitation_page.main_widget.get_precipitation_data(
-                    f"Simulation{simulation}")
-            if hasattr(self, "breaches_page"):
-                breach_id, breach, width, d_duration = self.breaches_page.main_widget.get_breaches_data(
-                    f"Simulation{simulation}")
-
-            one_simulation = dict()
-            one_simulation["ptype"] = ptype
-            one_simulation["poffset"] = poffset
-            one_simulation["pduration"] = pduration
-            one_simulation["punits"] = punits
-            one_simulation["pvalues"] = pvalues
-            one_simulation["breach_id"] = breach_id
-            one_simulation["width"] = width
-            one_simulation["d_duration"] = d_duration
-            simulation_template[f"Simulation{simulation}"] = one_simulation
+            simulation_template["laterals_page"] = scan_widgets_parameters(self.laterals_page.main_widget)
+            laterals_values = [lat.to_dict() for lat in self.laterals_page.main_widget.get_laterals_data()]
+            simulation_template["laterals_page"]["values"] = laterals_values
+        if hasattr(self, "precipitation_page"):
+            simulation_template["precipitation_page"] = scan_widgets_parameters(self.precipitation_page.main_widget)
+            precipitation_values = self.precipitation_page.main_widget.values
+            simulation_template["precipitation_page"]["values"] = precipitation_values
+        if hasattr(self, "breaches_page"):
+            simulation_template["breaches_page"] = scan_widgets_parameters(self.breaches_page.main_widget)
+            breaches_values = self.breaches_page.main_widget.values
+            simulation_template["breaches_page"]["values"] = breaches_values
 
         with open(TEMPLATE_PATH, 'a'):
             os.utime(TEMPLATE_PATH, None)
@@ -1134,6 +1077,26 @@ class SimulationWizard(QWizard):
             json_file.seek(0)
             json_file.write(jsonf)
             json_file.truncate()
+
+    def load_template_parameters(self, simulation_template):
+        set_widgets_parameters(self.name_page.main_widget, **simulation_template["name_page"])
+        set_widgets_parameters(self.duration_page.main_widget, **simulation_template["duration_page"])
+        if hasattr(self, "init_conditions_page"):
+            set_widgets_parameters(self.init_conditions_page.main_widget, **simulation_template["init_conditions_page"])
+        if hasattr(self, "laterals_page"):
+            set_widgets_parameters(self.laterals_page.main_widget, **simulation_template["laterals_page"])
+            laterals_values = simulation_template["laterals_page"]["values"]
+            self.laterals_page.main_widget.laterals_timeseries.update(laterals_values)
+        if hasattr(self, "precipitation_page"):
+            set_widgets_parameters(self.precipitation_page.main_widget, **simulation_template["precipitation_page"])
+            precipitation_values = simulation_template["precipitation_page"]["values"]
+            self.precipitation_page.main_widget.values.update(precipitation_values)
+        if hasattr(self, "breaches_page"):
+            set_widgets_parameters(self.breaches_page.main_widget, **simulation_template["breaches_page"])
+            simulation_template["breaches_page"] = scan_widgets_parameters(self.breaches_page.main_widget)
+            breaches_values = simulation_template["breaches_page"]["values"]
+            self.breaches_page.main_widget.values.update(breaches_values)
+            simulation_template["breaches_page"]["values"] = breaches_values
 
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
