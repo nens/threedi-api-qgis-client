@@ -54,7 +54,7 @@ def load_saved_templates():
     with open(TEMPLATE_PATH, "a"):
         os.utime(TEMPLATE_PATH, None)
     with open(TEMPLATE_PATH, "r+") as json_file:
-        data = []
+        data = {}
         if os.path.getsize(TEMPLATE_PATH):
             data = json.load(json_file)
         for name, parameters in sorted(data.items()):

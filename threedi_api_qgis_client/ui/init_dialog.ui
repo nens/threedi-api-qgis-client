@@ -593,7 +593,7 @@
         <item>
          <widget class="QCheckBox" name="cb_load_saved_state">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="font">
            <font>

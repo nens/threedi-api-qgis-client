@@ -13,9 +13,9 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
-from openapi_client import ApiException, TimeseriesLateral
+from openapi_client import ApiException
 from ..ui_utils import icon_path, set_widget_background_color, scan_widgets_parameters, set_widgets_parameters
-from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, load_saved_templates, TEMPLATE_PATH
+from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, TEMPLATE_PATH
 from ..api_calls.threedi_calls import ThreediCalls
 
 
@@ -157,13 +157,13 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.rasters = {}
+        self.saved_states = {}
         self.d1_widget.hide()
         self.d2_widget.hide()
         self.groundwater_widget.hide()
         self.cb_1d.stateChanged.connect(self.d1_change_state)
         self.cb_2d.stateChanged.connect(self.d2_change_state)
         self.cb_groundwater.stateChanged.connect(self.groundwater_change_state)
-        self.cb_saved_states.activated.connect(self.saved_state_changed)
         self.dd_1d.currentIndexChanged.connect(self.dropdown_d1_changed)
         self.dd_2d.currentIndexChanged.connect(self.dropdown_d2_changed)
         self.dd_groundwater.currentIndexChanged.connect(self.dropdown_groundwater_changed)
@@ -179,17 +179,20 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         try:
             self.dd_2d.addItem("")
             self.dd_groundwater.addItem("")
+            self.cb_saved_states.addItem("")
             tc = ThreediCalls(self.parent_page.parent_wizard.parent_dock.api_client)
-            rasters = tc.get_initial_waterlevels(self.parent_page.parent_wizard.parent_dock.current_model.id)
-            if rasters and rasters.results:
-                for raster in rasters.results:
-                    raster_filename = raster.file.filename
-                    self.rasters[raster_filename] = raster
-                    self.dd_2d.addItem(raster_filename)
-                    self.dd_groundwater.addItem(raster_filename)
-            # states = tc.get_saved_states_list(self.parent_page.parent_wizard.parent_dock.current_model.id)
-            # for state in states:
-            #     self.cb_saved_states.addItem(str(state.name))
+            rasters = tc.fetch_initial_waterlevels(self.parent_page.parent_wizard.parent_dock.current_model.id)
+            for raster in rasters or []:
+                raster_filename = raster.file.filename
+                self.rasters[raster_filename] = raster
+                self.dd_2d.addItem(raster_filename)
+                self.dd_groundwater.addItem(raster_filename)
+
+            states = tc.fetch_saved_states_list(self.parent_page.parent_wizard.parent_dock.current_model.id)
+            for state in states or []:
+                state_name = state.name
+                self.saved_states[state_name] = state
+                self.cb_saved_states.addItem(state_name)
         except ApiException as e:
             self.new_simulations = None
             self.new_simulation_statuses = None
@@ -237,9 +240,6 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.groundwater_widget.hide()
         if value == 2:
             self.groundwater_widget.show()
-
-    def saved_state_changed(self):
-        state = self.cb_saved_states.currentText()
 
 
 class LateralsWidget(uicls_laterals, basecls_laterals):
@@ -320,32 +320,30 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             return None, None
         QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
         values = {}
+        laterals_type = self.cb_type.currentText()
         with open(filename) as lateral_file:
             laterals_reader = csv.reader(lateral_file)
-            if self.cb_type.currentText() == "1D":
-                for row_id, lat_id, connection_node_id, timeseries in laterals_reader:
-                    if timeseries == "timeseries":
-                        continue
-                    try:
+            next(laterals_reader, None)
+            if laterals_type == "1D":
+                try:
+                    for row_id, lat_id, connection_node_id, timeseries in laterals_reader:
                         vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                        lateral = TimeseriesLateral(values=vals, units="m3/s", point=None,
-                                                    connection_node=int(connection_node_id), id=int(lat_id), offset=0)
+                        lateral = {"values": vals, "units": "m3/s", "point": None,
+                                   "connection_node": int(connection_node_id), "id": int(lat_id), "offset": 0}
                         values[lat_id] = lateral
                         self.last_uploaded_laterals = lateral
-                    except ValueError:
-                        continue
-            if self.cb_type.currentText() == "2D":
-                for x, y, ltype, lat_id, timeseries in laterals_reader:
-                    if timeseries == "timeseries":
-                        continue
-                    try:
+                except ValueError:
+                    return None, None
+            else:
+                try:
+                    for x, y, ltype, lat_id, timeseries in laterals_reader:
                         vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
                         point = {"type": "point",  "coordinates": [float(x), float(y)]}
-                        lateral = TimeseriesLateral(values=vals, units="m3/s", point=point, id=int(lat_id), offset=0)
+                        lateral = {"values": vals, "units": "m3/s", "point": point, "id": int(lat_id), "offset": 0}
                         values[lat_id] = lateral
                         self.last_uploaded_laterals = lateral
-                    except ValueError:
-                        continue
+                except ValueError:
+                    return None, None
         return values, filename
 
 
@@ -757,9 +755,9 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
 
     def fill_comboboxes(self):
         tc = ThreediCalls(self.parent_page.parent_wizard.parent_dock.api_client)
-        breaches = tc.get_breaches_list(self.parent_page.parent_wizard.parent_dock.current_model.id)
+        breaches = tc.fetch_breaches_list(self.parent_page.parent_wizard.parent_dock.current_model.id)
         for breach in breaches:
-            self.breaches[breach.connected_pnt_id] = breach
+            self.breaches[breach.connected_pnt_id] = breach.to_dict()
             self.dd_breach_id.addItem(str(breach.connected_pnt_id))
         self.write_values_into_dict()
 
@@ -770,7 +768,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         width = self.sb_width.value()
         units = self.dd_units.currentText()
         self.values[simulation] = {"breach_id": breach_id,
-                                   "breach": self.breaches.get(int(breach_id)),
+                                   "breach": self.breaches.get(int(breach_id) if breach_id.isnumeric() else None),
                                    "width": width,
                                    "duration": duration,
                                    "units": units}
@@ -1055,7 +1053,7 @@ class SimulationWizard(QWizard):
             simulation_template["init_conditions_page"] = scan_widgets_parameters(self.init_conditions_page.main_widget)
         if hasattr(self, "laterals_page"):
             simulation_template["laterals_page"] = scan_widgets_parameters(self.laterals_page.main_widget)
-            laterals_values = [lat.to_dict() for lat in self.laterals_page.main_widget.get_laterals_data()]
+            laterals_values = self.laterals_page.main_widget.get_laterals_data()
             simulation_template["laterals_page"]["values"] = laterals_values
         if hasattr(self, "precipitation_page"):
             simulation_template["precipitation_page"] = scan_widgets_parameters(self.precipitation_page.main_widget)
@@ -1087,16 +1085,16 @@ class SimulationWizard(QWizard):
             set_widgets_parameters(self.laterals_page.main_widget, **simulation_template["laterals_page"])
             laterals_values = simulation_template["laterals_page"]["values"]
             self.laterals_page.main_widget.laterals_timeseries.update(laterals_values)
+            for lat in self.laterals_page.main_widget.laterals_timeseries.keys():
+                self.laterals_page.main_widget.cb_laterals.addItem(lat)
         if hasattr(self, "precipitation_page"):
             set_widgets_parameters(self.precipitation_page.main_widget, **simulation_template["precipitation_page"])
             precipitation_values = simulation_template["precipitation_page"]["values"]
             self.precipitation_page.main_widget.values.update(precipitation_values)
         if hasattr(self, "breaches_page"):
             set_widgets_parameters(self.breaches_page.main_widget, **simulation_template["breaches_page"])
-            simulation_template["breaches_page"] = scan_widgets_parameters(self.breaches_page.main_widget)
             breaches_values = simulation_template["breaches_page"]["values"]
             self.breaches_page.main_widget.values.update(breaches_values)
-            simulation_template["breaches_page"]["values"] = breaches_values
 
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
@@ -1106,13 +1104,14 @@ class SimulationWizard(QWizard):
         start_datetime = datetime.utcnow()
         duration = self.duration_page.main_widget.calculate_simulation_duration()
         # initial conditions page attributes
-        global_value_1d, raster_2d, global_value_2d, raster_groundwater, global_value_groundwater = (None,) * 5
+        global_value_1d, raster_2d, global_value_2d, raster_groundwater, global_value_groundwater, saved_state = (None,) *6
         if self.init_conditions.include_initial_conditions:
             global_value_1d = self.init_conditions_page.main_widget.sp_1d_global_value.value()
             raster_2d = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_2d.currentText())
             global_value_2d = self.init_conditions_page.main_widget.sp_2d_global_value.value()
             raster_groundwater = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_groundwater.currentText())
             global_value_groundwater = self.init_conditions_page.main_widget.sp_gwater_global_value.value()
+            saved_state = self.init_conditions_page.main_widget.saved_states.get(self.init_conditions_page.main_widget.cb_saved_states.currentText())
 
         if self.summary_page.main_widget.cb_save_template.isChecked():
             self.save_simulation_as_template()
@@ -1149,15 +1148,13 @@ class SimulationWizard(QWizard):
                         repair_time_infrastructure=self.init_conditions.repair_time_infrastructure,
                         repair_time_buildings=self.init_conditions.repair_time_buildings)
                 if self.init_conditions.generate_saved_state:
-                    tc.generate_saved_state_after_simulation(sim_id, time=duration)
+                    tc.add_saved_state_after_simulation(sim_id, time=duration)
                 if self.init_conditions.include_breaches:
-                    tc.add_breaches(sim_id, potential_breach=breach.url, duration_till_max_depth=d_duration,
+                    tc.add_breaches(sim_id, potential_breach=breach["url"], duration_till_max_depth=d_duration,
                                     initial_width=width, offset=0)
                 if self.init_conditions.include_laterals:
                     for lateral in laterals.values():
-                        tc.add_lateral_timeseries(sim_id, offset=lateral.offset, values=lateral.values,
-                                                  units=lateral.units, point=lateral.point,
-                                                  connection_node=lateral.connection_node, id=lateral.id)
+                        tc.add_lateral_timeseries(sim_id, **lateral)
                 if self.init_conditions.include_initial_conditions:
                     if self.init_conditions_page.main_widget.cb_1d.isChecked():
                         if self.init_conditions_page.main_widget.dd_1d.currentText() == "Global value":
@@ -1176,6 +1173,8 @@ class SimulationWizard(QWizard):
                         else:
                             tc.add_initial_groundwater_level_raster(sim_id, aggregation_method="mean",
                                                                     initial_waterlevel=raster_groundwater.url)
+                    if self.init_conditions.load_from_saved_state and saved_state:
+                        tc.add_initial_saved_state(sim_id, saved_state=saved_state.url)
 
                 if ptype == CONSTANT_RAIN:
                     tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration,

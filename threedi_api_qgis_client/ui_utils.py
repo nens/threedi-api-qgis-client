@@ -49,7 +49,7 @@ def scan_widgets_parameters(main_widget):
 
 def set_widgets_parameters(main_widget, **widget_parameters):
     for name, value in widget_parameters.items():
-        widget = getattr(main_widget, name)
+        widget = getattr(main_widget, name, None)
         if widget is None:
             continue
         if isinstance(widget, QLineEdit):

@@ -9,7 +9,7 @@ from openapi_client import (ApiClient, RepositoriesApi, SimulationsApi, Revision
                             ConstantRain, TimeseriesRain, Organisation, CurrentStatus, ResultFile, Download, Breach,
                             TimeseriesLateral, ArrivalTimePostProcessing, BasicPostProcessing, DamagePostProcessing,
                             OneDWaterLevel, TwoDWaterLevel, OneDWaterLevelPredefined, TwoDWaterRaster, GroundWaterLevel,
-                            GroundWaterRaster, TimedSavedStateUpdate)
+                            GroundWaterRaster, TimedSavedStateUpdate, InitialSavedState)
 
 
 def get_api_client(api_username: str, api_password: str, api_host: str = "https://api.3di.live/v3.0") -> ApiClient:
@@ -132,6 +132,55 @@ class ThreediCalls:
         download = api.threedimodels_gridadmin_download(threedimodel_id)
         return result_file, download
 
+    def fetch_breaches_list(self, threedimodel_id: str):
+        """Fetch breaches list."""
+        api = ThreedimodelsApi(self.api_client)
+        response = api.threedimodels_potentialbreaches_list(threedimodel_id, limit=self.FETCH_LIMIT)
+        response_count = response.count
+        if response_count > self.FETCH_LIMIT:
+            response = api.threedimodels_potentialbreaches_list(threedimodel_id, limit=response_count)
+        breaches = response.results
+        return breaches
+
+    def fetch_initial_waterlevels(self, threedimodel_id: str):
+        api = ThreedimodelsApi(self.api_client)
+        response = api.threedimodels_initial_waterlevels_list(threedimodel_id)
+        waterlevels = response.results
+        return waterlevels
+
+    def fetch_saved_states_list(self, threedimodel_id: str):
+        """Fetch saved states list."""
+        api = ThreedimodelsApi(self.api_client)
+        response = api.threedimodels_saved_states_list(threedimodel_id)
+        states = response.results
+        return states
+
+    def fetch_revisions(self) -> List[Revision]:
+        """Fetch all Revisions available for current user."""
+        api = RevisionsApi(self.api_client)
+        response = api.revisions_list(limit=self.FETCH_LIMIT)
+        response_count = response.count
+        if response_count > self.FETCH_LIMIT:
+            response = api.revisions_list(limit=response_count)
+        revisions_list = response.results
+        return revisions_list
+
+    def fetch_revision_3di_models(self, rev_id: int) -> List[ThreediModel]:
+        """Fetch all 3Di models belonging to given Revision."""
+        api = RevisionsApi(self.api_client)
+        revision_models_list = api.revisions_threedimodels(rev_id)
+        return revision_models_list
+
+    def fetch_organisations(self) -> List[Organisation]:
+        """Fetch all Organisations available for current user."""
+        api = OrganisationsApi(self.api_client)
+        response = api.organisations_list(limit=self.FETCH_LIMIT)
+        response_count = response.count
+        if response_count > self.FETCH_LIMIT:
+            response = api.organisations_list(limit=response_count)
+        organisations = response.results
+        return organisations
+
     def add_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
         """Add ConstantRain to the given simulation."""
         api = SimulationsApi(self.api_client)
@@ -149,31 +198,6 @@ class ThreediCalls:
         api = SimulationsApi(self.api_client)
         breach = api.simulations_events_breaches_create((str(simulation_pk)), data)
         return breach
-
-    def get_breaches_list(self, threedimodel_id: str):
-        """Fetch breaches list."""
-        api = ThreedimodelsApi(self.api_client)
-        response = api.threedimodels_potentialbreaches_list(threedimodel_id)
-        breaches = response.results
-        return breaches
-
-    def get_raster_list(self, threedimodel_id: str):
-        """Fetch raster list."""
-        api = ThreedimodelsApi(self.api_client)
-        rasters = api.threedimodels_rasters_list(threedimodel_id)
-        return rasters
-
-    def get_initial_waterlevels(self, threedimodel_id: str):
-        api = ThreedimodelsApi(self.api_client)
-        waterlevels = api.threedimodels_initial_waterlevels_list(threedimodel_id)
-        return waterlevels
-
-    def get_saved_states_list(self, threedimodel_id: str):
-        """Fetch saved states list."""
-        api = ThreedimodelsApi(self.api_client)
-        response = api.threedimodels_saved_states_list(threedimodel_id)
-        states = response.results
-        return states
 
     def add_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
         """Add lateral_timeseries to the given simulation."""
@@ -199,8 +223,8 @@ class ThreediCalls:
         dmg_post_processing = api.simulations_results_post_processing_lizard_damage_create((str(simulation_pk)), data)
         return dmg_post_processing
 
-    def generate_saved_state_after_simulation(self, simulation_pk: int, **data) -> TimedSavedStateUpdate:
-        """Add generate_saved_state_after_simulation to the given simulation."""
+    def add_saved_state_after_simulation(self, simulation_pk: int, **data) -> TimedSavedStateUpdate:
+        """Add add_saved_state_after_simulation to the given simulation."""
         api = SimulationsApi(self.api_client)
         saved_state = api.simulations_create_saved_states_timed_create((str(simulation_pk)), data)
         return saved_state
@@ -241,28 +265,8 @@ class ThreediCalls:
         groundwater_raster = api.simulations_initial_groundwater_level_raster_create((str(simulation_pk)), data)
         return groundwater_raster
 
-    def fetch_revisions(self) -> List[Revision]:
-        """Fetch all Revisions available for current user."""
-        api = RevisionsApi(self.api_client)
-        response = api.revisions_list(limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.revisions_list(limit=response_count)
-        revisions_list = response.results
-        return revisions_list
-
-    def fetch_revision_3di_models(self, rev_id: int) -> List[ThreediModel]:
-        """Fetch all 3Di models belonging to given Revision."""
-        api = RevisionsApi(self.api_client)
-        revision_models_list = api.revisions_threedimodels(rev_id)
-        return revision_models_list
-
-    def fetch_organisations(self) -> List[Organisation]:
-        """Fetch all Organisations available for current user."""
-        api = OrganisationsApi(self.api_client)
-        response = api.organisations_list(limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.organisations_list(limit=response_count)
-        organisations = response.results
-        return organisations
+    def add_initial_saved_state(self, simulation_pk: int, **data) -> InitialSavedState:
+        """Add initial saved state to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        initial_saved_state = api.simulations_initial_saved_state_create((str(simulation_pk)), data)
+        return initial_saved_state
