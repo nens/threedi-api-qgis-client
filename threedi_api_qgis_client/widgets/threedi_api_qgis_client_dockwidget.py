@@ -100,7 +100,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.log_in_dlg is None:
             self.log_in()
         else:
-            self.log_in_dlg.show()
+            self.log_in_dlg.exec_()
             self.current_model = self.log_in_dlg.current_model
             self.label_repo.setText(self.current_model.repository_slug)
             revision = self.log_in_dlg.revisions[self.current_model.revision_hash]

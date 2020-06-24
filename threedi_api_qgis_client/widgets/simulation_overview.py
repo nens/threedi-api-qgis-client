@@ -13,6 +13,8 @@ from threedi_api_qgis_client.widgets.simulation_init import SimulationInit
 from .wizard import SimulationWizard
 from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
 from ..api_calls.threedi_calls import ThreediCalls
+from ..utils import load_saved_templates
+from ..ui_utils import set_widgets_parameters
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'sim_overview.ui'))
@@ -28,6 +30,7 @@ class SimulationOverview(uicls, basecls):
         self.parent_dock = parent_dock
         self.api_client = self.parent_dock.api_client
         self.user = self.parent_dock.label_user.text()
+        self.simulation_init_wizard = None
         self.simulation_wizard = None
         self.simulations_keys = {}
         self.last_progresses = {}
@@ -36,6 +39,7 @@ class SimulationOverview(uicls, basecls):
         self.setup_view_model()
         self.parent_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_progress)
         self.pb_new_sim.clicked.connect(self.new_wizard_init)
+        self.pb_load_template.clicked.connect(self.new_wizard_from_template)
         self.pb_stop_sim.clicked.connect(self.stop_simulation)
 
     def setup_view_model(self):
@@ -90,13 +94,25 @@ class SimulationOverview(uicls, basecls):
     def new_wizard_init(self):
         self.simulation_init_wizard = SimulationInit(self)
         self.simulation_init_wizard.exec_()
-        int_conditions = self.simulation_init_wizard.initial_conditions
         if self.simulation_init_wizard.open_wizard:
-            self.new_simulation(int_conditions)
+            self.new_simulation()
 
-    def new_simulation(self, init_conditions):
+    def new_wizard_from_template(self):
+        template_items = load_saved_templates()
+        items_keys = list(template_items.keys())
+        template = self.parent_dock.communication.pick_item("Load template", "Pick template to load", None, *items_keys)
+        if template:
+            simulation_template = template_items[template]
+            self.simulation_init_wizard = SimulationInit(self)
+            set_widgets_parameters(self.simulation_init_wizard, **simulation_template["options"])
+            self.simulation_init_wizard.start_wizard()
+            self.new_simulation(simulation_template)
+
+    def new_simulation(self, simulation_template=None):
         """Opening a wizard which allows defining and running new simulations."""
-        self.simulation_wizard = SimulationWizard(self.parent_dock, init_conditions)
+        self.simulation_wizard = SimulationWizard(self.parent_dock, self.simulation_init_wizard)
+        if simulation_template:
+            self.simulation_wizard.load_template_parameters(simulation_template)
         self.simulation_wizard.exec_()
         new_simulations = self.simulation_wizard.new_simulations
         if new_simulations is not None:

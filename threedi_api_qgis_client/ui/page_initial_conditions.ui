@@ -213,10 +213,13 @@
             <bool>false</bool>
            </property>
            <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
            </property>
            <property name="buttonSymbols">
             <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="minimum">
+            <double>-100000000000000005366162204393472.000000000000000</double>
            </property>
            <property name="maximum">
             <double>100000000000000004764729344.000000000000000</double>
@@ -309,10 +312,13 @@
             <bool>false</bool>
            </property>
            <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
            </property>
            <property name="buttonSymbols">
             <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="minimum">
+            <double>-100000000000000005366162204393472.000000000000000</double>
            </property>
            <property name="maximum">
             <double>100000000000000004764729344.000000000000000</double>
@@ -377,10 +383,13 @@
             <bool>false</bool>
            </property>
            <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
            </property>
            <property name="buttonSymbols">
             <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="minimum">
+            <double>-100000000000000005366162204393472.000000000000000</double>
            </property>
            <property name="maximum">
             <double>1000000000000000013287555072.000000000000000</double>
