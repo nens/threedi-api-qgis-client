@@ -1174,7 +1174,8 @@ class SimulationWizard(QWizard):
                             tc.add_initial_groundwater_level_raster(sim_id, aggregation_method="mean",
                                                                     initial_waterlevel=raster_groundwater.url)
                     if self.init_conditions.load_from_saved_state and saved_state:
-                        tc.add_initial_saved_state(sim_id, saved_state=saved_state.url)
+                        saved_state_id = saved_state.url.strip("/").split("/")[-1]
+                        tc.add_initial_saved_state(sim_id, saved_state=saved_state_id)
 
                 if ptype == CONSTANT_RAIN:
                     tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration,
