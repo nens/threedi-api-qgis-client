@@ -173,9 +173,9 @@ class WSProgressesSentinel(QObject):
     def all_simulations_progress_web_socket(self, data):
         """Get all simulations progresses through the websocket."""
         data = json.loads(data)
-        if data.get("type") == "active-simulations" or data.get("type") == "active-simulation":
+        data_type = data.get("type")
+        if data_type == "active-simulations" or data_type == "active-simulation":
             simulations = data.get("data")
-            self.progresses.clear()
             model_id = self.current_model.id
             model_url = self.current_model.url
             for sim_id, sim in simulations.items():
