@@ -178,7 +178,8 @@ class WSProgressesSentinel(QObject):
             simulations = data.get("data")
             model_id = self.current_model.id
             model_url = self.current_model.url
-            for sim_id, sim in simulations.items():
+            for sim_id_str, sim in simulations.items():
+                sim_id = int(sim_id_str)
                 sim = json.loads(sim)
                 simulation = Simulation(slug=sim.get("simulation_slug"), uuid=sim.get("uuid"), name=sim.get("name"),
                                         created=sim.get("date_created"), start_datetime=parse(sim.get("date_created")),
@@ -194,12 +195,15 @@ class WSProgressesSentinel(QObject):
                     sim_progress = Progress(0, sim.get("progress"))
                 else:
                     sim_progress = Progress(percentage=0, time=status_time)
-                self.progresses[int(sim_id)] = {"simulation": simulation, "current_status": current_status,
-                                                "progress": sim_progress}
-        if data.get("type") == "progress":
-            self.progresses[data["data"]["simulation_id"]]["progress"] = Progress(0, data["data"]["progress"])
-        if data.get("type") == "status":
-            self.progresses[data["data"]["simulation_id"]]["current_status"].name = data["data"]["status"]
+                self.progresses[sim_id] = {"simulation": simulation, "current_status": current_status,
+                                           "progress": sim_progress}
+        elif data_type == "progress":
+            sim_id = int(data["data"]["simulation_id"])
+            self.progresses[sim_id]["progress"] = Progress(0, data["data"]["progress"])
+        elif data_type == "status":
+            sim_id = int(data["data"]["simulation_id"])
+            self.progresses[sim_id]["current_status"].name = data["data"]["status"]
+
         result = dict()
         for sim_id, item in self.progresses.items():
             result[sim_id] = (item.get("simulation"), item.get("current_status"), item.get("progress"))
