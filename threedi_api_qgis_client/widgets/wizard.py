@@ -188,7 +188,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                 self.dd_2d.addItem(raster_filename)
                 self.dd_groundwater.addItem(raster_filename)
 
-            states = tc.fetch_saved_states_list(self.parent_page.parent_wizard.parent_dock.current_model.id)
+            states = tc.fetch_saved_states(self.parent_page.parent_wizard.parent_dock.current_model.id)
             for state in states or []:
                 state_name = state.name
                 self.saved_states[state_name] = state
@@ -380,11 +380,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.connect_signals()
         self.values = dict()
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "precipitation":
-            self.dd_simulation.addItems([f"Simulation{str(i)}" for i in range(1, initial_conditions.number_of_simulations + 1)])
             self.simulation_widget.show()
         else:
-            self.dd_simulation.addItem("Simulation1")
             self.simulation_widget.hide()
+        self.dd_simulation.addItems(initial_conditions.simulations_list)
         self.plot_precipitation()
 
     def connect_signals(self):
@@ -746,16 +745,15 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.sb_duration.valueChanged.connect(self.write_values_into_dict)
         self.sb_width.valueChanged.connect(self.write_values_into_dict)
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
-            self.dd_simulation.addItems([f"Simulation{i}" for i in range(1, initial_conditions.number_of_simulations + 1)])
             self.simulation_widget.show()
         else:
-            self.dd_simulation.addItem("Simulation1")
             self.simulation_widget.hide()
+        self.dd_simulation.addItems(initial_conditions.simulations_list)
         self.fill_comboboxes()
 
     def fill_comboboxes(self):
         tc = ThreediCalls(self.parent_page.parent_wizard.parent_dock.api_client)
-        breaches = tc.fetch_breaches_list(self.parent_page.parent_wizard.parent_dock.current_model.id)
+        breaches = tc.fetch_potential_breaches(self.parent_page.parent_wizard.parent_dock.current_model.id)
         for breach in breaches:
             self.breaches[breach.connected_pnt_id] = breach.to_dict()
             self.dd_breach_id.addItem(str(breach.connected_pnt_id))
@@ -789,8 +787,12 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
     def get_breaches_data(self, simulation):
         data = self.values.get(simulation)
         if data:
-            breach_data = (data.get("breach_id"), data.get("breach"), data.get("width"),
-                           int(data.get("duration")) * self.SECONDS_MULTIPLIERS[data.get("units")])
+            breach_data = (
+                data.get("breach_id"),
+                data.get("breach"),
+                data.get("width"),
+                int(data.get("duration")) * self.SECONDS_MULTIPLIERS[data.get("units")]
+            )
         else:
             breach_data = (None,) * 4
         return breach_data
@@ -820,10 +822,9 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         self.initial_conditions = initial_conditions
         if initial_conditions.multiple_simulations:
             self.simulation_widget.show()
-            self.dd_simulation.addItems([f"Simulation{i}" for i in range(1, initial_conditions.number_of_simulations + 1)])
         else:
-            self.dd_simulation.addItem("Simulation1")
             self.simulation_widget.hide()
+        self.dd_simulation.addItems(initial_conditions.simulations_list)
 
     def simulation_change(self):
         if self.initial_conditions.simulations_difference == "precipitation" and self.initial_conditions.include_precipitations:
@@ -997,6 +998,7 @@ class SimulationWizard(QWizard):
         self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.resize(800, 500)
+        self.first_simulation = init_conditions.simulations_list[0]
         self.init_conditions = init_conditions
 
     def page_changed(self, page_id):
@@ -1030,18 +1032,19 @@ class SimulationWizard(QWizard):
 
     def set_overview_precipitation(self):
         """Setting up precipitation labels in the summary page."""
-        if self.precipitation_page.main_widget.values.get("Simulation1"):
+        if self.precipitation_page.main_widget.values.get(self.first_simulation):
             self.summary_page.main_widget.precipitation_widget.show()
-            precipitation_type = self.precipitation_page.main_widget.values.get("Simulation1").get("precipitation_type")
+            precipitation_type = self.precipitation_page.main_widget.values.get(self.first_simulation).get("precipitation_type")
             total_precipitation = self.precipitation_page.main_widget.total_precipitation
             self.summary_page.main_widget.sim_prec_type.setText(precipitation_type)
-            self.summary_page.main_widget.sim_prec_total.setText(f"{round(total_precipitation, 2)} mm")
+            self.summary_page.main_widget.sim_prec_total.setText(f"{total_precipitation:.0f} mm")
 
     def set_overview_breaches(self):
-        if self.breaches_page.main_widget.values.get("Simulation1"):
+        """Setting breaches information in the overview page."""
+        if self.breaches_page.main_widget.values.get(self.first_simulation):
             self.summary_page.main_widget.breach_widget.show()
-            breach_id = self.breaches_page.main_widget.values.get("Simulation1").get("breach_id")
-            duration_of_breach = self.breaches_page.main_widget.values.get("Simulation1").get("duration")
+            breach_id = self.breaches_page.main_widget.values.get(self.first_simulation).get("breach_id")
+            duration_of_breach = self.breaches_page.main_widget.values.get(self.first_simulation).get("duration")
             self.summary_page.main_widget.breach_id.setText(breach_id)
             self.summary_page.main_widget.duration_breach.setText(str(duration_of_breach))
 
@@ -1121,19 +1124,21 @@ class SimulationWizard(QWizard):
         try:
             self.new_simulations = []
             self.new_simulation_statuses = {}
-            for simulation in range(1, (self.init_conditions.number_of_simulations + 1)):
+            for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
                 ptype, poffset, pduration, punits, pvalues = (None,) * 5
                 breach_id, breach, width, d_duration = (None,) * 4
                 laterals = []
                 if hasattr(self, "precipitation_page"):
-                    ptype, poffset, pduration, punits, pvalues = self.precipitation_page.main_widget.get_precipitation_data(f"Simulation{simulation}")
+                    self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
+                    prec_data = self.precipitation_page.main_widget.get_precipitation_data()
+                    ptype, poffset, pduration, punits, pvalues = prec_data
                 if hasattr(self, "breaches_page"):
-                    breach_id, breach, width, d_duration = self.breaches_page.main_widget.get_breaches_data(f"Simulation{simulation}")
+                    breach_id, breach, width, d_duration = self.breaches_page.main_widget.get_breaches_data(simulation)
                 if hasattr(self, "laterals_page"):
                     laterals = self.laterals_page.main_widget.get_laterals_data()
 
                 tc = ThreediCalls(self.parent_dock.api_client)
-                sim_name = f"{name}_{simulation}" if simulation > 1 else name
+                sim_name = f"{name}_{i}" if self.init_conditions.multiple_simulations is True else name
                 new_simulation = tc.new_simulation(name=sim_name, threedimodel=threedimodel_id,
                                                    start_datetime=start_datetime, organisation=organisation_uuid,
                                                    duration=duration)

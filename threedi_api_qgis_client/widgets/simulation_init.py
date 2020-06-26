@@ -96,8 +96,9 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.multiple_simulations = self.cb_multiple_simulations.isChecked()
         if self.initial_conditions.multiple_simulations:
             self.initial_conditions.number_of_simulations = int(self.dd_number_of_simulation.currentText())
+        nos = self.initial_conditions.number_of_simulations + 1
+        self.initial_conditions.simulations_list = [f"Simulation{i}" for i in range(1, nos)]
         self.initial_conditions.simulations_difference = self.dd_simulation_difference.currentText()
-
         self.initial_conditions.generate_saved_state = self.cb_generate.isChecked()
         self.initial_conditions.postprocessing = self.cb_postprocess.isChecked()
         self.initial_conditions.basic_processed_results = self.cb_basec_results.isChecked()
@@ -113,6 +114,7 @@ class SimulationInit(uicls, basecls):
 
 
 class SimulationInitObject:
+    """Object for storing init options."""
     def __init__(self):
         self.include_boundary_conditions = False
         self.include_initial_conditions = False
@@ -122,6 +124,7 @@ class SimulationInitObject:
         self.include_precipitations = False
         self.multiple_simulations = False
         self.number_of_simulations = 1
+        self.simulations_list = []
         self.simulations_difference = None
 
         self.generate_saved_state = False
