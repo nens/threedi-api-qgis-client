@@ -623,7 +623,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         if current_text == CONSTANT_RAIN:
             values = mmh_to_ms(self.get_intensity())
         elif current_text == CUSTOM_RAIN:
-            ts = self.custom_time_series
+            ts = self.custom_time_series[simulation]
             if self.cbo_units.currentText() == 'mm/h':
                 values = [[t, mmh_to_ms(v)] for t, v in ts]
             else:
