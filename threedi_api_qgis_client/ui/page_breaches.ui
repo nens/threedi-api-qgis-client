@@ -356,7 +356,7 @@
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QSpinBox {background-color: white;}</string>
+      <string notr="true">QDoubleSpinBox {background-color: white;}</string>
      </property>
      <property name="frame">
       <bool>false</bool>
