@@ -208,20 +208,32 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
     def dropdown_d1_changed(self):
         if self.dd_1d.currentText() == "Global value":
             self.sp_1d_global_value.setEnabled(True)
+            self.sp_1d_global_value.show()
+            self.label_1d_gv.show()
         else:
             self.sp_1d_global_value.setDisabled(True)
+            self.sp_1d_global_value.hide()
+            self.label_1d_gv.hide()
 
     def dropdown_d2_changed(self):
         if self.dd_2d.currentIndex() <= 0:
             self.sp_2d_global_value.setEnabled(True)
+            self.sp_2d_global_value.show()
+            self.label_2d_gv.show()
         else:
             self.sp_2d_global_value.setDisabled(True)
+            self.sp_2d_global_value.hide()
+            self.label_2d_gv.hide()
 
     def dropdown_groundwater_changed(self):
         if self.dd_groundwater.currentIndex() <= 0:
             self.sp_gwater_global_value.setEnabled(True)
+            self.sp_gwater_global_value.show()
+            self.label_gw_gv.show()
         else:
             self.sp_gwater_global_value.setDisabled(True)
+            self.sp_gwater_global_value.hide()
+            self.label_gw_gv.hide()
 
     def d1_change_state(self, value):
         if value == 0:
@@ -321,12 +333,12 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
         values = {}
         laterals_type = self.cb_type.currentText()
-        with open(filename) as lateral_file:
+        with open(filename, encoding="utf-8-sig") as lateral_file:
             laterals_reader = csv.reader(lateral_file)
             next(laterals_reader, None)
             if laterals_type == "1D":
                 try:
-                    for row_id, lat_id, connection_node_id, timeseries in laterals_reader:
+                    for lat_id, connection_node_id, timeseries in laterals_reader:
                         vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
                         lateral = {"values": vals, "units": "m3/s", "point": None,
                                    "connection_node": int(connection_node_id), "id": int(lat_id), "offset": 0}
@@ -533,7 +545,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
         time_series = []
         simulation = self.dd_simulation.currentText()
-        with open(filename) as rain_file:
+        with open(filename, encoding="utf-8-sig") as rain_file:
             rain_reader = csv.reader(rain_file)
             units_multiplier = self.SECONDS_MULTIPLIERS['mins']
             for time, rain in rain_reader:
@@ -1019,6 +1031,7 @@ class SimulationWizard(QWizard):
         """Setting up simulation name label in the summary page."""
         name = self.name_page.main_widget.le_sim_name.text()
         self.summary_page.main_widget.sim_name.setText(name)
+        self.summary_page.main_widget.template_name.setText(name)
 
     def set_overview_database(self):
         """Setting up database name label in the summary page."""
@@ -1155,7 +1168,7 @@ class SimulationWizard(QWizard):
                         repair_time_infrastructure=self.init_conditions.repair_time_infrastructure,
                         repair_time_buildings=self.init_conditions.repair_time_buildings)
                 if self.init_conditions.generate_saved_state:
-                    tc.add_saved_state_after_simulation(sim_id, time=duration)
+                    tc.add_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
                 if self.init_conditions.include_breaches:
                     tc.add_breaches(sim_id, potential_breach=breach["url"], duration_till_max_depth=d_duration,
                                     initial_width=width, offset=0)
