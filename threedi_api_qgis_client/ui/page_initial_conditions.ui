@@ -121,9 +121,39 @@
         </property>
         <item>
          <widget class="QCheckBox" name="cb_1d">
+          <property name="maximumSize">
+           <size>
+            <width>14</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>Segoe UI</family>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QCheckBox{background-color: white;}</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_4">
+          <property name="font">
+           <font>
             <pointsize>12</pointsize>
            </font>
           </property>
@@ -134,9 +164,33 @@
         </item>
         <item>
          <widget class="QCheckBox" name="cb_2d">
+          <property name="maximumSize">
+           <size>
+            <width>14</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>Segoe UI</family>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QCheckBox{background-color: white;}</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_6">
+          <property name="font">
+           <font>
             <pointsize>12</pointsize>
            </font>
           </property>
@@ -147,9 +201,33 @@
         </item>
         <item>
          <widget class="QCheckBox" name="cb_groundwater">
+          <property name="maximumSize">
+           <size>
+            <width>14</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>Segoe UI</family>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QCheckBox{background-color: white;}</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_9">
+          <property name="font">
+           <font>
             <pointsize>12</pointsize>
            </font>
           </property>
@@ -218,6 +296,12 @@
            <property name="buttonSymbols">
             <enum>QAbstractSpinBox::NoButtons</enum>
            </property>
+           <property name="prefix">
+            <string/>
+           </property>
+           <property name="suffix">
+            <string> m</string>
+           </property>
            <property name="minimum">
             <double>-100000000000000005366162204393472.000000000000000</double>
            </property>
@@ -227,7 +311,7 @@
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QLabel" name="label_9">
+          <widget class="QLabel" name="label_1d_gv">
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -255,7 +339,7 @@
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="2" column="0">
-          <widget class="QLabel" name="label_4">
+          <widget class="QLabel" name="label_2d_gv">
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -317,6 +401,9 @@
            <property name="buttonSymbols">
             <enum>QAbstractSpinBox::NoButtons</enum>
            </property>
+           <property name="suffix">
+            <string> m</string>
+           </property>
            <property name="minimum">
             <double>-100000000000000005366162204393472.000000000000000</double>
            </property>
@@ -345,7 +432,7 @@
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_6">
+          <widget class="QLabel" name="label_gw_gv">
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -387,6 +474,9 @@
            </property>
            <property name="buttonSymbols">
             <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="suffix">
+            <string> m</string>
            </property>
            <property name="minimum">
             <double>-100000000000000005366162204393472.000000000000000</double>

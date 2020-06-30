@@ -294,6 +294,9 @@
        <pointsize>10</pointsize>
       </font>
      </property>
+     <property name="styleSheet">
+      <string notr="true">QCheckBox::indicator {border: 1px solid; background: white;}</string>
+     </property>
      <property name="text">
       <string>Overrule single laterals</string>
      </property>

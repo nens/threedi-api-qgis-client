@@ -122,13 +122,14 @@
       <item row="0" column="1">
        <widget class="QComboBox" name="dd_simulation">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="font">
          <font>
+          <family>Segoe UI</family>
           <pointsize>10</pointsize>
          </font>
         </property>
@@ -191,6 +192,18 @@
    </item>
    <item row="5" column="0">
     <widget class="QLabel" name="label_2">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>225</width>
+       <height>0</height>
+      </size>
+     </property>
      <property name="font">
       <font>
        <family>Segoe UI</family>
@@ -198,7 +211,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Duration:</string>
+      <string>Duration till max depth:</string>
      </property>
     </widget>
    </item>
@@ -226,6 +239,9 @@
      </property>
      <property name="maximum">
       <double>100000000000000000620008645040778319495168.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>10.000000000000000</double>
      </property>
     </widget>
    </item>
@@ -277,55 +293,6 @@
      </item>
     </widget>
    </item>
-   <item row="5" column="2">
-    <widget class="QSpinBox" name="sb_duration">
-     <property name="minimumSize">
-      <size>
-       <width>67</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>50</width>
-       <height>16777215</height>
-      </size>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QSpinBox {background-color: white;}</string>
-     </property>
-     <property name="frame">
-      <bool>false</bool>
-     </property>
-     <property name="buttonSymbols">
-      <enum>QAbstractSpinBox::NoButtons</enum>
-     </property>
-     <property name="maximum">
-      <number>999999999</number>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="1">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Fixed</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>136</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
    <item row="4" column="0" colspan="2">
     <widget class="QLabel" name="label">
      <property name="font">
@@ -349,7 +316,7 @@
      </property>
      <property name="sizeHint" stdset="0">
       <size>
-       <width>128</width>
+       <width>100</width>
        <height>20</height>
       </size>
      </property>
@@ -367,6 +334,46 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="5" column="2">
+    <widget class="QDoubleSpinBox" name="sb_duration">
+     <property name="minimumSize">
+      <size>
+       <width>67</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>50</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QSpinBox {background-color: white;}</string>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="buttonSymbols">
+      <enum>QAbstractSpinBox::NoButtons</enum>
+     </property>
+     <property name="decimals">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <double>9999999999999999455752309870428160.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>0.100000000000000</double>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

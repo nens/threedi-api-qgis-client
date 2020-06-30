@@ -14,4 +14,5 @@ class UploadDialog(uicls_log, basecls_log):
         self.parent_dock = parent_dock
         self.communication = self.parent_dock.communication
         self.pb_cancel.clicked.connect(self.close)
+        self.label.setOpenExternalLinks(True)
         self.adjustSize()

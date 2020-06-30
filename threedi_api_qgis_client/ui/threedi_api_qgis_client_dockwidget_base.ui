@@ -20,7 +20,7 @@
    <enum>Qt::LeftToRight</enum>
   </property>
   <property name="windowTitle">
-   <string/>
+   <string>3Di</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">

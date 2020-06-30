@@ -4,12 +4,13 @@ import os
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Tuple
 from threedi_api_client import ThreediApiClient
-from openapi_client import (ApiClient, RepositoriesApi, SimulationsApi, RevisionsApi, OrganisationsApi,
-                            ThreedimodelsApi, Repository, Simulation, Action, Progress, Revision, ThreediModel,
+from openapi_client import (ApiClient, RepositoriesApi, SimulationsApi, RevisionsApi, OrganisationsApi, ThreediModel,
+                            ThreedimodelsApi, Repository, Simulation, Action, Progress, Revision, InitialWaterlevel,
                             ConstantRain, TimeseriesRain, Organisation, CurrentStatus, ResultFile, Download, Breach,
                             TimeseriesLateral, ArrivalTimePostProcessing, BasicPostProcessing, DamagePostProcessing,
                             OneDWaterLevel, TwoDWaterLevel, OneDWaterLevelPredefined, TwoDWaterRaster, GroundWaterLevel,
-                            GroundWaterRaster, TimedSavedStateUpdate, InitialSavedState)
+                            GroundWaterRaster, TimedSavedStateUpdate, ThreediModelSavedState, InitialSavedState,
+                            PotentialBreach)
 
 
 def get_api_client(api_username: str, api_password: str, api_host: str = "https://api.3di.live/v3.0") -> ApiClient:
@@ -132,7 +133,7 @@ class ThreediCalls:
         download = api.threedimodels_gridadmin_download(threedimodel_id)
         return result_file, download
 
-    def fetch_breaches_list(self, threedimodel_id: str):
+    def fetch_potential_breaches(self, threedimodel_id: str) -> List[PotentialBreach]:
         """Fetch breaches list."""
         api = ThreedimodelsApi(self.api_client)
         response = api.threedimodels_potentialbreaches_list(threedimodel_id, limit=self.FETCH_LIMIT)
@@ -142,16 +143,23 @@ class ThreediCalls:
         breaches = response.results
         return breaches
 
-    def fetch_initial_waterlevels(self, threedimodel_id: str):
+    def fetch_initial_waterlevels(self, threedimodel_id: str) -> List[InitialWaterlevel]:
+        """Fetch initial waterlevels List"""
         api = ThreedimodelsApi(self.api_client)
-        response = api.threedimodels_initial_waterlevels_list(threedimodel_id)
+        response = api.threedimodels_initial_waterlevels_list(threedimodel_id, limit=self.FETCH_LIMIT)
+        response_count = response.count
+        if response_count > self.FETCH_LIMIT:
+            response = api.threedimodels_initial_waterlevels_list(threedimodel_id, limit=response_count)
         waterlevels = response.results
         return waterlevels
 
-    def fetch_saved_states_list(self, threedimodel_id: str):
+    def fetch_saved_states(self, threedimodel_id: str) -> List[ThreediModelSavedState]:
         """Fetch saved states list."""
         api = ThreedimodelsApi(self.api_client)
-        response = api.threedimodels_saved_states_list(threedimodel_id)
+        response = api.threedimodels_saved_states_list(threedimodel_id, limit=self.FETCH_LIMIT)
+        response_count = response.count
+        if response_count > self.FETCH_LIMIT:
+            response = api.threedimodels_saved_states_list(threedimodel_id, limit=response_count)
         states = response.results
         return states
 
