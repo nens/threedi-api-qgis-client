@@ -60,3 +60,7 @@ def load_saved_templates():
         for name, parameters in sorted(data.items()):
             items[name] = parameters
     return items
+
+
+class SimulationError(Exception):
+    pass

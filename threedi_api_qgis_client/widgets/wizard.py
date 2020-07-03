@@ -15,7 +15,7 @@ from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
 from openapi_client import ApiException
 from ..ui_utils import icon_path, set_widget_background_color, scan_widgets_parameters, set_widgets_parameters
-from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, TEMPLATE_PATH
+from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, SimulationError, TEMPLATE_PATH
 from ..api_calls.threedi_calls import ThreediCalls
 
 
@@ -296,6 +296,10 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.laterals_layout.setText("Upload laterals for 1D:")
         if index == 1:
             self.laterals_layout.setText("Upload laterals for 2D:")
+        self.il_upload.setText("")
+        self.laterals_timeseries.clear()
+        self.cb_laterals.clear()
+        self.cb_overrule.setChecked(False)
 
     def load_csv(self):
         values, filename = self.open_upload_dialog()
@@ -325,37 +329,45 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         return self.laterals_timeseries
 
     def open_upload_dialog(self):
-        last_folder = QSettings().value("threedi/last_precipitation_folder", os.path.expanduser("~"), type=str)
+        last_folder = QSettings().value("threedi/last_laterals_folder", os.path.expanduser("~"), type=str)
         file_filter = "CSV (*.csv );;All Files (*)"
-        filename, __ = QFileDialog.getOpenFileName(self, "Precipitation Time Series", last_folder, file_filter)
+        filename, __ = QFileDialog.getOpenFileName(self, "Laterals Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return None, None
-        QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
+        QSettings().setValue("threedi/last_laterals_folder", os.path.dirname(filename))
         values = {}
         laterals_type = self.cb_type.currentText()
         with open(filename, encoding="utf-8-sig") as lateral_file:
             laterals_reader = csv.reader(lateral_file)
-            next(laterals_reader, None)
+            header = next(laterals_reader, None)
             if laterals_type == "1D":
-                try:
-                    for lat_id, connection_node_id, timeseries in laterals_reader:
+                if len(header) != 3:
+                    error_msg = "Wrong timeseries format for 1D laterals!"
+                    self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_msg)
+                    return None, None
+                for lat_id, connection_node_id, timeseries in laterals_reader:
+                    try:
                         vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
                         lateral = {"values": vals, "units": "m3/s", "point": None,
                                    "connection_node": int(connection_node_id), "id": int(lat_id), "offset": 0}
                         values[lat_id] = lateral
                         self.last_uploaded_laterals = lateral
-                except ValueError:
-                    return None, None
+                    except ValueError:
+                        continue
             else:
-                try:
-                    for x, y, ltype, lat_id, timeseries in laterals_reader:
+                if len(header) != 5:
+                    error_msg = "Wrong timeseries format for 2D laterals!"
+                    self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_msg)
+                    return None, None
+                for x, y, ltype, lat_id, timeseries in laterals_reader:
+                    try:
                         vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
                         point = {"type": "point",  "coordinates": [float(x), float(y)]}
                         lateral = {"values": vals, "units": "m3/s", "point": point, "id": int(lat_id), "offset": 0}
                         values[lat_id] = lateral
                         self.last_uploaded_laterals = lateral
-                except ValueError:
-                    return None, None
+                    except ValueError:
+                        continue
         return values, filename
 
 
@@ -792,8 +804,8 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             self.dd_units.setCurrentIndex(self.dd_units.findText(vals.get("units")))
         else:
             self.dd_breach_id.setCurrentIndex(0)
-            self.sb_duration.setValue(0)
-            self.sb_width.setValue(0)
+            self.sb_duration.setValue(0.1)
+            self.sb_width.setValue(10)
             self.dd_units.setCurrentIndex(0)
 
     def get_breaches_data(self, simulation):
@@ -1147,6 +1159,8 @@ class SimulationWizard(QWizard):
                     ptype, poffset, pduration, punits, pvalues = prec_data
                 if hasattr(self, "breaches_page"):
                     breach_id, breach, width, d_duration = self.breaches_page.main_widget.get_breaches_data(simulation)
+                    if breach is None:
+                        raise SimulationError("Breaches option used, but no breach selected")
                 if hasattr(self, "laterals_page"):
                     laterals = self.laterals_page.main_widget.get_laterals_data()
 

@@ -123,10 +123,9 @@ class WSProgressesSentinel(QObject):
 
     WSS_HOST = "wss://api.3di.live/v3.0"
 
-    def __init__(self, api_client, current_model):
+    def __init__(self, api_client):
         super().__init__()
         self.api_client = api_client
-        self.current_model = current_model
         self.tc = None
         self.ws_client = None
         self.progresses = {}
@@ -152,7 +151,7 @@ class WSProgressesSentinel(QObject):
         """Start listening of active simulations websocket."""
         token = self.tc.api_client.configuration.access_token
         ws_request = QtNetwork.QNetworkRequest(QUrl(f"{self.WSS_HOST}/active-simulations/"))
-        ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(f'Bearer {token}'))
+        ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(f"Bearer {token}"))
         self.ws_client.open(ws_request)
 
     def stop_listening(self):
@@ -176,16 +175,10 @@ class WSProgressesSentinel(QObject):
         data_type = data.get("type")
         if data_type == "active-simulations" or data_type == "active-simulation":
             simulations = data.get("data")
-            model_id = self.current_model.id
-            model_url = self.current_model.url
-            for sim_id_str, sim in simulations.items():
+            for sim_id_str, sim_data in simulations.items():
                 sim_id = int(sim_id_str)
-                sim = json.loads(sim)
-                simulation = Simulation(slug=sim.get("simulation_slug"), uuid=sim.get("uuid"), name=sim.get("name"),
-                                        created=sim.get("date_created"), start_datetime=parse(sim.get("date_created")),
-                                        organisation_name=sim.get("organisation_name"), user=sim.get("user_name"),
-                                        organisation=sim.get("organisation_name"), duration=sim.get("duration"),
-                                        threedimodel_id=model_id, threedimodel=model_url, id=sim_id)
+                sim = json.loads(sim_data)
+                simulation = self.tc.fetch_single_simulation(sim_id)
                 current_status = self.tc.simulation_current_status(sim_id)
                 status_name = current_status.name
                 status_time = current_status.time

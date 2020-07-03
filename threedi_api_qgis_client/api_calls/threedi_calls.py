@@ -51,6 +51,12 @@ class ThreediCalls:
         simulations_list = response.results
         return simulations_list
 
+    def fetch_single_simulation(self, simulation_pk: int) -> Simulation:
+        """Fetch single simulation."""
+        api = SimulationsApi(self.api_client)
+        simulation = api.simulations_read(id=simulation_pk)
+        return simulation
+
     def new_simulation(self, **simulation_data) -> Simulation:
         """Create a new Simulation."""
         api = SimulationsApi(self.api_client)
