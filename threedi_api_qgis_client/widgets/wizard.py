@@ -20,70 +20,69 @@ from ..api_calls.threedi_calls import ThreediCalls
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, 'ui', 'page_name.ui'))
-uicls_duration_page, basecls_duration_page = uic.loadUiType(os.path.join(base_dir, 'ui', 'page_duration.ui'))
-uicls_initial_conds, basecls_initial_conds = uic.loadUiType(os.path.join(base_dir, 'ui', 'page_initial_conditions.ui'))
-uicls_laterals, basecls_laterals = uic.loadUiType(os.path.join(base_dir, 'ui', 'page_laterals.ui'))
-uicls_precipitation_page, basecls_precipitation_page = uic.loadUiType(os.path.join(base_dir, 'ui', 'page_precipitation.ui'))
-uicls_breaches, basecls_breaches = uic.loadUiType(os.path.join(base_dir, 'ui', 'page_breaches.ui'))
-uicls_summary_page, basecls_summary_page = uic.loadUiType(os.path.join(base_dir, 'ui', 'page_initiation.ui'))
+uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui", "page_name.ui"))
+uicls_duration_page, basecls_duration_page = uic.loadUiType(os.path.join(base_dir, "ui", "page_duration.ui"))
+uicls_initial_conds, basecls_initial_conds = uic.loadUiType(os.path.join(base_dir, "ui", "page_initial_conditions.ui"))
+uicls_laterals, basecls_laterals = uic.loadUiType(os.path.join(base_dir, "ui", "page_laterals.ui"))
+uicls_precipitation_page, basecls_precipitation_page = uic.loadUiType(
+    os.path.join(base_dir, "ui", "page_precipitation.ui")
+)
+uicls_breaches, basecls_breaches = uic.loadUiType(os.path.join(base_dir, "ui", "page_breaches.ui"))
+uicls_summary_page, basecls_summary_page = uic.loadUiType(os.path.join(base_dir, "ui", "page_initiation.ui"))
 
 
 CONSTANT_RAIN = "Constant"
 CUSTOM_RAIN = "Custom"
 DESIGN_RAIN = "Design"
 AREA_WIDE_RAIN = {
-    '0': [0.0],
-    '1': [0.0],
-    '2': [0.0],
-    '3': [0.30, 0.60, 0.90, 1.50, 2.10, 2.10, 1.50, 1.20,
-          1.05, 0.90, 0.75, 0.60, 0.45, 0.30, 0.15],
-    '4': [0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.05, 1.20,
-          1.50, 2.10, 2.10, 1.50, 0.90, 0.60, 0.30],
-    '5': [0.30, 0.60, 1.50, 2.70, 2.70, 2.10, 1.50, 1.20,
-          1.05, 0.90, 0.75, 0.60, 0.45, 0.30, 0.15],
-    '6': [0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.05, 1.20,
-          1.50, 2.10, 2.70, 2.70, 1.50, 0.60, 0.30],
-    '7': [0.6, 1.2, 2.1, 3.3, 3.3, 2.7, 2.1, 1.5, 1.2, 0.9, 0.6, 0.3],
-    '8': [0.3, 0.6, 0.9, 1.2, 1.5, 2.1, 2.7, 3.3, 3.3, 2.1, 1.2, 0.6],
-    '9': [1.5, 2.7, 4.8, 4.8, 4.2, 3.3, 2.7, 2.1, 1.5, 0.9, 0.6, 0.3],
-    '10': [1.8, 3.6, 6.3, 6.3, 5.7, 4.8, 3.6, 2.4, 1.2],
-    '11': [5.833333333] * 12,
-    '12': [7.5] * 12,
-    '13': [6.666666667] * 24,
-    '14': [0.208333333] * 576,
-    '15': [0.225694444] * 576,
-    '16': [0.277777778] * 576
+    "0": [0.0],
+    "1": [0.0],
+    "2": [0.0],
+    "3": [0.30, 0.60, 0.90, 1.50, 2.10, 2.10, 1.50, 1.20, 1.05, 0.90, 0.75, 0.60, 0.45, 0.30, 0.15],
+    "4": [0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.05, 1.20, 1.50, 2.10, 2.10, 1.50, 0.90, 0.60, 0.30],
+    "5": [0.30, 0.60, 1.50, 2.70, 2.70, 2.10, 1.50, 1.20, 1.05, 0.90, 0.75, 0.60, 0.45, 0.30, 0.15],
+    "6": [0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.05, 1.20, 1.50, 2.10, 2.70, 2.70, 1.50, 0.60, 0.30],
+    "7": [0.6, 1.2, 2.1, 3.3, 3.3, 2.7, 2.1, 1.5, 1.2, 0.9, 0.6, 0.3],
+    "8": [0.3, 0.6, 0.9, 1.2, 1.5, 2.1, 2.7, 3.3, 3.3, 2.1, 1.2, 0.6],
+    "9": [1.5, 2.7, 4.8, 4.8, 4.2, 3.3, 2.7, 2.1, 1.5, 0.9, 0.6, 0.3],
+    "10": [1.8, 3.6, 6.3, 6.3, 5.7, 4.8, 3.6, 2.4, 1.2],
+    "11": [5.833333333] * 12,
+    "12": [7.5] * 12,
+    "13": [6.666666667] * 24,
+    "14": [0.208333333] * 576,
+    "15": [0.225694444] * 576,
+    "16": [0.277777778] * 576,
 }
 
 RAIN_LOOKUP = {
-    '0': ('', ''),
-    '1': ('0.25', 'v'),
-    '2': ('0.25', 'a'),
-    '3': ('0.50', 'v'),
-    '4': ('0.50', 'a'),
-    '5': ('1.00', 'v'),
-    '6': ('1.00', 'a'),
-    '7': ('2.00', 'v'),
-    '8': ('2.00', 'a'),
-    '9': ('5.00', 'v'),
-    '10': ('10.00', 'v'),
-    '11': ('100.00', 'c'),
-    '12': ('250.00', 'c'),
-    '13': ('1000.00', 'c'),
-    '14': ('100.00', 'c'),
-    '15': ('250.00', 'c'),
-    '16': ('1000.00', 'c')
+    "0": ("", ""),
+    "1": ("0.25", "v"),
+    "2": ("0.25", "a"),
+    "3": ("0.50", "v"),
+    "4": ("0.50", "a"),
+    "5": ("1.00", "v"),
+    "6": ("1.00", "a"),
+    "7": ("2.00", "v"),
+    "8": ("2.00", "a"),
+    "9": ("5.00", "v"),
+    "10": ("10.00", "v"),
+    "11": ("100.00", "c"),
+    "12": ("250.00", "c"),
+    "13": ("1000.00", "c"),
+    "14": ("100.00", "c"),
+    "15": ("250.00", "c"),
+    "16": ("1000.00", "c"),
 }
 
 
 class NameWidget(uicls_name_page, basecls_name_page):
     """Widget for Name page."""
+
     def __init__(self, parent_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path('sim_wizard_name.svg'))
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_name.svg"))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
@@ -93,11 +92,12 @@ class NameWidget(uicls_name_page, basecls_name_page):
 
 class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
     """Widget for Simulation Duration page."""
+
     def __init__(self, parent_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path('sim_wizard_duration.svg'))
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_duration.svg"))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
@@ -110,12 +110,12 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
 
     def to_datetime(self):
         """Method for QDateTime ==> datetime conversion."""
-        date_from = self.date_from.dateTime().toString('yyyy-MM-dd')
-        time_from = self.time_from.time().toString('H:m')
-        date_to = self.date_to.dateTime().toString('yyyy-MM-dd')
-        time_to = self.time_to.time().toString('H:m')
-        start = datetime.strptime(f"{date_from} {time_from}", '%Y-%m-%d %H:%M')
-        end = datetime.strptime(f"{date_to} {time_to}", '%Y-%m-%d %H:%M')
+        date_from = self.date_from.dateTime().toString("yyyy-MM-dd")
+        time_from = self.time_from.time().toString("H:m")
+        date_to = self.date_to.dateTime().toString("yyyy-MM-dd")
+        time_to = self.time_to.time().toString("H:m")
+        start = datetime.strptime(f"{date_from} {time_from}", "%Y-%m-%d %H:%M")
+        end = datetime.strptime(f"{date_to} {time_to}", "%Y-%m-%d %H:%M")
         return start, end
 
     def calculate_simulation_duration(self):
@@ -140,9 +140,9 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
                 start = end
             rel_delta = relativedelta(end, start)
             duration = (rel_delta.years, rel_delta.months, rel_delta.days, rel_delta.hours, rel_delta.minutes)
-            self.label_total_time.setText('{} years, {} months, {} days, {} hours, {} minutes'.format(*duration))
+            self.label_total_time.setText("{} years, {} months, {} days, {} hours, {} minutes".format(*duration))
         except ValueError:
-            self.label_total_time.setText('Invalid datetime format!')
+            self.label_total_time.setText("Invalid datetime format!")
 
 
 class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
@@ -150,7 +150,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path('sim_wizard_initial_con.svg'))
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_initial_con.svg"))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
@@ -259,7 +259,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path('sim_wizard_laterals.svg'))
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_laterals.svg"))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
@@ -348,8 +348,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 for lat_id, connection_node_id, timeseries in laterals_reader:
                     try:
                         vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                        lateral = {"values": vals, "units": "m3/s", "point": None,
-                                   "connection_node": int(connection_node_id), "id": int(lat_id), "offset": 0}
+                        lateral = {
+                            "values": vals,
+                            "units": "m3/s",
+                            "point": None,
+                            "connection_node": int(connection_node_id),
+                            "id": int(lat_id),
+                            "offset": 0,
+                        }
                         values[lat_id] = lateral
                         self.last_uploaded_laterals = lateral
                     except ValueError:
@@ -362,7 +368,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 for x, y, ltype, lat_id, timeseries in laterals_reader:
                     try:
                         vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                        point = {"type": "point",  "coordinates": [float(x), float(y)]}
+                        point = {"type": "point", "coordinates": [float(x), float(y)]}
                         lateral = {"values": vals, "units": "m3/s", "point": point, "id": int(lat_id), "offset": 0}
                         values[lat_id] = lateral
                         self.last_uploaded_laterals = lateral
@@ -373,20 +379,21 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
 class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
     """Widget for Precipitation page."""
-    SECONDS_MULTIPLIERS = {'s': 1, 'mins': 60, 'hrs': 3600}
+
+    SECONDS_MULTIPLIERS = {"s": 1, "mins": 60, "hrs": 3600}
     DESIGN_TIMESTEP = 300
 
     def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path('sim_wizard_precipitation.svg'))
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_precipitation.svg"))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
-        self.current_units = 'hrs'
+        self.current_units = "hrs"
         self.precipitation_duration = 0
         self.total_precipitation = 0
         self.custom_time_series = defaultdict(list)
@@ -435,32 +442,38 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             stop_after = self.sp_stop_after_constant.value()
             stop_after_units = self.stop_after_constant_u.currentText()
             intensity = self.sp_intensity.value()
-            self.values[simulation] = {"precipitation_type": precipitation_type,
-                                       "start_after": start_after,
-                                       "start_after_units": start_after_units,
-                                       "stop_after": stop_after,
-                                       "stop_after_units": stop_after_units,
-                                       "intensity": intensity}
+            self.values[simulation] = {
+                "precipitation_type": precipitation_type,
+                "start_after": start_after,
+                "start_after_units": start_after_units,
+                "stop_after": stop_after,
+                "stop_after_units": stop_after_units,
+                "intensity": intensity,
+            }
         elif precipitation_type == "Custom":
             start_after = self.sp_start_after_custom.value()
             start_after_units = self.start_after_custom_u.currentText()
             units = self.cbo_units.currentText()
             time_series = self.custom_time_series[simulation]
-            self.values[simulation] = {"precipitation_type": precipitation_type,
-                                       "start_after": start_after,
-                                       "start_after_units": start_after_units,
-                                       "units": units,
-                                       "time_series": time_series}
+            self.values[simulation] = {
+                "precipitation_type": precipitation_type,
+                "start_after": start_after,
+                "start_after_units": start_after_units,
+                "units": units,
+                "time_series": time_series,
+            }
         elif precipitation_type == "Design":
             start_after = self.sp_start_after_design.value()
             start_after_units = self.start_after_design_u.currentText()
             design_number = self.cbo_design.currentText()
             design_time_series = self.design_time_series[simulation]
-            self.values[simulation] = {"precipitation_type": precipitation_type,
-                                       "start_after": start_after,
-                                       "start_after_units": start_after_units,
-                                       "design_number": design_number,
-                                       "time_series": design_time_series}
+            self.values[simulation] = {
+                "precipitation_type": precipitation_type,
+                "start_after": start_after,
+                "start_after_units": start_after_units,
+                "design_number": design_number,
+                "time_series": design_time_series,
+            }
 
     def simulation_changed(self):
         simulation = self.dd_simulation.currentText()
@@ -473,9 +486,13 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         if vals.get("precipitation_type") == "Constant":
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_constant.setValue(vals.get("start_after"))
-            self.start_after_constant_u.setCurrentIndex(self.start_after_constant_u.findText(vals.get("start_after_units")))
+            self.start_after_constant_u.setCurrentIndex(
+                self.start_after_constant_u.findText(vals.get("start_after_units"))
+            )
             self.sp_stop_after_constant.setValue(vals.get("stop_after"))
-            self.stop_after_constant_u.setCurrentIndex(self.stop_after_constant_u.findText(vals.get("stop_after_units")))
+            self.stop_after_constant_u.setCurrentIndex(
+                self.stop_after_constant_u.findText(vals.get("stop_after_units"))
+            )
             self.sp_intensity.setValue(vals.get("intensity"))
         elif vals.get("precipitation_type") == "Custom":
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
@@ -559,11 +576,11 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         simulation = self.dd_simulation.currentText()
         with open(filename, encoding="utf-8-sig") as rain_file:
             rain_reader = csv.reader(rain_file)
-            units_multiplier = self.SECONDS_MULTIPLIERS['mins']
+            units_multiplier = self.SECONDS_MULTIPLIERS["mins"]
             for time, rain in rain_reader:
                 # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
                 try:
-                    time_series.append([float(time)*units_multiplier, float(rain)])
+                    time_series.append([float(time) * units_multiplier, float(rain)])
                 except ValueError:
                     continue
         self.custom_time_series[simulation] = time_series
@@ -589,7 +606,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.type_lbl.setText(type_full_text)
         # Design precipitation timestep is 300 seconds.
         timestep = self.DESIGN_TIMESTEP
-        self.design_time_series[simulation] = [[t, v] for t, v in zip(range(0, len(series)*timestep, timestep), series)]
+        self.design_time_series[simulation] = [
+            [t, v] for t, v in zip(range(0, len(series) * timestep, timestep), series)
+        ]
         self.plot_precipitation()
 
     def get_intensity(self):
@@ -622,7 +641,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             end = self.sp_stop_after_constant.value()
             start_in_seconds = start * to_seconds_multiplier
             end_in_seconds = end * to_seconds_multiplier
-            simulation_duration = self.parent_page.parent_wizard.duration_page.main_widget.calculate_simulation_duration()
+            simulation_duration = (
+                self.parent_page.parent_wizard.duration_page.main_widget.calculate_simulation_duration()
+            )
             if start_in_seconds > simulation_duration:
                 start_in_seconds = simulation_duration
             if end_in_seconds == 0 or end_in_seconds > simulation_duration:
@@ -648,13 +669,16 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             values = mmh_to_ms(self.get_intensity())
         elif current_text == CUSTOM_RAIN:
             ts = self.custom_time_series[simulation]
-            if self.cbo_units.currentText() == 'mm/h':
+            if self.cbo_units.currentText() == "mm/h":
                 values = [[t, mmh_to_ms(v)] for t, v in ts]
             else:
                 timestep = ts[1][0] - ts[0][0] if len(ts) > 1 else 1
                 values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, timestep))] for t, v in ts]
         elif current_text == DESIGN_RAIN:
-            values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, self.DESIGN_TIMESTEP))] for t, v in self.design_time_series[simulation]]
+            values = [
+                [t, mmh_to_ms(mmtimestep_to_mmh(v, self.DESIGN_TIMESTEP))]
+                for t, v in self.design_time_series[simulation]
+            ]
         else:
             values = []
         return values
@@ -728,9 +752,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         # Adding ticks in minutes
         dx = [(value, f"{value:.2f} ({self.current_units})") for value in x_values]
         self.plot_ticks = [[dx[0], dx[-1]]]
-        ax = self.plot_widget.getAxis('bottom')
+        ax = self.plot_widget.getAxis("bottom")
         ax.setTicks(self.plot_ticks)
-        self.plot_bar_graph = pg.BarGraphItem(x=x_values, height=y_values, width=timestep, brush=QColor('#1883D7'))
+        self.plot_bar_graph = pg.BarGraphItem(x=x_values, height=y_values, width=timestep, brush=QColor("#1883D7"))
         self.plot_widget.addItem(self.plot_bar_graph)
         if current_text == CONSTANT_RAIN:
             precipitation_values = y_values[:-1]
@@ -738,9 +762,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             precipitation_values = y_values
         if current_text == CONSTANT_RAIN:
             self.total_precipitation = sum(mmh_to_mmtimestep(v, 1, self.current_units) for v in precipitation_values)
-        elif current_text == CUSTOM_RAIN and self.cbo_units.currentText() == 'mm/h':
-            self.total_precipitation = sum(mmh_to_mmtimestep(v, timestep, self.current_units)
-                                           for v in precipitation_values)
+        elif current_text == CUSTOM_RAIN and self.cbo_units.currentText() == "mm/h":
+            self.total_precipitation = sum(
+                mmh_to_mmtimestep(v, timestep, self.current_units) for v in precipitation_values
+            )
         else:
             # This is for 'mm/timestep'
             self.total_precipitation = sum(precipitation_values)
@@ -749,13 +774,13 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
 
 
 class BreachesWidget(uicls_breaches, basecls_breaches):
-    SECONDS_MULTIPLIERS = {'s': 1, 'mins': 60, 'hrs': 3600}
+    SECONDS_MULTIPLIERS = {"s": 1, "mins": 60, "hrs": 3600}
 
     def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path('sim_wizard_breaches.svg'))
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_breaches.svg"))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
@@ -789,11 +814,13 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         duration = self.sb_duration.value()
         width = self.sb_width.value()
         units = self.dd_units.currentText()
-        self.values[simulation] = {"breach_id": breach_id,
-                                   "breach": self.breaches.get(int(breach_id) if breach_id.isnumeric() else None),
-                                   "width": width,
-                                   "duration": duration,
-                                   "units": units}
+        self.values[simulation] = {
+            "breach_id": breach_id,
+            "breach": self.breaches.get(int(breach_id) if breach_id.isnumeric() else None),
+            "width": width,
+            "duration": duration,
+            "units": units,
+        }
 
     def simulation_changed(self):
         vals = self.values.get(self.dd_simulation.currentText())
@@ -815,7 +842,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
                 data.get("breach_id"),
                 data.get("breach"),
                 data.get("width"),
-                int(data.get("duration")) * self.SECONDS_MULTIPLIERS[data.get("units")]
+                int(data.get("duration")) * self.SECONDS_MULTIPLIERS[data.get("units")],
             )
         else:
             breach_data = (None,) * 4
@@ -824,11 +851,12 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
 
 class SummaryWidget(uicls_summary_page, basecls_summary_page):
     """Widget for Summary page."""
+
     def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path('sim_wizard_initation.svg'))
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_initation.svg"))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
@@ -851,8 +879,13 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         self.dd_simulation.addItems(initial_conditions.simulations_list)
 
     def simulation_change(self):
-        if self.initial_conditions.simulations_difference == "precipitation" and self.initial_conditions.include_precipitations:
-            data = self.parent_page.parent_wizard.precipitation_page.main_widget.values.get(self.dd_simulation.currentText())
+        if (
+            self.initial_conditions.simulations_difference == "precipitation"
+            and self.initial_conditions.include_precipitations
+        ):
+            data = self.parent_page.parent_wizard.precipitation_page.main_widget.values.get(
+                self.dd_simulation.currentText()
+            )
             self.plot_overview_precipitation()
             if data:
                 ptype = data.get("precipitation_type")
@@ -877,9 +910,9 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         plot_ticks = self.parent_page.parent_wizard.precipitation_page.main_widget.plot_ticks
         if plot_bar_graph is None:
             return
-        height = plot_bar_graph.opts['height']
+        height = plot_bar_graph.opts["height"]
         new_bar_graph = pg.BarGraphItem(**plot_bar_graph.opts)
-        ax = self.plot_widget.getAxis('bottom')
+        ax = self.plot_widget.getAxis("bottom")
         ax.setTicks(plot_ticks)
         self.plot_widget.addItem(new_bar_graph)
         ticks = plot_ticks[0]
@@ -896,6 +929,7 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
 
 class NamePage(QWizardPage):
     """Simulation name definition page."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -910,6 +944,7 @@ class NamePage(QWizardPage):
 
 class SimulationDurationPage(QWizardPage):
     """Simulation duration definition page."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -923,6 +958,7 @@ class SimulationDurationPage(QWizardPage):
 
 class InitialConditionsPage(QWizardPage):
     """New simulation summary page."""
+
     def __init__(self, parent=None, load_conditions=False):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -936,6 +972,7 @@ class InitialConditionsPage(QWizardPage):
 
 class LateralsPage(QWizardPage):
     """New simulation summary page."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -949,6 +986,7 @@ class LateralsPage(QWizardPage):
 
 class PrecipitationPage(QWizardPage):
     """Precipitation definition page."""
+
     def __init__(self, parent=None, initial_conditions=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -962,6 +1000,7 @@ class PrecipitationPage(QWizardPage):
 
 class BreachesPage(QWizardPage):
     """New simulation summary page."""
+
     def __init__(self, parent=None, initial_conditions=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -975,6 +1014,7 @@ class BreachesPage(QWizardPage):
 
 class SummaryPage(QWizardPage):
     """New simulation summary page."""
+
     def __init__(self, parent=None, initial_conditions=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -988,6 +1028,7 @@ class SummaryPage(QWizardPage):
 
 class SimulationWizard(QWizard):
     """New simulation wizard."""
+
     def __init__(self, parent_dock, init_conditions_dlg, parent=None):
         super().__init__(parent)
         self.setWizardStyle(QWizard.ClassicStyle)
@@ -999,7 +1040,9 @@ class SimulationWizard(QWizard):
         self.addPage(self.name_page)
         self.addPage(self.duration_page)
         if init_conditions.include_initial_conditions:
-            self.init_conditions_page = InitialConditionsPage(self, load_conditions=init_conditions.load_from_saved_state)
+            self.init_conditions_page = InitialConditionsPage(
+                self, load_conditions=init_conditions.load_from_saved_state
+            )
             self.addPage(self.init_conditions_page)
         if init_conditions.include_laterals:
             self.laterals_page = LateralsPage(self)
@@ -1059,7 +1102,9 @@ class SimulationWizard(QWizard):
         """Setting up precipitation labels in the summary page."""
         if self.precipitation_page.main_widget.values.get(self.first_simulation):
             self.summary_page.main_widget.precipitation_widget.show()
-            precipitation_type = self.precipitation_page.main_widget.values.get(self.first_simulation).get("precipitation_type")
+            precipitation_type = self.precipitation_page.main_widget.values.get(self.first_simulation).get(
+                "precipitation_type"
+            )
             total_precipitation = self.precipitation_page.main_widget.total_precipitation
             self.summary_page.main_widget.sim_prec_type.setText(precipitation_type)
             self.summary_page.main_widget.sim_prec_total.setText(f"{total_precipitation:.0f} mm")
@@ -1094,9 +1139,9 @@ class SimulationWizard(QWizard):
             breaches_values = self.breaches_page.main_widget.values
             simulation_template["breaches_page"]["values"] = breaches_values
 
-        with open(TEMPLATE_PATH, 'a'):
+        with open(TEMPLATE_PATH, "a"):
             os.utime(TEMPLATE_PATH, None)
-        with open(TEMPLATE_PATH, 'r+') as json_file:
+        with open(TEMPLATE_PATH, "r+") as json_file:
             data = {}
             if os.path.getsize(TEMPLATE_PATH):
                 data = json.load(json_file)
@@ -1134,14 +1179,22 @@ class SimulationWizard(QWizard):
         start_datetime = datetime.utcnow()
         duration = self.duration_page.main_widget.calculate_simulation_duration()
         # initial conditions page attributes
-        global_value_1d, raster_2d, global_value_2d, raster_groundwater, global_value_groundwater, saved_state = (None,) *6
+        global_value_1d, raster_2d, global_value_2d, raster_groundwater, global_value_groundwater, saved_state = (
+            None,
+        ) * 6
         if self.init_conditions.include_initial_conditions:
             global_value_1d = self.init_conditions_page.main_widget.sp_1d_global_value.value()
-            raster_2d = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_2d.currentText())
+            raster_2d = self.init_conditions_page.main_widget.rasters.get(
+                self.init_conditions_page.main_widget.dd_2d.currentText()
+            )
             global_value_2d = self.init_conditions_page.main_widget.sp_2d_global_value.value()
-            raster_groundwater = self.init_conditions_page.main_widget.rasters.get(self.init_conditions_page.main_widget.dd_groundwater.currentText())
+            raster_groundwater = self.init_conditions_page.main_widget.rasters.get(
+                self.init_conditions_page.main_widget.dd_groundwater.currentText()
+            )
             global_value_groundwater = self.init_conditions_page.main_widget.sp_gwater_global_value.value()
-            saved_state = self.init_conditions_page.main_widget.saved_states.get(self.init_conditions_page.main_widget.cb_saved_states.currentText())
+            saved_state = self.init_conditions_page.main_widget.saved_states.get(
+                self.init_conditions_page.main_widget.cb_saved_states.currentText()
+            )
 
         if self.summary_page.main_widget.cb_save_template.isChecked():
             self.save_simulation_as_template()
@@ -1166,9 +1219,13 @@ class SimulationWizard(QWizard):
 
                 tc = ThreediCalls(self.parent_dock.api_client)
                 sim_name = f"{name}_{i}" if self.init_conditions.multiple_simulations is True else name
-                new_simulation = tc.new_simulation(name=sim_name, threedimodel=threedimodel_id,
-                                                   start_datetime=start_datetime, organisation=organisation_uuid,
-                                                   duration=duration)
+                new_simulation = tc.new_simulation(
+                    name=sim_name,
+                    threedimodel=threedimodel_id,
+                    start_datetime=start_datetime,
+                    organisation=organisation_uuid,
+                    duration=duration,
+                )
                 current_status = tc.simulation_current_status(new_simulation.id)
                 sim_id = new_simulation.id
                 if self.init_conditions.basic_processed_results:
@@ -1177,15 +1234,24 @@ class SimulationWizard(QWizard):
                     tc.add_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=True)
                 if self.init_conditions.damage_estimation:
                     tc.add_post_processing_lizard_damage(
-                        sim_id, basic_post_processing=True, cost_type=self.init_conditions.cost_type,
-                        flood_month=self.init_conditions.flood_month, inundation_period=self.init_conditions.period,
+                        sim_id,
+                        basic_post_processing=True,
+                        cost_type=self.init_conditions.cost_type,
+                        flood_month=self.init_conditions.flood_month,
+                        inundation_period=self.init_conditions.period,
                         repair_time_infrastructure=self.init_conditions.repair_time_infrastructure,
-                        repair_time_buildings=self.init_conditions.repair_time_buildings)
+                        repair_time_buildings=self.init_conditions.repair_time_buildings,
+                    )
                 if self.init_conditions.generate_saved_state:
                     tc.add_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
                 if self.init_conditions.include_breaches:
-                    tc.add_breaches(sim_id, potential_breach=breach["url"], duration_till_max_depth=d_duration,
-                                    initial_width=width, offset=0)
+                    tc.add_breaches(
+                        sim_id,
+                        potential_breach=breach["url"],
+                        duration_till_max_depth=d_duration,
+                        initial_width=width,
+                        offset=0,
+                    )
                 if self.init_conditions.include_laterals:
                     for lateral in laterals.values():
                         tc.add_lateral_timeseries(sim_id, **lateral)
@@ -1199,25 +1265,29 @@ class SimulationWizard(QWizard):
                         if self.init_conditions_page.main_widget.dd_2d.currentText() == "":
                             tc.add_initial_2d_water_level_constant(sim_id, value=global_value_2d)
                         else:
-                            tc.add_initial_2d_water_level_raster(sim_id, aggregation_method="mean",
-                                                                 initial_waterlevel=raster_2d.url)
+                            tc.add_initial_2d_water_level_raster(
+                                sim_id, aggregation_method="mean", initial_waterlevel=raster_2d.url
+                            )
                     if self.init_conditions_page.main_widget.cb_groundwater.isChecked():
                         if self.init_conditions_page.main_widget.dd_groundwater.currentText() == "":
                             tc.add_initial_groundwater_level_constant(sim_id, value=global_value_groundwater)
                         else:
-                            tc.add_initial_groundwater_level_raster(sim_id, aggregation_method="mean",
-                                                                    initial_waterlevel=raster_groundwater.url)
+                            tc.add_initial_groundwater_level_raster(
+                                sim_id, aggregation_method="mean", initial_waterlevel=raster_groundwater.url
+                            )
                     if self.init_conditions.load_from_saved_state and saved_state:
                         saved_state_id = saved_state.url.strip("/").split("/")[-1]
                         tc.add_initial_saved_state(sim_id, saved_state=saved_state_id)
 
                 if ptype == CONSTANT_RAIN:
-                    tc.add_constant_precipitation(sim_id, value=pvalues, units=punits, duration=pduration,
-                                                  offset=poffset)
+                    tc.add_constant_precipitation(
+                        sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset
+                    )
                 elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
-                    tc.add_custom_precipitation(sim_id, values=pvalues, units=punits, duration=pduration,
-                                                offset=poffset)
-                tc.make_action_on_simulation(sim_id, name='queue')
+                    tc.add_custom_precipitation(
+                        sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset
+                    )
+                tc.make_action_on_simulation(sim_id, name="queue")
                 self.new_simulations.append(new_simulation)
                 self.new_simulation_statuses[new_simulation.id] = current_status
                 msg = f"Simulation {new_simulation.name} added to queue!"

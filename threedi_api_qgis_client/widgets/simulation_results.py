@@ -12,11 +12,12 @@ from ..api_calls.threedi_calls import ThreediCalls
 from ..workers import DownloadProgressWorker
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'sim_results.ui'))
+uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_results.ui"))
 
 
 class SimulationResults(uicls, basecls):
     """Dialog with methods for handling simulations results."""
+
     PROGRESS_COLUMN_IDX = 3
 
     def __init__(self, parent_dock, parent=None):
@@ -106,11 +107,11 @@ class SimulationResults(uicls, basecls):
     def terminate_download_thread(self):
         """Forcing termination of download background thread."""
         if self.download_results_thread is not None and self.download_results_thread.isRunning():
-            self.parent_dock.communication.bar_info('Terminating download thread.')
+            self.parent_dock.communication.bar_info("Terminating download thread.")
             self.download_results_thread.terminate()
-            self.parent_dock.communication.bar_info('Waiting for download thread termination.')
+            self.parent_dock.communication.bar_info("Waiting for download thread termination.")
             self.download_results_thread.wait()
-            self.parent_dock.communication.bar_info('Download worker terminated.')
+            self.parent_dock.communication.bar_info("Download worker terminated.")
             self.download_results_thread = None
             self.download_worker = None
 
@@ -129,7 +130,7 @@ class SimulationResults(uicls, basecls):
             name_item = self.tv_model.item(current_row, 0)
             sim_id = name_item.data(Qt.UserRole)
             simulation = self.finished_simulations[sim_id]
-            simulation_name = simulation.name.replace(' ', '_')
+            simulation_name = simulation.name.replace(" ", "_")
             simulation_subdirectory = os.path.join(directory, f"sim_{sim_id}_{simulation_name}")
             simulation_model_id = int(simulation.threedimodel_id)
             tc = ThreediCalls(self.parent_dock.api_client)

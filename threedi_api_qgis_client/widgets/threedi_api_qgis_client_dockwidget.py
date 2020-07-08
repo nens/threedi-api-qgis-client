@@ -13,7 +13,7 @@ from ..communication import UICommunication
 from ..workers import WSProgressesSentinel
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, 'ui', 'threedi_api_qgis_client_dockwidget_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, "ui", "threedi_api_qgis_client_dockwidget_base.ui"))
 
 
 class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
@@ -44,11 +44,11 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btn_results.clicked.connect(self.show_simulation_results)
         self.btn_clear_log.clicked.connect(self.clear_log)
         self.btn_upload.clicked.connect(self.show_upload_dialog)
-        set_icon(self.btn_build, 'build.svg')
-        set_icon(self.btn_check, 'check.svg')
-        set_icon(self.btn_upload, 'upload.svg')
-        set_icon(self.btn_simulate, 'api.svg')
-        set_icon(self.btn_results, 'results.svg')
+        set_icon(self.btn_build, "build.svg")
+        set_icon(self.btn_check, "check.svg")
+        set_icon(self.btn_upload, "upload.svg")
+        set_icon(self.btn_simulate, "api.svg")
+        set_icon(self.btn_results, "results.svg")
 
     def closeEvent(self, event):
         self.log_out()
@@ -143,11 +143,11 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def terminate_fetching_simulations_progresses_thread(self):
         """Forcing termination of background thread if it's still running."""
         if self.simulations_progresses_thread is not None and self.simulations_progresses_thread.isRunning():
-            self.communication.bar_info('Terminating fetching simulations progresses thread.')
+            self.communication.bar_info("Terminating fetching simulations progresses thread.")
             self.simulations_progresses_thread.terminate()
-            self.communication.bar_info('Waiting for fetching simulations progresses thread termination.')
+            self.communication.bar_info("Waiting for fetching simulations progresses thread termination.")
             self.simulations_progresses_thread.wait()
-            self.communication.bar_info('Fetching simulations progresses worker terminated.')
+            self.communication.bar_info("Fetching simulations progresses worker terminated.")
             self.simulations_progresses_thread = None
             self.simulations_progresses_sentinel = None
 

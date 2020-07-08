@@ -8,6 +8,7 @@ from qgis.core import QgsMessageLog, Qgis
 
 class UICommunication(object):
     """Class with methods for handling messages using QGIS interface and logging list view."""
+
     def __init__(self, iface, context, list_view):
         self.iface = iface
         self.context = context

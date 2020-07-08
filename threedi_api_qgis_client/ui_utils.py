@@ -3,12 +3,12 @@
 import os
 from qgis.PyQt.QtGui import QIcon, QColor
 from qgis.PyQt.QtCore import QDate, QTime
-from qgis.PyQt.QtWidgets import (QLineEdit, QDateEdit, QTimeEdit, QCheckBox, QDoubleSpinBox, QSpinBox, QComboBox, QWidget)
+from qgis.PyQt.QtWidgets import QLineEdit, QDateEdit, QTimeEdit, QCheckBox, QDoubleSpinBox, QSpinBox, QComboBox, QWidget
 
 
 def icon_path(icon_filename):
     """Setting up path to the icon with given filename."""
-    path = os.path.join(os.path.dirname(__file__), 'icons', icon_filename)
+    path = os.path.join(os.path.dirname(__file__), "icons", icon_filename)
     return path
 
 
@@ -19,7 +19,7 @@ def set_icon(widget, icon_filename):
     widget.setIcon(icon)
 
 
-def set_widget_background_color(widget, hex_color='#F0F0F0'):
+def set_widget_background_color(widget, hex_color="#F0F0F0"):
     """Setting widget background color."""
     palette = widget.palette()
     palette.setColor(widget.backgroundRole(), QColor(hex_color))
@@ -37,9 +37,9 @@ def scan_widgets_parameters(main_widget):
         elif isinstance(widget, QComboBox):
             parameters[obj_name] = widget.currentText()
         elif isinstance(widget, QDateEdit):
-            parameters[obj_name] = widget.dateTime().toString('yyyy-MM-dd')
+            parameters[obj_name] = widget.dateTime().toString("yyyy-MM-dd")
         elif isinstance(widget, QTimeEdit):
-            parameters[obj_name] = widget.time().toString('H:m')
+            parameters[obj_name] = widget.time().toString("H:m")
         elif isinstance(widget, (QSpinBox, QDoubleSpinBox)):
             parameters[obj_name] = widget.value()
         elif isinstance(widget, QWidget):
@@ -60,8 +60,8 @@ def set_widgets_parameters(main_widget, **widget_parameters):
             idx = widget.findText(value)
             widget.setCurrentIndex(idx)
         elif isinstance(widget, QDateEdit):
-            widget.setDate(QDate.fromString(value, 'yyyy-MM-dd'))
+            widget.setDate(QDate.fromString(value, "yyyy-MM-dd"))
         elif isinstance(widget, QTimeEdit):
-            widget.setTime(QTime.fromString(value, 'H:m'))
+            widget.setTime(QTime.fromString(value, "H:m"))
         elif isinstance(widget, (QSpinBox, QDoubleSpinBox)):
             widget.setValue(value)

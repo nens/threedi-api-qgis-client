@@ -16,11 +16,12 @@ from ..utils import load_saved_templates
 from ..ui_utils import set_widgets_parameters
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'sim_overview.ui'))
+uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_overview.ui"))
 
 
 class SimulationOverview(uicls, basecls):
     """Dialog with methods for handling running simulations."""
+
     PROGRESS_COLUMN_IDX = 2
 
     def __init__(self, parent_dock, parent=None):
@@ -133,7 +134,7 @@ class SimulationOverview(uicls, basecls):
                 name_item = self.tv_model.item(index.row(), 0)
                 sim_id = name_item.data(Qt.UserRole)
                 tc = ThreediCalls(self.parent_dock.api_client)
-                tc.make_action_on_simulation(sim_id, name='shutdown')
+                tc.make_action_on_simulation(sim_id, name="shutdown")
                 msg = f"Simulation {name_item.text()} stopped!"
                 self.parent_dock.communication.bar_info(msg)
             except ApiException as e:

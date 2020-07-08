@@ -4,13 +4,42 @@ import os
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Tuple
 from threedi_api_client import ThreediApiClient
-from openapi_client import (ApiClient, RepositoriesApi, SimulationsApi, RevisionsApi, OrganisationsApi, ThreediModel,
-                            ThreedimodelsApi, Repository, Simulation, Action, Progress, Revision, InitialWaterlevel,
-                            ConstantRain, TimeseriesRain, Organisation, CurrentStatus, ResultFile, Download, Breach,
-                            TimeseriesLateral, ArrivalTimePostProcessing, BasicPostProcessing, DamagePostProcessing,
-                            OneDWaterLevel, TwoDWaterLevel, OneDWaterLevelPredefined, TwoDWaterRaster, GroundWaterLevel,
-                            GroundWaterRaster, TimedSavedStateUpdate, ThreediModelSavedState, InitialSavedState,
-                            PotentialBreach)
+from openapi_client import (
+    ApiClient,
+    RepositoriesApi,
+    SimulationsApi,
+    RevisionsApi,
+    OrganisationsApi,
+    ThreediModel,
+    ThreedimodelsApi,
+    Repository,
+    Simulation,
+    Action,
+    Progress,
+    Revision,
+    InitialWaterlevel,
+    ConstantRain,
+    TimeseriesRain,
+    Organisation,
+    CurrentStatus,
+    ResultFile,
+    Download,
+    Breach,
+    TimeseriesLateral,
+    ArrivalTimePostProcessing,
+    BasicPostProcessing,
+    DamagePostProcessing,
+    OneDWaterLevel,
+    TwoDWaterLevel,
+    OneDWaterLevelPredefined,
+    TwoDWaterRaster,
+    GroundWaterLevel,
+    GroundWaterRaster,
+    TimedSavedStateUpdate,
+    ThreediModelSavedState,
+    InitialSavedState,
+    PotentialBreach,
+)
 
 
 def get_api_client(api_username: str, api_password: str, api_host: str = "https://api.3di.live/v3.0") -> ApiClient:
@@ -24,6 +53,7 @@ def get_api_client(api_username: str, api_password: str, api_host: str = "https:
 
 class ThreediCalls:
     """Class with methods used for the communication with the 3Di API."""
+
     FETCH_LIMIT = 100
     EXPIRATION_TIME = datetime.now(timezone.utc) - timedelta(days=7)
 
@@ -43,7 +73,7 @@ class ThreediCalls:
     def fetch_simulations(self) -> List[Simulation]:
         """Fetch all simulations available for current user."""
         api = SimulationsApi(self.api_client)
-        created__date__gt = self.EXPIRATION_TIME.strftime('%Y-%m-%d')
+        created__date__gt = self.EXPIRATION_TIME.strftime("%Y-%m-%d")
         response = api.simulations_list(created__date__gt=created__date__gt, limit=self.FETCH_LIMIT)
         response_count = response.count
         if response_count > self.FETCH_LIMIT:
@@ -82,8 +112,9 @@ class ThreediCalls:
         simulations_progress = api.simulations_progress_list(str(simulation_pk), limit=self.FETCH_LIMIT)
         return simulations_progress
 
-    def all_simulations_progress(self, simulations_list: List[Simulation]
-                                 ) -> Dict[int, Tuple[Simulation, CurrentStatus, Progress]]:
+    def all_simulations_progress(
+        self, simulations_list: List[Simulation]
+    ) -> Dict[int, Tuple[Simulation, CurrentStatus, Progress]]:
         """Get all simulations with statuses and progresses."""
         api = SimulationsApi(self.api_client)
         progresses = {}

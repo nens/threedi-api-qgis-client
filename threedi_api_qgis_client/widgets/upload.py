@@ -3,11 +3,12 @@ from qgis.PyQt import uic
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, 'ui', 'upload_dialog.ui'))
+uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_dialog.ui"))
 
 
 class UploadDialog(uicls_log, basecls_log):
     """Upload dialog."""
+
     def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
         self.setupUi(self)

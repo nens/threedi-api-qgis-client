@@ -19,13 +19,13 @@ def ms_to_mmh(ms_value):
     return mmh_value
 
 
-def mmtimestep_to_mmh(value, timestep, units='s'):
+def mmtimestep_to_mmh(value, timestep, units="s"):
     """Converting values from 'mm/timestep' to the 'mm/h'."""
-    if units == 's':
+    if units == "s":
         timestep_seconds = timestep
-    elif units == 'mins':
+    elif units == "mins":
         timestep_seconds = timestep * 60
-    elif units == 'hrs':
+    elif units == "hrs":
         timestep_seconds = timestep * 3600
     else:
         raise ValueError(f"Unsupported timestep units format ({units})!")
@@ -34,13 +34,13 @@ def mmtimestep_to_mmh(value, timestep, units='s'):
     return mmh_value
 
 
-def mmh_to_mmtimestep(value, timestep, units='s'):
+def mmh_to_mmtimestep(value, timestep, units="s"):
     """Converting values from 'mm/h' to the 'mm/timestep'."""
-    if units == 's':
+    if units == "s":
         timestep_seconds = timestep
-    elif units == 'mins':
+    elif units == "mins":
         timestep_seconds = timestep * 60
-    elif units == 'hrs':
+    elif units == "hrs":
         timestep_seconds = timestep * 3600
     else:
         raise ValueError(f"Unsupported timestep units format ({units})!")

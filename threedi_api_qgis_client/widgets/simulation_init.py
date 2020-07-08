@@ -2,11 +2,12 @@ import os
 from qgis.PyQt import uic
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls, basecls = uic.loadUiType(os.path.join(base_dir, 'ui', 'init_dialog.ui'))
+uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "init_dialog.ui"))
 
 
 class SimulationInit(uicls, basecls):
     """Dialog with methods for handling running simulations."""
+
     PROGRESS_COLUMN_IDX = 2
     COST_TYPES = ["min", "avg", "max"]
     MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
@@ -115,6 +116,7 @@ class SimulationInit(uicls, basecls):
 
 class SimulationInitObject:
     """Object for storing init options."""
+
     def __init__(self):
         self.include_boundary_conditions = False
         self.include_initial_conditions = False

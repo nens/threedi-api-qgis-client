@@ -5,7 +5,7 @@ import json
 import requests
 from time import sleep
 from dateutil.parser import parse
-from qgis.PyQt.QtCore import QObject,  QUrl, QByteArray, pyqtSignal, pyqtSlot
+from qgis.PyQt.QtCore import QObject, QUrl, QByteArray, pyqtSignal, pyqtSlot
 from qgis.PyQt import QtNetwork
 from PyQt5 import QtWebSockets
 from openapi_client import ApiException, Simulation, Progress
@@ -14,6 +14,7 @@ from .api_calls.threedi_calls import ThreediCalls
 
 class SimulationsProgressesSentinel(QObject):
     """Worker object that will be moved to a separate thread and will check progresses of the running simulations."""
+
     thread_finished = pyqtSignal(str)
     thread_failed = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
@@ -61,11 +62,12 @@ class SimulationsProgressesSentinel(QObject):
 
 class DownloadProgressWorker(QObject):
     """Worker object responsible for downloading simulations results."""
+
     thread_finished = pyqtSignal(str)
     download_failed = pyqtSignal(str)
     download_progress = pyqtSignal(float)
 
-    CHUNK_SIZE = 1024**2
+    CHUNK_SIZE = 1024 ** 2
 
     NOT_STARTED = -1
     FINISHED = 100
@@ -94,7 +96,7 @@ class DownloadProgressWorker(QObject):
             try:
                 os.makedirs(self.directory, exist_ok=True)
                 file_data = requests.get(download.get_url, stream=True, timeout=15)
-                with open(filename_path, 'wb') as f:
+                with open(filename_path, "wb") as f:
                     for chunk in file_data.iter_content(chunk_size=self.CHUNK_SIZE):
                         if chunk:
                             f.write(chunk)
@@ -117,6 +119,7 @@ class WSProgressesSentinel(QObject):
     Worker object that will be moved to a separate thread and will check progresses of the running simulations.
     This worker is fetching data through the websocket.
     """
+
     thread_finished = pyqtSignal(str)
     thread_failed = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
@@ -188,8 +191,11 @@ class WSProgressesSentinel(QObject):
                     sim_progress = Progress(0, sim.get("progress"))
                 else:
                     sim_progress = Progress(percentage=0, time=status_time)
-                self.progresses[sim_id] = {"simulation": simulation, "current_status": current_status,
-                                           "progress": sim_progress}
+                self.progresses[sim_id] = {
+                    "simulation": simulation,
+                    "current_status": current_status,
+                    "progress": sim_progress,
+                }
         elif data_type == "progress":
             sim_id = int(data["data"]["simulation_id"])
             self.progresses[sim_id]["progress"] = Progress(0, data["data"]["progress"])

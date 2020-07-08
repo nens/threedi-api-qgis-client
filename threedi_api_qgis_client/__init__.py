@@ -10,4 +10,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
     from .threedi_api_qgis_client import ThreediQgisClient
+
     return ThreediQgisClient(iface)
