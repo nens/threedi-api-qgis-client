@@ -16,14 +16,14 @@ script:
 
 # Deploy uploads the "zip_plugin.py" result to https://artifacts.lizard.net, but
 # only when building a tag. It then turns up on https://plugins.lizard.net
-deploy:
-  provider: script
-  skip_cleanup: true
-  script: bash upload-artifact.sh
-  on:
-    tags: true
-    repo: nens/threedi-api-qgis-client
-    python: 3.7
+# deploy:
+#   provider: script
+#   skip_cleanup: true
+#   script: bash upload-artifact.sh
+#   on:
+#     tags: true
+#     repo: nens/threedi-api-qgis-client
+#     python: 3.7
 
 notifications:
   email: false
