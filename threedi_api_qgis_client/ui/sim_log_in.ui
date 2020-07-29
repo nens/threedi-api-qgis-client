@@ -566,7 +566,7 @@
      <property name="minimumSize">
       <size>
        <width>500</width>
-       <height>250</height>
+       <height>300</height>
       </size>
      </property>
      <layout class="QGridLayout" name="gridLayout_8">
