@@ -87,7 +87,9 @@ class ThreediCalls:
         simulation = api.simulations_read(id=simulation_pk)
         return simulation
 
-    def fetch_3di_models(self, limit: int = None, offset: int = None, name_contains: str = None) -> Tuple[List[ThreediModel], int]:
+    def fetch_3di_models(
+        self, limit: int = None, offset: int = None, name_contains: str = None
+    ) -> Tuple[List[ThreediModel], int]:
         """Fetch 3Di models available for current user."""
         api = ThreedimodelsApi(self.api_client)
         params = {}
