@@ -87,6 +87,23 @@ class ThreediCalls:
         simulation = api.simulations_read(id=simulation_pk)
         return simulation
 
+    def fetch_3di_models(
+        self, limit: int = None, offset: int = None, name_contains: str = None
+    ) -> Tuple[List[ThreediModel], int]:
+        """Fetch 3Di models available for current user."""
+        api = ThreedimodelsApi(self.api_client)
+        params = {}
+        if limit is not None:
+            params["limit"] = limit
+        if offset is not None:
+            params["offset"] = offset
+        if name_contains is not None:
+            params["name__contains"] = name_contains
+        response = api.threedimodels_list(**params)
+        models_list = response.results
+        models_count = response.count
+        return models_list, models_count
+
     def new_simulation(self, **simulation_data) -> Simulation:
         """Create a new Simulation."""
         api = SimulationsApi(self.api_client)

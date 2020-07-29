@@ -1,9 +1,10 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
+from math import ceil
 from time import sleep
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QDateTime
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from openapi_client import ApiException
 from ..api_calls.threedi_calls import get_api_client, ThreediCalls
@@ -14,6 +15,8 @@ uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "sim_log_in
 
 class LogInDialog(uicls_log, basecls_log):
     """Dialog with widgets and methods used in logging process."""
+
+    TABLE_LIMIT = 10
 
     def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
@@ -29,8 +32,8 @@ class LogInDialog(uicls_log, basecls_log):
         self.revisions = None
         self.threedi_models = None
         self.current_model = None
-        self.lv_model = QStandardItemModel()
-        self.models_lv.setModel(self.lv_model)
+        self.tv_model = QStandardItemModel()
+        self.models_tv.setModel(self.tv_model)
         self.log_in_widget.hide()
         self.wait_widget.hide()
         self.action_widget.hide()
@@ -38,23 +41,34 @@ class LogInDialog(uicls_log, basecls_log):
         self.organisation_widget.hide()
         self.pb_load_web.clicked.connect(self.show_log_widget)
         self.pb_log_in.clicked.connect(self.log_in_threedi)
+        self.pb_prev_page.clicked.connect(self.move_backward)
+        self.pb_next_page.clicked.connect(self.move_forward)
+        self.page_sbox.valueChanged.connect(self.fetch_3di_models)
         self.pb_next.clicked.connect(self.show_load_widget)
         self.pb_load.clicked.connect(self.load_model)
         self.pb_organisation.clicked.connect(self.set_organisation)
         self.pb_cancel.clicked.connect(self.reject)
         self.pb_cancel_action.clicked.connect(self.reject)
         self.pb_cancel_load.clicked.connect(self.reject)
-        self.search_le.textChanged.connect(self.search_model)
-        self.models_lv.selectionModel().selectionChanged.connect(self.toggle_load_model)
+        self.search_le.returnPressed.connect(self.search_model)
+        self.models_tv.selectionModel().selectionChanged.connect(self.toggle_load_model)
         self.resize(500, 250)
 
     def toggle_load_model(self):
         """Toggle load button if any model is selected."""
-        selection_model = self.models_lv.selectionModel()
+        selection_model = self.models_tv.selectionModel()
         if selection_model.hasSelection():
             self.pb_load.setEnabled(True)
         else:
             self.pb_load.setDisabled(True)
+
+    def move_backward(self):
+        """Moving to the previous results page."""
+        self.page_sbox.setValue(self.page_sbox.value() - 1)
+
+    def move_forward(self):
+        """Moving to the next results page."""
+        self.page_sbox.setValue(self.page_sbox.value() + 1)
 
     def show_log_widget(self):
         """Showing logging form widget."""
@@ -73,10 +87,6 @@ class LogInDialog(uicls_log, basecls_log):
         self.organisation_widget.hide()
         self.action_widget.show()
         self.setWindowTitle("Choose actions - web")
-        for sim_model in self.threedi_models:
-            item = QStandardItem(sim_model.name)
-            item.setData(sim_model, role=Qt.UserRole)
-            self.lv_model.appendRow([item])
         self.toggle_load_model()
 
     def show_organisation_widget(self):
@@ -120,34 +130,43 @@ class LogInDialog(uicls_log, basecls_log):
 
     def fetch_3di_models(self):
         """Fetching 3Di models list."""
-        threedi_models = []
         tc = ThreediCalls(self.api_client)
-        for revision in self.revisions.values():
-            threedi_models += tc.fetch_revision_3di_models(revision.id)
-        return threedi_models
+        offset = (self.page_sbox.value() - 1) * self.TABLE_LIMIT
+        text = self.search_le.text()
+        threedi_models, models_count = tc.fetch_3di_models(limit=self.TABLE_LIMIT, offset=offset, name_contains=text)
+        pages_nr = ceil(models_count / self.TABLE_LIMIT) or 1
+        self.page_sbox.setMaximum(pages_nr)
+        self.page_sbox.setSuffix(f" / {pages_nr}")
+        self.tv_model.clear()
+        header = ["Model", "Repository", "Revision", "Last updated"]
+        self.tv_model.setHorizontalHeaderLabels(header)
+        for sim_model in threedi_models:
+            name_item = QStandardItem(sim_model.name)
+            name_item.setData(sim_model, role=Qt.UserRole)
+            repo_item = QStandardItem(sim_model.repository_slug)
+            rev_item = QStandardItem(sim_model.revision_number)
+            last_updated_day = sim_model.revision_commit_date.split("T")[0]
+            lu_datetime = QDateTime.fromString(last_updated_day, "yyyy-MM-dd")
+            lu_item = QStandardItem(lu_datetime.toString("dd-MMMM-yyyy"))
+            self.tv_model.appendRow([name_item, repo_item, rev_item, lu_item])
+        for i in range(len(header)):
+            self.models_tv.resizeColumnToContents(i)
+        self.threedi_models = threedi_models
 
-    def search_model(self, search_string=None):
+    def search_model(self):
         """Method used for searching models with text typed withing search bar."""
-        row_count = self.lv_model.rowCount()
-        if not search_string:
-            for i in range(row_count):
-                row = self.lv_model.item(i).index().row()
-                self.models_lv.setRowHidden(row, False)
-        else:
-            items = self.lv_model.findItems(search_string, Qt.MatchContains)
-            rows = {i.index().row() for i in items}
-            for i in range(row_count):
-                row = self.lv_model.item(i).index().row()
-                if row not in rows:
-                    self.models_lv.setRowHidden(row, True)
-                else:
-                    self.models_lv.setRowHidden(row, False)
+        self.page_sbox.valueChanged.disconnect(self.fetch_3di_models)
+        self.page_sbox.setValue(1)
+        self.page_sbox.valueChanged.connect(self.fetch_3di_models)
+        self.fetch_3di_models()
 
     def load_model(self):
         """Loading selected model."""
-        index = self.models_lv.currentIndex()
+        index = self.models_tv.currentIndex()
         if index.isValid():
-            self.current_model = self.lv_model.data(index, Qt.UserRole)
+            current_row = index.row()
+            name_item = self.tv_model.item(current_row, 0)
+            self.current_model = name_item.data(Qt.UserRole)
         self.close()
 
     def log_in_threedi(self):
@@ -174,7 +193,7 @@ class LogInDialog(uicls_log, basecls_log):
             self.log_pbar.setValue(60)
             self.revisions = {rev.hash: rev for rev in self.fetch_revisions()}
             self.log_pbar.setValue(80)
-            self.threedi_models = self.fetch_3di_models()
+            self.fetch_3di_models()
             self.done_msg.show()
             self.wait_widget.update()
             self.log_pbar.setValue(100)
