@@ -4,7 +4,7 @@ import os
 from math import ceil
 from time import sleep
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QDateTime
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from openapi_client import ApiException
 from ..api_calls.threedi_calls import get_api_client, ThreediCalls
@@ -16,7 +16,7 @@ uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "sim_log_in
 class LogInDialog(uicls_log, basecls_log):
     """Dialog with widgets and methods used in logging process."""
 
-    TABLE_LIMIT = 2
+    TABLE_LIMIT = 10
 
     def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
@@ -144,8 +144,10 @@ class LogInDialog(uicls_log, basecls_log):
             name_item = QStandardItem(sim_model.name)
             name_item.setData(sim_model, role=Qt.UserRole)
             repo_item = QStandardItem(sim_model.repository_slug)
-            rev_item = QStandardItem(sim_model.revision_number or "")
-            lu_item = QStandardItem(sim_model.revision_commit_date or "")
+            rev_item = QStandardItem(sim_model.revision_number)
+            last_updated_day = sim_model.revision_commit_date.split("T")[0]
+            lu_datetime = QDateTime.fromString(last_updated_day, "yyyy-MM-dd")
+            lu_item = QStandardItem(lu_datetime.toString("dd-MMMM-yyyy"))
             self.tv_model.appendRow([name_item, repo_item, rev_item, lu_item])
         for i in range(len(header)):
             self.models_tv.resizeColumnToContents(i)
