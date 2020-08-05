@@ -175,6 +175,7 @@ class LogInDialog(uicls_log, basecls_log):
         self.close()
 
     def get_cached_data(self, geojson_name):
+        """Get model data that should be cached."""
         cached_file_path = None
         try:
             tc = ThreediCalls(self.api_client)
