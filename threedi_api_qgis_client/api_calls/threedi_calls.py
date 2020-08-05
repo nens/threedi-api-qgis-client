@@ -180,6 +180,18 @@ class ThreediCalls:
             downloads.append((result_file, download))
         return downloads
 
+    def fetch_geojson_cells_download(self, threedimodel_id: int) -> Download:
+        """Fetch model geojson cells Download object."""
+        api = ThreedimodelsApi(self.api_client)
+        cells_download = api.threedimodels_geojson_cells_download(threedimodel_id)
+        return cells_download
+
+    def fetch_geojson_breaches_download(self, threedimodel_id: int) -> Download:
+        """Fetch model geojson breaches Download object."""
+        api = ThreedimodelsApi(self.api_client)
+        breaches_download = api.threedimodels_geojson_breaches_download(threedimodel_id)
+        return breaches_download
+
     def fetch_gridadmin_download(self, threedimodel_id: int) -> Tuple[ResultFile, Download]:
         """Fetch simulation model gridadmin file."""
         api = ThreedimodelsApi(self.api_client)

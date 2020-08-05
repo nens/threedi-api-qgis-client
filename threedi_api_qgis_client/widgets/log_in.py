@@ -7,6 +7,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QDateTime
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from openapi_client import ApiException
+from ..utils import get_download_file, file_cached, CACHE_PATH
 from ..api_calls.threedi_calls import get_api_client, ThreediCalls
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -32,6 +33,8 @@ class LogInDialog(uicls_log, basecls_log):
         self.revisions = None
         self.threedi_models = None
         self.current_model = None
+        self.current_model_breaches = None
+        self.current_model_cells = None
         self.tv_model = QStandardItemModel()
         self.models_tv.setModel(self.tv_model)
         self.log_in_widget.hide()
@@ -167,7 +170,39 @@ class LogInDialog(uicls_log, basecls_log):
             current_row = index.row()
             name_item = self.tv_model.item(current_row, 0)
             self.current_model = name_item.data(Qt.UserRole)
+            self.current_model_cells = self.get_cached_data("cells")
+            self.current_model_breaches = self.get_cached_data("breaches")
         self.close()
+
+    def get_cached_data(self, geojson_name):
+        cached_file_path = None
+        try:
+            tc = ThreediCalls(self.api_client)
+            model_id = self.current_model.id
+            if geojson_name == "breaches":
+                download = tc.fetch_geojson_breaches_download(model_id)
+            elif geojson_name == "cells":
+                download = tc.fetch_geojson_cells_download(model_id)
+            else:
+                return cached_file_path
+            filename = f"{geojson_name}_{model_id}_{download.etag}.json"
+            file_path = os.path.join(CACHE_PATH, filename)
+            if not file_cached(file_path):
+                get_download_file(download, file_path)
+            cached_file_path = file_path
+            self.communication.bar_info(f"Model {geojson_name} cached.")
+        except ApiException as e:
+            error_body = e.body
+            error_details = error_body["details"] if "details" in error_body else error_body
+            error_msg = f"Error: {error_details}"
+            if "geojson file not found" in error_msg:
+                pass
+            else:
+                self.communication.bar_error(error_msg)
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.communication.bar_error(error_msg)
+        return cached_file_path
 
     def log_in_threedi(self):
         """Method which runs all logging widgets methods and setting up needed variables."""

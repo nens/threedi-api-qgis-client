@@ -50,7 +50,7 @@ def patch_wheel_imports():
         import threedi_api_client
         import openapi_client
     except ImportError:
-        deps_path = os.path.join(main_dir, "threedi_api_client-3.0.4b0-py2.py3-none-any.whl")
+        deps_path = os.path.join(main_dir, "threedi_api_client-3.0.6-py2.py3-none-any.whl")
         sys.path.append(deps_path)
 
     try:
