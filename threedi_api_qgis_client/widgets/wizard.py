@@ -13,6 +13,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
+from qgis.core import QgsVectorLayer, QgsProject
 from openapi_client import ApiException
 from ..ui_utils import icon_path, set_widget_background_color, scan_widgets_parameters, set_widgets_parameters
 from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, SimulationError, TEMPLATE_PATH
@@ -787,7 +788,6 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.values = dict()
-        self.breaches = dict()
         self.dd_breach_id.currentIndexChanged.connect(self.write_values_into_dict)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
         self.dd_units.currentIndexChanged.connect(self.write_values_into_dict)
@@ -798,14 +798,17 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         else:
             self.simulation_widget.hide()
         self.dd_simulation.addItems(initial_conditions.simulations_list)
-        self.fill_comboboxes()
+        self.setup_breaches()
 
-    def fill_comboboxes(self):
-        tc = ThreediCalls(self.parent_page.parent_wizard.parent_dock.api_client)
-        breaches = tc.fetch_potential_breaches(self.parent_page.parent_wizard.parent_dock.current_model.id)
-        for breach in breaches:
-            self.breaches[breach.connected_pnt_id] = breach.to_dict()
-            self.dd_breach_id.addItem(str(breach.connected_pnt_id))
+    def setup_breaches(self):
+        cached_breaches = self.parent_page.parent_wizard.parent_dock.current_model_breaches
+        if cached_breaches is not None:
+            breaches_lyr = QgsVectorLayer(cached_breaches, "breaches", "ogr")
+            QgsProject.instance().addMapLayer(breaches_lyr, False)
+            QgsProject.instance().layerTreeRoot().insertLayer(0, breaches_lyr)
+            breaches_ids = [str(feat["content_pk"]) for feat in breaches_lyr.getFeatures()]
+            breaches_ids.sort(key=lambda i: int(i))
+            self.dd_breach_id.addItems(breaches_ids)
         self.write_values_into_dict()
 
     def write_values_into_dict(self):
@@ -816,7 +819,6 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         units = self.dd_units.currentText()
         self.values[simulation] = {
             "breach_id": breach_id,
-            "breach": self.breaches.get(int(breach_id) if breach_id.isnumeric() else None),
             "width": width,
             "duration": duration,
             "units": units,
@@ -840,12 +842,11 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         if data:
             breach_data = (
                 data.get("breach_id"),
-                data.get("breach"),
                 data.get("width"),
                 int(data.get("duration")) * self.SECONDS_MULTIPLIERS[data.get("units")],
             )
         else:
-            breach_data = (None,) * 4
+            breach_data = (None,) * 3
         return breach_data
 
 
@@ -1204,15 +1205,15 @@ class SimulationWizard(QWizard):
             self.new_simulation_statuses = {}
             for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
                 ptype, poffset, pduration, punits, pvalues = (None,) * 5
-                breach_id, breach, width, d_duration = (None,) * 4
+                breach_id, width, d_duration = (None,) * 3
                 laterals = []
                 if hasattr(self, "precipitation_page"):
                     self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                     prec_data = self.precipitation_page.main_widget.get_precipitation_data()
                     ptype, poffset, pduration, punits, pvalues = prec_data
                 if hasattr(self, "breaches_page"):
-                    breach_id, breach, width, d_duration = self.breaches_page.main_widget.get_breaches_data(simulation)
-                    if breach is None:
+                    breach_id, width, d_duration = self.breaches_page.main_widget.get_breaches_data(simulation)
+                    if breach_id is None:
                         raise SimulationError("Breaches option used, but no breach selected")
                 if hasattr(self, "laterals_page"):
                     laterals = self.laterals_page.main_widget.get_laterals_data()
@@ -1245,6 +1246,8 @@ class SimulationWizard(QWizard):
                 if self.init_conditions.generate_saved_state:
                     tc.add_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
                 if self.init_conditions.include_breaches:
+                    breach_obj = tc.fetch_single_potential_breach(threedimodel_id, int(breach_id))
+                    breach = breach_obj.to_dict()
                     tc.add_breaches(
                         sim_id,
                         potential_breach=breach["url"],

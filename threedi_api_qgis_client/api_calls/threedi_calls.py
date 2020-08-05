@@ -209,6 +209,16 @@ class ThreediCalls:
         breaches = response.results
         return breaches
 
+    def fetch_single_potential_breach(self, threedimodel_id: str, content_pk: int = None) -> PotentialBreach:
+        """Fetch a single potential breach."""
+        api = ThreedimodelsApi(self.api_client)
+        params = {"threedimodel_pk": threedimodel_id}
+        if content_pk is not None:
+            params["connected_pnt_id"] = content_pk
+        response = api.threedimodels_potentialbreaches_list(**params)
+        breach = response.results[0]
+        return breach
+
     def fetch_initial_waterlevels(self, threedimodel_id: str) -> List[InitialWaterlevel]:
         """Fetch initial waterlevels List"""
         api = ThreedimodelsApi(self.api_client)

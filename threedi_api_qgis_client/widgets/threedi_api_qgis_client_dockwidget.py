@@ -31,6 +31,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.api_client = None
         self.threedi_models = None
         self.current_model = None
+        self.current_model_cells = None
+        self.current_model_breaches = None
         self.organisation = None
         self.log_in_dlg = None
         self.simulation_overview_dlg = None
@@ -62,6 +64,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.api_client = self.log_in_dlg.api_client
         self.threedi_models = self.log_in_dlg.threedi_models
         self.current_model = self.log_in_dlg.current_model
+        self.current_model_cells = self.log_in_dlg.current_model_cells
+        self.current_model_breaches = self.log_in_dlg.current_model_breaches
         if self.current_model is None:
             return
         self.widget_unauthorized.hide()
@@ -89,6 +93,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.log_in_dlg = None
         self.api_client = None
         self.current_model = None
+        self.current_model_cells = None
+        self.current_model_breaches = None
         self.widget_unauthorized.show()
         self.widget_authorized.hide()
         self.btn_simulate.setDisabled(True)
