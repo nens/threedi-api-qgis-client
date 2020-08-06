@@ -112,10 +112,10 @@ class SimulationOverview(uicls, basecls):
 
     def new_simulation(self, simulation_template=None):
         """Opening a wizard which allows defining and running new simulations."""
-        self.close()
         self.simulation_wizard = SimulationWizard(self.parent_dock, self.simulation_init_wizard)
         if simulation_template:
             self.simulation_wizard.load_template_parameters(simulation_template)
+        self.close()
         self.simulation_wizard.exec_()
         new_simulations = self.simulation_wizard.new_simulations
         if new_simulations is not None:

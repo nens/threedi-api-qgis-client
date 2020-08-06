@@ -41,7 +41,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.widget_authorized.hide()
         self.btn_start.clicked.connect(self.log_in)
         self.btn_log_out.clicked.connect(self.log_out)
-        self.btn_change_repo.clicked.connect(self.change_repository)
+        self.btn_change_repo.clicked.connect(self.change_model)
         self.btn_simulate.clicked.connect(self.show_simulation_overview)
         self.btn_results.clicked.connect(self.show_simulation_results)
         self.btn_clear_log.clicked.connect(self.clear_log)
@@ -101,13 +101,15 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btn_results.setDisabled(True)
         self.btn_upload.setDisabled(True)
 
-    def change_repository(self):
-        """Changing current repository."""
+    def change_model(self):
+        """Changing current model."""
         if self.log_in_dlg is None:
             self.log_in()
         else:
             self.log_in_dlg.exec_()
             self.current_model = self.log_in_dlg.current_model
+            self.current_model_cells = self.log_in_dlg.current_model_cells
+            self.current_model_breaches = self.log_in_dlg.current_model_breaches
             self.label_repo.setText(self.current_model.repository_slug)
             revision = self.log_in_dlg.revisions[self.current_model.revision_hash]
             self.label_rev.setText(f"{revision.number}")
