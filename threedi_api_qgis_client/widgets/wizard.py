@@ -15,7 +15,13 @@ from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
 from qgis.core import QgsVectorLayer, QgsProject
 from openapi_client import ApiException
-from ..ui_utils import icon_path, set_widget_background_color, scan_widgets_parameters, set_widgets_parameters, set_named_style
+from ..ui_utils import (
+    icon_path,
+    set_widget_background_color,
+    scan_widgets_parameters,
+    set_widgets_parameters,
+    set_named_style,
+)
 from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, SimulationError, TEMPLATE_PATH
 from ..api_calls.threedi_calls import ThreediCalls
 
@@ -850,7 +856,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         }
         if self.breaches_layer is not None:
             self.parent_page.parent_wizard.parent_dock.iface.setActiveLayer(self.breaches_layer)
-            self.breaches_layer.selectByExpression(f"\"content_pk\"={breach_id}")
+            self.breaches_layer.selectByExpression(f'"content_pk"={breach_id}')
             self.parent_page.parent_wizard.parent_dock.iface.actionZoomToSelected().trigger()
 
     def simulation_changed(self):
