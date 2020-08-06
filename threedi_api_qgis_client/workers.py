@@ -151,9 +151,11 @@ class WSProgressesSentinel(QObject):
 
     def start_listening(self):
         """Start listening of active simulations websocket."""
-        token = self.tc.api_client.configuration.access_token
+        identifier = "Bearer"
+        api_key = self.tc.api_client.configuration.api_key["Authorization"]
+        token_with_prefix = f"{identifier} {api_key}"
         ws_request = QtNetwork.QNetworkRequest(QUrl(f"{self.WSS_HOST}/active-simulations/"))
-        ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(f"Bearer {token}"))
+        ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(token_with_prefix))
         self.ws_client.open(ws_request)
 
     def stop_listening(self):

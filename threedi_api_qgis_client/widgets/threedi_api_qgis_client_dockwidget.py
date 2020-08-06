@@ -31,6 +31,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.api_client = None
         self.threedi_models = None
         self.current_model = None
+        self.current_model_cells = None
+        self.current_model_breaches = None
         self.organisation = None
         self.log_in_dlg = None
         self.simulation_overview_dlg = None
@@ -39,7 +41,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.widget_authorized.hide()
         self.btn_start.clicked.connect(self.log_in)
         self.btn_log_out.clicked.connect(self.log_out)
-        self.btn_change_repo.clicked.connect(self.change_repository)
+        self.btn_change_repo.clicked.connect(self.change_model)
         self.btn_simulate.clicked.connect(self.show_simulation_overview)
         self.btn_results.clicked.connect(self.show_simulation_results)
         self.btn_clear_log.clicked.connect(self.clear_log)
@@ -62,6 +64,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.api_client = self.log_in_dlg.api_client
         self.threedi_models = self.log_in_dlg.threedi_models
         self.current_model = self.log_in_dlg.current_model
+        self.current_model_cells = self.log_in_dlg.current_model_cells
+        self.current_model_breaches = self.log_in_dlg.current_model_breaches
         if self.current_model is None:
             return
         self.widget_unauthorized.hide()
@@ -89,19 +93,23 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.log_in_dlg = None
         self.api_client = None
         self.current_model = None
+        self.current_model_cells = None
+        self.current_model_breaches = None
         self.widget_unauthorized.show()
         self.widget_authorized.hide()
         self.btn_simulate.setDisabled(True)
         self.btn_results.setDisabled(True)
         self.btn_upload.setDisabled(True)
 
-    def change_repository(self):
-        """Changing current repository."""
+    def change_model(self):
+        """Changing current model."""
         if self.log_in_dlg is None:
             self.log_in()
         else:
             self.log_in_dlg.exec_()
             self.current_model = self.log_in_dlg.current_model
+            self.current_model_cells = self.log_in_dlg.current_model_cells
+            self.current_model_breaches = self.log_in_dlg.current_model_breaches
             self.label_repo.setText(self.current_model.repository_slug)
             revision = self.log_in_dlg.revisions[self.current_model.revision_hash]
             self.label_rev.setText(f"{revision.number}")

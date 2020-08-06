@@ -2,9 +2,14 @@
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
 import json
+import hashlib
+import requests
 from collections import OrderedDict
 
-TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates.json")
+PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))
+CACHE_PATH = os.path.join(PLUGIN_PATH, "_cached_data")
+TEMPLATE_PATH = os.path.join(CACHE_PATH, "templates.json")
+CHUNK_SIZE = 1024 ** 2
 
 
 def mmh_to_ms(mmh_value):
@@ -60,6 +65,26 @@ def load_saved_templates():
         for name, parameters in sorted(data.items()):
             items[name] = parameters
     return items
+
+
+def get_download_file(download, file_path):
+    r = requests.get(download.get_url, stream=True, timeout=15)
+    with open(file_path, "wb") as f:
+        for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
+            if chunk:
+                f.write(chunk)
+
+
+def file_cached(file_path):
+    return os.path.isfile(file_path)
+
+
+def check_download_checksum(download, filename):
+    file_path = os.path.join(PLUGIN_PATH, filename)
+    with open(file_path, "rb") as file_to_check:
+        data = file_to_check.read()
+        md5_returned = hashlib.md5(data).hexdigest()
+        return download.etag == md5_returned
 
 
 class SimulationError(Exception):

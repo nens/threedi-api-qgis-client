@@ -180,6 +180,18 @@ class ThreediCalls:
             downloads.append((result_file, download))
         return downloads
 
+    def fetch_geojson_cells_download(self, threedimodel_id: int) -> Download:
+        """Fetch model geojson cells Download object."""
+        api = ThreedimodelsApi(self.api_client)
+        cells_download = api.threedimodels_geojson_cells_download(threedimodel_id)
+        return cells_download
+
+    def fetch_geojson_breaches_download(self, threedimodel_id: int) -> Download:
+        """Fetch model geojson breaches Download object."""
+        api = ThreedimodelsApi(self.api_client)
+        breaches_download = api.threedimodels_geojson_breaches_download(threedimodel_id)
+        return breaches_download
+
     def fetch_gridadmin_download(self, threedimodel_id: int) -> Tuple[ResultFile, Download]:
         """Fetch simulation model gridadmin file."""
         api = ThreedimodelsApi(self.api_client)
@@ -196,6 +208,16 @@ class ThreediCalls:
             response = api.threedimodels_potentialbreaches_list(threedimodel_id, limit=response_count)
         breaches = response.results
         return breaches
+
+    def fetch_single_potential_breach(self, threedimodel_id: str, content_pk: int = None) -> PotentialBreach:
+        """Fetch a single potential breach."""
+        api = ThreedimodelsApi(self.api_client)
+        params = {"threedimodel_pk": threedimodel_id}
+        if content_pk is not None:
+            params["connected_pnt_id"] = content_pk
+        response = api.threedimodels_potentialbreaches_list(**params)
+        breach = response.results[0]
+        return breach
 
     def fetch_initial_waterlevels(self, threedimodel_id: str) -> List[InitialWaterlevel]:
         """Fetch initial waterlevels List"""

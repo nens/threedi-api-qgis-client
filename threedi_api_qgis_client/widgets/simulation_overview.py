@@ -92,12 +92,14 @@ class SimulationOverview(uicls, basecls):
                 self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
 
     def new_wizard_init(self):
+        """Open new simulation initiation options dialog."""
         self.simulation_init_wizard = SimulationInit(self)
         self.simulation_init_wizard.exec_()
         if self.simulation_init_wizard.open_wizard:
             self.new_simulation()
 
     def new_wizard_from_template(self):
+        """Start new simulation wizard from template."""
         template_items = load_saved_templates()
         items_keys = list(template_items.keys())
         template = self.parent_dock.communication.pick_item("Load template", "Pick template to load", None, *items_keys)
@@ -113,6 +115,7 @@ class SimulationOverview(uicls, basecls):
         self.simulation_wizard = SimulationWizard(self.parent_dock, self.simulation_init_wizard)
         if simulation_template:
             self.simulation_wizard.load_template_parameters(simulation_template)
+        self.close()
         self.simulation_wizard.exec_()
         new_simulations = self.simulation_wizard.new_simulations
         if new_simulations is not None:
