@@ -15,7 +15,7 @@ from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
 from qgis.core import QgsVectorLayer, QgsProject
 from openapi_client import ApiException
-from ..ui_utils import icon_path, set_widget_background_color, scan_widgets_parameters, set_widgets_parameters
+from ..ui_utils import icon_path, set_widget_background_color, scan_widgets_parameters, set_widgets_parameters, set_named_style
 from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, SimulationError, TEMPLATE_PATH
 from ..api_calls.threedi_calls import ThreediCalls
 
@@ -157,6 +157,8 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.svg_lout.addWidget(self.svg_widget)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
+        self.new_simulations = None
+        self.new_simulation_statuses = None
         self.rasters = {}
         self.saved_states = {}
         self.d1_widget.hide()
@@ -168,7 +170,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.dd_1d.currentIndexChanged.connect(self.dropdown_d1_changed)
         self.dd_2d.currentIndexChanged.connect(self.dropdown_d2_changed)
         self.dd_groundwater.currentIndexChanged.connect(self.dropdown_groundwater_changed)
-        self._fill_checkboxes()
+        self.setup_initial_conditions()
         if load_conditions:
             self.load_conditions_widget.show()
             self.default_init_widget.hide()
@@ -176,7 +178,8 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.load_conditions_widget.hide()
             self.default_init_widget.show()
 
-    def _fill_checkboxes(self):
+    def setup_initial_conditions(self):
+        """Setup initial conditions widget."""
         try:
             self.dd_2d.addItem("")
             self.dd_groundwater.addItem("")
@@ -207,6 +210,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.dd_1d.addItems(["Predefined", "Global value"])
 
     def dropdown_d1_changed(self):
+        """Handling dropdown menus selection changes."""
         if self.dd_1d.currentText() == "Global value":
             self.sp_1d_global_value.setEnabled(True)
             self.sp_1d_global_value.show()
@@ -217,6 +221,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.label_1d_gv.hide()
 
     def dropdown_d2_changed(self):
+        """Handling dropdown menus selection changes."""
         if self.dd_2d.currentIndex() <= 0:
             self.sp_2d_global_value.setEnabled(True)
             self.sp_2d_global_value.show()
@@ -227,6 +232,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.label_2d_gv.hide()
 
     def dropdown_groundwater_changed(self):
+        """Handling dropdown menus selection changes."""
         if self.dd_groundwater.currentIndex() <= 0:
             self.sp_gwater_global_value.setEnabled(True)
             self.sp_gwater_global_value.show()
@@ -237,18 +243,21 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.label_gw_gv.hide()
 
     def d1_change_state(self, value):
+        """Handling checkbox state changes."""
         if value == 0:
             self.d1_widget.hide()
         if value == 2:
             self.d1_widget.show()
 
     def d2_change_state(self, value):
+        """Handling checkbox state changes."""
         if value == 0:
             self.d2_widget.hide()
         if value == 2:
             self.d2_widget.show()
 
     def groundwater_change_state(self, value):
+        """Handling checkbox state changes."""
         if value == 0:
             self.groundwater_widget.hide()
         if value == 2:
@@ -268,14 +277,16 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         set_widget_background_color(self)
         self.laterals_timeseries = {}
         self.last_uploaded_laterals = None
-        self._init_widget()
-        self._connect_signals()
+        self.setup_laterals()
+        self.connect_signals()
 
-    def _init_widget(self):
+    def setup_laterals(self):
+        """Setup laterals widget."""
         self.overrule_widget.setVisible(False)
         self.cb_type.addItems(["1D", "2D"])
 
-    def _connect_signals(self):
+    def connect_signals(self):
+        """Connect signals."""
         self.cb_overrule.stateChanged.connect(self.overrule_value_changed)
         self.pb_upload.clicked.connect(self.load_csv)
         self.pb_use_csv.clicked.connect(self.overrule_with_csv)
@@ -283,16 +294,19 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.cb_laterals.currentIndexChanged.connect(self.laterals_change)
 
     def laterals_change(self):
+        """Handle dropdown menus selection changes."""
         lat_id = self.cb_laterals.currentText()
         self.il_location.setText(lat_id)
 
     def save_laterals(self):
+        """Save laterals time series."""
         lat = self.laterals_timeseries.get(self.cb_laterals.currentText())
         lat.values[0] = [float(f) for f in self.il_location.text().split(",")]
         lat.values[1] = [float(f) for f in self.il_discharge.text().split(",")]
         lat.offset(self.sb_offset.value())
 
     def selection_changed(self, index):
+        """Handle dropdown menus selection changes."""
         if index == 0:
             self.laterals_layout.setText("Upload laterals for 1D:")
         if index == 1:
@@ -303,6 +317,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.cb_overrule.setChecked(False)
 
     def load_csv(self):
+        """"Load laterals from CSV file."""
         values, filename = self.open_upload_dialog()
         if not filename:
             return
@@ -312,6 +327,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.cb_laterals.addItem(lat)
 
     def overrule_with_csv(self):
+        """Overrule laterals with values from CSV file."""
         values, filename = self.open_upload_dialog()
         if not filename:
             return
@@ -321,15 +337,18 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             return
 
     def overrule_value_changed(self, value):
+        """Handling checkbox state changes."""
         if value == 0:
             self.overrule_widget.setVisible(False)
         if value == 2:
             self.overrule_widget.setVisible(True)
 
     def get_laterals_data(self):
+        """Get laterals data."""
         return self.laterals_timeseries
 
     def open_upload_dialog(self):
+        """Open dialog for selecting CSV file with laterals."""
         last_folder = QSettings().value("threedi/last_laterals_folder", os.path.expanduser("~"), type=str)
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Laterals Time Series", last_folder, file_filter)
@@ -435,6 +454,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
 
     def write_values_into_dict(self):
+        """Store current widget values."""
         simulation = self.dd_simulation.currentText()
         precipitation_type = self.cbo_prec_type.currentText()
         if precipitation_type == "Constant":
@@ -477,6 +497,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             }
 
     def simulation_changed(self):
+        """Handling simulation change."""
         simulation = self.dd_simulation.currentText()
         vals = self.values.get(simulation)
         if not vals:
@@ -788,6 +809,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.values = dict()
+        self.breaches_layer = None
         self.dd_breach_id.currentIndexChanged.connect(self.write_values_into_dict)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
         self.dd_units.currentIndexChanged.connect(self.write_values_into_dict)
@@ -801,17 +823,20 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.setup_breaches()
 
     def setup_breaches(self):
+        """Setup breaches data with corresponding vector layer."""
         cached_breaches = self.parent_page.parent_wizard.parent_dock.current_model_breaches
         if cached_breaches is not None:
-            breaches_lyr = QgsVectorLayer(cached_breaches, "breaches", "ogr")
-            QgsProject.instance().addMapLayer(breaches_lyr, False)
-            QgsProject.instance().layerTreeRoot().insertLayer(0, breaches_lyr)
-            breaches_ids = [str(feat["content_pk"]) for feat in breaches_lyr.getFeatures()]
+            self.breaches_layer = QgsVectorLayer(cached_breaches, "breaches", "ogr")
+            set_named_style(self.breaches_layer, "breaches.qml")
+            QgsProject.instance().addMapLayer(self.breaches_layer, False)
+            QgsProject.instance().layerTreeRoot().insertLayer(0, self.breaches_layer)
+            breaches_ids = [str(feat["content_pk"]) for feat in self.breaches_layer.getFeatures()]
             breaches_ids.sort(key=lambda i: int(i))
             self.dd_breach_id.addItems(breaches_ids)
         self.write_values_into_dict()
 
     def write_values_into_dict(self):
+        """Store current widget values."""
         simulation = self.dd_simulation.currentText()
         breach_id = self.dd_breach_id.currentText()
         duration = self.sb_duration.value()
@@ -823,8 +848,13 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             "duration": duration,
             "units": units,
         }
+        if self.breaches_layer is not None:
+            self.parent_page.parent_wizard.parent_dock.iface.setActiveLayer(self.breaches_layer)
+            self.breaches_layer.selectByExpression(f"\"content_pk\"={breach_id}")
+            self.parent_page.parent_wizard.parent_dock.iface.actionZoomToSelected().trigger()
 
     def simulation_changed(self):
+        """Handle simulation change."""
         vals = self.values.get(self.dd_simulation.currentText())
         if vals:
             self.dd_breach_id.setCurrentIndex(self.dd_breach_id.findText(vals.get("breach_id")))
@@ -838,6 +868,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             self.dd_units.setCurrentIndex(0)
 
     def get_breaches_data(self, simulation):
+        """Get breaches data from values dictionary."""
         data = self.values.get(simulation)
         if data:
             breach_data = (
@@ -880,6 +911,7 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         self.dd_simulation.addItems(initial_conditions.simulations_list)
 
     def simulation_change(self):
+        """Handle simulation change."""
         if (
             self.initial_conditions.simulations_difference == "precipitation"
             and self.initial_conditions.include_precipitations
@@ -922,6 +954,7 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         self.plot_widget.setYRange(first_tick_value, max(height))
 
     def save_template_state_changed(self, value):
+        """Handle template checkbox state change."""
         if value == 0:
             self.template_widget.hide()
         if value == 2:
@@ -1060,6 +1093,8 @@ class SimulationWizard(QWizard):
         self.setButtonText(QWizard.FinishButton, "Add to queue")
         self.finish_btn = self.button(QWizard.FinishButton)
         self.finish_btn.clicked.connect(self.run_new_simulation)
+        self.cancel_btn = self.button(QWizard.CancelButton)
+        self.cancel_btn.clicked.connect(self.cancel_wizard)
         self.new_simulations = None
         self.new_simulation_statuses = None
         self.setWindowTitle("New simulation")
@@ -1120,6 +1155,7 @@ class SimulationWizard(QWizard):
             self.summary_page.main_widget.duration_breach.setText(str(duration_of_breach))
 
     def save_simulation_as_template(self):
+        """Saving simulation parameters to the JSON template file."""
         simulation_template = OrderedDict()
         template_name = self.summary_page.main_widget.template_name.text()
         simulation_template["options"] = scan_widgets_parameters(self.init_conditions_dlg)
@@ -1153,6 +1189,7 @@ class SimulationWizard(QWizard):
             json_file.truncate()
 
     def load_template_parameters(self, simulation_template):
+        """Loading simulation parameters from the JSON template file."""
         set_widgets_parameters(self.name_page.main_widget, **simulation_template["name_page"])
         set_widgets_parameters(self.duration_page.main_widget, **simulation_template["duration_page"])
         if hasattr(self, "init_conditions_page"):
@@ -1307,3 +1344,17 @@ class SimulationWizard(QWizard):
             self.new_simulation_statuses = None
             error_msg = f"Error: {e}"
             self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+        finally:
+            self.remove_layers()
+
+    def remove_layers(self):
+        """Removing model related vector layers from map canvas."""
+        if self.breaches_page.main_widget.breaches_layer is not None:
+            QgsProject.instance().removeMapLayer(self.breaches_page.main_widget.breaches_layer)
+            self.breaches_page.main_widget.breaches_layer = None
+            self.parent_dock.iface.mapCanvas().refresh()
+
+    def cancel_wizard(self):
+        """Handling canceling wizard action."""
+        self.remove_layers()
+        self.reject()

@@ -31,14 +31,16 @@ class SimulationInit(uicls, basecls):
         self.cb_precipitation.stateChanged.connect(self.toggle_precipitation)
         self.pb_next.clicked.connect(self.start_wizard)
         self.pb_cancel.clicked.connect(self.close)
-        self.fill_comboboxes()
+        self.setup_initial_options()
 
-    def fill_comboboxes(self):
+    def setup_initial_options(self):
+        """Setup initial options dialog."""
         self.dd_cost_type.addItems(self.COST_TYPES)
         self.dd_flood_month.addItems(self.MONTHS)
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
 
     def toggle_breaches(self):
+        """Handle breaches checkboxes state changes."""
         if self.cb_breaches.isChecked():
             self.dd_simulation_difference.addItem("breaches")
             self.cb_multiple_simulations.setEnabled(True)
@@ -50,6 +52,7 @@ class SimulationInit(uicls, basecls):
                 self.cb_multiple_simulations.setDisabled(True)
 
     def toggle_precipitation(self):
+        """Handle precipitation checkboxes state changes."""
         if self.cb_precipitation.isChecked():
             self.dd_simulation_difference.addItem("precipitation")
             self.cb_multiple_simulations.setEnabled(True)
@@ -61,18 +64,21 @@ class SimulationInit(uicls, basecls):
                 self.cb_multiple_simulations.setDisabled(True)
 
     def multiple_simulations_changed(self, i):
+        """Handle multiple simulations checkboxes state changes."""
         if i:
             self.multiple_simulations_widget.show()
         else:
             self.multiple_simulations_widget.hide()
 
     def load_saved_state_changed(self, i):
+        """Handle saved states checkboxes state changes."""
         if i:
             self.load_state_widget.show()
         else:
             self.load_state_widget.hide()
 
     def postprocessing_state_changed(self, i):
+        """Handle postprocessing checkboxes state changes."""
         if i:
             self.postprocessing_widget.show()
             self.cb_basec_results.setChecked(True)
@@ -81,12 +87,14 @@ class SimulationInit(uicls, basecls):
             self.cb_basec_results.setChecked(False)
 
     def damage_estimation_changed(self, i):
+        """Handle damage estimation checkboxes state changes."""
         if i:
             self.damage_estimation_widget.show()
         else:
             self.damage_estimation_widget.hide()
 
     def start_wizard(self):
+        """Start new simulation wizard based on selected options."""
         self.initial_conditions = SimulationInitObject()
         self.initial_conditions.include_boundary_conditions = self.cb_boundary.isChecked()
         self.initial_conditions.include_initial_conditions = self.cb_conditions.isChecked()

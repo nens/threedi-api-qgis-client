@@ -6,6 +6,18 @@ from qgis.PyQt.QtCore import QDate, QTime
 from qgis.PyQt.QtWidgets import QLineEdit, QDateEdit, QTimeEdit, QCheckBox, QDoubleSpinBox, QSpinBox, QComboBox, QWidget
 
 
+def style_path(qml_filename):
+    """Setting up path to the QML style with given filename."""
+    path = os.path.join(os.path.dirname(__file__), "styles", qml_filename)
+    return path
+
+
+def set_named_style(layer, qml_filename):
+    """Set QML style to the vector layer."""
+    qml_path = style_path(qml_filename)
+    layer.loadNamedStyle(qml_path)
+
+
 def icon_path(icon_filename):
     """Setting up path to the icon with given filename."""
     path = os.path.join(os.path.dirname(__file__), "icons", icon_filename)
@@ -27,6 +39,7 @@ def set_widget_background_color(widget, hex_color="#F0F0F0"):
 
 
 def scan_widgets_parameters(main_widget):
+    """Scan widget children and get their values."""
     parameters = {}
     for widget in main_widget.children():
         obj_name = widget.objectName()
@@ -48,6 +61,7 @@ def scan_widgets_parameters(main_widget):
 
 
 def set_widgets_parameters(main_widget, **widget_parameters):
+    """Set widget children values based on derived parameters."""
     for name, value in widget_parameters.items():
         widget = getattr(main_widget, name, None)
         if widget is None:
