@@ -74,7 +74,7 @@ BAD_SIM_DATA = {
     "duration": 72000,
 }
 
-ACTION_DATA = {"duration": None, "name": "start", "rate_limit": None, "timeout": None}
+ACTION_DATA = {"duration": None, "name": "start", "timeout": None}
 
 PROGRESS_DATA = {"percentage": 25, "time": 18000}
 
