@@ -39,6 +39,7 @@ from openapi_client import (
     ThreediModelSavedState,
     InitialSavedState,
     PotentialBreach,
+    LizardRasterRain,
 )
 
 
@@ -277,6 +278,12 @@ class ThreediCalls:
         time_series_rain = api.simulations_events_rain_timeseries_create((str(simulation_pk)), rain_data)
         return time_series_rain
 
+    def add_radar_precipitation(self, simulation_pk: int, **rain_data) -> LizardRasterRain:
+        """Add LizardRasterRain to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        time_series_rain = api.simulations_events_rain_rasters_lizard_create((str(simulation_pk)), rain_data)
+        return time_series_rain
+
     def add_breaches(self, simulation_pk: int, **data) -> Breach:
         """Add Breach to the given simulation."""
         api = SimulationsApi(self.api_client)
@@ -284,7 +291,7 @@ class ThreediCalls:
         return breach
 
     def add_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
-        """Add lateral_timeseries to the given simulation."""
+        """Add lateral timeseries to the given simulation."""
         api = SimulationsApi(self.api_client)
         lateral_timeseries = api.simulations_events_lateral_timeseries_create((str(simulation_pk)), data)
         return lateral_timeseries

@@ -41,6 +41,7 @@ uicls_summary_page, basecls_summary_page = uic.loadUiType(os.path.join(base_dir,
 CONSTANT_RAIN = "Constant"
 CUSTOM_RAIN = "Custom"
 DESIGN_RAIN = "Design"
+RADAR_RAIN = "Radar - NL Only"
 AREA_WIDE_RAIN = {
     "0": [0.0],
     "1": [0.0],
@@ -80,6 +81,8 @@ RAIN_LOOKUP = {
     "15": ("250.00", "c"),
     "16": ("1000.00", "c"),
 }
+
+RADAR_ID = "d6c2347d-7bd1-4d9d-a1f6-b342c865516f"
 
 
 class NameWidget(uicls_name_page, basecls_name_page):
@@ -434,6 +437,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.widget_constant.hide()
         self.widget_custom.hide()
         self.widget_design.hide()
+        self.widget_radar.hide()
         self.connect_signals()
         self.values = dict()
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "precipitation":
@@ -457,13 +461,17 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.cbo_design.currentIndexChanged.connect(self.set_design_time_series)
         self.start_after_design_u.currentIndexChanged.connect(self.sync_units)
         self.sp_start_after_design.valueChanged.connect(self.plot_precipitation)
+        self.start_after_radar_u.currentIndexChanged.connect(self.sync_units)
+        self.stop_after_radar_u.currentIndexChanged.connect(self.sync_units)
+        self.sp_start_after_radar.valueChanged.connect(self.plot_precipitation)
+        self.sp_stop_after_radar.valueChanged.connect(self.plot_precipitation)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
 
     def write_values_into_dict(self):
         """Store current widget values."""
         simulation = self.dd_simulation.currentText()
         precipitation_type = self.cbo_prec_type.currentText()
-        if precipitation_type == "Constant":
+        if precipitation_type == CONSTANT_RAIN:
             start_after = self.sp_start_after_constant.value()
             start_after_units = self.start_after_constant_u.currentText()
             stop_after = self.sp_stop_after_constant.value()
@@ -477,7 +485,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "stop_after_units": stop_after_units,
                 "intensity": intensity,
             }
-        elif precipitation_type == "Custom":
+        elif precipitation_type == CUSTOM_RAIN:
             start_after = self.sp_start_after_custom.value()
             start_after_units = self.start_after_custom_u.currentText()
             units = self.cbo_units.currentText()
@@ -489,7 +497,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "units": units,
                 "time_series": time_series,
             }
-        elif precipitation_type == "Design":
+        elif precipitation_type == DESIGN_RAIN:
             start_after = self.sp_start_after_design.value()
             start_after_units = self.start_after_design_u.currentText()
             design_number = self.cbo_design.currentText()
@@ -501,6 +509,18 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "design_number": design_number,
                 "time_series": design_time_series,
             }
+        elif precipitation_type == RADAR_RAIN:
+            start_after = self.sp_start_after_radar.value()
+            start_after_units = self.start_after_radar_u.currentText()
+            stop_after = self.sp_stop_after_radar.value()
+            stop_after_units = self.stop_after_radar_u.currentText()
+            self.values[simulation] = {
+                "precipitation_type": precipitation_type,
+                "start_after": start_after,
+                "start_after_units": start_after_units,
+                "stop_after": stop_after,
+                "stop_after_units": stop_after_units,
+            }
 
     def simulation_changed(self):
         """Handling simulation change."""
@@ -511,7 +531,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.cbo_design.setCurrentIndex(0)
             self.plot_precipitation()
             return
-        if vals.get("precipitation_type") == "Constant":
+        if vals.get("precipitation_type") == CONSTANT_RAIN:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_constant.setValue(vals.get("start_after"))
             self.start_after_constant_u.setCurrentIndex(
@@ -522,19 +542,25 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 self.stop_after_constant_u.findText(vals.get("stop_after_units"))
             )
             self.sp_intensity.setValue(vals.get("intensity"))
-        elif vals.get("precipitation_type") == "Custom":
+        elif vals.get("precipitation_type") == CUSTOM_RAIN:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_custom.setValue(vals.get("start_after"))
             self.start_after_custom_u.setCurrentIndex(self.start_after_custom_u.findText(vals.get("start_after_units")))
             self.cbo_units.setCurrentIndex(self.cbo_units.findText(vals.get("units")))
             self.custom_time_series[simulation] = vals.get("time_series", [])
-        elif vals.get("precipitation_type") == "Design":
+        elif vals.get("precipitation_type") == DESIGN_RAIN:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_design.setValue(vals.get("start_after"))
             self.start_after_design_u.setCurrentIndex(self.start_after_design_u.findText(vals.get("start_after_units")))
             design_number = vals.get("design_number")
             self.cbo_design.setCurrentIndex(self.cbo_design.findText(design_number))
             self.design_time_series[simulation] = vals.get("time_series", [])
+        elif vals.get("precipitation_type") == RADAR_RAIN:
+            self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
+            self.sp_start_after_radar.setValue(vals.get("start_after"))
+            self.start_after_radar_u.setCurrentIndex(self.start_after_radar_u.findText(vals.get("start_after_units")))
+            self.sp_stop_after_radar.setValue(vals.get("stop_after"))
+            self.stop_after_radar_u.setCurrentIndex(self.stop_after_radar_u.findText(vals.get("stop_after_units")))
 
     def precipitation_changed(self, idx):
         """Changing widgets looks based on currently selected precipitation type."""
@@ -542,18 +568,27 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.widget_constant.show()
             self.widget_custom.hide()
             self.widget_design.hide()
+            self.widget_radar.hide()
         elif idx == 2:
             self.widget_constant.hide()
             self.widget_custom.show()
             self.widget_design.hide()
+            self.widget_radar.hide()
         elif idx == 3:
             self.widget_constant.hide()
             self.widget_custom.hide()
             self.widget_design.show()
+            self.widget_radar.hide()
+        elif idx == 4:
+            self.widget_constant.hide()
+            self.widget_custom.hide()
+            self.widget_design.hide()
+            self.widget_radar.show()
         else:
             self.widget_constant.hide()
             self.widget_custom.hide()
             self.widget_design.hide()
+            self.widget_radar.hide()
         self.refresh_current_units()
         self.plot_precipitation()
 
@@ -570,6 +605,12 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.current_units = self.start_after_custom_u.currentText()
         elif current_text == DESIGN_RAIN:
             self.current_units = self.start_after_design_u.currentText()
+        elif current_text == RADAR_RAIN:
+            if self.start_after_radar_u.currentIndex != idx:
+                self.start_after_radar_u.setCurrentIndex(idx)
+            if self.stop_after_radar_u.currentIndex != idx:
+                self.stop_after_radar_u.setCurrentIndex(idx)
+            self.current_units = self.start_after_radar_u.currentText()
         self.plot_precipitation()
 
     def refresh_current_units(self):
@@ -581,6 +622,8 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.current_units = self.start_after_custom_u.currentText()
         elif current_text == DESIGN_RAIN:
             self.current_units = self.start_after_design_u.currentText()
+        elif current_text == RADAR_RAIN:
+            self.current_units = self.start_after_radar_u.currentText()
 
     def refresh_duration(self):
         """Refreshing precipitation duration in seconds."""
@@ -654,6 +697,8 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             start = self.sp_start_after_custom.value()
         elif current_text == DESIGN_RAIN:
             start = self.sp_start_after_design.value()
+        elif current_text == RADAR_RAIN:
+            start = self.sp_start_after_radar.value()
         else:
             return 0.0
         offset = start * to_seconds_multiplier
@@ -663,10 +708,14 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         """Calculating precipitation duration in seconds."""
         simulation = self.dd_simulation.currentText()
         current_text = self.cbo_prec_type.currentText()
-        if current_text == CONSTANT_RAIN:
+        if current_text == CONSTANT_RAIN or current_text == RADAR_RAIN:
             to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
-            start = self.sp_start_after_constant.value()
-            end = self.sp_stop_after_constant.value()
+            if current_text == CONSTANT_RAIN:
+                start = self.sp_start_after_constant.value()
+                end = self.sp_stop_after_constant.value()
+            else:
+                start = self.sp_start_after_radar.value()
+                end = self.sp_stop_after_radar.value()
             start_in_seconds = start * to_seconds_multiplier
             end_in_seconds = end * to_seconds_multiplier
             simulation_duration = (
@@ -718,7 +767,8 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         duration = self.get_precipitation_duration()
         units = "m/s"
         values = self.get_precipitation_values()
-        return precipitation_type, offset, duration, units, values
+        start, end = self.parent_page.parent_wizard.duration_page.main_widget.to_datetime()
+        return precipitation_type, offset, duration, units, values, start
 
     def constant_values(self):
         """Getting plot values for the Constant precipitation."""
@@ -757,9 +807,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         """Setting up precipitation plot."""
         self.refresh_duration()
         self.plot_widget.clear()
+        self.plot_label.show()
+        self.plot_widget.show()
         self.plot_bar_graph = None
         self.plot_ticks = None
-
         current_text = self.cbo_prec_type.currentText()
         if current_text == CONSTANT_RAIN:
             x_values, y_values = self.constant_values()
@@ -767,7 +818,13 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             x_values, y_values = self.custom_values()
         elif current_text == DESIGN_RAIN:
             x_values, y_values = self.design_values()
+        elif current_text == RADAR_RAIN:
+            x_values, y_values = [], []
+            self.plot_widget.hide()
+            self.plot_label.hide()
         else:
+            self.plot_widget.hide()
+            self.plot_label.hide()
             return
         self.write_values_into_dict()
         if len(x_values) < 2:
@@ -929,9 +986,12 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
             self.plot_overview_precipitation()
             if data:
                 ptype = data.get("precipitation_type")
-                total_prec = self.parent_page.parent_wizard.precipitation_page.main_widget.total_precipitation
+                if ptype != RADAR_RAIN:
+                    total_prec = str(self.parent_page.parent_wizard.precipitation_page.main_widget.total_precipitation)
+                else:
+                    total_prec = "N/A"
                 self.sim_prec_type.setText(ptype)
-                self.sim_prec_total.setText(str(total_prec))
+                self.sim_prec_total.setText(total_prec)
         elif self.initial_conditions.simulations_difference == "breaches" and self.initial_conditions.include_breaches:
             data = self.parent_page.parent_wizard.breaches_page.main_widget.values.get(self.dd_simulation.currentText())
             if data:
@@ -943,12 +1003,16 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
     def plot_overview_precipitation(self):
         """Setting up precipitation plot."""
         self.plot_widget.clear()
+        self.plot_label.show()
+        self.plot_widget.show()
         current_sim_idx = self.dd_simulation.currentIndex()
         self.parent_page.parent_wizard.precipitation_page.main_widget.dd_simulation.setCurrentIndex(current_sim_idx)
         self.parent_page.parent_wizard.precipitation_page.main_widget.plot_precipitation()
         plot_bar_graph = self.parent_page.parent_wizard.precipitation_page.main_widget.plot_bar_graph
         plot_ticks = self.parent_page.parent_wizard.precipitation_page.main_widget.plot_ticks
         if plot_bar_graph is None:
+            self.plot_widget.hide()
+            self.plot_label.hide()
             return
         height = plot_bar_graph.opts["height"]
         new_bar_graph = pg.BarGraphItem(**plot_bar_graph.opts)
@@ -1150,7 +1214,11 @@ class SimulationWizard(QWizard):
             )
             total_precipitation = self.precipitation_page.main_widget.total_precipitation
             self.summary_page.main_widget.sim_prec_type.setText(precipitation_type)
-            self.summary_page.main_widget.sim_prec_total.setText(f"{total_precipitation:.0f} mm")
+            if precipitation_type != RADAR_RAIN:
+                total_precipitation_text = f"{total_precipitation:.0f} mm"
+            else:
+                total_precipitation_text = "N/A"
+            self.summary_page.main_widget.sim_prec_total.setText(total_precipitation_text)
 
     def set_overview_breaches(self):
         """Setting breaches information in the overview page."""
@@ -1248,7 +1316,7 @@ class SimulationWizard(QWizard):
             self.new_simulations = []
             self.new_simulation_statuses = {}
             simulation_difference = self.init_conditions.simulations_difference
-            ptype, poffset, pduration, punits, pvalues = (None,) * 5
+            ptype, poffset, pduration, punits, pvalues, pstart = (None,) * 6
             breach_id, width, d_duration = (None,) * 3
             for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
                 laterals = []
@@ -1256,7 +1324,7 @@ class SimulationWizard(QWizard):
                     self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                     prec_data = self.precipitation_page.main_widget.get_precipitation_data()
                     if simulation_difference == "precipitation" or i == 1:
-                        ptype, poffset, pduration, punits, pvalues = prec_data
+                        ptype, poffset, pduration, punits, pvalues, pstart = prec_data
                 if hasattr(self, "breaches_page"):
                     self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                     breach_data = self.breaches_page.main_widget.get_breaches_data()
@@ -1336,6 +1404,15 @@ class SimulationWizard(QWizard):
                 elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
                     tc.add_custom_precipitation(
                         sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset
+                    )
+                elif ptype == RADAR_RAIN:
+                    tc.add_radar_precipitation(
+                        sim_id,
+                        reference_uuid=RADAR_ID,
+                        units=punits,
+                        duration=pduration,
+                        offset=poffset,
+                        start_datetime=pstart,
                     )
                 tc.make_action_on_simulation(sim_id, name="queue")
                 self.new_simulations.append(new_simulation)
