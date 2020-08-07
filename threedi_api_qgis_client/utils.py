@@ -55,6 +55,7 @@ def mmh_to_mmtimestep(value, timestep, units="s"):
 
 
 def load_saved_templates():
+    """Loading parameters from saved template."""
     items = OrderedDict()
     with open(TEMPLATE_PATH, "a"):
         os.utime(TEMPLATE_PATH, None)
@@ -68,6 +69,7 @@ def load_saved_templates():
 
 
 def get_download_file(download, file_path):
+    """Getting file from Download object and writing it under given path."""
     r = requests.get(download.get_url, stream=True, timeout=15)
     with open(file_path, "wb") as f:
         for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
@@ -76,11 +78,13 @@ def get_download_file(download, file_path):
 
 
 def file_cached(file_path):
+    """Checking if file exists."""
     return os.path.isfile(file_path)
 
 
 def check_download_checksum(download, filename):
-    file_path = os.path.join(PLUGIN_PATH, filename)
+    """Checking if Download object MD5 checksum matches checksum calculated for a cached file."""
+    file_path = os.path.join(CACHE_PATH, filename)
     with open(file_path, "rb") as file_to_check:
         data = file_to_check.read()
         md5_returned = hashlib.md5(data).hexdigest()
@@ -88,4 +92,5 @@ def check_download_checksum(download, filename):
 
 
 class SimulationError(Exception):
+    """Custom exception that might occur during defining new simulation."""
     pass
