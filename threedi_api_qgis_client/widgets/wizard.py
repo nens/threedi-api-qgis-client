@@ -8,12 +8,12 @@ import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from collections import OrderedDict, defaultdict
+from qgis.core import QgsVectorLayer, QgsProject
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
-from qgis.core import QgsVectorLayer, QgsProject
 from openapi_client import ApiException
 from ..ui_utils import (
     icon_path,
@@ -22,7 +22,7 @@ from ..ui_utils import (
     set_widgets_parameters,
     set_named_style,
 )
-from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, SimulationError, TEMPLATE_PATH
+from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, TEMPLATE_PATH
 from ..api_calls.threedi_calls import ThreediCalls
 
 

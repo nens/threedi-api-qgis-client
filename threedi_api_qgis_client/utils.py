@@ -68,6 +68,11 @@ def load_saved_templates():
     return items
 
 
+def file_cached(file_path):
+    """Checking if file exists."""
+    return os.path.isfile(file_path)
+
+
 def get_download_file(download, file_path):
     """Getting file from Download object and writing it under given path."""
     r = requests.get(download.get_url, stream=True, timeout=15)
@@ -77,11 +82,6 @@ def get_download_file(download, file_path):
                 f.write(chunk)
 
 
-def file_cached(file_path):
-    """Checking if file exists."""
-    return os.path.isfile(file_path)
-
-
 def check_download_checksum(download, filename):
     """Checking if Download object MD5 checksum matches checksum calculated for a cached file."""
     file_path = os.path.join(CACHE_PATH, filename)
@@ -89,9 +89,3 @@ def check_download_checksum(download, filename):
         data = file_to_check.read()
         md5_returned = hashlib.md5(data).hexdigest()
         return download.etag == md5_returned
-
-
-class SimulationError(Exception):
-    """Custom exception that might occur during defining new simulation."""
-
-    pass
