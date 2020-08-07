@@ -873,17 +873,18 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             self.sb_width.setValue(10)
             self.dd_units.setCurrentIndex(0)
 
-    def get_breaches_data(self, simulation):
-        """Get breaches data from values dictionary."""
-        data = self.values.get(simulation)
-        if data:
-            breach_data = (
-                data.get("breach_id"),
-                data.get("width"),
-                int(data.get("duration")) * self.SECONDS_MULTIPLIERS[data.get("units")],
-            )
-        else:
-            breach_data = (None,) * 3
+    def get_breaches_data(self):
+        """Getting all needed data for adding breaches to the simulation."""
+        breach_id = self.dd_breach_id.currentText()
+        width = self.sb_width.value()
+        duration = self.sb_duration.value()
+        units = self.dd_units.currentText()
+        duration_in_units = duration * self.SECONDS_MULTIPLIERS[units]
+        breach_data = (
+            breach_id,
+            width,
+            duration_in_units,
+        )
         return breach_data
 
 
@@ -1246,18 +1247,21 @@ class SimulationWizard(QWizard):
         try:
             self.new_simulations = []
             self.new_simulation_statuses = {}
+            simulation_difference = self.init_conditions.simulations_difference
+            ptype, poffset, pduration, punits, pvalues = (None,) * 5
+            breach_id, width, d_duration = (None,) * 3
             for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
-                ptype, poffset, pduration, punits, pvalues = (None,) * 5
-                breach_id, width, d_duration = (None,) * 3
                 laterals = []
                 if hasattr(self, "precipitation_page"):
                     self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                     prec_data = self.precipitation_page.main_widget.get_precipitation_data()
-                    ptype, poffset, pduration, punits, pvalues = prec_data
+                    if simulation_difference == "precipitation" or i == 1:
+                        ptype, poffset, pduration, punits, pvalues = prec_data
                 if hasattr(self, "breaches_page"):
-                    breach_id, width, d_duration = self.breaches_page.main_widget.get_breaches_data(simulation)
-                    if breach_id is None:
-                        raise SimulationError("Breaches option used, but no breach selected")
+                    self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
+                    breach_data = self.breaches_page.main_widget.get_breaches_data()
+                    if simulation_difference == "breaches" or i == 1:
+                        breach_id, width, d_duration = breach_data
                 if hasattr(self, "laterals_page"):
                     laterals = self.laterals_page.main_widget.get_laterals_data()
 

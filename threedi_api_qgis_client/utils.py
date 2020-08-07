@@ -93,4 +93,5 @@ def check_download_checksum(download, filename):
 
 class SimulationError(Exception):
     """Custom exception that might occur during defining new simulation."""
+
     pass
