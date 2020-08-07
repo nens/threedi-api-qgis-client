@@ -1359,10 +1359,13 @@ class SimulationWizard(QWizard):
 
     def remove_layers(self):
         """Removing model related vector layers from map canvas."""
-        if self.breaches_page.main_widget.breaches_layer is not None:
-            QgsProject.instance().removeMapLayer(self.breaches_page.main_widget.breaches_layer)
-            self.breaches_page.main_widget.breaches_layer = None
-            self.parent_dock.iface.mapCanvas().refresh()
+        try:
+            if self.breaches_page.main_widget.breaches_layer is not None:
+                QgsProject.instance().removeMapLayer(self.breaches_page.main_widget.breaches_layer)
+                self.breaches_page.main_widget.breaches_layer = None
+                self.parent_dock.iface.mapCanvas().refresh()
+        except AttributeError:
+            pass
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""
