@@ -33,6 +33,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.current_model = None
         self.current_model_cells = None
         self.current_model_breaches = None
+        self.cells_layer = None
+        self.breaches_layer = None
         self.organisation = None
         self.log_in_dlg = None
         self.simulation_overview_dlg = None
@@ -66,6 +68,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.current_model = self.log_in_dlg.current_model
         self.current_model_cells = self.log_in_dlg.current_model_cells
         self.current_model_breaches = self.log_in_dlg.current_model_breaches
+        self.cells_layer = self.log_in_dlg.cells_layer
+        self.breaches_layer = self.log_in_dlg.breaches_layer
         if self.current_model is None:
             return
         self.widget_unauthorized.hide()
@@ -90,6 +94,10 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulation_results_dlg is not None:
             self.simulation_results_dlg.terminate_download_thread()
             self.simulation_results_dlg = None
+        if self.log_in_dlg:
+            self.breaches_layer = None
+            self.cells_layer = None
+            self.log_in_dlg.unload_cached_layers()
         self.log_in_dlg = None
         self.api_client = None
         self.current_model = None
@@ -110,6 +118,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.current_model = self.log_in_dlg.current_model
             self.current_model_cells = self.log_in_dlg.current_model_cells
             self.current_model_breaches = self.log_in_dlg.current_model_breaches
+            self.cells_layer = self.log_in_dlg.cells_layer
+            self.breaches_layer = self.log_in_dlg.breaches_layer
             self.label_repo.setText(self.current_model.repository_slug)
             revision = self.log_in_dlg.revisions[self.current_model.revision_hash]
             self.label_rev.setText(f"{revision.number}")
