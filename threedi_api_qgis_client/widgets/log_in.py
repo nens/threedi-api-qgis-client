@@ -6,8 +6,10 @@ from time import sleep
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QDateTime
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from qgis.core import QgsVectorLayer, QgsProject, QgsMapLayer
 from openapi_client import ApiException
 from ..utils import get_download_file, file_cached, CACHE_PATH
+from ..ui_utils import set_named_style
 from ..api_calls.threedi_calls import get_api_client, ThreediCalls
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -33,8 +35,10 @@ class LogInDialog(uicls_log, basecls_log):
         self.revisions = None
         self.threedi_models = None
         self.current_model = None
-        self.current_model_breaches = None
         self.current_model_cells = None
+        self.current_model_breaches = None
+        self.cells_layer = None
+        self.breaches_layer = None
         self.tv_model = QStandardItemModel()
         self.models_tv.setModel(self.tv_model)
         self.log_in_widget.hide()
@@ -141,7 +145,7 @@ class LogInDialog(uicls_log, basecls_log):
         self.page_sbox.setMaximum(pages_nr)
         self.page_sbox.setSuffix(f" / {pages_nr}")
         self.tv_model.clear()
-        header = ["Model", "Repository", "Revision", "Last updated"]
+        header = ["Model", "Repository", "Revision", "Last updated", "Updated by"]
         self.tv_model.setHorizontalHeaderLabels(header)
         for sim_model in threedi_models:
             name_item = QStandardItem(sim_model.name)
@@ -151,7 +155,8 @@ class LogInDialog(uicls_log, basecls_log):
             last_updated_day = sim_model.revision_commit_date.split("T")[0]
             lu_datetime = QDateTime.fromString(last_updated_day, "yyyy-MM-dd")
             lu_item = QStandardItem(lu_datetime.toString("dd-MMMM-yyyy"))
-            self.tv_model.appendRow([name_item, repo_item, rev_item, lu_item])
+            ub_item = QStandardItem(sim_model.user)
+            self.tv_model.appendRow([name_item, repo_item, rev_item, lu_item, ub_item])
         for i in range(len(header)):
             self.models_tv.resizeColumnToContents(i)
         self.threedi_models = threedi_models
@@ -163,15 +168,48 @@ class LogInDialog(uicls_log, basecls_log):
         self.page_sbox.valueChanged.connect(self.fetch_3di_models)
         self.fetch_3di_models()
 
+    def load_cached_layers(self):
+        """Loading cached layers into the map canvas."""
+        if self.current_model_cells is not None:
+            self.cells_layer = QgsVectorLayer(self.current_model_cells, "cells", "ogr")
+            set_named_style(self.cells_layer, "cells.qml")
+            QgsProject.instance().addMapLayer(self.cells_layer, False)
+            QgsProject.instance().layerTreeRoot().insertLayer(0, self.cells_layer)
+            self.cells_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
+        if self.current_model_breaches is not None:
+            self.breaches_layer = QgsVectorLayer(self.current_model_breaches, "breaches", "ogr")
+            set_named_style(self.breaches_layer, "breaches.qml")
+            QgsProject.instance().addMapLayer(self.breaches_layer, False)
+            QgsProject.instance().layerTreeRoot().insertLayer(0, self.breaches_layer)
+            self.breaches_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
+        if self.current_model_cells is not None:
+            self.parent_dock.iface.setActiveLayer(self.cells_layer)
+            self.parent_dock.iface.zoomToActiveLayer()
+
+    def unload_cached_layers(self):
+        """Removing model related vector layers from map canvas."""
+        try:
+            if self.breaches_layer is not None:
+                QgsProject.instance().removeMapLayer(self.breaches_layer)
+                self.breaches_layer = None
+            if self.cells_layer is not None:
+                QgsProject.instance().removeMapLayer(self.cells_layer)
+                self.cells_layer = None
+            self.parent_dock.iface.mapCanvas().refresh()
+        except AttributeError:
+            pass
+
     def load_model(self):
         """Loading selected model."""
         index = self.models_tv.currentIndex()
         if index.isValid():
+            self.unload_cached_layers()
             current_row = index.row()
             name_item = self.tv_model.item(current_row, 0)
             self.current_model = name_item.data(Qt.UserRole)
             self.current_model_cells = self.get_cached_data("cells")
             self.current_model_breaches = self.get_cached_data("breaches")
+            self.load_cached_layers()
         self.close()
 
     def get_cached_data(self, geojson_name):

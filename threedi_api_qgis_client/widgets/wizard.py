@@ -8,7 +8,6 @@ import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from collections import OrderedDict, defaultdict
-from qgis.core import QgsVectorLayer, QgsProject
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
@@ -20,7 +19,6 @@ from ..ui_utils import (
     set_widget_background_color,
     scan_widgets_parameters,
     set_widgets_parameters,
-    set_named_style,
 )
 from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, TEMPLATE_PATH
 from ..api_calls.threedi_calls import ThreediCalls
@@ -872,7 +870,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.values = dict()
-        self.breaches_layer = None
+        self.breaches_layer = parent_page.parent_wizard.parent_dock.breaches_layer
         self.dd_breach_id.currentIndexChanged.connect(self.write_values_into_dict)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
         self.dd_units.currentIndexChanged.connect(self.write_values_into_dict)
@@ -889,13 +887,15 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         """Setup breaches data with corresponding vector layer."""
         cached_breaches = self.parent_page.parent_wizard.parent_dock.current_model_breaches
         if cached_breaches is not None:
-            self.breaches_layer = QgsVectorLayer(cached_breaches, "breaches", "ogr")
-            set_named_style(self.breaches_layer, "breaches.qml")
-            QgsProject.instance().addMapLayer(self.breaches_layer, False)
-            QgsProject.instance().layerTreeRoot().insertLayer(0, self.breaches_layer)
+            if self.breaches_layer.selectedFeatureCount() > 0:
+                first_id = [str(feat["content_pk"]) for feat in self.breaches_layer.selectedFeatures()][0]
+            else:
+                first_id = None
             breaches_ids = [str(feat["content_pk"]) for feat in self.breaches_layer.getFeatures()]
             breaches_ids.sort(key=lambda i: int(i))
             self.dd_breach_id.addItems(breaches_ids)
+            if first_id is not None:
+                self.dd_breach_id.setCurrentText(first_id)
         self.write_values_into_dict()
 
     def write_values_into_dict(self):
@@ -1431,20 +1431,7 @@ class SimulationWizard(QWizard):
             self.new_simulation_statuses = None
             error_msg = f"Error: {e}"
             self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
-        finally:
-            self.remove_layers()
-
-    def remove_layers(self):
-        """Removing model related vector layers from map canvas."""
-        try:
-            if self.breaches_page.main_widget.breaches_layer is not None:
-                QgsProject.instance().removeMapLayer(self.breaches_page.main_widget.breaches_layer)
-                self.breaches_page.main_widget.breaches_layer = None
-                self.parent_dock.iface.mapCanvas().refresh()
-        except AttributeError:
-            pass
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""
-        self.remove_layers()
         self.reject()

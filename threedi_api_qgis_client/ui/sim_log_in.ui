@@ -89,7 +89,7 @@
         <property name="minimumSize">
          <size>
           <width>150</width>
-          <height>0</height>
+          <height>30</height>
          </size>
         </property>
         <property name="font">
@@ -130,7 +130,7 @@
         <property name="minimumSize">
          <size>
           <width>150</width>
-          <height>0</height>
+          <height>30</height>
          </size>
         </property>
         <property name="font">
@@ -149,7 +149,7 @@
         <property name="minimumSize">
          <size>
           <width>150</width>
-          <height>0</height>
+          <height>30</height>
          </size>
         </property>
         <property name="font">
@@ -307,6 +307,12 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>30</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
             <width>100</width>
@@ -339,8 +345,8 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>0</width>
-            <height>0</height>
+            <width>100</width>
+            <height>30</height>
            </size>
           </property>
           <property name="maximumSize">
@@ -590,7 +596,7 @@
         <property name="minimumSize">
          <size>
           <width>100</width>
-          <height>0</height>
+          <height>30</height>
          </size>
         </property>
         <property name="maximumSize">
@@ -617,7 +623,7 @@
         <property name="minimumSize">
          <size>
           <width>100</width>
-          <height>0</height>
+          <height>30</height>
          </size>
         </property>
         <property name="maximumSize">
@@ -795,6 +801,12 @@
      <layout class="QGridLayout" name="gridLayout_7">
       <item row="6" column="0">
        <widget class="QPushButton" name="pb_cancel_action">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>30</height>
+         </size>
+        </property>
         <property name="maximumSize">
          <size>
           <width>100</width>
@@ -868,6 +880,12 @@
       </item>
       <item row="6" column="1">
        <widget class="QPushButton" name="pb_next">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>30</height>
+         </size>
+        </property>
         <property name="maximumSize">
          <size>
           <width>100</width>
@@ -949,7 +967,7 @@
         <property name="minimumSize">
          <size>
           <width>100</width>
-          <height>0</height>
+          <height>30</height>
          </size>
         </property>
         <property name="maximumSize">
