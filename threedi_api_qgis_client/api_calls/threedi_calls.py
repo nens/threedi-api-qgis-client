@@ -2,7 +2,7 @@
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
 from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Callable, Any
 from threedi_api_client import ThreediApiClient
 from openapi_client import (
     ApiClient,
@@ -55,31 +55,35 @@ def get_api_client(api_username: str, api_password: str, api_host: str = "https:
 class ThreediCalls:
     """Class with methods used for the communication with the 3Di API."""
 
-    FETCH_LIMIT = 100
+    FETCH_LIMIT = 250
     EXPIRATION_TIME = datetime.now(timezone.utc) - timedelta(days=7)
 
     def __init__(self, api_client: ApiClient) -> None:
         self.api_client = api_client
 
+    def paginated_fetch(self, api_method: Callable, *args, **kwargs) -> List[Any]:
+        """Method for iterative fetching of the data via given API endpoint."""
+        limit = self.FETCH_LIMIT
+        response = api_method(*args, limit=limit, **kwargs)
+        response_count = response.count
+        results_list = response.results
+        if response_count > limit:
+            for offset in range(limit, response_count, limit):
+                response = api_method(*args, offset=offset, limit=limit, **kwargs)
+                results_list += response.results
+        return results_list
+
     def fetch_repositories(self) -> List[Repository]:
         """Fetch all repositories available for current user."""
         api = RepositoriesApi(self.api_client)
-        response = api.repositories_list(limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.repositories_list(limit=response_count)
-        repositories_list = response.results
+        repositories_list = self.paginated_fetch(api.repositories_list)
         return repositories_list
 
     def fetch_simulations(self) -> List[Simulation]:
         """Fetch all simulations available for current user."""
         api = SimulationsApi(self.api_client)
         created__date__gt = self.EXPIRATION_TIME.strftime("%Y-%m-%d")
-        response = api.simulations_list(created__date__gt=created__date__gt, limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.simulations_list(created__date__gt=created__date__gt, limit=response_count)
-        simulations_list = response.results
+        simulations_list = self.paginated_fetch(api.simulations_list, created__date__gt=created__date__gt)
         return simulations_list
 
     def fetch_single_simulation(self, simulation_pk: int) -> Simulation:
@@ -159,11 +163,7 @@ class ThreediCalls:
         """Fetch simulation results list."""
         api = SimulationsApi(self.api_client)
         spk_str = str(simulation_pk)
-        response = api.simulations_results_files_list(spk_str, limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.simulations_results_files_list(spk_str, limit=response_count)
-        results_list = response.results
+        results_list = self.paginated_fetch(api.simulations_results_files_list, spk_str)
         return results_list
 
     def fetch_simulation_downloads(self, simulation_pk: int) -> List[Tuple[ResultFile, Download]]:
@@ -171,11 +171,7 @@ class ThreediCalls:
         api = SimulationsApi(self.api_client)
         spk_str = str(simulation_pk)
         downloads = []
-        response = api.simulations_results_files_list(spk_str, limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.simulations_results_files_list(spk_str, limit=response_count)
-        results_list = response.results
+        results_list = self.paginated_fetch(api.simulations_results_files_list, spk_str)
         for result_file in results_list:
             download = api.simulations_results_files_download(result_file.id, spk_str)
             downloads.append((result_file, download))
@@ -203,11 +199,7 @@ class ThreediCalls:
     def fetch_potential_breaches(self, threedimodel_id: str) -> List[PotentialBreach]:
         """Fetch breaches list."""
         api = ThreedimodelsApi(self.api_client)
-        response = api.threedimodels_potentialbreaches_list(threedimodel_id, limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.threedimodels_potentialbreaches_list(threedimodel_id, limit=response_count)
-        breaches = response.results
+        breaches = self.paginated_fetch(api.threedimodels_potentialbreaches_list, threedimodel_id)
         return breaches
 
     def fetch_single_potential_breach(self, threedimodel_id: str, content_pk: int = None) -> PotentialBreach:
@@ -223,31 +215,19 @@ class ThreediCalls:
     def fetch_initial_waterlevels(self, threedimodel_id: str) -> List[InitialWaterlevel]:
         """Fetch initial waterlevels List"""
         api = ThreedimodelsApi(self.api_client)
-        response = api.threedimodels_initial_waterlevels_list(threedimodel_id, limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.threedimodels_initial_waterlevels_list(threedimodel_id, limit=response_count)
-        waterlevels = response.results
+        waterlevels = self.paginated_fetch(api.threedimodels_initial_waterlevels_list, threedimodel_id)
         return waterlevels
 
     def fetch_saved_states(self, threedimodel_id: str) -> List[ThreediModelSavedState]:
         """Fetch saved states list."""
         api = ThreedimodelsApi(self.api_client)
-        response = api.threedimodels_saved_states_list(threedimodel_id, limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.threedimodels_saved_states_list(threedimodel_id, limit=response_count)
-        states = response.results
+        states = self.paginated_fetch(api.threedimodels_saved_states_list, threedimodel_id)
         return states
 
     def fetch_revisions(self) -> List[Revision]:
         """Fetch all Revisions available for current user."""
         api = RevisionsApi(self.api_client)
-        response = api.revisions_list(limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.revisions_list(limit=response_count)
-        revisions_list = response.results
+        revisions_list = self.paginated_fetch(api.revisions_list)
         return revisions_list
 
     def fetch_revision_3di_models(self, rev_id: int) -> List[ThreediModel]:
@@ -259,11 +239,7 @@ class ThreediCalls:
     def fetch_organisations(self) -> List[Organisation]:
         """Fetch all Organisations available for current user."""
         api = OrganisationsApi(self.api_client)
-        response = api.organisations_list(limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.organisations_list(limit=response_count)
-        organisations = response.results
+        organisations = self.paginated_fetch(api.organisations_list)
         return organisations
 
     def add_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
