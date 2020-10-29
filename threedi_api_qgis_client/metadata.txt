@@ -29,7 +29,7 @@ repository=https://github.com/nens/threedi-api-qgis-client
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=<p>
- <p>2.2.2 Pagination fixes
+ <p>2.2.0 Pagination fixes
  <p>2.1.1 Bugfixes
  <p>2.1.0 Enhancements: #88, #101
  <p>2.0.2 Added Initial Conditions, Laterals, Breaches pages with multiple simulations support, loading from template
