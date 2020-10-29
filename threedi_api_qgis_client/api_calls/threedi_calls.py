@@ -2,7 +2,7 @@
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
 import os
 from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Callable, Any
 from threedi_api_client import ThreediApiClient
 from openapi_client import (
     ApiClient,
@@ -55,31 +55,35 @@ def get_api_client(api_username: str, api_password: str, api_host: str = "https:
 class ThreediCalls:
     """Class with methods used for the communication with the 3Di API."""
 
-    FETCH_LIMIT = 100
+    FETCH_LIMIT = 250
     EXPIRATION_TIME = datetime.now(timezone.utc) - timedelta(days=7)
 
     def __init__(self, api_client: ApiClient) -> None:
         self.api_client = api_client
 
+    def paginated_fetch(self, api_method: Callable, **extra_parameters) -> List[Any]:
+        """Method for iterative fetching of the data via given API endpoint."""
+        limit = self.FETCH_LIMIT
+        response = api_method(limit=limit, **extra_parameters)
+        response_count = response.count
+        results_list = response.results
+        if response_count > limit:
+            for offset in range(limit, response_count, limit):
+                response = api_method(offset=offset, limit=limit, **extra_parameters)
+                results_list += response.results
+        return results_list
+
     def fetch_repositories(self) -> List[Repository]:
         """Fetch all repositories available for current user."""
         api = RepositoriesApi(self.api_client)
-        response = api.repositories_list(limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.repositories_list(limit=response_count)
-        repositories_list = response.results
+        repositories_list = self.paginated_fetch(api.repositories_list)
         return repositories_list
 
     def fetch_simulations(self) -> List[Simulation]:
         """Fetch all simulations available for current user."""
         api = SimulationsApi(self.api_client)
         created__date__gt = self.EXPIRATION_TIME.strftime("%Y-%m-%d")
-        response = api.simulations_list(created__date__gt=created__date__gt, limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.simulations_list(created__date__gt=created__date__gt, limit=response_count)
-        simulations_list = response.results
+        simulations_list = self.paginated_fetch(api.simulations_list, created__date__gt=created__date__gt)
         return simulations_list
 
     def fetch_single_simulation(self, simulation_pk: int) -> Simulation:
@@ -243,11 +247,7 @@ class ThreediCalls:
     def fetch_revisions(self) -> List[Revision]:
         """Fetch all Revisions available for current user."""
         api = RevisionsApi(self.api_client)
-        response = api.revisions_list(limit=self.FETCH_LIMIT)
-        response_count = response.count
-        if response_count > self.FETCH_LIMIT:
-            response = api.revisions_list(limit=response_count)
-        revisions_list = response.results
+        revisions_list = self.paginated_fetch(api.revisions_list)
         return revisions_list
 
     def fetch_revision_3di_models(self, rev_id: int) -> List[ThreediModel]:
