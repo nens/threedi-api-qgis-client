@@ -335,6 +335,7 @@
         <property name="font">
          <font>
           <family>Segoe UI</family>
+          <pointsize>12</pointsize>
          </font>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
@@ -374,16 +375,15 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_3">
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_2d_am">
            <property name="font">
             <font>
-             <family>Segoe UI</family>
-             <pointsize>12</pointsize>
+             <italic>true</italic>
             </font>
            </property>
            <property name="text">
-            <string>2D:</string>
+            <string>      Aggregation method:</string>
            </property>
           </widget>
          </item>
@@ -412,6 +412,50 @@
            </property>
           </widget>
          </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_3">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>2D:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QComboBox" name="cb_2d_aggregation">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
+           </property>
+           <item>
+            <property name="text">
+             <string>mean</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>max</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>min</string>
+            </property>
+           </item>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
@@ -428,6 +472,31 @@
            </property>
            <property name="text">
             <string>Groundwater:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QDoubleSpinBox" name="sp_gwater_global_value">
+           <property name="styleSheet">
+            <string notr="true">QDoubleSpinBox {background-color:white; selection-background-color: lightgray;}</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="suffix">
+            <string> m</string>
+           </property>
+           <property name="minimum">
+            <double>-100000000000000005366162204393472.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>1000000000000000013287555072.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -461,28 +530,47 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="2">
-          <widget class="QDoubleSpinBox" name="sp_gwater_global_value">
+         <item row="2" column="2">
+          <widget class="QComboBox" name="cb_gwater_aggregation">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="styleSheet">
-            <string notr="true">QDoubleSpinBox {background-color:white; selection-background-color: lightgray;}</string>
+            <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
            </property>
            <property name="frame">
             <bool>false</bool>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+           <item>
+            <property name="text">
+             <string>mean</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>max</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>min</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_gwater_am">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <italic>true</italic>
+            </font>
            </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
-           </property>
-           <property name="suffix">
-            <string> m</string>
-           </property>
-           <property name="minimum">
-            <double>-100000000000000005366162204393472.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>1000000000000000013287555072.000000000000000</double>
+           <property name="text">
+            <string>      Aggregation method:</string>
            </property>
           </widget>
          </item>
@@ -508,20 +596,6 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="font">
-         <font>
-          <family>Segoe UI</family>
-          <pointsize>12</pointsize>
-          <italic>true</italic>
-         </font>
-        </property>
-        <property name="text">
-         <string>Using the saved state for initial conditions</string>
-        </property>
-       </widget>
-      </item>
       <item row="1" column="1">
        <widget class="QComboBox" name="cb_saved_states">
         <property name="font">
@@ -535,6 +609,20 @@
         </property>
         <property name="frame">
          <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+          <pointsize>12</pointsize>
+          <italic>true</italic>
+         </font>
+        </property>
+        <property name="text">
+         <string>Using the saved state for initial conditions</string>
         </property>
        </widget>
       </item>
