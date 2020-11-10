@@ -389,6 +389,12 @@
          </item>
          <item row="2" column="2">
           <widget class="QDoubleSpinBox" name="sp_2d_global_value">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>8</pointsize>
+            </font>
+           </property>
            <property name="styleSheet">
             <string notr="true">QDoubleSpinBox {background-color:white; selection-background-color: lightgray;}</string>
            </property>
