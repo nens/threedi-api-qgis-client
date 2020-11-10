@@ -1289,7 +1289,7 @@ class SimulationWizard(QWizard):
         name = self.name_page.main_widget.le_sim_name.text()
         threedimodel_id = self.parent_dock.current_model.id
         organisation_uuid = self.parent_dock.organisation.unique_id
-        start_datetime = datetime.utcnow()
+        start_datetime, end_datetime = self.duration_page.main_widget.to_datetime()
         duration = self.duration_page.main_widget.calculate_simulation_duration()
         # initial conditions page attributes
         global_value_1d, raster_2d, global_value_2d, raster_groundwater, global_value_groundwater, saved_state = (
@@ -1380,18 +1380,20 @@ class SimulationWizard(QWizard):
                         else:
                             tc.add_initial_1d_water_level_predefined(sim_id)
                     if self.init_conditions_page.main_widget.cb_2d.isChecked():
+                        aggregation_method = self.init_conditions_page.main_widget.cb_2d_aggregation.currentText()
                         if self.init_conditions_page.main_widget.dd_2d.currentText() == "":
                             tc.add_initial_2d_water_level_constant(sim_id, value=global_value_2d)
                         else:
                             tc.add_initial_2d_water_level_raster(
-                                sim_id, aggregation_method="mean", initial_waterlevel=raster_2d.url
+                                sim_id, aggregation_method=aggregation_method, initial_waterlevel=raster_2d.url
                             )
                     if self.init_conditions_page.main_widget.cb_groundwater.isChecked():
+                        aggregation_method = self.init_conditions_page.main_widget.cb_gwater_aggregation.currentText()
                         if self.init_conditions_page.main_widget.dd_groundwater.currentText() == "":
                             tc.add_initial_groundwater_level_constant(sim_id, value=global_value_groundwater)
                         else:
                             tc.add_initial_groundwater_level_raster(
-                                sim_id, aggregation_method="mean", initial_waterlevel=raster_groundwater.url
+                                sim_id, aggregation_method=aggregation_method, initial_waterlevel=raster_groundwater.url
                             )
                     if self.init_conditions.load_from_saved_state and saved_state:
                         saved_state_id = saved_state.url.strip("/").split("/")[-1]
