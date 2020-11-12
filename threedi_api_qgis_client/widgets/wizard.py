@@ -1,9 +1,7 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
-import json
 import os
 import csv
-
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
@@ -20,7 +18,7 @@ from ..ui_utils import (
     scan_widgets_parameters,
     set_widgets_parameters,
 )
-from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, TEMPLATE_PATH
+from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, write_template, write_laterals_to_json, upload_laterals_json_file
 from ..api_calls.threedi_calls import ThreediCalls
 
 
@@ -295,15 +293,22 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
     def connect_signals(self):
         """Connect signals."""
         self.cb_overrule.stateChanged.connect(self.overrule_value_changed)
-        self.pb_upload.clicked.connect(self.load_csv)
+        self.pb_upload_laterals.clicked.connect(self.load_csv)
         self.pb_use_csv.clicked.connect(self.overrule_with_csv)
         self.cb_type.currentIndexChanged.connect(self.selection_changed)
         self.cb_laterals.currentIndexChanged.connect(self.laterals_change)
+        self.cb_interpolate_laterals.stateChanged.connect(self.interpolate_changed)
 
     def laterals_change(self):
         """Handle dropdown menus selection changes."""
         lat_id = self.cb_laterals.currentText()
         self.il_location.setText(lat_id)
+
+    def interpolate_changed(self):
+        """Handle interpolate checkbox."""
+        interpolate = self.cb_interpolate_laterals.isChecked()
+        for val in self.laterals_timeseries.values():
+            val["interpolate"] = interpolate
 
     def save_laterals(self):
         """Save laterals time series."""
@@ -364,6 +369,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         QSettings().setValue("threedi/last_laterals_folder", os.path.dirname(filename))
         values = {}
         laterals_type = self.cb_type.currentText()
+        interpolate = self.cb_interpolate_laterals.isChecked()
         with open(filename, encoding="utf-8-sig") as lateral_file:
             laterals_reader = csv.reader(lateral_file)
             header = next(laterals_reader, None)
@@ -382,6 +388,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                             "connection_node": int(connection_node_id),
                             "id": int(lat_id),
                             "offset": 0,
+                            "interpolate": interpolate,
                         }
                         values[lat_id] = lateral
                         self.last_uploaded_laterals = lateral
@@ -395,8 +402,15 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 for x, y, ltype, lat_id, timeseries in laterals_reader:
                     try:
                         vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                        point = {"type": "point", "coordinates": [float(x), float(y)]}
-                        lateral = {"values": vals, "units": "m3/s", "point": point, "id": int(lat_id), "offset": 0}
+                        point = {"type": "Point", "coordinates": [float(x), float(y)]}
+                        lateral = {
+                            "values": vals,
+                            "units": "m3/s",
+                            "point": point,
+                            "id": int(lat_id),
+                            "offset": 0,
+                            "interpolate": interpolate,
+                        }
                         values[lat_id] = lateral
                         self.last_uploaded_laterals = lateral
                     except ValueError:
@@ -453,7 +467,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.stop_after_constant_u.currentIndexChanged.connect(self.sync_units)
         self.sp_start_after_constant.valueChanged.connect(self.plot_precipitation)
         self.sp_stop_after_constant.valueChanged.connect(self.plot_precipitation)
-        self.pb_csv.clicked.connect(self.set_custom_time_series)
+        self.pb_upload_rain.clicked.connect(self.set_custom_time_series)
         self.start_after_custom_u.currentIndexChanged.connect(self.sync_units)
         self.sp_start_after_custom.valueChanged.connect(self.plot_precipitation)
         self.cbo_design.currentIndexChanged.connect(self.set_design_time_series)
@@ -464,6 +478,25 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.sp_start_after_radar.valueChanged.connect(self.plot_precipitation)
         self.sp_stop_after_radar.valueChanged.connect(self.plot_precipitation)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
+        self.rb_from_csv.toggled.connect(self.use_csv_time_series)
+        self.rb_from_netcdf.toggled.connect(self.use_netcdf_time_series)
+        self.cb_interpolate_rain.stateChanged.connect(self.plot_precipitation)
+
+    def use_csv_time_series(self, is_checked):
+        if is_checked is True:
+            self.cb_interpolate_rain.setEnabled(True)
+            self.label_interpolate.setEnabled(True)
+            self.le_upload_rain.clear()
+            self.plot_precipitation()
+
+    def use_netcdf_time_series(self, is_checked):
+        if is_checked is True:
+            self.cb_interpolate_rain.setDisabled(True)
+            self.label_interpolate.setDisabled(True)
+            self.le_upload_rain.clear()
+            simulation = self.dd_simulation.currentText()
+            del self.custom_time_series[simulation][:]
+            self.plot_precipitation()
 
     def write_values_into_dict(self):
         """Store current widget values."""
@@ -488,12 +521,20 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             start_after_units = self.start_after_custom_u.currentText()
             units = self.cbo_units.currentText()
             time_series = self.custom_time_series[simulation]
+            time_series_path = self.le_upload_rain.text()
+            interpolate = self.cb_interpolate_rain.isChecked()
+            from_csv = self.rb_from_csv.isChecked()
+            from_netcdf = self.rb_from_netcdf.isChecked()
             self.values[simulation] = {
                 "precipitation_type": precipitation_type,
                 "start_after": start_after,
                 "start_after_units": start_after_units,
                 "units": units,
                 "time_series": time_series,
+                "time_series_path": time_series_path,
+                "interpolate": interpolate,
+                "from_csv": from_csv,
+                "from_netcdf": from_netcdf,
             }
         elif precipitation_type == DESIGN_RAIN:
             start_after = self.sp_start_after_design.value()
@@ -541,11 +582,24 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             )
             self.sp_intensity.setValue(vals.get("intensity"))
         elif vals.get("precipitation_type") == CUSTOM_RAIN:
+            self.rb_from_csv.toggled.disconnect(self.use_csv_time_series)
+            self.rb_from_netcdf.toggled.disconnect(self.use_netcdf_time_series)
+            self.cb_interpolate_rain.stateChanged.disconnect(self.plot_precipitation)
+
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_custom.setValue(vals.get("start_after"))
             self.start_after_custom_u.setCurrentIndex(self.start_after_custom_u.findText(vals.get("start_after_units")))
             self.cbo_units.setCurrentIndex(self.cbo_units.findText(vals.get("units")))
+            self.rb_from_csv.setChecked(vals.get("from_csv"))
+            self.rb_from_netcdf.setChecked(vals.get("from_netcdf"))
+            self.le_upload_rain.setText(vals.get("time_series_path"))
             self.custom_time_series[simulation] = vals.get("time_series", [])
+            self.cb_interpolate_rain.setChecked(vals.get("interpolate"))
+
+            self.rb_from_csv.toggled.connect(self.use_csv_time_series)
+            self.rb_from_netcdf.toggled.connect(self.use_netcdf_time_series)
+            self.cb_interpolate_rain.stateChanged.connect(self.plot_precipitation)
+
         elif vals.get("precipitation_type") == DESIGN_RAIN:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_design.setValue(vals.get("start_after"))
@@ -559,6 +613,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.start_after_radar_u.setCurrentIndex(self.start_after_radar_u.findText(vals.get("start_after_units")))
             self.sp_stop_after_radar.setValue(vals.get("stop_after"))
             self.stop_after_radar_u.setCurrentIndex(self.stop_after_radar_u.findText(vals.get("stop_after_units")))
+        self.plot_precipitation()  # Is it needed?
 
     def precipitation_changed(self, idx):
         """Changing widgets looks based on currently selected precipitation type."""
@@ -634,24 +689,30 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         return duration_in_units
 
     def set_custom_time_series(self):
-        """Selecting and setting up rain time series from CSV format."""
+        """Selecting and setting up rain time series from CSV/NetCDF format."""
+        from_csv = self.rb_from_csv.isChecked()
+        if from_csv:
+            file_filter = "CSV (*.csv);;All Files (*)"
+        else:
+            file_filter = "NetCDF (*.nc);;All Files (*)"
         last_folder = QSettings().value("threedi/last_precipitation_folder", os.path.expanduser("~"), type=str)
-        file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Precipitation Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return
         QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
         time_series = []
         simulation = self.dd_simulation.currentText()
-        with open(filename, encoding="utf-8-sig") as rain_file:
-            rain_reader = csv.reader(rain_file)
-            units_multiplier = self.SECONDS_MULTIPLIERS["mins"]
-            for time, rain in rain_reader:
-                # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
-                try:
-                    time_series.append([float(time) * units_multiplier, float(rain)])
-                except ValueError:
-                    continue
+        if from_csv:
+            with open(filename, encoding="utf-8-sig") as rain_file:
+                rain_reader = csv.reader(rain_file)
+                units_multiplier = self.SECONDS_MULTIPLIERS["mins"]
+                for time, rain in rain_reader:
+                    # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
+                    try:
+                        time_series.append([float(time) * units_multiplier, float(rain)])
+                    except ValueError:
+                        continue
+        self.le_upload_rain.setText(filename)
         self.custom_time_series[simulation] = time_series
         self.plot_precipitation()
 
@@ -766,7 +827,8 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         units = "m/s"
         values = self.get_precipitation_values()
         start, end = self.parent_page.parent_wizard.duration_page.main_widget.to_datetime()
-        return precipitation_type, offset, duration, units, values, start
+        interpolate = self.cb_interpolate_rain.isChecked()
+        return precipitation_type, offset, duration, units, values, start, interpolate
 
     def constant_values(self):
         """Getting plot values for the Constant precipitation."""
@@ -1250,18 +1312,7 @@ class SimulationWizard(QWizard):
             simulation_template["breaches_page"] = scan_widgets_parameters(self.breaches_page.main_widget)
             breaches_values = self.breaches_page.main_widget.values
             simulation_template["breaches_page"]["values"] = breaches_values
-
-        with open(TEMPLATE_PATH, "a"):
-            os.utime(TEMPLATE_PATH, None)
-        with open(TEMPLATE_PATH, "r+") as json_file:
-            data = {}
-            if os.path.getsize(TEMPLATE_PATH):
-                data = json.load(json_file)
-            data[template_name] = simulation_template
-            jsonf = json.dumps(data)
-            json_file.seek(0)
-            json_file.write(jsonf)
-            json_file.truncate()
+        write_template(template_name, simulation_template)
 
     def load_template_parameters(self, simulation_template):
         """Loading simulation parameters from the JSON template file."""
@@ -1287,6 +1338,7 @@ class SimulationWizard(QWizard):
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
         name = self.name_page.main_widget.le_sim_name.text()
+        tags = self.name_page.main_widget.le_tags.text()
         threedimodel_id = self.parent_dock.current_model.id
         organisation_uuid = self.parent_dock.organisation.unique_id
         start_datetime, end_datetime = self.duration_page.main_widget.to_datetime()
@@ -1316,7 +1368,7 @@ class SimulationWizard(QWizard):
             self.new_simulations = []
             self.new_simulation_statuses = {}
             simulation_difference = self.init_conditions.simulations_difference
-            ptype, poffset, pduration, punits, pvalues, pstart = (None,) * 6
+            ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate = (None,) * 7
             breach_id, width, d_duration = (None,) * 3
             for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
                 laterals = []
@@ -1324,7 +1376,7 @@ class SimulationWizard(QWizard):
                     self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                     prec_data = self.precipitation_page.main_widget.get_precipitation_data()
                     if simulation_difference == "precipitation" or i == 1:
-                        ptype, poffset, pduration, punits, pvalues, pstart = prec_data
+                        ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate = prec_data
                 if hasattr(self, "breaches_page"):
                     self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                     breach_data = self.breaches_page.main_widget.get_breaches_data()
@@ -1337,6 +1389,7 @@ class SimulationWizard(QWizard):
                 sim_name = f"{name}_{i}" if self.init_conditions.multiple_simulations is True else name
                 new_simulation = tc.new_simulation(
                     name=sim_name,
+                    tags=tags,
                     threedimodel=threedimodel_id,
                     start_datetime=start_datetime,
                     organisation=organisation_uuid,
@@ -1371,8 +1424,10 @@ class SimulationWizard(QWizard):
                         offset=0,
                     )
                 if self.init_conditions.include_laterals:
-                    for lateral in laterals.values():
-                        tc.add_lateral_timeseries(sim_id, **lateral)
+                    lateral_values = list(laterals.values())
+                    write_laterals_to_json(lateral_values)
+                    upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_laterals.json", offset=0)
+                    upload_laterals_json_file(upload_event_file)
                 if self.init_conditions.include_initial_conditions:
                     if self.init_conditions_page.main_widget.cb_1d.isChecked():
                         if self.init_conditions_page.main_widget.dd_1d.currentText() == "Global value":
@@ -1403,7 +1458,11 @@ class SimulationWizard(QWizard):
                     tc.add_constant_precipitation(
                         sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset
                     )
-                elif ptype == CUSTOM_RAIN or ptype == DESIGN_RAIN:
+                elif ptype == CUSTOM_RAIN:
+                    tc.add_custom_precipitation(
+                        sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset, interpolate=pinterpolate
+                    )
+                elif ptype == DESIGN_RAIN:
                     tc.add_custom_precipitation(
                         sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset
                     )

@@ -3,7 +3,17 @@
 import os
 from qgis.PyQt.QtGui import QIcon, QColor
 from qgis.PyQt.QtCore import QDate, QTime
-from qgis.PyQt.QtWidgets import QLineEdit, QDateEdit, QTimeEdit, QCheckBox, QDoubleSpinBox, QSpinBox, QComboBox, QWidget
+from qgis.PyQt.QtWidgets import (
+    QLineEdit,
+    QDateEdit,
+    QTimeEdit,
+    QCheckBox,
+    QDoubleSpinBox,
+    QSpinBox,
+    QComboBox,
+    QWidget,
+    QRadioButton,
+)
 
 
 def style_path(qml_filename):
@@ -45,7 +55,7 @@ def scan_widgets_parameters(main_widget):
         obj_name = widget.objectName()
         if isinstance(widget, QLineEdit):
             parameters[obj_name] = widget.text()
-        elif isinstance(widget, QCheckBox):
+        elif isinstance(widget, (QCheckBox, QRadioButton)):
             parameters[obj_name] = widget.isChecked()
         elif isinstance(widget, QComboBox):
             parameters[obj_name] = widget.currentText()
@@ -68,7 +78,7 @@ def set_widgets_parameters(main_widget, **widget_parameters):
             continue
         if isinstance(widget, QLineEdit):
             widget.setText(value)
-        elif isinstance(widget, QCheckBox):
+        elif isinstance(widget, (QCheckBox, QRadioButton)):
             widget.setChecked(value)
         elif isinstance(widget, QComboBox):
             idx = widget.findText(value)
