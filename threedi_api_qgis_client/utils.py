@@ -91,10 +91,10 @@ def write_laterals_to_json(laterals_values):
         json_file.write(jsonf)
 
 
-def upload_laterals_json_file(upload_event_file):
-    """Upload laterals JSON file."""
-    with open(LATERALS_FILE_TEMPLATE, "rb") as json_file:
-        response = requests.put(upload_event_file.put_url, data=json_file)
+def upload_file(upload, filepath):
+    """Upload file."""
+    with open(filepath, "rb") as file:
+        response = requests.put(upload.put_url, data=file)
         return response
 
 

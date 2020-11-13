@@ -41,6 +41,7 @@ from openapi_client import (
     PotentialBreach,
     LizardRasterRain,
     UploadEventFile,
+    Upload,
 )
 
 
@@ -254,6 +255,12 @@ class ThreediCalls:
         api = SimulationsApi(self.api_client)
         time_series_rain = api.simulations_events_rain_timeseries_create((str(simulation_pk)), rain_data)
         return time_series_rain
+
+    def add_custom_netcdf_precipitation(self, simulation_pk: int, **rain_data) -> Upload:
+        """Add rain time series from NetCDF file to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        netcdf_upload = api.simulations_events_rain_rasters_netcdf_create((str(simulation_pk)), rain_data)
+        return netcdf_upload
 
     def add_radar_precipitation(self, simulation_pk: int, **rain_data) -> LizardRasterRain:
         """Add LizardRasterRain to the given simulation."""

@@ -18,7 +18,7 @@ from ..ui_utils import (
     scan_widgets_parameters,
     set_widgets_parameters,
 )
-from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, write_template, write_laterals_to_json, upload_laterals_json_file
+from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, write_template, write_laterals_to_json, upload_file, LATERALS_FILE_TEMPLATE
 from ..api_calls.threedi_calls import ThreediCalls
 
 
@@ -496,6 +496,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.le_upload_rain.clear()
             simulation = self.dd_simulation.currentText()
             del self.custom_time_series[simulation][:]
+            self.cb_interpolate_rain.setChecked(False)
             self.plot_precipitation()
 
     def write_values_into_dict(self):
@@ -567,6 +568,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         vals = self.values.get(simulation)
         if not vals:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText("None"))
+            self.le_upload_rain.clear()
             self.cbo_design.setCurrentIndex(0)
             self.plot_precipitation()
             return
@@ -642,6 +644,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.widget_custom.hide()
             self.widget_design.hide()
             self.widget_radar.hide()
+
         self.refresh_current_units()
         self.plot_precipitation()
 
@@ -828,7 +831,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         values = self.get_precipitation_values()
         start, end = self.parent_page.parent_wizard.duration_page.main_widget.to_datetime()
         interpolate = self.cb_interpolate_rain.isChecked()
-        return precipitation_type, offset, duration, units, values, start, interpolate
+        filepath = self.le_upload_rain.text()
+        from_csv = self.rb_from_csv.isChecked()
+        from_netcdf = self.rb_from_netcdf.isChecked()
+        return precipitation_type, offset, duration, units, values, start, interpolate, filepath, from_csv, from_netcdf
 
     def constant_values(self):
         """Getting plot values for the Constant precipitation."""
@@ -1368,15 +1374,15 @@ class SimulationWizard(QWizard):
             self.new_simulations = []
             self.new_simulation_statuses = {}
             simulation_difference = self.init_conditions.simulations_difference
-            ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate = (None,) * 7
+            ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate, pfpath, pcsv, pnetcdf = (None,) * 10
             breach_id, width, d_duration = (None,) * 3
             for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
                 laterals = []
                 if hasattr(self, "precipitation_page"):
                     self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
-                    prec_data = self.precipitation_page.main_widget.get_precipitation_data()
+                    pdata = self.precipitation_page.main_widget.get_precipitation_data()
                     if simulation_difference == "precipitation" or i == 1:
-                        ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate = prec_data
+                        ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate, pfpath, pcsv, pnetcdf = pdata
                 if hasattr(self, "breaches_page"):
                     self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                     breach_data = self.breaches_page.main_widget.get_breaches_data()
@@ -1427,7 +1433,7 @@ class SimulationWizard(QWizard):
                     lateral_values = list(laterals.values())
                     write_laterals_to_json(lateral_values)
                     upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_laterals.json", offset=0)
-                    upload_laterals_json_file(upload_event_file)
+                    upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
                 if self.init_conditions.include_initial_conditions:
                     if self.init_conditions_page.main_widget.cb_1d.isChecked():
                         if self.init_conditions_page.main_widget.dd_1d.currentText() == "Global value":
@@ -1459,9 +1465,14 @@ class SimulationWizard(QWizard):
                         sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset
                     )
                 elif ptype == CUSTOM_RAIN:
-                    tc.add_custom_precipitation(
-                        sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset, interpolate=pinterpolate
-                    )
+                    if pcsv:
+                        tc.add_custom_precipitation(
+                            sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset,interpolate=pinterpolate
+                        )
+                    else:
+                        filename = os.path.basename(pfpath)
+                        upload = tc.add_custom_netcdf_precipitation(sim_id, filename=filename)
+                        upload_file(upload, pfpath)
                 elif ptype == DESIGN_RAIN:
                     tc.add_custom_precipitation(
                         sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset
