@@ -18,7 +18,15 @@ from ..ui_utils import (
     scan_widgets_parameters,
     set_widgets_parameters,
 )
-from ..utils import mmh_to_ms, mmh_to_mmtimestep, mmtimestep_to_mmh, write_template, write_laterals_to_json, upload_file, LATERALS_FILE_TEMPLATE
+from ..utils import (
+    mmh_to_ms,
+    mmh_to_mmtimestep,
+    mmtimestep_to_mmh,
+    write_template,
+    write_laterals_to_json,
+    upload_file,
+    LATERALS_FILE_TEMPLATE,
+)
 from ..api_calls.threedi_calls import ThreediCalls
 
 
@@ -1459,7 +1467,12 @@ class SimulationWizard(QWizard):
                 elif ptype == CUSTOM_RAIN:
                     if pcsv:
                         tc.add_custom_precipitation(
-                            sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset,interpolate=pinterpolate
+                            sim_id,
+                            values=pvalues,
+                            units=punits,
+                            duration=pduration,
+                            offset=poffset,
+                            interpolate=pinterpolate,
                         )
                     else:
                         filename = os.path.basename(pfpath)
