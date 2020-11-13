@@ -102,6 +102,9 @@ class SimulationOverview(uicls, basecls):
         """Start new simulation wizard from template."""
         template_items = load_saved_templates()
         items_keys = list(template_items.keys())
+        if not items_keys:
+            self.parent_dock.communication.show_warn("There are no any templates available!")
+            return
         template = self.parent_dock.communication.pick_item("Load template", "Pick template to load", None, *items_keys)
         if template:
             simulation_template = template_items[template]

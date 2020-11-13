@@ -9,6 +9,7 @@ from collections import OrderedDict
 PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))
 CACHE_PATH = os.path.join(PLUGIN_PATH, "_cached_data")
 TEMPLATE_PATH = os.path.join(CACHE_PATH, "templates.json")
+LATERALS_FILE_TEMPLATE = os.path.join(CACHE_PATH, "laterals.json")
 CHUNK_SIZE = 1024 ** 2
 
 
@@ -66,6 +67,35 @@ def load_saved_templates():
         for name, parameters in sorted(data.items()):
             items[name] = parameters
     return items
+
+
+def write_template(template_name, simulation_template):
+    """Writing parameters as a template."""
+    with open(TEMPLATE_PATH, "a"):
+        os.utime(TEMPLATE_PATH, None)
+    with open(TEMPLATE_PATH, "r+") as json_file:
+        data = {}
+        if os.path.getsize(TEMPLATE_PATH):
+            data = json.load(json_file)
+        data[template_name] = simulation_template
+        jsonf = json.dumps(data)
+        json_file.seek(0)
+        json_file.write(jsonf)
+        json_file.truncate()
+
+
+def write_laterals_to_json(laterals_values):
+    """Writing laterals values to the JSON file."""
+    with open(LATERALS_FILE_TEMPLATE, "w") as json_file:
+        jsonf = json.dumps(laterals_values)
+        json_file.write(jsonf)
+
+
+def upload_file(upload, filepath):
+    """Upload file."""
+    with open(filepath, "rb") as file:
+        response = requests.put(upload.put_url, data=file)
+        return response
 
 
 def file_cached(file_path):
