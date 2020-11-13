@@ -478,25 +478,14 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.sp_start_after_radar.valueChanged.connect(self.plot_precipitation)
         self.sp_stop_after_radar.valueChanged.connect(self.plot_precipitation)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
-        self.rb_from_csv.toggled.connect(self.use_csv_time_series)
-        self.rb_from_netcdf.toggled.connect(self.use_netcdf_time_series)
+        self.rb_from_csv.toggled.connect(self.change_time_series_source)
+        self.rb_from_netcdf.toggled.connect(self.change_time_series_source)
         self.cb_interpolate_rain.stateChanged.connect(self.plot_precipitation)
 
-    def use_csv_time_series(self, is_checked):
+    def change_time_series_source(self, is_checked):
+        """Handling rain time series source change."""
         if is_checked is True:
-            self.cb_interpolate_rain.setEnabled(True)
-            self.label_interpolate.setEnabled(True)
             self.le_upload_rain.clear()
-            self.plot_precipitation()
-
-    def use_netcdf_time_series(self, is_checked):
-        if is_checked is True:
-            self.cb_interpolate_rain.setDisabled(True)
-            self.label_interpolate.setDisabled(True)
-            self.le_upload_rain.clear()
-            simulation = self.dd_simulation.currentText()
-            del self.custom_time_series[simulation][:]
-            self.cb_interpolate_rain.setChecked(False)
             self.plot_precipitation()
 
     def write_values_into_dict(self):
@@ -584,24 +573,22 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             )
             self.sp_intensity.setValue(vals.get("intensity"))
         elif vals.get("precipitation_type") == CUSTOM_RAIN:
-            self.rb_from_csv.toggled.disconnect(self.use_csv_time_series)
-            self.rb_from_netcdf.toggled.disconnect(self.use_netcdf_time_series)
-            self.cb_interpolate_rain.stateChanged.disconnect(self.plot_precipitation)
-
+            # Temporary disconnect radio buttons signals
+            self.rb_from_csv.toggled.disconnect(self.change_time_series_source)
+            self.rb_from_netcdf.toggled.disconnect(self.change_time_series_source)
+            # Get simulation values
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_custom.setValue(vals.get("start_after"))
             self.start_after_custom_u.setCurrentIndex(self.start_after_custom_u.findText(vals.get("start_after_units")))
             self.cbo_units.setCurrentIndex(self.cbo_units.findText(vals.get("units")))
-            self.rb_from_csv.setChecked(vals.get("from_csv"))
-            self.rb_from_netcdf.setChecked(vals.get("from_netcdf"))
-            self.le_upload_rain.setText(vals.get("time_series_path"))
+            self.rb_from_csv.setChecked(vals.get("from_csv", True))
+            self.rb_from_netcdf.setChecked(vals.get("from_netcdf", False))
+            self.le_upload_rain.setText(vals.get("time_series_path", ""))
             self.custom_time_series[simulation] = vals.get("time_series", [])
-            self.cb_interpolate_rain.setChecked(vals.get("interpolate"))
-
-            self.rb_from_csv.toggled.connect(self.use_csv_time_series)
-            self.rb_from_netcdf.toggled.connect(self.use_netcdf_time_series)
-            self.cb_interpolate_rain.stateChanged.connect(self.plot_precipitation)
-
+            self.cb_interpolate_rain.setChecked(vals.get("interpolate", False))
+            # Connect radio buttons signals again
+            self.rb_from_csv.toggled.connect(self.change_time_series_source)
+            self.rb_from_netcdf.toggled.connect(self.change_time_series_source)
         elif vals.get("precipitation_type") == DESIGN_RAIN:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_design.setValue(vals.get("start_after"))
@@ -615,7 +602,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.start_after_radar_u.setCurrentIndex(self.start_after_radar_u.findText(vals.get("start_after_units")))
             self.sp_stop_after_radar.setValue(vals.get("stop_after"))
             self.stop_after_radar_u.setCurrentIndex(self.stop_after_radar_u.findText(vals.get("stop_after_units")))
-        self.plot_precipitation()  # Is it needed?
+        self.plot_precipitation()
 
     def precipitation_changed(self, idx):
         """Changing widgets looks based on currently selected precipitation type."""
@@ -851,11 +838,14 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         """Getting plot values for the Custom precipitation."""
         simulation = self.dd_simulation.currentText()
         x_values, y_values = [], []
-        units_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
-        for x, y in self.custom_time_series[simulation]:
-            x_in_units = x / units_multiplier
-            x_values.append(x_in_units)
-            y_values.append(y)
+        if self.rb_from_netcdf.isChecked():
+            del self.custom_time_series[simulation][:]
+        else:
+            units_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
+            for x, y in self.custom_time_series[simulation]:
+                x_in_units = x / units_multiplier
+                x_values.append(x_in_units)
+                y_values.append(y)
         return x_values, y_values
 
     def design_values(self):
@@ -1055,7 +1045,8 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
             if data:
                 ptype = data.get("precipitation_type")
                 if ptype != RADAR_RAIN:
-                    total_prec = str(self.parent_page.parent_wizard.precipitation_page.main_widget.total_precipitation)
+                    total_prec_val = self.parent_page.parent_wizard.precipitation_page.main_widget.total_precipitation
+                    total_prec = f"{total_prec_val:.1f}"
                 else:
                     total_prec = "N/A"
                 self.sim_prec_type.setText(ptype)
@@ -1336,6 +1327,7 @@ class SimulationWizard(QWizard):
             set_widgets_parameters(self.precipitation_page.main_widget, **simulation_template["precipitation_page"])
             precipitation_values = simulation_template["precipitation_page"]["values"]
             self.precipitation_page.main_widget.values.update(precipitation_values)
+            self.precipitation_page.main_widget.simulation_changed()
         if hasattr(self, "breaches_page"):
             set_widgets_parameters(self.breaches_page.main_widget, **simulation_template["breaches_page"])
             breaches_values = simulation_template["breaches_page"]["values"]
