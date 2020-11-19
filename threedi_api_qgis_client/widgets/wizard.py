@@ -98,8 +98,11 @@ class NameWidget(uicls_name_page, basecls_name_page):
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path("sim_wizard_name.svg"))
         self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMaximumHeight(75)
         self.svg_widget.setMinimumWidth(700)
+        self.svg_widget.setMaximumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
 
@@ -113,8 +116,11 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path("sim_wizard_duration.svg"))
         self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMaximumHeight(75)
         self.svg_widget.setMinimumWidth(700)
+        self.svg_widget.setMaximumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.date_from.dateTimeChanged.connect(self.update_time_difference)
@@ -166,8 +172,11 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path("sim_wizard_initial_con.svg"))
         self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMaximumHeight(75)
         self.svg_widget.setMinimumWidth(700)
+        self.svg_widget.setMaximumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.new_simulations = None
@@ -284,8 +293,11 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path("sim_wizard_laterals.svg"))
         self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMaximumHeight(75)
         self.svg_widget.setMinimumWidth(700)
+        self.svg_widget.setMaximumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.laterals_timeseries = {}
@@ -438,8 +450,11 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path("sim_wizard_precipitation.svg"))
         self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMaximumHeight(75)
         self.svg_widget.setMinimumWidth(700)
+        self.svg_widget.setMaximumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.current_units = "hrs"
@@ -451,9 +466,11 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
         self.plot_widget.setFixedHeight(80)
+        self.plot_widget.setFixedWidth(750)
         self.plot_bar_graph = None
         self.plot_ticks = None
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
+        self.lout_plot.setAlignment(self.plot_widget, Qt.AlignHCenter)
         self.widget_constant.hide()
         self.widget_custom.hide()
         self.widget_design.hide()
@@ -931,8 +948,11 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path("sim_wizard_breaches.svg"))
         self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMaximumHeight(75)
         self.svg_widget.setMinimumWidth(700)
+        self.svg_widget.setMaximumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.values = dict()
@@ -1020,14 +1040,19 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         self.parent_page = parent_page
         self.svg_widget = QSvgWidget(icon_path("sim_wizard_initation.svg"))
         self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMaximumHeight(75)
         self.svg_widget.setMinimumWidth(700)
+        self.svg_widget.setMaximumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
         self.plot_widget.setFixedHeight(80)
+        self.plot_widget.setFixedWidth(750)
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
+        self.lout_plot.setAlignment(self.plot_widget, Qt.AlignHCenter)
         self.template_widget.hide()
         self.cb_save_template.stateChanged.connect(self.save_template_state_changed)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_change)
@@ -1238,7 +1263,7 @@ class SimulationWizard(QWizard):
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.resize(800, 500)
+        self.resize(850, 600)
         self.first_simulation = init_conditions.simulations_list[0]
         self.init_conditions = init_conditions
 

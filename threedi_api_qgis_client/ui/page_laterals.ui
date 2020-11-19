@@ -73,6 +73,18 @@
         </property>
         <item>
          <widget class="QLabel" name="label">
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>20</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>10</pointsize>
@@ -84,7 +96,32 @@
          </widget>
         </item>
         <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
          <widget class="QComboBox" name="cb_laterals">
+          <property name="minimumSize">
+           <size>
+            <width>320</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>10</pointsize>
@@ -107,6 +144,18 @@
         </property>
         <item>
          <widget class="QLabel" name="label_5">
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>20</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>Segoe UI</family>
@@ -132,6 +181,12 @@
             <height>25</height>
            </size>
           </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="styleSheet">
            <string notr="true">QLineEdit {background-color: white;}</string>
           </property>
@@ -145,7 +200,13 @@
           <property name="minimumSize">
            <size>
             <width>100</width>
-            <height>0</height>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>25</height>
            </size>
           </property>
           <property name="font">
@@ -197,6 +258,18 @@
      </property>
      <item>
       <widget class="QLabel" name="laterals_layout">
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>20</height>
+        </size>
+       </property>
        <property name="font">
         <font>
          <family>Segoe UI</family>
@@ -241,7 +314,7 @@
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>16777215</height>
+         <height>25</height>
         </size>
        </property>
        <property name="font">
@@ -264,14 +337,14 @@
       <widget class="QPushButton" name="pb_upload_laterals">
        <property name="minimumSize">
         <size>
-         <width>80</width>
+         <width>100</width>
          <height>25</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
          <width>100</width>
-         <height>16777215</height>
+         <height>25</height>
         </size>
        </property>
        <property name="font">
@@ -289,10 +362,16 @@
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
         <widget class="QCheckBox" name="cb_interpolate_laterals">
+         <property name="minimumSize">
+          <size>
+           <width>14</width>
+           <height>14</height>
+          </size>
+         </property>
          <property name="maximumSize">
           <size>
-           <width>15</width>
-           <height>16777215</height>
+           <width>14</width>
+           <height>14</height>
           </size>
          </property>
          <property name="font">
@@ -317,10 +396,16 @@
        </item>
        <item>
         <widget class="QLabel" name="label_11">
+         <property name="minimumSize">
+          <size>
+           <width>75</width>
+           <height>20</height>
+          </size>
+         </property>
          <property name="maximumSize">
           <size>
-           <width>80</width>
-           <height>16777215</height>
+           <width>75</width>
+           <height>25</height>
           </size>
          </property>
          <property name="font">
@@ -367,6 +452,18 @@
      </property>
      <item>
       <widget class="QLabel" name="label_8">
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>150</width>
+         <height>20</height>
+        </size>
+       </property>
        <property name="font">
         <font>
          <family>Segoe UI</family>
@@ -379,11 +476,30 @@
       </widget>
      </item>
      <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
       <widget class="QComboBox" name="cb_type">
        <property name="minimumSize">
         <size>
-         <width>400</width>
-         <height>0</height>
+         <width>435</width>
+         <height>25</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>25</height>
         </size>
        </property>
        <property name="font">
@@ -409,10 +525,16 @@
      </property>
      <item>
       <widget class="QCheckBox" name="cb_overrule">
+       <property name="minimumSize">
+        <size>
+         <width>14</width>
+         <height>14</height>
+        </size>
+       </property>
        <property name="maximumSize">
         <size>
          <width>14</width>
-         <height>16777215</height>
+         <height>14</height>
         </size>
        </property>
        <property name="palette">
@@ -522,6 +644,18 @@
      </item>
      <item>
       <widget class="QLabel" name="label_2">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>20</height>
+        </size>
+       </property>
        <property name="font">
         <font>
          <pointsize>10</pointsize>

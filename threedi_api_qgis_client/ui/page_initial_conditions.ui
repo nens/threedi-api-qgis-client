@@ -100,9 +100,21 @@
    </item>
    <item row="2" column="0" colspan="3">
     <widget class="QWidget" name="default_init_widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>700</width>
+       <height>0</height>
+      </size>
+     </property>
      <layout class="QGridLayout" name="gridLayout_4">
       <item row="0" column="0">
        <widget class="QLabel" name="label">
+        <property name="minimumSize">
+         <size>
+          <width>300</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -121,10 +133,16 @@
         </property>
         <item>
          <widget class="QCheckBox" name="cb_1d">
+          <property name="minimumSize">
+           <size>
+            <width>14</width>
+            <height>14</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
             <width>14</width>
-            <height>16777215</height>
+            <height>14</height>
            </size>
           </property>
           <property name="font">
@@ -152,6 +170,18 @@
         </item>
         <item>
          <widget class="QLabel" name="label_4">
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>
@@ -164,10 +194,16 @@
         </item>
         <item>
          <widget class="QCheckBox" name="cb_2d">
+          <property name="minimumSize">
+           <size>
+            <width>14</width>
+            <height>14</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
             <width>14</width>
-            <height>16777215</height>
+            <height>14</height>
            </size>
           </property>
           <property name="font">
@@ -189,6 +225,18 @@
         </item>
         <item>
          <widget class="QLabel" name="label_6">
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>
@@ -201,10 +249,16 @@
         </item>
         <item>
          <widget class="QCheckBox" name="cb_groundwater">
+          <property name="minimumSize">
+           <size>
+            <width>14</width>
+            <height>14</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
             <width>14</width>
-            <height>16777215</height>
+            <height>14</height>
            </size>
           </property>
           <property name="font">
@@ -226,6 +280,18 @@
         </item>
         <item>
          <widget class="QLabel" name="label_9">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>
@@ -240,6 +306,12 @@
       </item>
       <item row="1" column="0" colspan="2">
        <widget class="QWidget" name="d1_widget" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>680</width>
+          <height>70</height>
+         </size>
+        </property>
         <property name="baseSize">
          <size>
           <width>0</width>
@@ -252,6 +324,18 @@
          </property>
          <item row="0" column="2">
           <widget class="QComboBox" name="dd_1d">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -268,6 +352,18 @@
          </item>
          <item row="0" column="1">
           <widget class="QLabel" name="label_2">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -281,6 +377,18 @@
          </item>
          <item row="1" column="2">
           <widget class="QDoubleSpinBox" name="sp_1d_global_value">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font/>
            </property>
@@ -312,6 +420,18 @@
          </item>
          <item row="1" column="1">
           <widget class="QLabel" name="label_1d_gv">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -332,6 +452,12 @@
       </item>
       <item row="2" column="0" colspan="2">
        <widget class="QWidget" name="d2_widget" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>680</width>
+          <height>100</height>
+         </size>
+        </property>
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -341,6 +467,18 @@
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="2" column="0">
           <widget class="QLabel" name="label_2d_gv">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -361,6 +499,18 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -377,6 +527,12 @@
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_2d_am">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <italic>true</italic>
@@ -389,6 +545,18 @@
          </item>
          <item row="2" column="2">
           <widget class="QDoubleSpinBox" name="sp_2d_global_value">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -420,6 +588,18 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_3">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -433,6 +613,18 @@
          </item>
          <item row="3" column="2">
           <widget class="QComboBox" name="cb_2d_aggregation">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -467,9 +659,27 @@
       </item>
       <item row="3" column="0" colspan="2">
        <widget class="QWidget" name="groundwater_widget" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>680</width>
+          <height>100</height>
+         </size>
+        </property>
         <layout class="QGridLayout" name="gridLayout_3">
          <item row="0" column="0">
           <widget class="QLabel" name="label_5">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -483,6 +693,18 @@
          </item>
          <item row="1" column="2">
           <widget class="QDoubleSpinBox" name="sp_gwater_global_value">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="styleSheet">
             <string notr="true">QDoubleSpinBox {background-color:white; selection-background-color: lightgray;}</string>
            </property>
@@ -508,6 +730,18 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_gw_gv">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -522,6 +756,18 @@
          </item>
          <item row="0" column="2">
           <widget class="QComboBox" name="dd_groundwater">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -538,6 +784,18 @@
          </item>
          <item row="2" column="2">
           <widget class="QComboBox" name="cb_gwater_aggregation">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -569,6 +827,18 @@
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="label_gwater_am">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>12</pointsize>
@@ -588,9 +858,27 @@
    </item>
    <item row="3" column="0" colspan="3">
     <widget class="QWidget" name="load_conditions_widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>700</width>
+       <height>70</height>
+      </size>
+     </property>
      <layout class="QGridLayout" name="gridLayout_5">
       <item row="1" column="0">
        <widget class="QLabel" name="label_8">
+        <property name="minimumSize">
+         <size>
+          <width>300</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>25</height>
+         </size>
+        </property>
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -604,6 +892,18 @@
       </item>
       <item row="1" column="1">
        <widget class="QComboBox" name="cb_saved_states">
+        <property name="minimumSize">
+         <size>
+          <width>300</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>25</height>
+         </size>
+        </property>
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -620,6 +920,18 @@
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label_7">
+        <property name="minimumSize">
+         <size>
+          <width>300</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>25</height>
+         </size>
+        </property>
         <property name="font">
          <font>
           <family>Segoe UI</family>
