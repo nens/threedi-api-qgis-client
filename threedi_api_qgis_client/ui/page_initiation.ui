@@ -54,8 +54,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>30</width>
-       <height>40</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -69,8 +69,8 @@
         </property>
         <property name="maximumSize">
          <size>
-          <width>110</width>
-          <height>20</height>
+          <width>16777215</width>
+          <height>16777215</height>
          </size>
         </property>
         <property name="font">
@@ -85,6 +85,12 @@
       </item>
       <item>
        <widget class="QLineEdit" name="template_name">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="minimumSize">
          <size>
           <width>175</width>
@@ -93,8 +99,8 @@
         </property>
         <property name="maximumSize">
          <size>
-          <width>175</width>
-          <height>25</height>
+          <width>16777215</width>
+          <height>16777215</height>
          </size>
         </property>
         <property name="font">
@@ -130,7 +136,7 @@
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>50</height>
+       <height>16777215</height>
       </size>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
@@ -144,8 +150,8 @@
         </property>
         <property name="maximumSize">
          <size>
-          <width>100</width>
-          <height>25</height>
+          <width>16777215</width>
+          <height>16777215</height>
          </size>
         </property>
         <property name="font">
@@ -161,7 +167,7 @@
       <item row="0" column="1">
        <widget class="QComboBox" name="dd_simulation">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -175,7 +181,7 @@
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>25</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="font">
@@ -251,7 +257,7 @@
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>25</height>
+            <height>16777215</height>
            </size>
           </property>
           <property name="font">
@@ -279,8 +285,8 @@
           </property>
           <property name="maximumSize">
            <size>
-            <width>150</width>
-            <height>25</height>
+            <width>16777215</width>
+            <height>16777215</height>
            </size>
           </property>
           <property name="font">
@@ -304,8 +310,8 @@
           </property>
           <property name="maximumSize">
            <size>
-            <width>150</width>
-            <height>25</height>
+            <width>16777215</width>
+            <height>16777215</height>
            </size>
           </property>
           <property name="font">
@@ -368,7 +374,7 @@
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>80</height>
+         <height>16777215</height>
         </size>
        </property>
        <layout class="QGridLayout" name="gridLayout_4">
@@ -382,8 +388,8 @@
           </property>
           <property name="maximumSize">
            <size>
-            <width>150</width>
-            <height>25</height>
+            <width>16777215</width>
+            <height>16777215</height>
            </size>
           </property>
           <property name="font">
@@ -436,7 +442,7 @@
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>25</height>
+            <height>16777215</height>
            </size>
           </property>
           <property name="font">
@@ -464,8 +470,8 @@
           </property>
           <property name="maximumSize">
            <size>
-            <width>150</width>
-            <height>25</height>
+            <width>16777215</width>
+            <height>16777215</height>
            </size>
           </property>
           <property name="font">
@@ -532,7 +538,7 @@
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>20</height>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -587,8 +593,8 @@
        </property>
        <property name="maximumSize">
         <size>
-         <width>150</width>
-         <height>25</height>
+         <width>16777215</width>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">
@@ -618,8 +624,8 @@
        </property>
        <property name="maximumSize">
         <size>
-         <width>150</width>
-         <height>25</height>
+         <width>16777215</width>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">
@@ -644,7 +650,7 @@
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>25</height>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">
@@ -675,8 +681,8 @@
        </property>
        <property name="maximumSize">
         <size>
-         <width>150</width>
-         <height>25</height>
+         <width>16777215</width>
+         <height>16777215</height>
         </size>
        </property>
        <property name="palette">
@@ -738,7 +744,7 @@
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>25</height>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">
@@ -764,7 +770,7 @@
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>25</height>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">
@@ -822,8 +828,8 @@
        </property>
        <property name="maximumSize">
         <size>
-         <width>350</width>
-         <height>20</height>
+         <width>16777215</width>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">

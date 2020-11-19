@@ -51,8 +51,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>110</width>
-       <height>25</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -76,8 +76,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>110</width>
-       <height>25</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -127,6 +127,12 @@
    </item>
    <item row="4" column="0">
     <widget class="QDateEdit" name="date_from">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="minimumSize">
       <size>
        <width>110</width>
@@ -135,8 +141,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>110</width>
-       <height>25</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -171,6 +177,12 @@
    </item>
    <item row="4" column="5">
     <widget class="QDateEdit" name="date_to">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="minimumSize">
       <size>
        <width>110</width>
@@ -179,8 +191,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>110</width>
-       <height>25</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -230,7 +242,7 @@
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>25</height>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -251,6 +263,12 @@
    </item>
    <item row="4" column="3">
     <widget class="QTimeEdit" name="time_from">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="minimumSize">
       <size>
        <width>75</width>
@@ -259,8 +277,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>75</width>
-       <height>25</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -303,7 +321,7 @@
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>25</height>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -381,8 +399,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>110</width>
-       <height>25</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -414,8 +432,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>75</width>
-       <height>25</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -469,6 +487,12 @@
    </item>
    <item row="4" column="6">
     <widget class="QTimeEdit" name="time_to">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="minimumSize">
       <size>
        <width>75</width>
@@ -477,8 +501,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>75</width>
-       <height>25</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
@@ -520,8 +544,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>110</width>
-       <height>25</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">

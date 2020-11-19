@@ -692,7 +692,7 @@
              </property>
              <property name="maximumSize">
               <size>
-               <width>55</width>
+               <width>16777215</width>
                <height>16777215</height>
               </size>
              </property>
@@ -710,14 +710,14 @@
            <item>
             <widget class="QComboBox" name="dd_number_of_simulation">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
              <property name="maximumSize">
               <size>
-               <width>50</width>
+               <width>16777215</width>
                <height>16777215</height>
               </size>
              </property>
@@ -854,6 +854,12 @@
            </item>
            <item>
             <widget class="QLabel" name="label_4">
+             <property name="minimumSize">
+              <size>
+               <width>250</width>
+               <height>0</height>
+              </size>
+             </property>
              <property name="font">
               <font>
                <family>Segoe UI</family>
@@ -1060,7 +1066,7 @@
        <property name="minimumSize">
         <size>
          <width>100</width>
-         <height>0</height>
+         <height>30</height>
         </size>
        </property>
        <property name="text">
@@ -1073,7 +1079,7 @@
        <property name="minimumSize">
         <size>
          <width>100</width>
-         <height>0</height>
+         <height>30</height>
         </size>
        </property>
        <property name="text">
