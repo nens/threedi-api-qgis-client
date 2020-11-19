@@ -9,7 +9,7 @@ from collections import OrderedDict, defaultdict
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtCore import QSettings, Qt, QSize
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
 from openapi_client import ApiException
 from ..ui_utils import (
@@ -1210,6 +1210,7 @@ class SimulationWizard(QWizard):
 
     def __init__(self, parent_dock, init_conditions_dlg, parent=None):
         super().__init__(parent)
+        self.settings = QSettings()
         self.setWizardStyle(QWizard.ClassicStyle)
         self.init_conditions_dlg = init_conditions_dlg
         init_conditions = self.init_conditions_dlg.initial_conditions
@@ -1245,7 +1246,7 @@ class SimulationWizard(QWizard):
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.resize(800, 600)
+        self.resize(self.settings.value("threedi/wizard_size", QSize(800, 600)))
         self.first_simulation = init_conditions.simulations_list[0]
         self.init_conditions = init_conditions
 
@@ -1350,6 +1351,7 @@ class SimulationWizard(QWizard):
 
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
+        self.settings.setValue("threedi/wizard_size", self.size())
         name = self.name_page.main_widget.le_sim_name.text()
         tags = self.name_page.main_widget.le_tags.text()
         threedimodel_id = self.parent_dock.current_model.id
@@ -1518,4 +1520,5 @@ class SimulationWizard(QWizard):
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""
+        self.settings.setValue("threedi/wizard_size", self.size())
         self.reject()
