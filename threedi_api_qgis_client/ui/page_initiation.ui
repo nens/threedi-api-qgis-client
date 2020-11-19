@@ -14,7 +14,7 @@
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -46,9 +46,33 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="16" column="3" colspan="3">
     <widget class="QWidget" name="template_widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>300</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
        <widget class="QLabel" name="label">
+        <property name="minimumSize">
+         <size>
+          <width>110</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="font">
          <font>
           <pointsize>10</pointsize>
@@ -61,6 +85,24 @@
       </item>
       <item>
        <widget class="QLineEdit" name="template_name">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>175</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="font">
          <font>
           <pointsize>10</pointsize>
@@ -94,12 +136,24 @@
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>50</height>
+       <height>16777215</height>
       </size>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="0">
        <widget class="QLabel" name="label_3">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="font">
          <font>
           <pointsize>12</pointsize>
@@ -113,10 +167,22 @@
       <item row="0" column="1">
        <widget class="QComboBox" name="dd_simulation">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
         </property>
         <property name="font">
          <font>
@@ -182,6 +248,18 @@
        <layout class="QGridLayout" name="gridLayout_3">
         <item row="0" column="1" alignment="Qt::AlignRight">
          <widget class="QLabel" name="sim_prec_type">
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>9</pointsize>
@@ -192,10 +270,25 @@
           <property name="text">
            <string>Design</string>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
          </widget>
         </item>
         <item row="0" column="0">
          <widget class="QLabel" name="sim_prec_type_l">
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>Segoe UI</family>
@@ -209,6 +302,18 @@
         </item>
         <item row="1" column="0">
          <widget class="QLabel" name="sim_prec_total_l">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>Segoe UI</family>
@@ -222,6 +327,18 @@
         </item>
         <item row="1" column="1" alignment="Qt::AlignRight">
          <widget class="QLabel" name="sim_prec_total">
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>9</pointsize>
@@ -231,6 +348,9 @@
           </property>
           <property name="text">
            <string>600mm</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -254,12 +374,24 @@
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>80</height>
+         <height>16777215</height>
         </size>
        </property>
        <layout class="QGridLayout" name="gridLayout_4">
         <item row="3" column="0">
          <widget class="QLabel" name="duration_breach_l">
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>
@@ -272,6 +404,18 @@
         </item>
         <item row="3" column="1" alignment="Qt::AlignRight">
          <widget class="QLabel" name="duration_breach">
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>25</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>9</pointsize>
@@ -281,11 +425,26 @@
           </property>
           <property name="text">
            <string>0</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
         <item row="2" column="1" alignment="Qt::AlignRight">
          <widget class="QLabel" name="breach_id">
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>9</pointsize>
@@ -296,10 +455,25 @@
           <property name="text">
            <string>0</string>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
          </widget>
         </item>
         <item row="2" column="0">
          <widget class="QLabel" name="breach_id_l">
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>
@@ -355,6 +529,18 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="minimumSize">
+      <size>
+       <width>200</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
      <property name="font">
       <font>
        <family>Segoe UI</family>
@@ -401,14 +587,14 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>150</width>
          <height>25</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>25</height>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">
@@ -432,14 +618,14 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>150</width>
          <height>25</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>25</height>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">
@@ -457,14 +643,14 @@
       <widget class="QLabel" name="sim_name">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>200</width>
          <height>25</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>25</height>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">
@@ -489,14 +675,14 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>150</width>
          <height>25</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>25</height>
+         <height>16777215</height>
         </size>
        </property>
        <property name="palette">
@@ -551,14 +737,14 @@
       <widget class="QLabel" name="sim_database">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>200</width>
          <height>25</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>25</height>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">
@@ -577,14 +763,14 @@
       <widget class="QLabel" name="sim_duration">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>200</width>
          <height>25</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>25</height>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">
@@ -617,23 +803,35 @@
      </property>
     </spacer>
    </item>
-   <item row="16" column="2">
-    <spacer name="horizontalSpacer_4">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="15" column="3" colspan="3">
+   <item row="15" column="0" colspan="6">
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
       <widget class="QLabel" name="label_2">
+       <property name="minimumSize">
+        <size>
+         <width>350</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="font">
         <font>
          <pointsize>10</pointsize>
@@ -642,10 +840,25 @@
        <property name="text">
         <string>Save these settings as a template for future simulations</string>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
       </widget>
      </item>
      <item>
       <widget class="QCheckBox" name="cb_save_template">
+       <property name="minimumSize">
+        <size>
+         <width>14</width>
+         <height>14</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>14</width>
+         <height>14</height>
+        </size>
+       </property>
        <property name="font">
         <font>
          <pointsize>10</pointsize>
@@ -666,6 +879,19 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item row="16" column="2">
+    <spacer name="horizontalSpacer_4">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>

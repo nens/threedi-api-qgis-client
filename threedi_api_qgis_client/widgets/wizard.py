@@ -9,7 +9,7 @@ from collections import OrderedDict, defaultdict
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtCore import QSettings, Qt, QSize
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
 from openapi_client import ApiException
 from ..ui_utils import (
@@ -100,6 +100,7 @@ class NameWidget(uicls_name_page, basecls_name_page):
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
 
@@ -115,6 +116,7 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.date_from.dateTimeChanged.connect(self.update_time_difference)
@@ -168,6 +170,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.new_simulations = None
@@ -286,6 +289,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.laterals_timeseries = {}
@@ -440,6 +444,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.current_units = "hrs"
@@ -933,6 +938,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.values = dict()
@@ -1018,10 +1024,11 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_initation.svg"))
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_initiation.svg"))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.plot_widget = pg.PlotWidget()
@@ -1203,6 +1210,7 @@ class SimulationWizard(QWizard):
 
     def __init__(self, parent_dock, init_conditions_dlg, parent=None):
         super().__init__(parent)
+        self.settings = QSettings()
         self.setWizardStyle(QWizard.ClassicStyle)
         self.init_conditions_dlg = init_conditions_dlg
         init_conditions = self.init_conditions_dlg.initial_conditions
@@ -1238,7 +1246,7 @@ class SimulationWizard(QWizard):
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.resize(800, 500)
+        self.resize(self.settings.value("threedi/wizard_size", QSize(800, 600)))
         self.first_simulation = init_conditions.simulations_list[0]
         self.init_conditions = init_conditions
 
@@ -1343,6 +1351,7 @@ class SimulationWizard(QWizard):
 
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
+        self.settings.setValue("threedi/wizard_size", self.size())
         name = self.name_page.main_widget.le_sim_name.text()
         tags = self.name_page.main_widget.le_tags.text()
         threedimodel_id = self.parent_dock.current_model.id
@@ -1511,4 +1520,5 @@ class SimulationWizard(QWizard):
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""
+        self.settings.setValue("threedi/wizard_size", self.size())
         self.reject()
