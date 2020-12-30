@@ -105,7 +105,7 @@ class ThreediCalls:
         if offset is not None:
             params["offset"] = offset
         if name_contains is not None:
-            params["name__contains"] = name_contains
+            params["name__contains"] = name_contains.lower()
         response = api.threedimodels_list(**params)
         models_list = response.results
         models_count = response.count
