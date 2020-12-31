@@ -254,7 +254,7 @@ class LogInDialog(uicls_log, basecls_log):
             self.le_user.setText("")
             self.le_pass.setText("")
             self.log_pbar.setValue(20)
-            self.api_client = get_api_client(username, password)
+            self.api_client = get_api_client(username, password, self.parent_dock.plugin_settings.api_url)
             self.user = username
             self.fetch_msg.show()
             self.wait_widget.update()

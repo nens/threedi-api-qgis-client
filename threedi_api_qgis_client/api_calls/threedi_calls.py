@@ -45,7 +45,7 @@ from openapi_client import (
 )
 
 
-def get_api_client(api_username: str, api_password: str, api_host: str = "https://api.3di.live/v3.0") -> ApiClient:
+def get_api_client(api_username: str, api_password: str, api_host: str) -> ApiClient:
     """Setup open_api client using username and password."""
     os.environ["API_HOST"] = api_host
     os.environ["API_USERNAME"] = api_username
