@@ -24,7 +24,7 @@ class SettingsDialog(QDialog):
 
     def load_settings(self):
         self.api_url = QSettings().value("threedi/api_url", self.DEFAULT_API_URL, type=str)
-        self.wss_url = self.api_url.replace("https:", "wss:")
+        self.wss_url = self.api_url.replace("https:", "wss:").replace("http:", "ws:")
         self.api_url_le.setText(self.api_url)
 
     def save_settings(self):
