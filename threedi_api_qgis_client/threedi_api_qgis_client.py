@@ -1,8 +1,9 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
-# Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
+# Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
-from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtGui import QIcon
+from .settings import SettingsDialog
 from .deps.custom_imports import patch_wheel_imports
 import os.path
 
@@ -23,7 +24,7 @@ class ThreediQgisClient:
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
-
+        self.plugin_settings = SettingsDialog()
         # initialize locale
         locale = QSettings().value("locale/userLocale")[0:2]
         locale_path = os.path.join(self.plugin_dir, "i18n", "ThreediQgisClient_{}.qm".format(locale))
@@ -133,6 +134,7 @@ class ThreediQgisClient:
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         icon_path = ":/plugins/threedi_api_qgis_client/icon.png"
         self.add_action(icon_path, text=self.tr(u"3Di API Client"), callback=self.run, parent=self.iface.mainWindow())
+        self.add_action(icon_path, text=self.tr(u"Settings"), callback=self.settings, parent=self.iface.mainWindow())
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
@@ -148,6 +150,10 @@ class ThreediQgisClient:
         # remove the toolbar
         del self.toolbar
 
+    def settings(self):
+        """Show plugin settings dialog."""
+        self.plugin_settings.exec_()
+
     def run(self):
         """Run method that loads and starts the plugin"""
         patch_wheel_imports()
@@ -157,7 +163,7 @@ class ThreediQgisClient:
             self.pluginIsActive = True
             if self.dockwidget is None:
                 # Create the dockwidget (after translation) and keep reference
-                self.dockwidget = ThreediQgisClientDockWidget(self.iface)
+                self.dockwidget = ThreediQgisClientDockWidget(self.iface, self.plugin_settings)
 
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)

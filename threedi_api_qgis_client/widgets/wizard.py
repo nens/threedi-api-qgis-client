@@ -1,5 +1,5 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
-# Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
+# Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
 import csv
 import pyqtgraph as pg
@@ -1500,7 +1500,13 @@ class SimulationWizard(QWizard):
                         offset=poffset,
                         start_datetime=pstart,
                     )
-                tc.make_action_on_simulation(sim_id, name="queue")
+                try:
+                    tc.make_action_on_simulation(sim_id, name="start")
+                except ApiException as e:
+                    if e.status == 429:
+                        tc.make_action_on_simulation(sim_id, name="queue")
+                    else:
+                        raise e
                 self.new_simulations.append(new_simulation)
                 self.new_simulation_statuses[new_simulation.id] = current_status
                 msg = f"Simulation {new_simulation.name} added to queue!"

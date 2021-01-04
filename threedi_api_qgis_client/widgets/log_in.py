@@ -1,5 +1,5 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
-# Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
+# Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
 from math import ceil
 from time import sleep
@@ -254,7 +254,7 @@ class LogInDialog(uicls_log, basecls_log):
             self.le_user.setText("")
             self.le_pass.setText("")
             self.log_pbar.setValue(20)
-            self.api_client = get_api_client(username, password)
+            self.api_client = get_api_client(username, password, self.parent_dock.plugin_settings.api_url)
             self.user = username
             self.fetch_msg.show()
             self.wait_widget.update()

@@ -1,5 +1,5 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
-# Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
+# Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Tuple, Callable, Any
@@ -45,7 +45,7 @@ from openapi_client import (
 )
 
 
-def get_api_client(api_username: str, api_password: str, api_host: str = "https://api.3di.live/v3.0") -> ApiClient:
+def get_api_client(api_username: str, api_password: str, api_host: str) -> ApiClient:
     """Setup open_api client using username and password."""
     os.environ["API_HOST"] = api_host
     os.environ["API_USERNAME"] = api_username
@@ -105,7 +105,7 @@ class ThreediCalls:
         if offset is not None:
             params["offset"] = offset
         if name_contains is not None:
-            params["name__contains"] = name_contains
+            params["name__contains"] = name_contains.lower()
         response = api.threedimodels_list(**params)
         models_list = response.results
         models_count = response.count

@@ -1,5 +1,5 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
-# Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
+# Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
 import json
 import requests
@@ -20,11 +20,10 @@ class WSProgressesSentinel(QObject):
     thread_failed = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
 
-    WSS_HOST = "wss://api.3di.live/v3.0"
-
-    def __init__(self, api_client):
+    def __init__(self, api_client, wss_url):
         super().__init__()
         self.api_client = api_client
+        self.wss_url = wss_url
         self.tc = None
         self.ws_client = None
         self.progresses = {}
@@ -51,7 +50,7 @@ class WSProgressesSentinel(QObject):
         identifier = "Bearer"
         api_key = self.tc.api_client.configuration.api_key["Authorization"]
         token_with_prefix = f"{identifier} {api_key}"
-        ws_request = QtNetwork.QNetworkRequest(QUrl(f"{self.WSS_HOST}/active-simulations/"))
+        ws_request = QtNetwork.QNetworkRequest(QUrl(f"{self.wss_url}/active-simulations/"))
         ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(token_with_prefix))
         self.ws_client.open(ws_request)
 

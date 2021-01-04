@@ -1,5 +1,5 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
-# Copyright (C) 2020 by Lutra Consulting for 3Di Water Management
+# Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QThread, pyqtSignal
@@ -20,11 +20,12 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     closingPlugin = pyqtSignal()
 
-    def __init__(self, iface, parent=None):
+    def __init__(self, iface, plugin_settings, parent=None):
         """Constructor."""
         super().__init__(parent)
         self.setupUi(self)
         self.iface = iface
+        self.plugin_settings = plugin_settings
         self.communication = UICommunication(self.iface, "3Di MI", self.lv_log)
         self.simulations_progresses_thread = None
         self.simulations_progresses_sentinel = None
@@ -134,7 +135,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulations_progresses_thread is not None:
             self.terminate_fetching_simulations_progresses_thread()
         self.simulations_progresses_thread = QThread()
-        self.simulations_progresses_sentinel = WSProgressesSentinel(self.api_client)
+        self.simulations_progresses_sentinel = WSProgressesSentinel(self.api_client, self.plugin_settings.wss_url)
         self.simulations_progresses_sentinel.moveToThread(self.simulations_progresses_thread)
         self.simulations_progresses_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
         self.simulations_progresses_sentinel.thread_failed.connect(self.on_fetching_simulations_progresses_failed)
