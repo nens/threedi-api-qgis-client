@@ -13,7 +13,7 @@
    version="1.1"
    id="svg3767"
    inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
-   sodipodi:docname="sim_wizard_breaches.svg">
+   sodipodi:docname="sim_wizard_wind.svg">
   <defs
      id="defs3761" />
   <sodipodi:namedview
@@ -24,8 +24,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="426.204"
-     inkscape:cy="72.673489"
+     inkscape:cx="540.55901"
+     inkscape:cy="100.36603"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -59,7 +59,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -69,7 +69,7 @@
      id="layer1"
      transform="translate(-14.357216,-2.6426198)">
     <rect
-       style="fill:#ffffff;fill-opacity:0.917647;stroke:none;stroke-width:0.067419;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#6ccf86;fill-opacity:0.99215686;stroke:none;stroke-width:0.067419;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect69-4-2"
        width="13.015121"
        height="2.211853"
@@ -83,7 +83,7 @@
        x="143.75247"
        y="15.541258" />
     <ellipse
-       style="fill:#ffffff;fill-opacity:0.917647;stroke-width:0.0596828"
+       style="fill:#6cce86;fill-opacity:0.917647;stroke-width:0.0596828"
        id="circle3765"
        cx="168.99922"
        cy="16.222464"
@@ -207,9 +207,9 @@
        id="text50"
        y="9.0663071"
        x="132.15134"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.64423px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.227764;"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.64423px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.227764"
        xml:space="preserve"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.64423px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.227764;"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.64423px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.227764"
          y="9.0663071"
          x="132.15134"
          id="tspan48"
@@ -235,6 +235,13 @@
        cy="16.373985"
        rx="3.046165"
        ry="3.0129485" />
+    <ellipse
+       cy="16.373983"
+       cx="143.16953"
+       id="circle3763"
+       style="fill:#6cce86;fill-opacity:0.917647;stroke-width:0.0596828"
+       rx="3.046165"
+       ry="3.0129485" />
     <rect
        y="15.407578"
        x="56.85796"
@@ -257,7 +264,7 @@
        id="rect65"
        style="fill:#6cce86;fill-opacity:0.917647;stroke:none;stroke-width:0.0654315;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <rect
-       style="fill:#ffffff;fill-opacity:0.917647;stroke:none;stroke-width:0.0683251;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#6cce86;fill-opacity:0.917647;stroke:none;stroke-width:0.0683251;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect67"
        width="13.367278"
        height="2.211853"
@@ -269,7 +276,7 @@
        height="2.211853"
        width="12.357039"
        id="rect69"
-       style="fill:#ffffff;fill-opacity:0.917647;stroke:none;stroke-width:0.0656925;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+       style="fill:#6cce86;fill-opacity:0.917647;stroke:none;stroke-width:0.0656925;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.64423px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.227764"
@@ -298,7 +305,7 @@
        height="2.211853"
        width="13.015121"
        id="rect69-4"
-       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.0674191;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+       style="fill:#6cce86;fill-opacity:0.917647;stroke:none;stroke-width:0.0674191;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <rect
        y="15.407578"
        x="117.94534"
@@ -350,7 +357,7 @@
        y="15.407578" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.64424px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.227764;"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.64424px;line-height:1.25;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.227764"
        x="164.85585"
        y="9.0752115"
        id="text50-1"><tspan
@@ -358,13 +365,6 @@
          id="tspan48-6"
          x="164.85585"
          y="9.0752115"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.64424px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.227764;">Wind</tspan></text>
-    <ellipse
-       cy="16.373983"
-       cx="143.16953"
-       id="circle3763"
-       style="fill:#ffffff;fill-opacity:0.917647;stroke-width:0.0596828"
-       rx="3.046165"
-       ry="3.0129485" />
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.64424px;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.227764">Wind</tspan></text>
   </g>
 </svg>

@@ -42,6 +42,9 @@ from openapi_client import (
     LizardRasterRain,
     UploadEventFile,
     Upload,
+    ConstantWind,
+    TimeseriesWind,
+    WindDragCoefficient,
 )
 
 
@@ -351,3 +354,21 @@ class ThreediCalls:
         api = SimulationsApi(self.api_client)
         initial_saved_state = api.simulations_initial_saved_state_create((str(simulation_pk)), data)
         return initial_saved_state
+
+    def add_initial_wind_drag_coefficient(self, simulation_pk: int, **data) -> WindDragCoefficient:
+        """Add initial wind drag coefficient to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        initial_wind_drag_coefficient = api.simulations_initial_wind_drag_coefficient_create((str(simulation_pk)), data)
+        return initial_wind_drag_coefficient
+
+    def add_constant_wind(self, simulation_pk: int, **wind_data) -> ConstantWind:
+        """Add ConstantWind to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        constant_wind = api.simulations_events_wind_constant_create(str(simulation_pk), wind_data)
+        return constant_wind
+
+    def add_custom_wind(self, simulation_pk: int, **wind_data) -> TimeseriesWind:
+        """Add TimeseriesWind to the given simulation."""
+        api = SimulationsApi(self.api_client)
+        time_series_wind = api.simulations_events_wind_timeseries_create((str(simulation_pk)), wind_data)
+        return time_series_wind

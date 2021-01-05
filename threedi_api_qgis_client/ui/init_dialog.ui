@@ -649,6 +649,13 @@
       </widget>
      </item>
      <item>
+      <widget class="QCheckBox" name="cb_wind">
+       <property name="text">
+        <string>Include wind</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QCheckBox" name="cb_multiple_simulations">
        <property name="enabled">
         <bool>false</bool>
