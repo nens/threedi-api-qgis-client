@@ -1601,7 +1601,9 @@ class SimulationWizard(QWizard):
             self.new_simulation_statuses = {}
             simulation_difference = self.init_conditions.simulations_difference
             ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate, pfpath, pcsv, pnetcdf = (None,) * 10
-            wtype, woffset, wduration, wspeed, wdirection, wunits, wdrag_coeff, wispeed, widirection, wvalues = (None,) * 10
+            wtype, woffset, wduration, wspeed, wdirection, wunits, wdrag_coeff, wispeed, widirection, wvalues = (
+                None,
+            ) * 10
             breach_id, width, d_duration = (None,) * 3
             for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
                 laterals = []
@@ -1618,7 +1620,18 @@ class SimulationWizard(QWizard):
                 if hasattr(self, "laterals_page"):
                     laterals = self.laterals_page.main_widget.get_laterals_data()
                 if hasattr(self, "wind_page"):
-                    wtype, woffset, wduration, wspeed, wdirection, wunits, wdrag_coeff, wispeed, widirection, wvalues = self.wind_page.main_widget.get_wind_data()
+                    (
+                        wtype,
+                        woffset,
+                        wduration,
+                        wspeed,
+                        wdirection,
+                        wunits,
+                        wdrag_coeff,
+                        wispeed,
+                        widirection,
+                        wvalues,
+                    ) = self.wind_page.main_widget.get_wind_data()
                 tc = ThreediCalls(self.parent_dock.api_client)
                 sim_name = f"{name}_{i}" if self.init_conditions.multiple_simulations is True else name
                 new_simulation = tc.new_simulation(
@@ -1722,11 +1735,23 @@ class SimulationWizard(QWizard):
                 if self.init_conditions.include_wind:
                     tc.add_initial_wind_drag_coefficient(sim_id, value=wdrag_coeff)
                 if wtype == CONSTANT:
-                    tc.add_constant_wind(sim_id, offset=woffset, duration=wduration, units=wunits, speed_value=wspeed,
-                                         direction_value=wdirection)
+                    tc.add_constant_wind(
+                        sim_id,
+                        offset=woffset,
+                        duration=wduration,
+                        units=wunits,
+                        speed_value=wspeed,
+                        direction_value=wdirection,
+                    )
                 elif wtype == CUSTOM:
-                    tc.add_custom_wind(sim_id, offset=woffset, values=wvalues, units=wunits, speed_interpolate=wispeed,
-                                       direction_interpolate=widirection)
+                    tc.add_custom_wind(
+                        sim_id,
+                        offset=woffset,
+                        values=wvalues,
+                        units=wunits,
+                        speed_interpolate=wispeed,
+                        direction_interpolate=widirection,
+                    )
                 try:
                     tc.make_action_on_simulation(sim_id, name="start")
                 except ApiException as e:
