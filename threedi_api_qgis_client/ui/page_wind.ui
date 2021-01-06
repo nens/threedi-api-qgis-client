@@ -471,10 +471,19 @@
       </item>
       <item row="6" column="1">
        <widget class="QSpinBox" name="sp_direction">
+        <property name="minimumSize">
+         <size>
+          <width>105</width>
+          <height>25</height>
+         </size>
+        </property>
         <property name="font">
          <font>
           <pointsize>10</pointsize>
          </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QSpinBox {background-color: white;}</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -487,6 +496,9 @@
         </property>
         <property name="suffix">
          <string>°</string>
+        </property>
+        <property name="maximum">
+         <number>359</number>
         </property>
        </widget>
       </item>
@@ -553,7 +565,7 @@
            <string>E</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -576,7 +588,7 @@
            <string>W</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -593,8 +605,11 @@
             <pointsize>8</pointsize>
            </font>
           </property>
+          <property name="minimum">
+           <number>0</number>
+          </property>
           <property name="maximum">
-           <number>360</number>
+           <number>359</number>
           </property>
           <property name="value">
            <number>180</number>
@@ -655,7 +670,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Direction (0-360°):</string>
+         <string>Direction (0-359°):</string>
         </property>
        </widget>
       </item>
@@ -764,7 +779,7 @@
        </widget>
       </item>
       <item row="2" column="2">
-       <widget class="QComboBox" name="start_after_constant_u">
+       <widget class="QComboBox" name="cbo_windspeed_u">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -918,6 +933,15 @@
         </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
+        </property>
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="maximum">
+         <double>100.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.005000000000000</double>
         </property>
        </widget>
       </item>
