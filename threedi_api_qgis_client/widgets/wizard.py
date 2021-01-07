@@ -1660,21 +1660,6 @@ class SimulationWizard(QWizard):
                     )
                 if self.init_conditions.generate_saved_state:
                     tc.add_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
-                if self.init_conditions.include_breaches:
-                    breach_obj = tc.fetch_single_potential_breach(threedimodel_id, int(breach_id))
-                    breach = breach_obj.to_dict()
-                    tc.add_breaches(
-                        sim_id,
-                        potential_breach=breach["url"],
-                        duration_till_max_depth=d_duration,
-                        initial_width=width,
-                        offset=0,
-                    )
-                if self.init_conditions.include_laterals:
-                    lateral_values = list(laterals.values())
-                    write_laterals_to_json(lateral_values)
-                    upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_laterals.json", offset=0)
-                    upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
                 if self.init_conditions.include_initial_conditions:
                     if self.init_conditions_page.main_widget.cb_1d.isChecked():
                         if self.init_conditions_page.main_widget.dd_1d.currentText() == "Global value":
@@ -1700,6 +1685,23 @@ class SimulationWizard(QWizard):
                     if self.init_conditions.load_from_saved_state and saved_state:
                         saved_state_id = saved_state.url.strip("/").split("/")[-1]
                         tc.add_initial_saved_state(sim_id, saved_state=saved_state_id)
+
+                if self.init_conditions.include_laterals:
+                    lateral_values = list(laterals.values())
+                    write_laterals_to_json(lateral_values)
+                    upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_laterals.json", offset=0)
+                    upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
+
+                if self.init_conditions.include_breaches:
+                    breach_obj = tc.fetch_single_potential_breach(threedimodel_id, int(breach_id))
+                    breach = breach_obj.to_dict()
+                    tc.add_breaches(
+                        sim_id,
+                        potential_breach=breach["url"],
+                        duration_till_max_depth=d_duration,
+                        initial_width=width,
+                        offset=0,
+                    )
 
                 if ptype == CONSTANT:
                     tc.add_constant_precipitation(
