@@ -91,7 +91,7 @@ RADAR_ID = "d6c2347d-7bd1-4d9d-a1f6-b342c865516f"
 
 
 class NameWidget(uicls_name_page, basecls_name_page):
-    """Widget for Name page."""
+    """Widget for the Name page."""
 
     def __init__(self, parent_page):
         super().__init__()
@@ -107,7 +107,7 @@ class NameWidget(uicls_name_page, basecls_name_page):
 
 
 class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
-    """Widget for Simulation Duration page."""
+    """Widget for the Simulation Duration page."""
 
     def __init__(self, parent_page):
         super().__init__()
@@ -163,7 +163,7 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
 
 
 class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
-    """Widget for Initial Conditions page."""
+    """Widget for the Initial Conditions page."""
 
     def __init__(self, parent_page, load_conditions=False):
         super().__init__()
@@ -284,7 +284,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
 
 
 class LateralsWidget(uicls_laterals, basecls_laterals):
-    """Widget for Laterals page."""
+    """Widget for the Laterals page."""
 
     def __init__(self, parent_page):
         super().__init__()
@@ -436,7 +436,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
 
 class BreachesWidget(uicls_breaches, basecls_breaches):
-    """Widget for Breaches page."""
+    """Widget for the Breaches page."""
 
     SECONDS_MULTIPLIERS = {"s": 1, "mins": 60, "hrs": 3600}
 
@@ -528,7 +528,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
 
 
 class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
-    """Widget for Precipitation page."""
+    """Widget for the Precipitation page."""
 
     SECONDS_MULTIPLIERS = {"s": 1, "mins": 60, "hrs": 3600}
     DESIGN_TIMESTEP = 300
@@ -1025,7 +1025,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
 
 
 class WindWidget(uicls_wind_page, basecls_wind_page):
-    """Widget for Wind page."""
+    """Widget for the Wind page."""
 
     SECONDS_MULTIPLIERS = {"s": 1, "mins": 60, "hrs": 3600}
 
@@ -1132,25 +1132,6 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
         self.le_upload_wind.setText(filename)
         self.custom_wind = time_series
 
-    def get_windspeed(self):
-        """Getting wind speed value for the Constant precipitation type."""
-        windspeed = self.sp_windspeed.value()
-        return windspeed
-
-    def get_direction(self):
-        """Getting direction value for the Constant wind type."""
-        direction = self.sp_direction.value()
-        return direction
-
-    def get_drag_coefficient(self):
-        """Getting drag coefficient value."""
-        current_text = self.cbo_wind_type.currentText()
-        if current_text == CONSTANT:
-            drag_coefficient = self.sp_dc_constant.value()
-        else:
-            drag_coefficient = self.sp_dc_custom.value()
-        return drag_coefficient
-
     def get_wind_offset(self):
         """Calculating wind offset in seconds."""
         current_text = self.cbo_wind_type.currentText()
@@ -1190,6 +1171,25 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
             wind_duration = 0
         return wind_duration
 
+    def get_windspeed(self):
+        """Getting wind speed value for the Constant precipitation type."""
+        windspeed = self.sp_windspeed.value()
+        return windspeed
+
+    def get_direction(self):
+        """Getting direction value for the Constant wind type."""
+        direction = self.sp_direction.value()
+        return direction
+
+    def get_drag_coefficient(self):
+        """Getting drag coefficient value."""
+        current_text = self.cbo_wind_type.currentText()
+        if current_text == CONSTANT:
+            drag_coefficient = self.sp_dc_constant.value()
+        else:
+            drag_coefficient = self.sp_dc_custom.value()
+        return drag_coefficient
+
     def get_interpolate_flags(self):
         """Getting interpolate flags values."""
         interpolate_speed = self.cb_interpolate_speed.isChecked()
@@ -1211,7 +1211,7 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
 
 
 class SummaryWidget(uicls_summary_page, basecls_summary_page):
-    """Widget for Summary page."""
+    """Widget for the Summary page."""
 
     def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
