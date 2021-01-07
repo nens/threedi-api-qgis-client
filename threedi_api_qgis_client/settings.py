@@ -7,6 +7,7 @@ from qgis.PyQt import uic
 
 
 class SettingsDialog(QDialog):
+    """Dialog with plugin settings."""
 
     DEFAULT_API_URL = "https://api.3di.live/v3.0"
 
@@ -23,24 +24,29 @@ class SettingsDialog(QDialog):
         self.load_settings()
 
     def load_settings(self):
+        """Loading plugin settings from QSettings."""
         self.api_url = QSettings().value("threedi/api_url", self.DEFAULT_API_URL, type=str)
         self.wss_url = self.api_url.replace("https:", "wss:").replace("http:", "ws:")
         self.api_url_le.setText(self.api_url)
 
     def save_settings(self):
+        """Saving plugin settings in QSettings."""
         self.api_url = self.api_url_le.text()
         QSettings().setValue("threedi/api_url", self.api_url)
 
     def restore_defaults(self):
+        """Restoring default settings values."""
         self.api_url_le.setText(self.DEFAULT_API_URL)
         self.save_settings()
         self.load_settings()
 
     def accept(self):
+        """Accepting changes and closing dialog."""
         self.save_settings()
         self.load_settings()
         super().accept()
 
     def reject(self):
+        """Rejecting changes and closing dialog."""
         self.load_settings()
         super().reject()

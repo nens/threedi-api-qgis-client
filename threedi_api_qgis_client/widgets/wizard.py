@@ -1607,18 +1607,18 @@ class SimulationWizard(QWizard):
             breach_id, width, d_duration = (None,) * 3
             for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
                 laterals = []
-                if hasattr(self, "precipitation_page"):
-                    self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
-                    pdata = self.precipitation_page.main_widget.get_precipitation_data()
-                    if simulation_difference == "precipitation" or i == 1:
-                        ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate, pfpath, pcsv, pnetcdf = pdata
+                if hasattr(self, "laterals_page"):
+                    laterals = self.laterals_page.main_widget.get_laterals_data()
                 if hasattr(self, "breaches_page"):
                     self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                     breach_data = self.breaches_page.main_widget.get_breaches_data()
                     if simulation_difference == "breaches" or i == 1:
                         breach_id, width, d_duration = breach_data
-                if hasattr(self, "laterals_page"):
-                    laterals = self.laterals_page.main_widget.get_laterals_data()
+                if hasattr(self, "precipitation_page"):
+                    self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
+                    pdata = self.precipitation_page.main_widget.get_precipitation_data()
+                    if simulation_difference == "precipitation" or i == 1:
+                        ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate, pfpath, pcsv, pnetcdf = pdata
                 if hasattr(self, "wind_page"):
                     (
                         wtype,
