@@ -1147,7 +1147,7 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
         return direction
 
     def get_drag_coefficient(self):
-        """Getting drag coefficient value for the Constant wind type."""
+        """Getting drag coefficient value."""
         current_text = self.cbo_wind_type.currentText()
         if current_text == CONSTANT:
             drag_coefficient = self.sp_dc_constant.value()
