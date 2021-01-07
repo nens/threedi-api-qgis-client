@@ -16,7 +16,6 @@ class SimulationInit(uicls, basecls):
         super().__init__(parent)
         self.setupUi(self)
         self.parent_dock = parent_dock
-
         self.open_wizard = False
         self.initial_conditions = None
         self.multiple_simulations_widget.setVisible(False)
@@ -102,6 +101,7 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.include_laterals = self.cb_laterals.isChecked()
         self.initial_conditions.include_breaches = self.cb_breaches.isChecked()
         self.initial_conditions.include_precipitations = self.cb_precipitation.isChecked()
+        self.initial_conditions.include_wind = self.cb_wind.isChecked()
         self.initial_conditions.multiple_simulations = self.cb_multiple_simulations.isChecked()
         if self.initial_conditions.multiple_simulations:
             self.initial_conditions.number_of_simulations = int(self.dd_number_of_simulation.currentText())
@@ -132,6 +132,7 @@ class SimulationInitObject:
         self.include_laterals = False
         self.include_breaches = False
         self.include_precipitations = False
+        self.include_wind = False
         self.multiple_simulations = False
         self.number_of_simulations = 1
         self.simulations_list = []
