@@ -256,109 +256,109 @@ class ThreediCalls:
     def add_custom_precipitation(self, simulation_pk: int, **rain_data) -> TimeseriesRain:
         """Add TimeseriesRain to the given simulation."""
         api = SimulationsApi(self.api_client)
-        time_series_rain = api.simulations_events_rain_timeseries_create((str(simulation_pk)), rain_data)
+        time_series_rain = api.simulations_events_rain_timeseries_create(str(simulation_pk), rain_data)
         return time_series_rain
 
     def add_custom_netcdf_precipitation(self, simulation_pk: int, **rain_data) -> Upload:
         """Add rain time series from NetCDF file to the given simulation."""
         api = SimulationsApi(self.api_client)
-        netcdf_upload = api.simulations_events_rain_rasters_netcdf_create((str(simulation_pk)), rain_data)
+        netcdf_upload = api.simulations_events_rain_rasters_netcdf_create(str(simulation_pk), rain_data)
         return netcdf_upload
 
     def add_radar_precipitation(self, simulation_pk: int, **rain_data) -> LizardRasterRain:
         """Add LizardRasterRain to the given simulation."""
         api = SimulationsApi(self.api_client)
-        time_series_rain = api.simulations_events_rain_rasters_lizard_create((str(simulation_pk)), rain_data)
+        time_series_rain = api.simulations_events_rain_rasters_lizard_create(str(simulation_pk), rain_data)
         return time_series_rain
 
     def add_breaches(self, simulation_pk: int, **data) -> Breach:
         """Add Breach to the given simulation."""
         api = SimulationsApi(self.api_client)
-        breach = api.simulations_events_breaches_create((str(simulation_pk)), data)
+        breach = api.simulations_events_breaches_create(str(simulation_pk), data)
         return breach
 
     def add_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
         """Add lateral timeseries to the given simulation."""
         api = SimulationsApi(self.api_client)
-        lateral_timeseries = api.simulations_events_lateral_timeseries_create((str(simulation_pk)), data)
+        lateral_timeseries = api.simulations_events_lateral_timeseries_create(str(simulation_pk), data)
         return lateral_timeseries
 
     def add_lateral_file(self, simulation_pk: int, **data) -> UploadEventFile:
         """Add lateral file to the given simulation."""
         api = SimulationsApi(self.api_client)
-        lateral_upload_file = api.simulations_events_lateral_file_create((str(simulation_pk)), data)
+        lateral_upload_file = api.simulations_events_lateral_file_create(str(simulation_pk), data)
         return lateral_upload_file
 
     def add_postprocessing_in_lizard_arrival(self, simulation_pk: int, **data) -> ArrivalTimePostProcessing:
         """Add add_postprocessing_in_lizard_arrival to the given simulation."""
         api = SimulationsApi(self.api_client)
-        time_post_processing = api.simulations_results_post_processing_lizard_arrival_create((str(simulation_pk)), data)
+        time_post_processing = api.simulations_results_post_processing_lizard_arrival_create(str(simulation_pk), data)
         return time_post_processing
 
     def add_post_processing_lizard_basic(self, simulation_pk: int, **data) -> BasicPostProcessing:
         """Add add_post_processing_lizard_basic to the given simulation."""
         api = SimulationsApi(self.api_client)
-        basic_post_processing = api.simulations_results_post_processing_lizard_basic_create((str(simulation_pk)), data)
+        basic_post_processing = api.simulations_results_post_processing_lizard_basic_create(str(simulation_pk), data)
         return basic_post_processing
 
     def add_post_processing_lizard_damage(self, simulation_pk: int, **data) -> DamagePostProcessing:
         """Add add_post_processing_lizard_damage to the given simulation."""
         api = SimulationsApi(self.api_client)
-        dmg_post_processing = api.simulations_results_post_processing_lizard_damage_create((str(simulation_pk)), data)
+        dmg_post_processing = api.simulations_results_post_processing_lizard_damage_create(str(simulation_pk), data)
         return dmg_post_processing
 
     def add_saved_state_after_simulation(self, simulation_pk: int, **data) -> TimedSavedStateUpdate:
         """Add add_saved_state_after_simulation to the given simulation."""
         api = SimulationsApi(self.api_client)
-        saved_state = api.simulations_create_saved_states_timed_create((str(simulation_pk)), data)
+        saved_state = api.simulations_create_saved_states_timed_create(str(simulation_pk), data)
         return saved_state
 
     def add_initial_1d_water_level_constant(self, simulation_pk: int, **data) -> OneDWaterLevel:
         """Add add_initial_1d_water_level_constant to the given simulation."""
         api = SimulationsApi(self.api_client)
-        water_level_1d_const = api.simulations_initial1d_water_level_constant_create((str(simulation_pk)), data)
+        water_level_1d_const = api.simulations_initial1d_water_level_constant_create(str(simulation_pk), data)
         return water_level_1d_const
 
     def add_initial_1d_water_level_predefined(self, simulation_pk: int, **data) -> OneDWaterLevelPredefined:
         """Add add_initial_1d_water_level_predefined to the given simulation."""
         api = SimulationsApi(self.api_client)
-        water_level_1d_pred = api.simulations_initial1d_water_level_predefined_create((str(simulation_pk)), data)
+        water_level_1d_pred = api.simulations_initial1d_water_level_predefined_create(str(simulation_pk), data)
         return water_level_1d_pred
 
     def add_initial_2d_water_level_constant(self, simulation_pk: int, **data) -> TwoDWaterLevel:
         """Add add_initial_2d_water_level_constant to the given simulation."""
         api = SimulationsApi(self.api_client)
-        water_level_2d_const = api.simulations_initial2d_water_level_constant_create((str(simulation_pk)), data)
+        water_level_2d_const = api.simulations_initial2d_water_level_constant_create(str(simulation_pk), data)
         return water_level_2d_const
 
     def add_initial_2d_water_level_raster(self, simulation_pk: int, **data) -> TwoDWaterRaster:
         """Add add_initial_2d_water_level_raster to the given simulation."""
         api = SimulationsApi(self.api_client)
-        water_level_2d_raster = api.simulations_initial2d_water_level_raster_create((str(simulation_pk)), data)
+        water_level_2d_raster = api.simulations_initial2d_water_level_raster_create(str(simulation_pk), data)
         return water_level_2d_raster
 
     def add_initial_groundwater_level_constant(self, simulation_pk: int, **data) -> GroundWaterLevel:
         """Add add_initial_groundwater_level_constant to the given simulation."""
         api = SimulationsApi(self.api_client)
-        groundwater_const = api.simulations_initial_groundwater_level_constant_create((str(simulation_pk)), data)
+        groundwater_const = api.simulations_initial_groundwater_level_constant_create(str(simulation_pk), data)
         return groundwater_const
 
     def add_initial_groundwater_level_raster(self, simulation_pk: int, **data) -> GroundWaterRaster:
         """Add add_initial_groundwater_level_raster to the given simulation."""
         api = SimulationsApi(self.api_client)
-        groundwater_raster = api.simulations_initial_groundwater_level_raster_create((str(simulation_pk)), data)
+        groundwater_raster = api.simulations_initial_groundwater_level_raster_create(str(simulation_pk), data)
         return groundwater_raster
 
     def add_initial_saved_state(self, simulation_pk: int, **data) -> InitialSavedState:
         """Add initial saved state to the given simulation."""
         api = SimulationsApi(self.api_client)
-        initial_saved_state = api.simulations_initial_saved_state_create((str(simulation_pk)), data)
+        initial_saved_state = api.simulations_initial_saved_state_create(str(simulation_pk), data)
         return initial_saved_state
 
     def add_initial_wind_drag_coefficient(self, simulation_pk: int, **data) -> WindDragCoefficient:
         """Add initial wind drag coefficient to the given simulation."""
         api = SimulationsApi(self.api_client)
-        initial_wind_drag_coefficient = api.simulations_initial_wind_drag_coefficient_create((str(simulation_pk)), data)
+        initial_wind_drag_coefficient = api.simulations_initial_wind_drag_coefficient_create(str(simulation_pk), data)
         return initial_wind_drag_coefficient
 
     def add_constant_wind(self, simulation_pk: int, **wind_data) -> ConstantWind:

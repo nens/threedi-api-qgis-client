@@ -1111,10 +1111,6 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
         else:
             self.current_units = self.start_wind_custom_u.currentText()
 
-    def refresh_duration(self):
-        """Refreshing wind duration in seconds."""
-        self.wind_duration = self.get_wind_duration()
-
     def set_custom_wind(self):
         """Selecting and setting up wind time series from CSV format."""
         file_filter = "CSV (*.csv);;All Files (*)"
@@ -1194,6 +1190,12 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
             wind_duration = 0
         return wind_duration
 
+    def get_interpolate_flags(self):
+        """Getting interpolate flags values."""
+        interpolate_speed = self.cb_interpolate_speed.isChecked()
+        interpolate_direction = self.cb_interpolate_direction.isChecked()
+        return interpolate_speed, interpolate_direction
+
     def get_wind_data(self):
         """Getting all needed data for adding wind to the simulation."""
         wind_type = self.cbo_wind_type.currentText()
@@ -1203,8 +1205,7 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
         direction = self.get_direction()
         units = self.cbo_windspeed_u.currentText()
         drag_coeff = self.get_drag_coefficient()
-        inter_speed = self.cb_interpolate_speed.isChecked()
-        inter_direction = self.cb_interpolate_direction.isChecked()
+        inter_speed, inter_direction = self.get_interpolate_flags()
         values = self.custom_wind
         return wind_type, offset, duration, speed, direction, units, drag_coeff, inter_speed, inter_direction, values
 
@@ -1592,10 +1593,8 @@ class SimulationWizard(QWizard):
             saved_state = self.init_conditions_page.main_widget.saved_states.get(
                 self.init_conditions_page.main_widget.cb_saved_states.currentText()
             )
-
         if self.summary_page.main_widget.cb_save_template.isChecked():
             self.save_simulation_as_template()
-
         try:
             self.new_simulations = []
             self.new_simulation_statuses = {}
@@ -1685,13 +1684,11 @@ class SimulationWizard(QWizard):
                     if self.init_conditions.load_from_saved_state and saved_state:
                         saved_state_id = saved_state.url.strip("/").split("/")[-1]
                         tc.add_initial_saved_state(sim_id, saved_state=saved_state_id)
-
                 if self.init_conditions.include_laterals:
                     lateral_values = list(laterals.values())
                     write_laterals_to_json(lateral_values)
                     upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_laterals.json", offset=0)
                     upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
-
                 if self.init_conditions.include_breaches:
                     breach_obj = tc.fetch_single_potential_breach(threedimodel_id, int(breach_id))
                     breach = breach_obj.to_dict()
@@ -1702,7 +1699,6 @@ class SimulationWizard(QWizard):
                         initial_width=width,
                         offset=0,
                     )
-
                 if ptype == CONSTANT:
                     tc.add_constant_precipitation(
                         sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset
