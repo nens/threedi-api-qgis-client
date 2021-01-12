@@ -1084,10 +1084,6 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
     def sync_dial(self):
         """Syncing dial position with direction value."""
         direction = self.sp_direction.value()
-        if direction < 180:
-            direction += 180
-        else:
-            direction -= 180
         dial_value = self.wind_dial.value()
         if dial_value != direction:
             self.wind_dial.setValue(direction)
@@ -1095,10 +1091,6 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
     def sync_direction_value(self):
         """Syncing direction value with dial position."""
         dial_value = self.wind_dial.value()
-        if dial_value < 180:
-            dial_value += 180
-        else:
-            dial_value -= 180
         direction = self.sp_direction.value()
         if dial_value != direction:
             self.sp_direction.setValue(dial_value)

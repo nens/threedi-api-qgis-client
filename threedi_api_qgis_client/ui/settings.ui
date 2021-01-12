@@ -101,6 +101,12 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>api_url_le</tabstop>
+  <tabstop>save_pb</tabstop>
+  <tabstop>cancel_pb</tabstop>
+  <tabstop>defaults_pb</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
