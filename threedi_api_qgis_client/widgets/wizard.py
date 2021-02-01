@@ -2,6 +2,7 @@
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
 import csv
+import time
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
@@ -1681,6 +1682,12 @@ class SimulationWizard(QWizard):
                     write_laterals_to_json(lateral_values)
                     upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_laterals.json", offset=0)
                     upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
+                    for ti in range(10):
+                        uploaded_lateral = tc.fetch_lateral_files(sim_id)[0]
+                        if uploaded_lateral.state == "processed":
+                            break
+                        else:
+                            time.sleep(2.5)
                 if self.init_conditions.include_breaches:
                     breach_obj = tc.fetch_single_potential_breach(threedimodel_id, int(breach_id))
                     breach = breach_obj.to_dict()

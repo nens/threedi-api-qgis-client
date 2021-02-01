@@ -45,6 +45,7 @@ from openapi_client import (
     ConstantWind,
     TimeseriesWind,
     WindDragCoefficient,
+    FileLateral,
 )
 
 
@@ -288,6 +289,12 @@ class ThreediCalls:
         api = SimulationsApi(self.api_client)
         lateral_upload_file = api.simulations_events_lateral_file_create(str(simulation_pk), data)
         return lateral_upload_file
+
+    def fetch_lateral_files(self, simulation_pk: int) -> List[FileLateral]:
+        """Get list of the lateral files of the given simulation."""
+        api = SimulationsApi(self.api_client)
+        lateral_files_list = self.paginated_fetch(api.simulations_events_lateral_file_list, str(simulation_pk))
+        return lateral_files_list
 
     def add_postprocessing_in_lizard_arrival(self, simulation_pk: int, **data) -> ArrivalTimePostProcessing:
         """Add add_postprocessing_in_lizard_arrival to the given simulation."""
