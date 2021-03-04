@@ -22,10 +22,12 @@ commands and follow their steps::
     $ fullrelease
 
 This creates a new release and tag on github. Additionally, a zip file
-``threedi_api_qgis_client_<version>.zip`` is created. Travis also automatically creates
-this file and uploads it to https://artifacts.lizard.net/ whenever a new tag gets
-created. When this process finishes the plugin is available for its users on
-https://plugins.lizard.net/.
+``threedi_api_qgis_client_<version>.zip`` is created. Upload this zip-file to 
+https://artifacts.lizard.net/ via the ``upload-artifact.sh`` script. You'll need 
+to set $ARTIFACTS_KEY environment variable. Get the key from 
+https://artifacts.lizard.net/admin/ Afterwards run it like this::
+
+    $ ./upload-artifact.sh threedi_api_qgis_client_<version>.zip
 
 You can also manually create this zip file and upload it to a server from where you want
 to distribute the new release::
