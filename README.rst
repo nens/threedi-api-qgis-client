@@ -22,18 +22,19 @@ commands and follow their steps::
     $ fullrelease
 
 This creates a new release and tag on github. Additionally, a zip file
-``threedi_api_qgis_client_<version>.zip`` is created. Upload this zip-file to 
+``threedi_api_qgis_client.<version>.zip`` is created. Upload this zip-file to
 https://artifacts.lizard.net/ via the ``upload-artifact.sh`` script. You'll need 
 to set $ARTIFACTS_KEY environment variable. Get the key from 
 https://artifacts.lizard.net/admin/ Afterwards run it like this::
 
-    $ ./upload-artifact.sh threedi_api_qgis_client_<version>.zip
+    $ make zip
+    $ bash upload-artifact.sh threedi_api_qgis_client_<version>.zip
 
 You can also manually create this zip file and upload it to a server from where you want
 to distribute the new release::
 
     $ make zip
-    $ scp threedi_api_qgis_client_<version>.zip <user.name>@packages-server.example.local:/srv/packages.lizard.net/var/plugins
+    $ scp threedi_api_qgis_client.<version>.zip <user.name>@packages-server.example.local:/srv/packages.lizard.net/var/plugins
 
 
 Other
