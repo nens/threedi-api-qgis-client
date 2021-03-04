@@ -14,5 +14,4 @@ curl -X POST \
      -H "Content-Type: multipart/form-data" \
      -F key=${ARTIFACTS_KEY} \
      -F artifact=@${ARTIFACT} \
-     -F branch=${TRAVIS_BRANCH} \
      https://artifacts.lizard.net/upload/${PROJECT}/
