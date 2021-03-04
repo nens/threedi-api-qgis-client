@@ -2,7 +2,7 @@
 History
 =======
 
-1.0.1 (unreleased)
+2.4.0 (2021-03-04)
 ------------------
 
 - Nothing changed yet.
