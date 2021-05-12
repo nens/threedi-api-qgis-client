@@ -75,24 +75,27 @@ class WSProgressesSentinel(QObject):
         data_type = data.get("type")
         if data_type == "active-simulations" or data_type == "active-simulation":
             simulations = data.get("data")
-            for sim_id_str, sim_data in simulations.items():
-                sim_id = int(sim_id_str)
-                sim = json.loads(sim_data)
-                simulation = self.tc.fetch_single_simulation(sim_id)
-                current_status = self.tc.simulation_current_status(sim_id)
-                status_name = current_status.name
-                status_time = current_status.time
-                if status_time is None:
-                    status_time = 0
-                if status_name == "initialized":
-                    sim_progress = Progress(0, sim.get("progress"))
-                else:
-                    sim_progress = Progress(percentage=0, time=status_time)
-                self.progresses[sim_id] = {
-                    "simulation": simulation,
-                    "current_status": current_status,
-                    "progress": sim_progress,
-                }
+            # Note: commented-out 2021-05-21 by Reinout as this code can lead to
+            # throttling, see https://github.com/nens/threedi-api-qgis-client/issues/151
+            #
+            # for sim_id_str, sim_data in simulations.items():
+            #     sim_id = int(sim_id_str)
+            #     sim = json.loads(sim_data)
+            #     simulation = self.tc.fetch_single_simulation(sim_id)
+            #     current_status = self.tc.simulation_current_status(sim_id)
+            #     status_name = current_status.name
+            #     status_time = current_status.time
+            #     if status_time is None:
+            #         status_time = 0
+            #     if status_name == "initialized":
+            #         sim_progress = Progress(0, sim.get("progress"))
+            #     else:
+            #         sim_progress = Progress(percentage=0, time=status_time)
+            #     self.progresses[sim_id] = {
+            #         "simulation": simulation,
+            #         "current_status": current_status,
+            #         "progress": sim_progress,
+            #     }
         elif data_type == "progress":
             sim_id = int(data["data"]["simulation_id"])
             self.progresses[sim_id]["progress"] = Progress(0, data["data"]["progress"])
