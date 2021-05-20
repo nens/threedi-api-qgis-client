@@ -1,5 +1,6 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
+import logging
 import os
 from math import ceil
 from time import sleep
@@ -14,6 +15,9 @@ from ..api_calls.threedi_calls import get_api_client, ThreediCalls
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "sim_log_in.ui"))
+
+
+logger = logging.getLogger(__name__)
 
 
 class LogInDialog(uicls_log, basecls_log):
@@ -239,6 +243,7 @@ class LogInDialog(uicls_log, basecls_log):
             else:
                 self.communication.bar_error(error_msg)
         except Exception as e:
+            logger.exception("Error when getting to-be-cached data")
             error_msg = f"Error: {e}"
             self.communication.bar_error(error_msg)
         return cached_file_path
