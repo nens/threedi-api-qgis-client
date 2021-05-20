@@ -1,5 +1,6 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
+import logging
 import os
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Tuple, Callable, Any
@@ -49,6 +50,9 @@ from openapi_client import (
 )
 
 
+logger = logging.getLogger(__name__)
+
+
 def get_api_client(api_username: str, api_password: str, api_host: str) -> ApiClient:
     """Setup open_api client using username and password."""
     os.environ["API_HOST"] = api_host
@@ -70,11 +74,13 @@ class ThreediCalls:
     def paginated_fetch(self, api_method: Callable, *args, **kwargs) -> List[Any]:
         """Method for iterative fetching of the data via given API endpoint."""
         limit = self.FETCH_LIMIT
+        logger.debug("Paginated fetch for %s...", api_method.__name__)
         response = api_method(*args, limit=limit, **kwargs)
         response_count = response.count
         results_list = response.results
         if response_count > limit:
             for offset in range(limit, response_count, limit):
+                logger.debug("Another paginated fetch for %s...", api_method.__name__)
                 response = api_method(*args, offset=offset, limit=limit, **kwargs)
                 results_list += response.results
         return results_list
@@ -95,6 +101,7 @@ class ThreediCalls:
     def fetch_single_simulation(self, simulation_pk: int) -> Simulation:
         """Fetch single simulation."""
         api = SimulationsApi(self.api_client)
+        logger.debug("Fetching single simulation %s...", simulation_pk)
         simulation = api.simulations_read(id=simulation_pk)
         return simulation
 
@@ -110,6 +117,7 @@ class ThreediCalls:
             params["offset"] = offset
         if name_contains is not None:
             params["name__contains"] = name_contains.lower()
+        logger.debug("Fetching 3di models for current user...")
         response = api.threedimodels_list(**params)
         models_list = response.results
         models_count = response.count
