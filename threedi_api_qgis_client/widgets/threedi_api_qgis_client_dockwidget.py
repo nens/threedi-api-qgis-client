@@ -135,7 +135,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulations_progresses_thread is not None:
             self.terminate_fetching_simulations_progresses_thread()
         self.simulations_progresses_thread = QThread()
-        self.simulations_progresses_sentinel = WSProgressesSentinel(self.api_client, self.plugin_settings.wss_url)
+        self.simulations_progresses_sentinel = WSProgressesSentinel(self.api_client, self.plugin_settings.wss_url, model_id=self.current_model.id)
         self.simulations_progresses_sentinel.moveToThread(self.simulations_progresses_thread)
         self.simulations_progresses_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
         self.simulations_progresses_sentinel.thread_failed.connect(self.on_fetching_simulations_progresses_failed)
