@@ -109,3 +109,5 @@ ENV/
 
 # pycharm
 .idea/
+.vscode
+threedi_api_qgis_client*.zip
