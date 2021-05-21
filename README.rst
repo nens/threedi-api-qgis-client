@@ -23,41 +23,28 @@ commands and follow their steps::
 
 This creates a new release and tag on github. Additionally, a zip file
 ``threedi_api_qgis_client.<version>.zip`` is created. Upload this zip-file to
-https://artifacts.lizard.net/ via the ``upload-artifact.sh`` script. You'll need 
-to set $ARTIFACTS_KEY environment variable. Get the key from 
+https://artifacts.lizard.net/ via the ``upload-artifact.sh`` script. You'll need
+to set $ARTIFACTS_KEY environment variable. Get the key from
 https://artifacts.lizard.net/admin/ Afterwards run it like this::
 
     $ make zip
     $ bash upload-artifact.sh threedi_api_qgis_client_<version>.zip
 
-You can also manually create this zip file and upload it to a server from where you want
-to distribute the new release::
 
-    $ make zip
-    $ scp threedi_api_qgis_client.<version>.zip <user.name>@packages-server.example.local:/srv/packages.lizard.net/var/plugins
+Local development notes
+-----------------------
 
+Reinout added a Dockerfile and docker-compose.yml for local development on his macbook.
+Install xquartz and it should work::
 
-Other
------
+    $ docker compose build
+    $ xhost +localhost
+    $ docker compose up
 
+and::
 
+    $ docker compose run --rm qgis make test
 
-Python Boilerplate contains all the boilerplate you need to create a Python package.
-
-
-* Free software: GNU General Public License v3
-* Documentation: https://threedi-api-qgis-client.readthedocs.io.
-
-
-Features
---------
-
-* TODO
-
-Credits
--------
-
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
-
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+On linux, you probably have a proper setup already and don't need this. If you want to use the
+docker setup, look at ThreeDiToolbox's setup (so: add /tmp/x-something mount; and adjust the DISPLAY
+env variable).
