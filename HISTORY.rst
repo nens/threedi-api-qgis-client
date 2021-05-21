@@ -1,7 +1,7 @@
 History
 =======
 
-2.5.0 (unreleased)
+2.4.1 (2021-05-21)
 ------------------
 
 - Fixed throttling issue when you had access to lots of repositories.
