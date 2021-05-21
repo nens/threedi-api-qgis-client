@@ -1,5 +1,6 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
+import logging
 import os
 import json
 import requests
@@ -8,6 +9,9 @@ from qgis.PyQt import QtNetwork
 from PyQt5 import QtWebSockets
 from openapi_client import ApiException, Progress
 from .api_calls.threedi_calls import ThreediCalls
+
+
+logger = logging.getLogger(__name__)
 
 
 class WSProgressesSentinel(QObject):
@@ -20,7 +24,7 @@ class WSProgressesSentinel(QObject):
     thread_failed = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
 
-    def __init__(self, api_client, wss_url):
+    def __init__(self, api_client, wss_url, model_id=None):
         super().__init__()
         self.api_client = api_client
         self.wss_url = wss_url
@@ -28,12 +32,22 @@ class WSProgressesSentinel(QObject):
         self.ws_client = None
         self.progresses = {}
         self.simulations_list = []
+        self.model_id = model_id
+
 
     @pyqtSlot()
     def run(self):
         """Checking running simulations progresses."""
         try:
             self.tc = ThreediCalls(self.api_client)
+            if self.model_id:
+                logger.debug("Fetching simulations list and filtering it on model id %s", self.model_id)
+                full_simulations_list = self.tc.fetch_simulations()
+                logger.debug("Starting out with %d simulations" % len(full_simulations_list))
+                self.simulations_list = [simulation for simulation in full_simulations_list
+                    if simulation.threedimodel_id == self.model_id]
+                logger.debug("We have %d simulations left" % len(self.simulations_list))
+
             result = self.tc.all_simulations_progress(self.simulations_list)
             self.progresses_fetched.emit(result)
         except ApiException as e:
@@ -73,8 +87,13 @@ class WSProgressesSentinel(QObject):
         """Get all simulations progresses through the websocket."""
         data = json.loads(data)
         data_type = data.get("type")
+        logger.debug("Got simulation progress (type %s) from the websocket", data_type)
         if data_type == "active-simulations" or data_type == "active-simulation":
             simulations = data.get("data")
+            # Note: commented-out 2021-05-21 by Reinout as this code can lead to
+            # throttling, see https://github.com/nens/threedi-api-qgis-client/issues/151
+            #
+            logger.info("Fetching fresh simulation for simulation(s): %r", simulations.keys())
             for sim_id_str, sim_data in simulations.items():
                 sim_id = int(sim_id_str)
                 sim = json.loads(sim_data)

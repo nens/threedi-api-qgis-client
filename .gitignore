@@ -1,6 +1,8 @@
 threedi_api_qgis_client.zip
 
 .DS_Store
+*~
+_cached_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -107,3 +109,5 @@ ENV/
 
 # pycharm
 .idea/
+.vscode
+threedi_api_qgis_client*.zip
