@@ -74,13 +74,13 @@ class ThreediCalls:
     def paginated_fetch(self, api_method: Callable, *args, **kwargs) -> List[Any]:
         """Method for iterative fetching of the data via given API endpoint."""
         limit = self.FETCH_LIMIT
-        logger.debug("Paginated fetch for %s...", api_method.__name__)
+        logger.debug("Paginated fetch for %s...", api_method)
         response = api_method(*args, limit=limit, **kwargs)
         response_count = response.count
         results_list = response.results
         if response_count > limit:
             for offset in range(limit, response_count, limit):
-                logger.debug("Another paginated fetch for %s...", api_method.__name__)
+                logger.debug("Another paginated fetch for %s...", api_method)
                 response = api_method(*args, offset=offset, limit=limit, **kwargs)
                 results_list += response.results
         return results_list
