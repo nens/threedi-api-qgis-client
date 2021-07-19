@@ -119,3 +119,19 @@ def check_download_checksum(download, filename):
         data = file_to_check.read()
         md5_returned = hashlib.md5(data).hexdigest()
         return download.etag == md5_returned
+
+
+def handle_api_exceptions(e):
+    """Extracting useful information from ApiException exceptions."""
+    error_body = e.body
+    try:
+        error_details = error_body["details"]
+    except TypeError:
+        error_body = json.loads(error_body)
+        errors = error_body["errors"]
+        error_parts = [f"{err['reason']} ({err['instance']['related_object']})" for err in errors]
+        error_details = "\n".join(error_parts)
+    except KeyError:
+        error_details = error_body
+    error_msg = f"Error: {error_details}"
+    return error_msg
