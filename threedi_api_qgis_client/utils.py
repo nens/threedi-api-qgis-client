@@ -121,17 +121,21 @@ def check_download_checksum(download, filename):
         return download.etag == md5_returned
 
 
-def handle_api_exceptions(e):
+def extract_error_message(e):
     """Extracting useful information from ApiException exceptions."""
     error_body = e.body
     try:
-        error_details = error_body["details"]
-    except TypeError:
-        error_body = json.loads(error_body)
-        errors = error_body["errors"]
-        error_parts = [f"{err['reason']} ({err['instance']['related_object']})" for err in errors]
-        error_details = "\n".join(error_parts)
-    except KeyError:
-        error_details = error_body
+        if isinstance(error_body, str):
+            error_body = json.loads(error_body)
+        if "details" in error_body:
+            error_details = error_body["details"]
+        elif "errors" in error_body:
+            errors = error_body["errors"]
+            error_parts = [f"{err['reason']} ({err['instance']['related_object']})" for err in errors]
+            error_details = "\n".join(error_parts)
+        else:
+            error_details = str(error_body)
+    except json.JSONDecodeError:
+        error_details = str(error_body)
     error_msg = f"Error: {error_details}"
     return error_msg

@@ -21,7 +21,7 @@ from ..ui_utils import (
     set_widgets_parameters,
 )
 from ..utils import (
-    handle_api_exceptions,
+    extract_error_message,
     mmh_to_ms,
     mmh_to_mmtimestep,
     mmtimestep_to_mmh,
@@ -1777,7 +1777,7 @@ class SimulationWizard(QWizard):
         except ApiException as e:
             self.new_simulations = None
             self.new_simulation_statuses = None
-            error_msg = handle_api_exceptions(e)
+            error_msg = extract_error_message(e)
             self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         except Exception as e:
             self.new_simulations = None
