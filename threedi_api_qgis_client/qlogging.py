@@ -15,6 +15,7 @@ verbosity ought to be made configurable.
 from qgis.core import Qgis
 from qgis.core import QgsApplication
 from qgis.core import QgsMessageLog
+
 # from ThreeDiToolbox.utils import log_traceback_monkeypatch  # noqa
 
 import logging

@@ -1,7 +1,14 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import pytest
-from threedi_api_qgis_client.utils import mmh_to_ms, ms_to_mmh, mmtimestep_to_mmh, mmh_to_mmtimestep
+from threedi_api_qgis_client.utils import (
+    mmh_to_ms,
+    ms_to_mmh,
+    mmtimestep_to_mmh,
+    mmh_to_mmtimestep,
+    extract_error_message,
+)
+from .conftest import RELATED_OBJECTS_EXCEPTION_BODY, SIM_EXCEPTION_BODY, DETAILED_EXCEPTION_BODY, SimpleApiException
 
 
 def test_mmh_to_ms():
@@ -34,3 +41,31 @@ def test_mmh_to_mmtimestep():
     expected_mmtimestep_series = [0.3, 0.6, 0.9, 1.2, 1.5, 2.1, 2.7, 3.3, 3.3, 2.1, 1.2, 0.6, 0.0]
     mmtimestep_series = [round(mmh_to_mmtimestep(v, timestep, units), 2) for v in mmh_series]
     assert mmtimestep_series == expected_mmtimestep_series
+
+
+def test_extract_error_message_simulation_err():
+    sim_error = SimpleApiException(SIM_EXCEPTION_BODY)
+    assert extract_error_message(sim_error) == "Error: {'duration': ['minimum value for duration is 60']}"
+
+
+def test_extract_error_message_detailed_err():
+    detailed_error = SimpleApiException(DETAILED_EXCEPTION_BODY)
+    assert extract_error_message(detailed_error) == "Error: {'duration': ['minimum value for duration is 60']}"
+
+
+def test_extract_error_message_related_err():
+    rel_error = SimpleApiException(RELATED_OBJECTS_EXCEPTION_BODY)
+    assert (
+        extract_error_message(rel_error)
+        == "Error: File processing error: Invalid file, see related event for further details (<related_object>)"
+    )
+
+
+def test_extract_error_message_decode_err():
+    decode_error = SimpleApiException("invalid JSON body")
+    assert extract_error_message(decode_error) == "Error: invalid JSON body"
+
+
+def test_extract_error_message_unknown_err():
+    unknown_error_body = SimpleApiException(["nobody expects the spanish inquisition"])
+    assert extract_error_message(unknown_error_body) == "Error: ['nobody expects the spanish inquisition']"

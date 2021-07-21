@@ -164,3 +164,39 @@ CURRENT_STATUSES_LIST = [
     {"created": datetime.datetime.utcnow(), "id": 1201, "name": "initialized", "paused": None, "time": 18000.0},
     {"created": datetime.datetime.utcnow(), "id": 1202, "name": "finished", "paused": None, "time": 72000.0},
 ]
+
+
+SIM_EXCEPTION_BODY = {"duration": ["minimum value for duration is 60"]}
+DETAILED_EXCEPTION_BODY = {"details": {"duration": ["minimum value for duration is 60"]}}
+
+RELATED_OBJECTS_EXCEPTION_BODY = {
+    "errors": [
+        {
+            "instance": {
+                "url": "<url>",
+                "storage_name": "MINIO_DEV",
+                "filename": "laterals.json",
+                "bucket": "3di",
+                "prefix": "None",
+                "etag": "<etag>",
+                "size": "1024",
+                "expiry_date": "2021-08-01",
+                "related_object": "<related_object>",
+                "type": "bulklateral",
+                "state": "error",
+                "state_description": "Invalid file, see related event for further details",
+                "meta": "None",
+                "id": "123456",
+            },
+            "reason": "File processing error: Invalid file, see related event for further details",
+            "resolution": "Fix the error, remove the event (see related_object) and try again",
+        }
+    ]
+}
+
+
+class SimpleApiException(Exception):
+    """Simplified API exception class used for testing."""
+
+    def __init__(self, body):
+        self.body = body

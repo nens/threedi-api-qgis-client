@@ -6,6 +6,7 @@ import time
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
+from copy import deepcopy
 from collections import OrderedDict, defaultdict
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
@@ -20,6 +21,7 @@ from ..ui_utils import (
     set_widgets_parameters,
 )
 from ..utils import (
+    extract_error_message,
     mmh_to_ms,
     mmh_to_mmtimestep,
     mmtimestep_to_mmh,
@@ -373,9 +375,21 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if value == 2:
             self.overrule_widget.setVisible(True)
 
-    def get_laterals_data(self):
-        """Get laterals data."""
-        return self.laterals_timeseries
+    def get_laterals_data(self, timesteps_in_seconds=False):
+        """Get laterals data (timesteps in seconds)."""
+        if timesteps_in_seconds is False:
+            return self.laterals_timeseries
+        laterals_data = deepcopy(self.laterals_timeseries)
+        units = self.cbo_lateral_units.currentText()
+        if units == "hrs":
+            seconds_per_unit = 3600
+        elif units == "mins":
+            seconds_per_unit = 60
+        else:
+            seconds_per_unit = 1
+        for val in laterals_data.values():
+            val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
+        return laterals_data
 
     def open_upload_dialog(self):
         """Open dialog for selecting CSV file with laterals."""
@@ -1600,7 +1614,7 @@ class SimulationWizard(QWizard):
             for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
                 laterals = []
                 if hasattr(self, "laterals_page"):
-                    laterals = self.laterals_page.main_widget.get_laterals_data()
+                    laterals = self.laterals_page.main_widget.get_laterals_data(timesteps_in_seconds=True)
                 if hasattr(self, "breaches_page"):
                     self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                     breach_data = self.breaches_page.main_widget.get_breaches_data()
@@ -1763,9 +1777,7 @@ class SimulationWizard(QWizard):
         except ApiException as e:
             self.new_simulations = None
             self.new_simulation_statuses = None
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             self.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         except Exception as e:
             self.new_simulations = None
