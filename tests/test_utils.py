@@ -43,17 +43,29 @@ def test_mmh_to_mmtimestep():
     assert mmtimestep_series == expected_mmtimestep_series
 
 
-def test_extract_error_message():
+def test_extract_error_message_simulation_err():
     sim_error = SimpleApiException(SIM_EXCEPTION_BODY)
-    detailed_error = SimpleApiException(DETAILED_EXCEPTION_BODY)
-    rel_error = SimpleApiException(RELATED_OBJECTS_EXCEPTION_BODY)
-    decode_error = SimpleApiException("invalid JSON body")
-    unknown_error_body = SimpleApiException(["nobody expects the spanish inquisition"])
     assert extract_error_message(sim_error) == "Error: {'duration': ['minimum value for duration is 60']}"
+
+
+def test_extract_error_message_detailed_err():
+    detailed_error = SimpleApiException(DETAILED_EXCEPTION_BODY)
     assert extract_error_message(detailed_error) == "Error: {'duration': ['minimum value for duration is 60']}"
+
+
+def test_extract_error_message_related_err():
+    rel_error = SimpleApiException(RELATED_OBJECTS_EXCEPTION_BODY)
     assert (
         extract_error_message(rel_error)
         == "Error: File processing error: Invalid file, see related event for further details (<related_object>)"
     )
+
+
+def test_extract_error_message_decode_err():
+    decode_error = SimpleApiException("invalid JSON body")
     assert extract_error_message(decode_error) == "Error: invalid JSON body"
+
+
+def test_extract_error_message_unknown_err():
+    unknown_error_body = SimpleApiException(["nobody expects the spanish inquisition"])
     assert extract_error_message(unknown_error_body) == "Error: ['nobody expects the spanish inquisition']"
