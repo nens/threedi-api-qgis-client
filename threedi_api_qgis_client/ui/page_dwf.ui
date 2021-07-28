@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>720</width>
+    <height>475</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>720</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="palette">
+   <palette>
+    <active>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </active>
+    <inactive>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </inactive>
+    <disabled>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </disabled>
+   </palette>
+  </property>
+  <property name="font">
+   <font>
+    <family>Segoe UI</family>
+    <pointsize>12</pointsize>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="15" column="0">
+    <spacer name="verticalSpacer_4">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="1" column="0">
+    <spacer name="verticalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>25</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="0" column="0">
+    <layout class="QVBoxLayout" name="svg_lout">
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+    </layout>
+   </item>
+   <item row="5" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="dwf_layout">
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Upload dry weather flow CSV:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="dwf_upload">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>225</width>
+         <height>25</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QLineEdit {background-color: white;}</string>
+       </property>
+       <property name="frame">
+        <bool>false</bool>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pb_upload_dwf">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>25</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Upload CSV</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="7" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QCheckBox" name="cb_24h">
+       <property name="minimumSize">
+        <size>
+         <width>14</width>
+         <height>14</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>14</width>
+         <height>14</height>
+        </size>
+       </property>
+       <property name="palette">
+        <palette>
+         <active>
+          <colorrole role="Button">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Window">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </active>
+         <inactive>
+          <colorrole role="Button">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Window">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </inactive>
+         <disabled>
+          <colorrole role="Button">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Window">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>255</red>
+             <green>255</green>
+             <blue>255</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </disabled>
+        </palette>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI</family>
+         <pointsize>15</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QCheckBox{background-color: white;}</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>CSV contains 24 hour timeseries</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="6" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <widget class="QCheckBox" name="cb_interpolate_dwf">
+       <property name="minimumSize">
+        <size>
+         <width>14</width>
+         <height>14</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>14</width>
+         <height>14</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::RightToLeft</enum>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QCheckBox{background-color: white;}</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_11">
+       <property name="minimumSize">
+        <size>
+         <width>75</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Interpolate</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="14" column="0">
+    <widget class="QLabel" name="label">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;justify&quot;&gt;&lt;br/&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Use the 3Di DWF Calculator (Processing Toolbox &amp;gt; 3Di &amp;gt; Dry Weather Flow) to generate the dry weather flow CSV that is requested here.&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;justify&quot;&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;The dry weather flow that you add to your simulatione here, will be processed as lateral discharge. If lateral discharges on the same connection nodes already exists, dry weather flow will be added to these lateral discharges.&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;justify&quot;&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;24-hour timeseries are assumed to start and end at midnight. The simulation start and end time will determine which part of the timeseries is used.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::RichText</enum>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
