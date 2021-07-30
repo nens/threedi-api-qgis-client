@@ -484,10 +484,15 @@ class DWFWidget(uicls_dwf, basecls_dwf):
     def get_dwf_data(self, timeseries24=False):
         """Get Dry Weather Flow data (timesteps in seconds)."""
         if timeseries24 and self.cb_24h.isChecked():
+            seconds_in_day = 86400
             dwf_data = deepcopy(self.dwf_timeseries)
             start, end = self.parent_page.parent_wizard.duration_page.main_widget.to_datetime()
             for val in dwf_data.values():
-                val["values"] = apply_24h_timeseries(start, end, val["values"])
+                current_values = val["values"]
+                if current_values[-1][0] < seconds_in_day:
+                    raise ValueError("Last timestep does not match 24 hour Dry Weather Timeseries format.")
+                new_values = apply_24h_timeseries(start, end, current_values)
+                val["values"] = new_values
             return dwf_data
         else:
             return self.dwf_timeseries
