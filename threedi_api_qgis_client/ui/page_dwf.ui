@@ -155,7 +155,7 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>225</width>
+         <width>300</width>
          <height>25</height>
         </size>
        </property>
