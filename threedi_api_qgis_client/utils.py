@@ -152,7 +152,8 @@ def apply_24h_timeseries(start_datetime, end_datetime, timeseries):
     full_days_delta = end_day - start_day
     full_days_duration = full_days_delta.days + 1
     full_days_sec = full_days_duration * day_in_sec
-    extended_flow_ts = [ts[-1] for ts in timeseries] * full_days_duration
+    flow_ts = [ts[-1] for ts in timeseries]
+    extended_flow_ts = flow_ts + flow_ts[1:] * (full_days_duration - 1)  # skipping 0.0 time step while extending TS
     full_days_seconds_range = range(0, full_days_sec + hour_in_sec, hour_in_sec)
     start_time_delta = start_datetime - start_day
     end_time_delta = end_datetime - start_day

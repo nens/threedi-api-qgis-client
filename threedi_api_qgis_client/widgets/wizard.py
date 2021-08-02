@@ -352,7 +352,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.cb_overrule.setChecked(False)
 
     def load_csv(self):
-        """"Load laterals from CSV file."""
+        """Load laterals from CSV file."""
         values, filename = self.open_upload_dialog()
         if not filename:
             return
@@ -498,7 +498,7 @@ class DWFWidget(uicls_dwf, basecls_dwf):
             return self.dwf_timeseries
 
     def load_csv(self):
-        """"Load DWF CSV file."""
+        """Load DWF CSV file."""
         values, filename = self.open_upload_dialog()
         if not filename:
             return
