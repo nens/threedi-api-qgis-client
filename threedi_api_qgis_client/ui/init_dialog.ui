@@ -623,6 +623,13 @@
       </widget>
      </item>
      <item>
+      <widget class="QCheckBox" name="cb_dwf">
+       <property name="text">
+        <string>Include dry weather flow</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QCheckBox" name="cb_breaches">
        <property name="font">
         <font>

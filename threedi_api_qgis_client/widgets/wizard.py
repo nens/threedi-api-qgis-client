@@ -21,6 +21,7 @@ from ..ui_utils import (
     set_widgets_parameters,
 )
 from ..utils import (
+    apply_24h_timeseries,
     extract_error_message,
     mmh_to_ms,
     mmh_to_mmtimestep,
@@ -29,6 +30,7 @@ from ..utils import (
     write_laterals_to_json,
     upload_file,
     LATERALS_FILE_TEMPLATE,
+    DWF_FILE_TEMPLATE,
 )
 from ..api_calls.threedi_calls import ThreediCalls
 
@@ -38,6 +40,7 @@ uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui",
 uicls_duration_page, basecls_duration_page = uic.loadUiType(os.path.join(base_dir, "ui", "page_duration.ui"))
 uicls_initial_conds, basecls_initial_conds = uic.loadUiType(os.path.join(base_dir, "ui", "page_initial_conditions.ui"))
 uicls_laterals, basecls_laterals = uic.loadUiType(os.path.join(base_dir, "ui", "page_laterals.ui"))
+uicls_dwf, basecls_dwf = uic.loadUiType(os.path.join(base_dir, "ui", "page_dwf.ui"))
 uicls_breaches, basecls_breaches = uic.loadUiType(os.path.join(base_dir, "ui", "page_breaches.ui"))
 uicls_precipitation_page, basecls_precipitation_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "page_precipitation.ui")
@@ -349,7 +352,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.cb_overrule.setChecked(False)
 
     def load_csv(self):
-        """"Load laterals from CSV file."""
+        """Load laterals from CSV file."""
         values, filename = self.open_upload_dialog()
         if not filename:
             return
@@ -447,6 +450,95 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                         self.last_uploaded_laterals = lateral
                     except ValueError:
                         continue
+        return values, filename
+
+
+class DWFWidget(uicls_dwf, basecls_dwf):
+    """Widget for the Dry Weather Flow page."""
+
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_dwf.svg"))
+        self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMinimumWidth(700)
+        self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
+        set_widget_background_color(self.svg_widget)
+        set_widget_background_color(self)
+        self.dwf_timeseries = {}
+        self.last_uploaded_dwf = None
+        self.connect_signals()
+
+    def connect_signals(self):
+        """Connect signals."""
+        self.pb_upload_dwf.clicked.connect(self.load_csv)
+
+    def interpolate_changed(self):
+        """Handle interpolate checkbox."""
+        interpolate = self.cb_interpolate_dwf.isChecked()
+        for val in self.dwf_timeseries.values():
+            val["interpolate"] = interpolate
+
+    def get_dwf_data(self, timeseries24=False):
+        """Get Dry Weather Flow data (timesteps in seconds)."""
+        if timeseries24 and self.cb_24h.isChecked():
+            seconds_in_day = 86400
+            dwf_data = deepcopy(self.dwf_timeseries)
+            start, end = self.parent_page.parent_wizard.duration_page.main_widget.to_datetime()
+            for val in dwf_data.values():
+                current_values = val["values"]
+                if current_values[-1][0] < seconds_in_day:
+                    raise ValueError("Last timestep does not match 24 hour Dry Weather Timeseries format.")
+                new_values = apply_24h_timeseries(start, end, current_values)
+                val["values"] = new_values
+            return dwf_data
+        else:
+            return self.dwf_timeseries
+
+    def load_csv(self):
+        """Load DWF CSV file."""
+        values, filename = self.open_upload_dialog()
+        if not filename:
+            return
+        self.dwf_upload.setText(filename)
+        self.dwf_timeseries = values
+
+    def open_upload_dialog(self):
+        """Open dialog for selecting CSV file with Dry Weather Flow."""
+        last_folder = QSettings().value("threedi/last_dwf_folder", os.path.expanduser("~"), type=str)
+        file_filter = "CSV (*.csv );;All Files (*)"
+        filename, __ = QFileDialog.getOpenFileName(self, "Dry Weather Flow Time Series", last_folder, file_filter)
+        if len(filename) == 0:
+            return None, None
+        QSettings().setValue("threedi/last_dwf_folder", os.path.dirname(filename))
+        values = {}
+        interpolate = self.cb_interpolate_dwf.isChecked()
+        with open(filename, encoding="utf-8-sig") as dwf_file:
+            dwf_reader = csv.reader(dwf_file)
+            header = next(dwf_reader, None)
+            if len(header) != 3:
+                error_msg = "Wrong timeseries format for Dry Weather Flow!"
+                self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_msg)
+                return None, None
+            for dwf_id, connection_node_id, timeseries in dwf_reader:
+                try:
+                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                    dwf = {
+                        "values": vals,
+                        "units": "m3/s",
+                        "point": None,
+                        "connection_node": int(connection_node_id),
+                        "id": int(dwf_id),
+                        "offset": 0,
+                        "interpolate": interpolate,
+                    }
+                    values[dwf_id] = dwf
+                    self.last_uploaded_dwf = dwf
+                except ValueError:
+                    continue
+
         return values, filename
 
 
@@ -1363,6 +1455,20 @@ class LateralsPage(QWizardPage):
         self.adjustSize()
 
 
+class DWFPage(QWizardPage):
+    """Dry Weather Flow definition page."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = DWFWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+
 class BreachesPage(QWizardPage):
     """Breaches definition page."""
 
@@ -1441,6 +1547,9 @@ class SimulationWizard(QWizard):
         if init_conditions.include_laterals:
             self.laterals_page = LateralsPage(self)
             self.addPage(self.laterals_page)
+        if init_conditions.include_dwf:
+            self.dwf_page = DWFPage(self)
+            self.addPage(self.dwf_page)
         if init_conditions.include_breaches:
             self.breaches_page = BreachesPage(self, initial_conditions=init_conditions)
             self.addPage(self.breaches_page)
@@ -1534,6 +1643,10 @@ class SimulationWizard(QWizard):
             simulation_template["laterals_page"] = scan_widgets_parameters(self.laterals_page.main_widget)
             laterals_values = self.laterals_page.main_widget.get_laterals_data()
             simulation_template["laterals_page"]["values"] = laterals_values
+        if hasattr(self, "dwf_page"):
+            simulation_template["dwf_page"] = scan_widgets_parameters(self.dwf_page.main_widget)
+            dwf_values = self.dwf_page.main_widget.get_dwf_data()
+            simulation_template["dwf_page"]["values"] = dwf_values
         if hasattr(self, "breaches_page"):
             simulation_template["breaches_page"] = scan_widgets_parameters(self.breaches_page.main_widget)
             breaches_values = self.breaches_page.main_widget.values
@@ -1560,6 +1673,10 @@ class SimulationWizard(QWizard):
             self.laterals_page.main_widget.laterals_timeseries.update(laterals_values)
             for lat in self.laterals_page.main_widget.laterals_timeseries.keys():
                 self.laterals_page.main_widget.cb_laterals.addItem(lat)
+        if hasattr(self, "dwf_page"):
+            set_widgets_parameters(self.dwf_page.main_widget, **simulation_template["dwf_page"])
+            dwf_values = simulation_template["dwf_page"]["values"]
+            self.dwf_page.main_widget.dwf_timeseries.update(dwf_values)
         if hasattr(self, "breaches_page"):
             set_widgets_parameters(self.breaches_page.main_widget, **simulation_template["breaches_page"])
             breaches_values = simulation_template["breaches_page"]["values"]
@@ -1615,6 +1732,9 @@ class SimulationWizard(QWizard):
                 laterals = []
                 if hasattr(self, "laterals_page"):
                     laterals = self.laterals_page.main_widget.get_laterals_data(timesteps_in_seconds=True)
+                dwf = []
+                if hasattr(self, "dwf_page"):
+                    dwf = self.dwf_page.main_widget.get_dwf_data(timeseries24=True)
                 if hasattr(self, "breaches_page"):
                     self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                     breach_data = self.breaches_page.main_widget.get_breaches_data()
@@ -1693,12 +1813,23 @@ class SimulationWizard(QWizard):
                         tc.add_initial_saved_state(sim_id, saved_state=saved_state_id)
                 if self.init_conditions.include_laterals:
                     lateral_values = list(laterals.values())
-                    write_laterals_to_json(lateral_values)
+                    write_laterals_to_json(lateral_values, LATERALS_FILE_TEMPLATE)
                     upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_laterals.json", offset=0)
                     upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
                     for ti in range(10):
                         uploaded_lateral = tc.fetch_lateral_files(sim_id)[0]
                         if uploaded_lateral.state == "processed":
+                            break
+                        else:
+                            time.sleep(2.5)
+                if self.init_conditions.include_dwf:
+                    dwf_values = list(dwf.values())
+                    write_laterals_to_json(dwf_values, DWF_FILE_TEMPLATE)
+                    upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_dwf.json", offset=0)
+                    upload_file(upload_event_file, DWF_FILE_TEMPLATE)
+                    for ti in range(10):
+                        uploaded_dwf = tc.fetch_lateral_files(sim_id)[0]
+                        if uploaded_dwf.state == "processed":
                             break
                         else:
                             time.sleep(2.5)

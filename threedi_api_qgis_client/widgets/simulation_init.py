@@ -99,6 +99,7 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.include_initial_conditions = self.cb_conditions.isChecked()
         self.initial_conditions.load_from_saved_state = self.cb_load_saved_state.isChecked()
         self.initial_conditions.include_laterals = self.cb_laterals.isChecked()
+        self.initial_conditions.include_dwf = self.cb_dwf.isChecked()
         self.initial_conditions.include_breaches = self.cb_breaches.isChecked()
         self.initial_conditions.include_precipitations = self.cb_precipitation.isChecked()
         self.initial_conditions.include_wind = self.cb_wind.isChecked()
@@ -130,6 +131,7 @@ class SimulationInitObject:
         self.include_initial_conditions = False
         self.load_from_saved_state = False
         self.include_laterals = False
+        self.include_dwf = False
         self.include_breaches = False
         self.include_precipitations = False
         self.include_wind = False

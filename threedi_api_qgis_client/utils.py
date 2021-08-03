@@ -5,11 +5,13 @@ import json
 import hashlib
 import requests
 from collections import OrderedDict
+from datetime import datetime
 
 PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))
 CACHE_PATH = os.path.join(PLUGIN_PATH, "_cached_data")
 TEMPLATE_PATH = os.path.join(CACHE_PATH, "templates.json")
 LATERALS_FILE_TEMPLATE = os.path.join(CACHE_PATH, "laterals.json")
+DWF_FILE_TEMPLATE = os.path.join(CACHE_PATH, "dwf.json")
 CHUNK_SIZE = 1024 ** 2
 
 
@@ -84,9 +86,9 @@ def write_template(template_name, simulation_template):
         json_file.truncate()
 
 
-def write_laterals_to_json(laterals_values):
+def write_laterals_to_json(laterals_values, laterals_file_template):
     """Writing laterals values to the JSON file."""
-    with open(LATERALS_FILE_TEMPLATE, "w") as json_file:
+    with open(laterals_file_template, "w") as json_file:
         jsonf = json.dumps(laterals_values)
         json_file.write(jsonf)
 
@@ -139,3 +141,32 @@ def extract_error_message(e):
         error_details = str(error_body)
     error_msg = f"Error: {error_details}"
     return error_msg
+
+
+def apply_24h_timeseries(start_datetime, end_datetime, timeseries):
+    """Applying 24 hours Dry Weather Flow timeseries based on simulation duration."""
+    start_day = datetime(start_datetime.year, start_datetime.month, start_datetime.day)
+    end_day = datetime(end_datetime.year, end_datetime.month, end_datetime.day)
+    hour_in_sec = 3600
+    day_in_sec = hour_in_sec * 24
+    full_days_delta = end_day - start_day
+    full_days_duration = full_days_delta.days + 1
+    full_days_sec = full_days_duration * day_in_sec
+    flow_ts = [ts[-1] for ts in timeseries]
+    extended_flow_ts = flow_ts + flow_ts[1:] * (full_days_duration - 1)  # skipping 0.0 time step while extending TS
+    full_days_seconds_range = range(0, full_days_sec + hour_in_sec, hour_in_sec)
+    start_time_delta = start_datetime - start_day
+    end_time_delta = end_datetime - start_day
+    start_timestep = (start_time_delta.total_seconds() // hour_in_sec) * hour_in_sec
+    end_timestep = (end_time_delta.total_seconds() // hour_in_sec) * hour_in_sec
+    timestep = 0.0
+    new_timeseries = []
+    for extended_timestep, flow in zip(full_days_seconds_range, extended_flow_ts):
+        if extended_timestep < start_timestep:
+            continue
+        elif end_timestep >= extended_timestep >= start_timestep:
+            new_timeseries.append((timestep, flow))
+            timestep += hour_in_sec
+        else:
+            break
+    return new_timeseries
