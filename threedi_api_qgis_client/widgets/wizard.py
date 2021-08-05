@@ -232,7 +232,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         except Exception as e:
             error_msg = f"Error: {e}"
             self.parent_page.parent_wizard.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
-        self.dd_1d.addItems(["Predefined", "Global value"])
+        self.dd_1d.addItems(["From spatialite", "Global value"])
 
     def dropdown_1d_changed(self):
         """Handling dropdown menus selection changes."""
@@ -565,6 +565,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.dd_units.currentIndexChanged.connect(self.write_values_into_dict)
         self.sb_duration.valueChanged.connect(self.write_values_into_dict)
         self.sb_width.valueChanged.connect(self.write_values_into_dict)
+        self.sp_start_after.valueChanged.connect(self.write_values_into_dict)
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
             self.simulation_widget.show()
         else:
@@ -594,11 +595,13 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         duration = self.sb_duration.value()
         width = self.sb_width.value()
         units = self.dd_units.currentText()
+        offset = self.sp_start_after.value()
         self.values[simulation] = {
             "breach_id": breach_id,
             "width": width,
             "duration": duration,
             "units": units,
+            "offset": offset,
         }
         if self.breaches_layer is not None:
             self.parent_page.parent_wizard.parent_dock.iface.setActiveLayer(self.breaches_layer)
@@ -613,11 +616,13 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             self.sb_duration.setValue(vals.get("duration"))
             self.sb_width.setValue(vals.get("width"))
             self.dd_units.setCurrentIndex(self.dd_units.findText(vals.get("units")))
+            self.sp_start_after.setValue(vals.get("offset"))
         else:
             self.dd_breach_id.setCurrentIndex(0)
             self.sb_duration.setValue(0.1)
             self.sb_width.setValue(10)
             self.dd_units.setCurrentIndex(0)
+            self.sp_start_after.setValue(0)
 
     def get_breaches_data(self):
         """Getting all needed data for adding breaches to the simulation."""
@@ -625,11 +630,13 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         width = self.sb_width.value()
         duration = self.sb_duration.value()
         units = self.dd_units.currentText()
+        offset = self.sp_start_after.value()
         duration_in_units = duration * self.SECONDS_MULTIPLIERS[units]
         breach_data = (
             breach_id,
             width,
             duration_in_units,
+            offset,
         )
         return breach_data
 
@@ -1727,7 +1734,7 @@ class SimulationWizard(QWizard):
             wtype, woffset, wduration, wspeed, wdirection, wunits, wdrag_coeff, wispeed, widirection, wvalues = (
                 None,
             ) * 10
-            breach_id, width, d_duration = (None,) * 3
+            breach_id, width, d_duration, breach_offset = (None,) * 4
             for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
                 laterals = []
                 if hasattr(self, "laterals_page"):
@@ -1739,7 +1746,7 @@ class SimulationWizard(QWizard):
                     self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                     breach_data = self.breaches_page.main_widget.get_breaches_data()
                     if simulation_difference == "breaches" or i == 1:
-                        breach_id, width, d_duration = breach_data
+                        breach_id, width, d_duration, breach_offset = breach_data
                 if hasattr(self, "precipitation_page"):
                     self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                     pdata = self.precipitation_page.main_widget.get_precipitation_data()
@@ -1841,7 +1848,7 @@ class SimulationWizard(QWizard):
                         potential_breach=breach["url"],
                         duration_till_max_depth=d_duration,
                         initial_width=width,
-                        offset=0,
+                        offset=breach_offset,
                     )
                 if ptype == CONSTANT:
                     tc.add_constant_precipitation(

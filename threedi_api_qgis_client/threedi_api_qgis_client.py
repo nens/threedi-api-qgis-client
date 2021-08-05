@@ -27,7 +27,7 @@ class ThreediQgisClient:
         self.plugin_settings = SettingsDialog()
         # initialize locale
         locale = QSettings().value("locale/userLocale")[0:2]
-        locale_path = os.path.join(self.plugin_dir, "i18n", "ThreediQgisClient_{}.qm".format(locale))
+        locale_path = os.path.join(self.plugin_dir, "i18n", f"ThreediQgisClient_{locale}.qm")
 
         if os.path.exists(locale_path):
             self.translator = QTranslator()
@@ -132,9 +132,15 @@ class ThreediQgisClient:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-        icon_path = ":/plugins/threedi_api_qgis_client/icon.png"
+        icon_path = os.path.join(os.path.dirname(__file__), "icon.png")
         self.add_action(icon_path, text=self.tr(u"3Di API Client"), callback=self.run, parent=self.iface.mainWindow())
-        self.add_action(icon_path, text=self.tr(u"Settings"), callback=self.settings, parent=self.iface.mainWindow())
+        self.add_action(
+            icon_path,
+            text=self.tr(u"Settings"),
+            callback=self.settings,
+            parent=self.iface.mainWindow(),
+            add_to_toolbar=False,
+        )
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
