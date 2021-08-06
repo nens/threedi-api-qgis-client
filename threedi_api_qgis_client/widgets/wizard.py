@@ -394,6 +394,32 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
         return laterals_data
 
+    def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
+        """Fetching first lateral row and handling potential header."""
+        error_message = None
+        if not laterals_list:
+            error_message = "Laterals list is empty!"
+            if log_error is True:
+                self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
+            return error_message
+        header = laterals_list[0]
+        if laterals_type == "1D":
+            if len(header) != 3:
+                error_message = "Wrong timeseries format for 1D laterals!"
+        else:
+            if len(header) != 5:
+                error_message = "Wrong timeseries format for 2D laterals!"
+        if error_message is None:
+            try:
+                timeseries_candidate = header[-1]
+                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+            except ValueError:
+                laterals_list.pop(0)
+        else:
+            if log_error is True:
+                self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
+        return error_message
+
     def open_upload_dialog(self):
         """Open dialog for selecting CSV file with laterals."""
         last_folder = QSettings().value("threedi/last_laterals_folder", os.path.expanduser("~"), type=str)
@@ -405,51 +431,47 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         values = {}
         laterals_type = self.cb_type.currentText()
         interpolate = self.cb_interpolate_laterals.isChecked()
+        laterals_list = []
         with open(filename, encoding="utf-8-sig") as lateral_file:
             laterals_reader = csv.reader(lateral_file)
-            header = next(laterals_reader, None)
-            if laterals_type == "1D":
-                if len(header) != 3:
-                    error_msg = "Wrong timeseries format for 1D laterals!"
-                    self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_msg)
-                    return None, None
-                for lat_id, connection_node_id, timeseries in laterals_reader:
-                    try:
-                        vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                        lateral = {
-                            "values": vals,
-                            "units": "m3/s",
-                            "point": None,
-                            "connection_node": int(connection_node_id),
-                            "id": int(lat_id),
-                            "offset": 0,
-                            "interpolate": interpolate,
-                        }
-                        values[lat_id] = lateral
-                        self.last_uploaded_laterals = lateral
-                    except ValueError:
-                        continue
-            else:
-                if len(header) != 5:
-                    error_msg = "Wrong timeseries format for 2D laterals!"
-                    self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_msg)
-                    return None, None
-                for x, y, ltype, lat_id, timeseries in laterals_reader:
-                    try:
-                        vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                        point = {"type": "Point", "coordinates": [float(x), float(y)]}
-                        lateral = {
-                            "values": vals,
-                            "units": "m3/s",
-                            "point": point,
-                            "id": int(lat_id),
-                            "offset": 0,
-                            "interpolate": interpolate,
-                        }
-                        values[lat_id] = lateral
-                        self.last_uploaded_laterals = lateral
-                    except ValueError:
-                        continue
+            laterals_list += list(laterals_reader)
+        error_msg = self.handle_laterals_header(laterals_list, laterals_type)
+        if error_msg is not None:
+            return None, None
+        if laterals_type == "1D":
+            for lat_id, connection_node_id, timeseries in laterals_list:
+                try:
+                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                    lateral = {
+                        "values": vals,
+                        "units": "m3/s",
+                        "point": None,
+                        "connection_node": int(connection_node_id),
+                        "id": int(lat_id),
+                        "offset": 0,
+                        "interpolate": interpolate,
+                    }
+                    values[lat_id] = lateral
+                    self.last_uploaded_laterals = lateral
+                except ValueError:
+                    continue
+        else:
+            for x, y, ltype, lat_id, timeseries in laterals_list:
+                try:
+                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                    point = {"type": "Point", "coordinates": [float(x), float(y)]}
+                    lateral = {
+                        "values": vals,
+                        "units": "m3/s",
+                        "point": point,
+                        "id": int(lat_id),
+                        "offset": 0,
+                        "interpolate": interpolate,
+                    }
+                    values[lat_id] = lateral
+                    self.last_uploaded_laterals = lateral
+                except ValueError:
+                    continue
         return values, filename
 
 
@@ -505,6 +527,28 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         self.dwf_upload.setText(filename)
         self.dwf_timeseries = values
 
+    def handle_dwf_laterals_header(self, dwf_laterals_list, log_error=True):
+        """Fetching first DWF lateral row and handling potential header."""
+        error_message = None
+        if not dwf_laterals_list:
+            error_message = "Dry Weather Flow timeseries list is empty!"
+            if log_error is True:
+                self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
+            return error_message
+        header = dwf_laterals_list[0]
+        if len(header) != 3:
+            error_message = "Wrong timeseries format for Dry Weather Flow!"
+        if error_message is None:
+            try:
+                timeseries_candidate = header[-1]
+                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+            except ValueError:
+                dwf_laterals_list.pop(0)
+        else:
+            if log_error is True:
+                self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
+        return error_message
+
     def open_upload_dialog(self):
         """Open dialog for selecting CSV file with Dry Weather Flow."""
         last_folder = QSettings().value("threedi/last_dwf_folder", os.path.expanduser("~"), type=str)
@@ -515,30 +559,29 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         QSettings().setValue("threedi/last_dwf_folder", os.path.dirname(filename))
         values = {}
         interpolate = self.cb_interpolate_dwf.isChecked()
+        dwf_laterals_list = []
         with open(filename, encoding="utf-8-sig") as dwf_file:
             dwf_reader = csv.reader(dwf_file)
-            header = next(dwf_reader, None)
-            if len(header) != 3:
-                error_msg = "Wrong timeseries format for Dry Weather Flow!"
-                self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_msg)
-                return None, None
-            for dwf_id, connection_node_id, timeseries in dwf_reader:
-                try:
-                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                    dwf = {
-                        "values": vals,
-                        "units": "m3/s",
-                        "point": None,
-                        "connection_node": int(connection_node_id),
-                        "id": int(dwf_id),
-                        "offset": 0,
-                        "interpolate": interpolate,
-                    }
-                    values[dwf_id] = dwf
-                    self.last_uploaded_dwf = dwf
-                except ValueError:
-                    continue
-
+            dwf_laterals_list += list(dwf_reader)
+        error_msg = self.handle_dwf_laterals_header(dwf_laterals_list)
+        if error_msg is not None:
+            return None, None
+        for dwf_id, connection_node_id, timeseries in dwf_laterals_list:
+            try:
+                vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                dwf = {
+                    "values": vals,
+                    "units": "m3/s",
+                    "point": None,
+                    "connection_node": int(connection_node_id),
+                    "id": int(dwf_id),
+                    "offset": 0,
+                    "interpolate": interpolate,
+                }
+                values[dwf_id] = dwf
+                self.last_uploaded_dwf = dwf
+            except ValueError:
+                continue
         return values, filename
 
 
