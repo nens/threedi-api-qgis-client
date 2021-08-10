@@ -32,6 +32,7 @@ from ..utils import (
     LATERALS_FILE_TEMPLATE,
     DWF_FILE_TEMPLATE,
 )
+from .custom_items import FilteredComboBox
 from ..api_calls.threedi_calls import ThreediCalls
 
 
@@ -603,6 +604,8 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         set_widget_background_color(self)
         self.values = dict()
         self.breaches_layer = parent_page.parent_wizard.parent_dock.breaches_layer
+        self.dd_breach_id = FilteredComboBox(self)
+        self.breach_lout.addWidget(self.dd_breach_id)
         self.dd_breach_id.currentIndexChanged.connect(self.write_values_into_dict)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
         self.dd_units.currentIndexChanged.connect(self.write_values_into_dict)

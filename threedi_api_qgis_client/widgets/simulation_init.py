@@ -148,7 +148,9 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.cost_type = self.dd_cost_type.currentText()
         self.initial_conditions.flood_month = self.MONTHS[self.dd_flood_month.currentText()]
         self.initial_conditions.period = self.sb_period.value()
-        self.initial_conditions.repair_time_infrastructure = self.REPAIR_TIME[self.dd_repair_infrastructure.currentText()]
+        self.initial_conditions.repair_time_infrastructure = self.REPAIR_TIME[
+            self.dd_repair_infrastructure.currentText()
+        ]
         self.initial_conditions.repair_time_buildings = self.REPAIR_TIME[self.dd_repair_building.currentText()]
         self.open_wizard = True
         self.close()
