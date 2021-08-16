@@ -396,11 +396,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         return laterals_data
 
     def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
-        """Fetching first lateral row and handling potential header."""
+        """
+        Fetch first lateral row and handle potential header.
+        Return None if fetch successful or error message if file is empty or have invalid structure.
+        """
         error_message = None
         if not laterals_list:
             error_message = "Laterals list is empty!"
-            if log_error is True:
+            if log_error:
                 self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
             return error_message
         header = laterals_list[0]
@@ -417,7 +420,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             except ValueError:
                 laterals_list.pop(0)
         else:
-            if log_error is True:
+            if log_error:
                 self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
         return error_message
 
@@ -529,11 +532,14 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         self.dwf_timeseries = values
 
     def handle_dwf_laterals_header(self, dwf_laterals_list, log_error=True):
-        """Fetching first DWF lateral row and handling potential header."""
+        """
+        Fetch first DWF lateral row and handle potential header.
+        Return None if fetch successful or error message if file is empty or have invalid structure.
+        """
         error_message = None
         if not dwf_laterals_list:
             error_message = "Dry Weather Flow timeseries list is empty!"
-            if log_error is True:
+            if log_error:
                 self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
             return error_message
         header = dwf_laterals_list[0]
@@ -546,7 +552,7 @@ class DWFWidget(uicls_dwf, basecls_dwf):
             except ValueError:
                 dwf_laterals_list.pop(0)
         else:
-            if log_error is True:
+            if log_error:
                 self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
         return error_message
 
