@@ -85,6 +85,9 @@
      <property name="styleSheet">
       <string notr="true">QLineEdit {background-color: white;}</string>
      </property>
+     <property name="maxLength">
+      <number>80</number>
+     </property>
      <property name="frame">
       <bool>false</bool>
      </property>

@@ -32,6 +32,7 @@ from ..utils import (
     LATERALS_FILE_TEMPLATE,
     DWF_FILE_TEMPLATE,
 )
+from .custom_items import FilteredComboBox
 from ..api_calls.threedi_calls import ThreediCalls
 
 
@@ -232,7 +233,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         except Exception as e:
             error_msg = f"Error: {e}"
             self.parent_page.parent_wizard.parent_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
-        self.dd_1d.addItems(["Predefined", "Global value"])
+        self.dd_1d.addItems(["From spatialite", "Global value"])
 
     def dropdown_1d_changed(self):
         """Handling dropdown menus selection changes."""
@@ -394,6 +395,35 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
         return laterals_data
 
+    def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
+        """
+        Fetch first lateral row and handle potential header.
+        Return None if fetch successful or error message if file is empty or have invalid structure.
+        """
+        error_message = None
+        if not laterals_list:
+            error_message = "Laterals list is empty!"
+            if log_error:
+                self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
+            return error_message
+        header = laterals_list[0]
+        if laterals_type == "1D":
+            if len(header) != 3:
+                error_message = "Wrong timeseries format for 1D laterals!"
+        else:
+            if len(header) != 5:
+                error_message = "Wrong timeseries format for 2D laterals!"
+        if error_message is None:
+            try:
+                timeseries_candidate = header[-1]
+                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+            except ValueError:
+                laterals_list.pop(0)
+        else:
+            if log_error:
+                self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
+        return error_message
+
     def open_upload_dialog(self):
         """Open dialog for selecting CSV file with laterals."""
         last_folder = QSettings().value("threedi/last_laterals_folder", os.path.expanduser("~"), type=str)
@@ -405,51 +435,47 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         values = {}
         laterals_type = self.cb_type.currentText()
         interpolate = self.cb_interpolate_laterals.isChecked()
+        laterals_list = []
         with open(filename, encoding="utf-8-sig") as lateral_file:
             laterals_reader = csv.reader(lateral_file)
-            header = next(laterals_reader, None)
-            if laterals_type == "1D":
-                if len(header) != 3:
-                    error_msg = "Wrong timeseries format for 1D laterals!"
-                    self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_msg)
-                    return None, None
-                for lat_id, connection_node_id, timeseries in laterals_reader:
-                    try:
-                        vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                        lateral = {
-                            "values": vals,
-                            "units": "m3/s",
-                            "point": None,
-                            "connection_node": int(connection_node_id),
-                            "id": int(lat_id),
-                            "offset": 0,
-                            "interpolate": interpolate,
-                        }
-                        values[lat_id] = lateral
-                        self.last_uploaded_laterals = lateral
-                    except ValueError:
-                        continue
-            else:
-                if len(header) != 5:
-                    error_msg = "Wrong timeseries format for 2D laterals!"
-                    self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_msg)
-                    return None, None
-                for x, y, ltype, lat_id, timeseries in laterals_reader:
-                    try:
-                        vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                        point = {"type": "Point", "coordinates": [float(x), float(y)]}
-                        lateral = {
-                            "values": vals,
-                            "units": "m3/s",
-                            "point": point,
-                            "id": int(lat_id),
-                            "offset": 0,
-                            "interpolate": interpolate,
-                        }
-                        values[lat_id] = lateral
-                        self.last_uploaded_laterals = lateral
-                    except ValueError:
-                        continue
+            laterals_list += list(laterals_reader)
+        error_msg = self.handle_laterals_header(laterals_list, laterals_type)
+        if error_msg is not None:
+            return None, None
+        if laterals_type == "1D":
+            for lat_id, connection_node_id, timeseries in laterals_list:
+                try:
+                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                    lateral = {
+                        "values": vals,
+                        "units": "m3/s",
+                        "point": None,
+                        "connection_node": int(connection_node_id),
+                        "id": int(lat_id),
+                        "offset": 0,
+                        "interpolate": interpolate,
+                    }
+                    values[lat_id] = lateral
+                    self.last_uploaded_laterals = lateral
+                except ValueError:
+                    continue
+        else:
+            for x, y, ltype, lat_id, timeseries in laterals_list:
+                try:
+                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                    point = {"type": "Point", "coordinates": [float(x), float(y)]}
+                    lateral = {
+                        "values": vals,
+                        "units": "m3/s",
+                        "point": point,
+                        "id": int(lat_id),
+                        "offset": 0,
+                        "interpolate": interpolate,
+                    }
+                    values[lat_id] = lateral
+                    self.last_uploaded_laterals = lateral
+                except ValueError:
+                    continue
         return values, filename
 
 
@@ -505,6 +531,31 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         self.dwf_upload.setText(filename)
         self.dwf_timeseries = values
 
+    def handle_dwf_laterals_header(self, dwf_laterals_list, log_error=True):
+        """
+        Fetch first DWF lateral row and handle potential header.
+        Return None if fetch successful or error message if file is empty or have invalid structure.
+        """
+        error_message = None
+        if not dwf_laterals_list:
+            error_message = "Dry Weather Flow timeseries list is empty!"
+            if log_error:
+                self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
+            return error_message
+        header = dwf_laterals_list[0]
+        if len(header) != 3:
+            error_message = "Wrong timeseries format for Dry Weather Flow!"
+        if error_message is None:
+            try:
+                timeseries_candidate = header[-1]
+                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+            except ValueError:
+                dwf_laterals_list.pop(0)
+        else:
+            if log_error:
+                self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_message)
+        return error_message
+
     def open_upload_dialog(self):
         """Open dialog for selecting CSV file with Dry Weather Flow."""
         last_folder = QSettings().value("threedi/last_dwf_folder", os.path.expanduser("~"), type=str)
@@ -515,30 +566,29 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         QSettings().setValue("threedi/last_dwf_folder", os.path.dirname(filename))
         values = {}
         interpolate = self.cb_interpolate_dwf.isChecked()
+        dwf_laterals_list = []
         with open(filename, encoding="utf-8-sig") as dwf_file:
             dwf_reader = csv.reader(dwf_file)
-            header = next(dwf_reader, None)
-            if len(header) != 3:
-                error_msg = "Wrong timeseries format for Dry Weather Flow!"
-                self.parent_page.parent_wizard.parent_dock.communication.show_warn(error_msg)
-                return None, None
-            for dwf_id, connection_node_id, timeseries in dwf_reader:
-                try:
-                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                    dwf = {
-                        "values": vals,
-                        "units": "m3/s",
-                        "point": None,
-                        "connection_node": int(connection_node_id),
-                        "id": int(dwf_id),
-                        "offset": 0,
-                        "interpolate": interpolate,
-                    }
-                    values[dwf_id] = dwf
-                    self.last_uploaded_dwf = dwf
-                except ValueError:
-                    continue
-
+            dwf_laterals_list += list(dwf_reader)
+        error_msg = self.handle_dwf_laterals_header(dwf_laterals_list)
+        if error_msg is not None:
+            return None, None
+        for dwf_id, connection_node_id, timeseries in dwf_laterals_list:
+            try:
+                vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                dwf = {
+                    "values": vals,
+                    "units": "m3/s",
+                    "point": None,
+                    "connection_node": int(connection_node_id),
+                    "id": int(dwf_id),
+                    "offset": 0,
+                    "interpolate": interpolate,
+                }
+                values[dwf_id] = dwf
+                self.last_uploaded_dwf = dwf
+            except ValueError:
+                continue
         return values, filename
 
 
@@ -560,11 +610,14 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         set_widget_background_color(self)
         self.values = dict()
         self.breaches_layer = parent_page.parent_wizard.parent_dock.breaches_layer
+        self.dd_breach_id = FilteredComboBox(self)
+        self.breach_lout.addWidget(self.dd_breach_id)
         self.dd_breach_id.currentIndexChanged.connect(self.write_values_into_dict)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
         self.dd_units.currentIndexChanged.connect(self.write_values_into_dict)
         self.sb_duration.valueChanged.connect(self.write_values_into_dict)
         self.sb_width.valueChanged.connect(self.write_values_into_dict)
+        self.sp_start_after.valueChanged.connect(self.write_values_into_dict)
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
             self.simulation_widget.show()
         else:
@@ -594,11 +647,13 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         duration = self.sb_duration.value()
         width = self.sb_width.value()
         units = self.dd_units.currentText()
+        offset = self.sp_start_after.value()
         self.values[simulation] = {
             "breach_id": breach_id,
             "width": width,
             "duration": duration,
             "units": units,
+            "offset": offset,
         }
         if self.breaches_layer is not None:
             self.parent_page.parent_wizard.parent_dock.iface.setActiveLayer(self.breaches_layer)
@@ -613,11 +668,13 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             self.sb_duration.setValue(vals.get("duration"))
             self.sb_width.setValue(vals.get("width"))
             self.dd_units.setCurrentIndex(self.dd_units.findText(vals.get("units")))
+            self.sp_start_after.setValue(vals.get("offset"))
         else:
             self.dd_breach_id.setCurrentIndex(0)
             self.sb_duration.setValue(0.1)
             self.sb_width.setValue(10)
             self.dd_units.setCurrentIndex(0)
+            self.sp_start_after.setValue(0)
 
     def get_breaches_data(self):
         """Getting all needed data for adding breaches to the simulation."""
@@ -625,11 +682,13 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         width = self.sb_width.value()
         duration = self.sb_duration.value()
         units = self.dd_units.currentText()
+        offset = self.sp_start_after.value()
         duration_in_units = duration * self.SECONDS_MULTIPLIERS[units]
         breach_data = (
             breach_id,
             width,
             duration_in_units,
+            offset,
         )
         return breach_data
 
@@ -1727,7 +1786,7 @@ class SimulationWizard(QWizard):
             wtype, woffset, wduration, wspeed, wdirection, wunits, wdrag_coeff, wispeed, widirection, wvalues = (
                 None,
             ) * 10
-            breach_id, width, d_duration = (None,) * 3
+            breach_id, width, d_duration, breach_offset = (None,) * 4
             for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
                 laterals = []
                 if hasattr(self, "laterals_page"):
@@ -1739,7 +1798,7 @@ class SimulationWizard(QWizard):
                     self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                     breach_data = self.breaches_page.main_widget.get_breaches_data()
                     if simulation_difference == "breaches" or i == 1:
-                        breach_id, width, d_duration = breach_data
+                        breach_id, width, d_duration, breach_offset = breach_data
                 if hasattr(self, "precipitation_page"):
                     self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                     pdata = self.precipitation_page.main_widget.get_precipitation_data()
@@ -1841,7 +1900,7 @@ class SimulationWizard(QWizard):
                         potential_breach=breach["url"],
                         duration_till_max_depth=d_duration,
                         initial_width=width,
-                        offset=0,
+                        offset=breach_offset,
                     )
                 if ptype == CONSTANT:
                     tc.add_constant_precipitation(

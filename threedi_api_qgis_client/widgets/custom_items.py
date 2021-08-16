@@ -1,8 +1,15 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QPalette, QColor
-from qgis.PyQt.QtWidgets import QApplication, QStyledItemDelegate, QStyleOptionProgressBar, QStyle
+from qgis.PyQt.QtCore import Qt, QSortFilterProxyModel
+from qgis.PyQt.QtGui import QPalette, QColor, QFont
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QStyledItemDelegate,
+    QStyleOptionProgressBar,
+    QStyle,
+    QComboBox,
+    QCompleter,
+)
 
 PROGRESS_ROLE = Qt.UserRole + 1000
 
@@ -81,3 +88,47 @@ class DownloadProgressDelegate(QStyledItemDelegate):
         palette.setColor(QPalette.Highlight, pbar_color)
         pbar.palette = palette
         QApplication.style().drawControl(QStyle.CE_ProgressBar, pbar, painter)
+
+
+class FilteredComboBox(QComboBox):
+    """Custom QComboBox with filtering option."""
+
+    def __init__(self, parent=None):
+        super(FilteredComboBox, self).__init__(parent)
+
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
+        self.setEditable(True)
+        self.filter_proxy_model = QSortFilterProxyModel(self)
+        self.filter_proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.filter_proxy_model.setSortCaseSensitivity(Qt.CaseInsensitive)
+        self.filter_proxy_model.setSourceModel(self.model())
+        self.completer = QCompleter(self.filter_proxy_model, self)
+        self.completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
+        self.setCompleter(self.completer)
+        self.setMinimumSize(150, 25)
+        self.setFont(QFont("Segoe UI", 10))
+        self.setStyleSheet("QComboBox {background-color: white;}")
+        self.setMaxVisibleItems(10)
+        self.completer.activated.connect(self.on_completer_activated)
+        self.lineEdit().textEdited.connect(self.filter_proxy_model.setFilterFixedString)
+
+    def on_completer_activated(self, text):
+        """Set active combobox item when a completer item is picked."""
+        if not text:
+            return
+        idx = self.findText(text)
+        self.setCurrentIndex(idx)
+        self.activated[str].emit(self.itemText(idx))
+
+    def setModel(self, model):
+        """Set completer model after the combobox model."""
+        super(FilteredComboBox, self).setModel(model)
+        self.filter_proxy_model.setSourceModel(model)
+        self.completer.setModel(self.filter_proxy_model)
+
+    def setModelColumn(self, column_idx):
+        """Set the correct column for completer and combobox model using column index."""
+        self.completer.setCompletionColumn(column_idx)
+        self.filter_proxy_model.setFilterKeyColumn(column_idx)
+        super(FilteredComboBox, self).setModelColumn(column_idx)

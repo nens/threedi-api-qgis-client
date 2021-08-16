@@ -1,4 +1,5 @@
 import os
+from collections import OrderedDict
 from qgis.PyQt import uic
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -10,7 +11,33 @@ class SimulationInit(uicls, basecls):
 
     PROGRESS_COLUMN_IDX = 2
     COST_TYPES = ["min", "avg", "max"]
-    MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+    MONTHS = OrderedDict(
+        (
+            ("january", "jan"),
+            ("february", "feb"),
+            ("march", "mar"),
+            ("april", "apr"),
+            ("may", "may"),
+            ("june", "jun"),
+            ("july", "jul"),
+            ("august", "aug"),
+            ("september", "sep"),
+            ("october", "oct"),
+            ("november", "nov"),
+            ("december", "dec"),
+        )
+    )
+
+    REPAIR_TIME = OrderedDict(
+        (
+            ("0 hours", 0),
+            ("6 hours", 6),
+            ("1 day", 24),
+            ("2 days", 48),
+            ("5 days", 120),
+            ("10 days", 240),
+        )
+    )
 
     def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
@@ -35,7 +62,11 @@ class SimulationInit(uicls, basecls):
     def setup_initial_options(self):
         """Setup initial options dialog."""
         self.dd_cost_type.addItems(self.COST_TYPES)
-        self.dd_flood_month.addItems(self.MONTHS)
+        self.dd_cost_type.setCurrentText("avg")
+        self.dd_flood_month.addItems(list(self.MONTHS.keys()))
+        self.dd_flood_month.setCurrentText("september")
+        self.dd_repair_infrastructure.addItems(list(self.REPAIR_TIME.keys()))
+        self.dd_repair_building.addItems(list(self.REPAIR_TIME.keys()))
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
 
     def toggle_breaches(self):
@@ -115,10 +146,12 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.arrival_time_map = self.cb_arrival_time_map.isChecked()
         self.initial_conditions.damage_estimation = self.cb_damage_estimation.isChecked()
         self.initial_conditions.cost_type = self.dd_cost_type.currentText()
-        self.initial_conditions.flood_month = self.dd_flood_month.currentText()
+        self.initial_conditions.flood_month = self.MONTHS[self.dd_flood_month.currentText()]
         self.initial_conditions.period = self.sb_period.value()
-        self.initial_conditions.repair_time_infrastructure = self.sb_repair_infrastructure.value()
-        self.initial_conditions.repair_time_buildings = self.sb_repair_building.value()
+        self.initial_conditions.repair_time_infrastructure = self.REPAIR_TIME[
+            self.dd_repair_infrastructure.currentText()
+        ]
+        self.initial_conditions.repair_time_buildings = self.REPAIR_TIME[self.dd_repair_building.currentText()]
         self.open_wizard = True
         self.close()
 
