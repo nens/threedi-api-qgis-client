@@ -1753,6 +1753,7 @@ class SimulationWizard(QWizard):
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
         self.settings.setValue("threedi/wizard_size", self.size())
+        laterals_timeout = self.settings.value("threedi/laterals_timeout", 45, type=int)
         name = self.name_page.main_widget.le_sim_name.text()
         tags = self.name_page.main_widget.le_tags.text()
         threedimodel_id = self.parent_dock.current_model.id
@@ -1875,23 +1876,23 @@ class SimulationWizard(QWizard):
                     write_laterals_to_json(lateral_values, LATERALS_FILE_TEMPLATE)
                     upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_laterals.json", offset=0)
                     upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
-                    for ti in range(10):
+                    for ti in range(int(laterals_timeout // 2)):
                         uploaded_lateral = tc.fetch_lateral_files(sim_id)[0]
                         if uploaded_lateral.state == "processed":
                             break
                         else:
-                            time.sleep(2.5)
+                            time.sleep(2)
                 if self.init_conditions.include_dwf:
                     dwf_values = list(dwf.values())
                     write_laterals_to_json(dwf_values, DWF_FILE_TEMPLATE)
                     upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_dwf.json", offset=0)
                     upload_file(upload_event_file, DWF_FILE_TEMPLATE)
-                    for ti in range(10):
+                    for ti in range(int(laterals_timeout // 2)):
                         uploaded_dwf = tc.fetch_lateral_files(sim_id)[0]
                         if uploaded_dwf.state == "processed":
                             break
                         else:
-                            time.sleep(2.5)
+                            time.sleep(2)
                 if self.init_conditions.include_breaches:
                     breach_obj = tc.fetch_single_potential_breach(threedimodel_id, int(breach_id))
                     breach = breach_obj.to_dict()
