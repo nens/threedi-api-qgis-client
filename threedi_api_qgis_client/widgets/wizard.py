@@ -1782,6 +1782,7 @@ class SimulationWizard(QWizard):
         try:
             self.new_simulations = []
             self.new_simulation_statuses = {}
+            valid_states = ["processed", "valid"]
             simulation_difference = self.init_conditions.simulations_difference
             ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate, pfpath, pcsv, pnetcdf = (None,) * 10
             wtype, woffset, wduration, wspeed, wdirection, wunits, wdrag_coeff, wispeed, widirection, wvalues = (
@@ -1878,7 +1879,7 @@ class SimulationWizard(QWizard):
                     upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
                     for ti in range(int(laterals_timeout // 2)):
                         uploaded_lateral = tc.fetch_lateral_files(sim_id)[0]
-                        if uploaded_lateral.state == "processed":
+                        if uploaded_lateral.state in valid_states:
                             break
                         else:
                             time.sleep(2)
@@ -1889,7 +1890,7 @@ class SimulationWizard(QWizard):
                     upload_file(upload_event_file, DWF_FILE_TEMPLATE)
                     for ti in range(int(laterals_timeout // 2)):
                         uploaded_dwf = tc.fetch_lateral_files(sim_id)[0]
-                        if uploaded_dwf.state == "processed":
+                        if uploaded_dwf.state in valid_states:
                             break
                         else:
                             time.sleep(2)
