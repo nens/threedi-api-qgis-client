@@ -69,9 +69,10 @@ AREA_WIDE_RAIN = {
     "11": [5.833333333] * 12,
     "12": [7.5] * 12,
     "13": [6.666666667] * 24,
-    "14": [0.208333333] * 300,
-    "15": [0.225694444] * 300,
-    "16": [0.277777778] * 300,
+    # Last 3 designs should use 1 hour timestep.
+    "14": [0.208333333] * 48,
+    "15": [0.225694444] * 48,
+    "16": [0.277777778] * 48,
 }
 
 RAIN_LOOKUP = {
@@ -697,7 +698,8 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
     """Widget for the Precipitation page."""
 
     SECONDS_MULTIPLIERS = {"s": 1, "mins": 60, "hrs": 3600}
-    DESIGN_TIMESTEP = 300
+    DESIGN_5_MINUTES_TIMESTEP = 300
+    DESIGN_HOUR_TIMESTEP = 3600
 
     def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
@@ -1000,8 +1002,8 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             type_full_text = type_txt
         self.return_period_lbl.setText(period_txt)
         self.type_lbl.setText(type_full_text)
-        # Design precipitation timestep is 300 seconds.
-        timestep = self.DESIGN_TIMESTEP
+        # Design precipitation timestep is 5 minutes (300 seconds) or 1 hour (3600 seconds).
+        timestep = self.DESIGN_5_MINUTES_TIMESTEP if int(design_id) < 14 else self.DESIGN_HOUR_TIMESTEP
         self.design_time_series[simulation] = [
             [t, v] for t, v in zip(range(0, len(series) * timestep, timestep), series)
         ]
@@ -1078,7 +1080,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, timestep))] for t, v in ts]
         elif current_text == DESIGN:
             values = [
-                [t, mmh_to_ms(mmtimestep_to_mmh(v, self.DESIGN_TIMESTEP))]
+                [t, mmh_to_ms(mmtimestep_to_mmh(v, self.DESIGN_5_MINUTES_TIMESTEP))]
                 for t, v in self.design_time_series[simulation]
             ]
         else:
