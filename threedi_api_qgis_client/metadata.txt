@@ -29,6 +29,7 @@ repository=https://github.com/nens/threedi-api-qgis-client
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=<p>
+ <p>2.5.0 Enhancements and fixes: #98, #104, #110, #117, #118, #120, #122, #124, #126, #128, #141, #143, #147, #152, #157, #158, #161, #163, #164, #165, #166, #175, #177
  <p>2.4.0 Enhancements: #120, #135, #136, #140, #147, #148
  <p>2.3.2 UI fixes
  <p>2.3.0 Enhancements and fixes: #117, #118, #121, #122, #124. #126
