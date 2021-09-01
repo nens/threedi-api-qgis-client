@@ -1,10 +1,20 @@
 History
 =======
 
-2.5.0 (unreleased)
+2.5.0 (2021-09-01)
 ------------------
 
-- Nothing changed yet.
+- Added Dry Weather Flow when running a simulation
+- Support for tags when adding a simulation
+- Specify initial 2D waterlevels (Mean, mix, max dropdown)
+- Added the possibility to upload lateral files
+- Added interpolate flag to time series
+- Added the possibility to upload netcdf file for rainfall
+- Model search is now case insensitive
+- Simplified breach selection
+- Add wind to a simulation
+- Accept different time-units for laterals
+- Various Bugfixes
 
 
 2.4.1 (2021-05-21)
