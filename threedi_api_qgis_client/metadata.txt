@@ -7,7 +7,7 @@ name=3Di API Client
 qgisMinimumVersion=3.4
 qgisMaximumVersion=3.99
 description=3Di API Client for QGIS
-version=2.5.0
+version=2.5.1
 author=Lutra Consulting for 3Di Water Management
 email=info@lutraconsulting.co.uk
 
