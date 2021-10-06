@@ -116,7 +116,7 @@ class ThreediCalls:
         if offset is not None:
             params["offset"] = offset
         if name_contains is not None:
-            params["name__contains"] = name_contains.lower()
+            params["name__icontains"] = name_contains.lower()
         logger.debug("Fetching 3di models for current user...")
         response = api.threedimodels_list(**params)
         models_list = response.results
