@@ -2,7 +2,7 @@
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import pytest
 from unittest.mock import Mock, patch
-from threedi_api_client.openapi import (
+from openapi_client import (
     ApiException,
     Repository,
     Simulation,
@@ -13,12 +13,13 @@ from threedi_api_client.openapi import (
     TimeseriesRain,
     ThreediModel,
     CurrentStatus,
+    RepositoriesApi,
+    SimulationsApi,
+    RevisionsApi,
 )
 from threedi_api_qgis_client.api_calls.threedi_calls import (
     get_api_client,
     ThreediCalls,
-    ThreediApi,
-
 )
 from .conftest import (
     TEST_API_PARAMETERS,
@@ -36,7 +37,7 @@ from .conftest import (
 )
 
 
-@patch.object(ThreediApi, "repositories_list")
+@patch.object(RepositoriesApi, "repositories_list")
 def test_fetch_repositories(mock_repositories_list):
     repos = [Repository(**data) for data in REPO_DATA_LIST]
     mock_repositories_list.return_value = Mock(results=repos, count=len(repos))
@@ -51,7 +52,7 @@ def test_fetch_repositories(mock_repositories_list):
     assert results == repos
 
 
-@patch.object(ThreediApi, "simulations_list")
+@patch.object(SimulationsApi, "simulations_list")
 def test_fetch_simulations(mock_simulations_list):
     sims = [Simulation(**data) for data in SIM_DATA_LIST]
     mock_simulations_list.return_value = Mock(results=sims, count=len(sims))
@@ -66,7 +67,7 @@ def test_fetch_simulations(mock_simulations_list):
     assert results == sims
 
 
-@patch.object(ThreediApi, "simulations_create", new=lambda self, data: data)
+@patch.object(SimulationsApi, "simulations_create", new=lambda self, data: data)
 def test_new_simulation():
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
@@ -74,7 +75,7 @@ def test_new_simulation():
     assert isinstance(sim, Simulation)
 
 
-@patch.object(ThreediApi, "simulations_actions_create", new=lambda self, pk, data: Action(**data))
+@patch.object(SimulationsApi, "simulations_actions_create", new=lambda self, pk, data: Action(**data))
 def test_make_action_on_simulation():
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
@@ -84,7 +85,7 @@ def test_make_action_on_simulation():
     assert action.name == "start"
 
 
-@patch.object(ThreediApi, "simulations_progress_list")
+@patch.object(SimulationsApi, "simulations_progress_list")
 def test_simulations_progress(mock_simulations_progress_list):
     mock_simulations_progress_list.return_value = Progress(**PROGRESS_DATA)
     api = get_api_client(*TEST_API_PARAMETERS)
@@ -96,9 +97,9 @@ def test_simulations_progress(mock_simulations_progress_list):
     assert progress.time == 18000
 
 
-@patch.object(ThreediApi, "simulations_list")
-@patch.object(ThreediApi, "simulations_progress_list")
-@patch.object(ThreediApi, "simulations_status_list")
+@patch.object(SimulationsApi, "simulations_list")
+@patch.object(SimulationsApi, "simulations_progress_list")
+@patch.object(SimulationsApi, "simulations_status_list")
 def test_all_simulations_progress(mock_simulations_status_list, mock_simulations_progress_list, mock_simulations_list):
     statuses = [CurrentStatus(**data) for data in CURRENT_STATUSES_LIST]
     mock_simulations_status_list.side_effect = statuses + [ApiException(500)]
@@ -127,7 +128,7 @@ def test_all_simulations_progress(mock_simulations_status_list, mock_simulations
 
 
 @patch.object(
-    ThreediApi, "simulations_events_rain_constant_create", new=lambda self, pk, data: ConstantRain(**data)
+    SimulationsApi, "simulations_events_rain_constant_create", new=lambda self, pk, data: ConstantRain(**data)
 )
 def test_add_constant_precipitation():
     api = get_api_client(*TEST_API_PARAMETERS)
@@ -139,7 +140,7 @@ def test_add_constant_precipitation():
 
 
 @patch.object(
-    ThreediApi, "simulations_events_rain_timeseries_create", new=lambda self, pk, data: TimeseriesRain(**data)
+    SimulationsApi, "simulations_events_rain_timeseries_create", new=lambda self, pk, data: TimeseriesRain(**data)
 )
 def test_add_custom_precipitation():
     api = get_api_client(*TEST_API_PARAMETERS)
@@ -150,7 +151,7 @@ def test_add_custom_precipitation():
         assert getattr(custom_rain, k) == v
 
 
-@patch.object(ThreediApi, "revisions_list")
+@patch.object(RevisionsApi, "revisions_list")
 def test_fetch_revisions(mock_revisions_list):
     revs = [Revision(**data) for data in REVISION_DATA_LIST]
     mock_revisions_list.return_value = Mock(results=revs, count=len(revs))
@@ -166,7 +167,7 @@ def test_fetch_revisions(mock_revisions_list):
     assert results == revs
 
 
-@patch.object(ThreediApi, "revisions_threedimodels")
+@patch.object(RevisionsApi, "revisions_threedimodels")
 def test_fetch_revision_3di_models(mock_revisions_threedimodels):
     models = [ThreediModel(**data) for data in MODEL_DATA_LIST]
     mock_revisions_threedimodels.return_value = models
