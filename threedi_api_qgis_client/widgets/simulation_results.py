@@ -135,7 +135,7 @@ class SimulationResults(uicls, basecls):
             simulation_model_id = int(simulation.threedimodel_id)
             tc = ThreediCalls(self.parent_dock.api_client)
             downloads = tc.fetch_simulation_downloads(sim_id)
-            gridadmin_downloads = tc.fetch_gridadmin_download(simulation_model_id)
+            gridadmin_downloads = tc.fetch_3di_model_gridadmin_download(simulation_model_id)
             downloads.append(gridadmin_downloads)
             downloads.sort(key=lambda x: x[-1].size)
             self.last_progress_item = self.tv_model.item(current_row, self.PROGRESS_COLUMN_IDX)

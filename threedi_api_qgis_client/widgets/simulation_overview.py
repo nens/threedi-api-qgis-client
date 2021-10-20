@@ -140,7 +140,7 @@ class SimulationOverview(uicls, basecls):
                 name_item = self.tv_model.item(index.row(), 0)
                 sim_id = name_item.data(Qt.UserRole)
                 tc = ThreediCalls(self.parent_dock.api_client)
-                tc.make_action_on_simulation(sim_id, name="shutdown")
+                tc.create_simulation_action(sim_id, name="shutdown")
                 msg = f"Simulation {name_item.text()} stopped!"
                 self.parent_dock.communication.bar_info(msg)
             except ApiException as e:

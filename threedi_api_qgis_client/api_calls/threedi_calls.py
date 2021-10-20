@@ -4,15 +4,9 @@ import logging
 import os
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Tuple, Callable, Any
-from threedi_api_client import ThreediApiClient
-from openapi_client import (
-    ApiClient,
-    RepositoriesApi,
-    SimulationsApi,
-    RevisionsApi,
-    OrganisationsApi,
+from threedi_api_client import ThreediApi
+from threedi_api_client.openapi import (
     ThreediModel,
-    ThreedimodelsApi,
     Repository,
     Simulation,
     Action,
@@ -47,18 +41,23 @@ from openapi_client import (
     TimeseriesWind,
     WindDragCoefficient,
     FileLateral,
+    Schematisation,
+    SchematisationRevision,
+    SqliteFileUpload,
+    RasterCreate,
+    Commit,
 )
 
 
 logger = logging.getLogger(__name__)
 
 
-def get_api_client(api_username: str, api_password: str, api_host: str) -> ApiClient:
+def get_api_client(api_username: str, api_password: str, api_host: str, version: str = "v3-beta") -> ThreediApi:
     """Setup open_api client using username and password."""
-    os.environ["API_HOST"] = api_host
-    os.environ["API_USERNAME"] = api_username
-    os.environ["API_PASSWORD"] = api_password
-    api_client = ThreediApiClient()
+    os.environ["THREEDI_API_HOST"] = api_host
+    os.environ["THREEDI_API_USERNAME"] = api_username
+    os.environ["THREEDI_API_PASSWORD"] = api_password
+    api_client = ThreediApi(version=version)
     return api_client
 
 
@@ -68,7 +67,7 @@ class ThreediCalls:
     FETCH_LIMIT = 250
     EXPIRATION_TIME = datetime.now(timezone.utc) - timedelta(days=7)
 
-    def __init__(self, api_client: ApiClient) -> None:
+    def __init__(self, api_client: ThreediApi) -> None:
         self.api_client = api_client
 
     def paginated_fetch(self, api_method: Callable, *args, **kwargs) -> List[Any]:
@@ -87,29 +86,25 @@ class ThreediCalls:
 
     def fetch_repositories(self) -> List[Repository]:
         """Fetch all repositories available for current user."""
-        api = RepositoriesApi(self.api_client)
-        repositories_list = self.paginated_fetch(api.repositories_list)
+        repositories_list = self.paginated_fetch(self.api_client.repositories_list)
         return repositories_list
 
     def fetch_simulations(self) -> List[Simulation]:
         """Fetch all simulations available for current user."""
-        api = SimulationsApi(self.api_client)
         created__date__gt = self.EXPIRATION_TIME.strftime("%Y-%m-%d")
-        simulations_list = self.paginated_fetch(api.simulations_list, created__date__gt=created__date__gt)
+        simulations_list = self.paginated_fetch(self.api_client.simulations_list, created__date__gt=created__date__gt)
         return simulations_list
 
-    def fetch_single_simulation(self, simulation_pk: int) -> Simulation:
+    def fetch_simulation(self, simulation_pk: int) -> Simulation:
         """Fetch single simulation."""
-        api = SimulationsApi(self.api_client)
         logger.debug("Fetching single simulation %s...", simulation_pk)
-        simulation = api.simulations_read(id=simulation_pk)
+        simulation = self.api_client.simulations_read(id=simulation_pk)
         return simulation
 
-    def fetch_3di_models(
+    def fetch_3di_models_with_count(
         self, limit: int = None, offset: int = None, name_contains: str = None
     ) -> Tuple[List[ThreediModel], int]:
         """Fetch 3Di models available for current user."""
-        api = ThreedimodelsApi(self.api_client)
         params = {}
         if limit is not None:
             params["limit"] = limit
@@ -118,44 +113,39 @@ class ThreediCalls:
         if name_contains is not None:
             params["name__contains"] = name_contains.lower()
         logger.debug("Fetching 3di models for current user...")
-        response = api.threedimodels_list(**params)
+        response = self.api_client.threedimodels_list(**params)
         models_list = response.results
         models_count = response.count
         return models_list, models_count
 
-    def new_simulation(self, **simulation_data) -> Simulation:
+    def create_simulation(self, **simulation_data) -> Simulation:
         """Create a new Simulation."""
-        api = SimulationsApi(self.api_client)
         sim = Simulation(**simulation_data)
-        new_sim = api.simulations_create(sim)
+        new_sim = self.api_client.simulations_create(sim)
         logger.info("Created new simulation")
         return new_sim
 
-    def make_action_on_simulation(self, simulation_pk: int, **action_data) -> Action:
+    def create_simulation_action(self, simulation_pk: int, **action_data) -> Action:
         """Make an action on 'simulation_pk' simulation."""
-        api = SimulationsApi(self.api_client)
-        action = api.simulations_actions_create(str(simulation_pk), action_data)
+        action = self.api_client.simulations_actions_create(str(simulation_pk), action_data)
         return action
 
-    def simulation_current_status(self, simulation_pk: int) -> CurrentStatus:
+    def fetch_simulation_status(self, simulation_pk: int) -> CurrentStatus:
         """Get a given simulation current status."""
-        api = SimulationsApi(self.api_client)
         logger.debug("Fetching simulation status for sim id %s...", str(simulation_pk))
-        current_status = api.simulations_status_list(str(simulation_pk), limit=self.FETCH_LIMIT)
+        current_status = self.api_client.simulations_status_list(str(simulation_pk), limit=self.FETCH_LIMIT)
         return current_status
 
-    def simulations_progress(self, simulation_pk: int) -> Progress:
+    def fetch_simulation_progress(self, simulation_pk: int) -> Progress:
         """Get a given simulation progress. Available only if simulation was already started."""
-        api = SimulationsApi(self.api_client)
-        logger.debug("Fetching simulation progess for sim id %s...", str(simulation_pk))
-        simulations_progress = api.simulations_progress_list(str(simulation_pk), limit=self.FETCH_LIMIT)
+        logger.debug("Fetching simulation progress for sim id %s...", str(simulation_pk))
+        simulations_progress = self.api_client.simulations_progress_list(str(simulation_pk), limit=self.FETCH_LIMIT)
         return simulations_progress
 
-    def all_simulations_progress(
+    def fetch_simulations_progresses(
         self, simulations_list: List[Simulation]
     ) -> Dict[int, Tuple[Simulation, CurrentStatus, Progress]]:
         """Get all simulations with statuses and progresses."""
-        api = SimulationsApi(self.api_client)
         progresses = {}
         if not simulations_list:
             logger.warning("Simulations list not specified, we grab all simulations! ")
@@ -168,13 +158,13 @@ class ThreediCalls:
             spk = sim.id
             spk_str = str(spk)
             logger.debug("Fetching status for simulation %s", spk_str)
-            current_status = api.simulations_status_list(spk_str, limit=self.FETCH_LIMIT)
+            current_status = self.api_client.simulations_status_list(spk_str, limit=self.FETCH_LIMIT)
             status_name = current_status.name
             status_time = current_status.time
             if status_time is None:
                 status_time = 0
             if status_name == "initialized":
-                sim_progress = api.simulations_progress_list(spk_str, limit=self.FETCH_LIMIT)
+                sim_progress = self.api_client.simulations_progress_list(spk_str, limit=self.FETCH_LIMIT)
             elif status_name == "postprocessing" or status_name == "finished":
                 sim_progress = Progress(percentage=100, time=status_time)
             else:
@@ -184,218 +174,269 @@ class ThreediCalls:
 
     def fetch_simulation_results(self, simulation_pk: int) -> List[ResultFile]:
         """Fetch simulation results list."""
-        api = SimulationsApi(self.api_client)
         spk_str = str(simulation_pk)
-        results_list = self.paginated_fetch(api.simulations_results_files_list, spk_str)
+        results_list = self.paginated_fetch(self.api_client.simulations_results_files_list, spk_str)
         return results_list
 
     def fetch_simulation_downloads(self, simulation_pk: int) -> List[Tuple[ResultFile, Download]]:
         """Fetch simulation downloads list."""
-        api = SimulationsApi(self.api_client)
         spk_str = str(simulation_pk)
         downloads = []
-        results_list = self.paginated_fetch(api.simulations_results_files_list, spk_str)
+        results_list = self.paginated_fetch(self.api_client.simulations_results_files_list, spk_str)
         for result_file in results_list:
-            download = api.simulations_results_files_download(result_file.id, spk_str)
+            download = self.api_client.simulations_results_files_download(result_file.id, spk_str)
             downloads.append((result_file, download))
         return downloads
 
-    def fetch_geojson_cells_download(self, threedimodel_id: int) -> Download:
+    def fetch_3di_model_geojson_cells_download(self, threedimodel_id: int) -> Download:
         """Fetch model geojson cells Download object."""
-        api = ThreedimodelsApi(self.api_client)
         logger.debug("Fetching cells json for model %s", threedimodel_id)
-        cells_download = api.threedimodels_geojson_cells_download(threedimodel_id)
+        cells_download = self.api_client.threedimodels_geojson_cells_download(threedimodel_id)
         return cells_download
 
-    def fetch_geojson_breaches_download(self, threedimodel_id: int) -> Download:
+    def fetch_3di_model_geojson_breaches_download(self, threedimodel_id: int) -> Download:
         """Fetch model geojson breaches Download object."""
-        api = ThreedimodelsApi(self.api_client)
         logger.debug("Fetching breaches json for model %s", threedimodel_id)
-        breaches_download = api.threedimodels_geojson_breaches_download(threedimodel_id)
+        breaches_download = self.api_client.threedimodels_geojson_breaches_download(threedimodel_id)
         return breaches_download
 
-    def fetch_gridadmin_download(self, threedimodel_id: int) -> Tuple[ResultFile, Download]:
+    def fetch_3di_model_gridadmin_download(self, threedimodel_id: int) -> Tuple[ResultFile, Download]:
         """Fetch simulation model gridadmin file."""
-        api = ThreedimodelsApi(self.api_client)
         logger.debug("Fetching gridadmin for model %s", threedimodel_id)
         result_file = ResultFile(filename="gridadmin.h5", created=datetime.utcnow())
-        download = api.threedimodels_gridadmin_download(threedimodel_id)
+        download = self.api_client.threedimodels_gridadmin_download(threedimodel_id)
         return result_file, download
 
-    def fetch_potential_breaches(self, threedimodel_id: str) -> List[PotentialBreach]:
+    def fetch_3di_model_potential_breaches(self, threedimodel_id: str) -> List[PotentialBreach]:
         """Fetch breaches list."""
-        api = ThreedimodelsApi(self.api_client)
-        breaches = self.paginated_fetch(api.threedimodels_potentialbreaches_list, threedimodel_id)
+        breaches = self.paginated_fetch(self.api_client.threedimodels_potentialbreaches_list, threedimodel_id)
         return breaches
 
-    def fetch_single_potential_breach(self, threedimodel_id: str, content_pk: int = None) -> PotentialBreach:
+    def fetch_3di_model_potential_breach(self, threedimodel_id: str, content_pk: int = None) -> PotentialBreach:
         """Fetch a single potential breach."""
-        api = ThreedimodelsApi(self.api_client)
         params = {"threedimodel_pk": threedimodel_id}
         if content_pk is not None:
             params["connected_pnt_id"] = content_pk
-        response = api.threedimodels_potentialbreaches_list(**params)
+        response = self.api_client.threedimodels_potentialbreaches_list(**params)
         breach = response.results[0]
         return breach
 
-    def fetch_initial_waterlevels(self, threedimodel_id: str) -> List[InitialWaterlevel]:
+    def fetch_3di_model_initial_waterlevels(self, threedimodel_id: str) -> List[InitialWaterlevel]:
         """Fetch initial waterlevels List"""
-        api = ThreedimodelsApi(self.api_client)
-        waterlevels = self.paginated_fetch(api.threedimodels_initial_waterlevels_list, threedimodel_id)
+        waterlevels = self.paginated_fetch(self.api_client.threedimodels_initial_waterlevels_list, threedimodel_id)
         return waterlevels
 
-    def fetch_saved_states(self, threedimodel_id: str) -> List[ThreediModelSavedState]:
+    def fetch_3di_model_saved_states(self, threedimodel_id: str) -> List[ThreediModelSavedState]:
         """Fetch saved states list."""
-        api = ThreedimodelsApi(self.api_client)
-        states = self.paginated_fetch(api.threedimodels_saved_states_list, threedimodel_id)
+        states = self.paginated_fetch(self.api_client.threedimodels_saved_states_list, threedimodel_id)
         return states
 
     def fetch_revisions(self) -> List[Revision]:
         """Fetch all Revisions available for current user."""
-        api = RevisionsApi(self.api_client)
-        revisions_list = self.paginated_fetch(api.revisions_list)
+        revisions_list = self.paginated_fetch(self.api_client.revisions_list)
         return revisions_list
 
     def fetch_revision_3di_models(self, rev_id: int) -> List[ThreediModel]:
         """Fetch all 3Di models belonging to given Revision."""
-        api = RevisionsApi(self.api_client)
-        revision_models_list = api.revisions_threedimodels(rev_id)
+        revision_models_list = self.api_client.revisions_threedimodels(rev_id)
         return revision_models_list
 
     def fetch_organisations(self) -> List[Organisation]:
         """Fetch all Organisations available for current user."""
-        api = OrganisationsApi(self.api_client)
-        organisations = self.paginated_fetch(api.organisations_list)
+        organisations = self.paginated_fetch(self.api_client.organisations_list)
         return organisations
 
-    def add_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
+    def create_simulation_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
         """Add ConstantRain to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        constant_rain = api.simulations_events_rain_constant_create(str(simulation_pk), rain_data)
+        constant_rain = self.api_client.simulations_events_rain_constant_create(str(simulation_pk), rain_data)
         return constant_rain
 
-    def add_custom_precipitation(self, simulation_pk: int, **rain_data) -> TimeseriesRain:
+    def create_simulation_custom_precipitation(self, simulation_pk: int, **rain_data) -> TimeseriesRain:
         """Add TimeseriesRain to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        time_series_rain = api.simulations_events_rain_timeseries_create(str(simulation_pk), rain_data)
+        time_series_rain = self.api_client.simulations_events_rain_timeseries_create(str(simulation_pk), rain_data)
         return time_series_rain
 
-    def add_custom_netcdf_precipitation(self, simulation_pk: int, **rain_data) -> Upload:
+    def create_simulation_custom_netcdf_precipitation(self, simulation_pk: int, **rain_data) -> Upload:
         """Add rain time series from NetCDF file to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        netcdf_upload = api.simulations_events_rain_rasters_netcdf_create(str(simulation_pk), rain_data)
+        netcdf_upload = self.api_client.simulations_events_rain_rasters_netcdf_create(str(simulation_pk), rain_data)
         return netcdf_upload
 
-    def add_radar_precipitation(self, simulation_pk: int, **rain_data) -> LizardRasterRain:
+    def create_simulation_radar_precipitation(self, simulation_pk: int, **rain_data) -> LizardRasterRain:
         """Add LizardRasterRain to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        time_series_rain = api.simulations_events_rain_rasters_lizard_create(str(simulation_pk), rain_data)
+        time_series_rain = self.api_client.simulations_events_rain_rasters_lizard_create(str(simulation_pk), rain_data)
         return time_series_rain
 
-    def add_breaches(self, simulation_pk: int, **data) -> Breach:
+    def create_simulation_breaches(self, simulation_pk: int, **data) -> Breach:
         """Add Breach to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        breach = api.simulations_events_breaches_create(str(simulation_pk), data)
+        breach = self.api_client.simulations_events_breaches_create(str(simulation_pk), data)
         return breach
 
-    def add_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
+    def create_simulation_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
         """Add lateral timeseries to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        lateral_timeseries = api.simulations_events_lateral_timeseries_create(str(simulation_pk), data)
+        lateral_timeseries = self.api_client.simulations_events_lateral_timeseries_create(str(simulation_pk), data)
         return lateral_timeseries
 
-    def add_lateral_file(self, simulation_pk: int, **data) -> UploadEventFile:
+    def create_simulation_lateral_file(self, simulation_pk: int, **data) -> UploadEventFile:
         """Add lateral file to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        lateral_upload_file = api.simulations_events_lateral_file_create(str(simulation_pk), data)
+        lateral_upload_file = self.api_client.simulations_events_lateral_file_create(str(simulation_pk), data)
         return lateral_upload_file
 
     def fetch_lateral_files(self, simulation_pk: int) -> List[FileLateral]:
         """Get list of the lateral files of the given simulation."""
-        api = SimulationsApi(self.api_client)
-        lateral_files_list = self.paginated_fetch(api.simulations_events_lateral_file_list, str(simulation_pk))
+        lateral_files_list = self.paginated_fetch(
+            self.api_client.simulations_events_lateral_file_list, str(simulation_pk)
+        )
         return lateral_files_list
 
-    def add_postprocessing_in_lizard_arrival(self, simulation_pk: int, **data) -> ArrivalTimePostProcessing:
+    def create_simulation_postprocessing_in_lizard_arrival(
+        self, simulation_pk: int, **data
+    ) -> ArrivalTimePostProcessing:
         """Add add_postprocessing_in_lizard_arrival to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        time_post_processing = api.simulations_results_post_processing_lizard_arrival_create(str(simulation_pk), data)
+        time_post_processing = self.api_client.simulations_results_post_processing_lizard_arrival_create(
+            str(simulation_pk), data
+        )
         return time_post_processing
 
-    def add_post_processing_lizard_basic(self, simulation_pk: int, **data) -> BasicPostProcessing:
+    def create_simulation_post_processing_lizard_basic(self, simulation_pk: int, **data) -> BasicPostProcessing:
         """Add add_post_processing_lizard_basic to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        basic_post_processing = api.simulations_results_post_processing_lizard_basic_create(str(simulation_pk), data)
+        basic_post_processing = self.api_client.simulations_results_post_processing_lizard_basic_create(
+            str(simulation_pk), data
+        )
         return basic_post_processing
 
-    def add_post_processing_lizard_damage(self, simulation_pk: int, **data) -> DamagePostProcessing:
+    def create_simulation_post_processing_lizard_damage(self, simulation_pk: int, **data) -> DamagePostProcessing:
         """Add add_post_processing_lizard_damage to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        dmg_post_processing = api.simulations_results_post_processing_lizard_damage_create(str(simulation_pk), data)
+        dmg_post_processing = self.api_client.simulations_results_post_processing_lizard_damage_create(
+            str(simulation_pk), data
+        )
         return dmg_post_processing
 
-    def add_saved_state_after_simulation(self, simulation_pk: int, **data) -> TimedSavedStateUpdate:
+    def create_simulation_saved_state_after_simulation(self, simulation_pk: int, **data) -> TimedSavedStateUpdate:
         """Add add_saved_state_after_simulation to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        saved_state = api.simulations_create_saved_states_timed_create(str(simulation_pk), data)
+        saved_state = self.api_client.simulations_create_saved_states_timed_create(str(simulation_pk), data)
         return saved_state
 
-    def add_initial_1d_water_level_constant(self, simulation_pk: int, **data) -> OneDWaterLevel:
+    def create_simulation_initial_1d_water_level_constant(self, simulation_pk: int, **data) -> OneDWaterLevel:
         """Add add_initial_1d_water_level_constant to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        water_level_1d_const = api.simulations_initial1d_water_level_constant_create(str(simulation_pk), data)
+        water_level_1d_const = self.api_client.simulations_initial1d_water_level_constant_create(
+            str(simulation_pk), data
+        )
         return water_level_1d_const
 
-    def add_initial_1d_water_level_predefined(self, simulation_pk: int, **data) -> OneDWaterLevelPredefined:
+    def create_simulation_initial_1d_water_level_predefined(
+        self, simulation_pk: int, **data
+    ) -> OneDWaterLevelPredefined:
         """Add add_initial_1d_water_level_predefined to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        water_level_1d_pred = api.simulations_initial1d_water_level_predefined_create(str(simulation_pk), data)
+        water_level_1d_pred = self.api_client.simulations_initial1d_water_level_predefined_create(
+            str(simulation_pk), data
+        )
         return water_level_1d_pred
 
-    def add_initial_2d_water_level_constant(self, simulation_pk: int, **data) -> TwoDWaterLevel:
+    def create_simulation_initial_2d_water_level_constant(self, simulation_pk: int, **data) -> TwoDWaterLevel:
         """Add add_initial_2d_water_level_constant to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        water_level_2d_const = api.simulations_initial2d_water_level_constant_create(str(simulation_pk), data)
+        water_level_2d_const = self.api_client.simulations_initial2d_water_level_constant_create(
+            str(simulation_pk), data
+        )
         return water_level_2d_const
 
-    def add_initial_2d_water_level_raster(self, simulation_pk: int, **data) -> TwoDWaterRaster:
+    def create_simulation_initial_2d_water_level_raster(self, simulation_pk: int, **data) -> TwoDWaterRaster:
         """Add add_initial_2d_water_level_raster to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        water_level_2d_raster = api.simulations_initial2d_water_level_raster_create(str(simulation_pk), data)
+        water_level_2d_raster = self.api_client.simulations_initial2d_water_level_raster_create(
+            str(simulation_pk), data
+        )
         return water_level_2d_raster
 
-    def add_initial_groundwater_level_constant(self, simulation_pk: int, **data) -> GroundWaterLevel:
+    def create_simulation_initial_groundwater_level_constant(self, simulation_pk: int, **data) -> GroundWaterLevel:
         """Add add_initial_groundwater_level_constant to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        groundwater_const = api.simulations_initial_groundwater_level_constant_create(str(simulation_pk), data)
+        groundwater_const = self.api_client.simulations_initial_groundwater_level_constant_create(
+            str(simulation_pk), data
+        )
         return groundwater_const
 
-    def add_initial_groundwater_level_raster(self, simulation_pk: int, **data) -> GroundWaterRaster:
+    def create_simulation_initial_groundwater_level_raster(self, simulation_pk: int, **data) -> GroundWaterRaster:
         """Add add_initial_groundwater_level_raster to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        groundwater_raster = api.simulations_initial_groundwater_level_raster_create(str(simulation_pk), data)
+        groundwater_raster = self.api_client.simulations_initial_groundwater_level_raster_create(
+            str(simulation_pk), data
+        )
         return groundwater_raster
 
-    def add_initial_saved_state(self, simulation_pk: int, **data) -> InitialSavedState:
+    def create_simulation_initial_saved_state(self, simulation_pk: int, **data) -> InitialSavedState:
         """Add initial saved state to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        initial_saved_state = api.simulations_initial_saved_state_create(str(simulation_pk), data)
+        initial_saved_state = self.api_client.simulations_initial_saved_state_create(str(simulation_pk), data)
         return initial_saved_state
 
-    def add_initial_wind_drag_coefficient(self, simulation_pk: int, **data) -> WindDragCoefficient:
+    def create_simulation_initial_wind_drag_coefficient(self, simulation_pk: int, **data) -> WindDragCoefficient:
         """Add initial wind drag coefficient to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        initial_wind_drag_coefficient = api.simulations_initial_wind_drag_coefficient_create(str(simulation_pk), data)
+        initial_wind_drag_coefficient = self.api_client.simulations_initial_wind_drag_coefficient_create(
+            str(simulation_pk), data
+        )
         return initial_wind_drag_coefficient
 
-    def add_constant_wind(self, simulation_pk: int, **wind_data) -> ConstantWind:
+    def create_simulation_constant_wind(self, simulation_pk: int, **wind_data) -> ConstantWind:
         """Add ConstantWind to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        constant_wind = api.simulations_events_wind_constant_create(str(simulation_pk), wind_data)
+        constant_wind = self.api_client.simulations_events_wind_constant_create(str(simulation_pk), wind_data)
         return constant_wind
 
-    def add_custom_wind(self, simulation_pk: int, **wind_data) -> TimeseriesWind:
+    def create_simulation_custom_wind(self, simulation_pk: int, **wind_data) -> TimeseriesWind:
         """Add TimeseriesWind to the given simulation."""
-        api = SimulationsApi(self.api_client)
-        time_series_wind = api.simulations_events_wind_timeseries_create((str(simulation_pk)), wind_data)
+        time_series_wind = self.api_client.simulations_events_wind_timeseries_create((str(simulation_pk)), wind_data)
         return time_series_wind
+
+    # V3-beta API methods
+    def fetch_schematisations(self, **data) -> List[Schematisation]:
+        schematisations_list = self.paginated_fetch(self.api_client.schematisations_list, **data)
+        return schematisations_list
+
+    def fetch_schematisation(self, schematisation_pk: int, **data) -> Schematisation:
+        schematisation = self.api_client.schematisations_read(id=schematisation_pk, **data)
+        return schematisation
+
+    def create_schematisation(self, name: str, owner: str, **data) -> Schematisation:
+        data.update({"name": name, "owner": owner})
+        schematisation = self.api_client.schematisations_create(data)
+        return schematisation
+
+    def fetch_schematisation_revisions(self, schematisation_pk: int, **data) -> List[SchematisationRevision]:
+        schematisation_revisions = self.paginated_fetch(
+            self.api_client.schematisations_revisions_list, schematisation_pk, **data
+        )
+        return schematisation_revisions
+
+    def fetch_schematisation_revision(self, schematisation_pk: int, revision_pk: int) -> SchematisationRevision:
+        schematisation_revision = self.api_client.schematisations_revisions_read(revision_pk, schematisation_pk)
+        return schematisation_revision
+
+    def create_schematisation_revision(
+        self, schematisation_pk: int, empty: bool = False, **data
+    ) -> SchematisationRevision:
+        data["empty"] = empty
+        schematisation_revision = self.api_client.schematisations_revisions_create(schematisation_pk, data)
+        return schematisation_revision
+
+    def upload_schematisation_revision_sqlite(
+        self, schematisation_pk: int, revision_pk: int, filename: str, **data
+    ) -> SqliteFileUpload:
+        data["filename"] = filename
+        sqlite_file_upload = self.api_client.schematisations_revisions_sqlite_upload(
+            revision_pk, schematisation_pk, data
+        )
+        return sqlite_file_upload
+
+    def delete_schematisation_revision_sqlite(self, schematisation_pk: int, revision_pk: int):
+        self.api_client.schematisations_revisions_sqlite_delete(revision_pk, schematisation_pk)
+
+    def upload_schematisation_revision_raster(
+        self, schematisation_pk: int, revision_pk: int, name: str, raster_type: str = "dem_file", **data
+    ) -> RasterCreate:
+        data.update({"name": name, "type": raster_type})
+        raster_file_upload = self.api_client.schematisations_revisions_raster_upload(
+            revision_pk, schematisation_pk, data
+        )
+        return raster_file_upload
+
+    def delete_schematisation_revision_raster(self, schematisation_pk: int, revision_pk: int):
+        self.api_client.schematisations_revisions_raster_delete(revision_pk, schematisation_pk)
+
+    def commit_schematisation_revision(self, schematisation_pk: int, revision_pk: int, **data) -> Commit:
+        commit = self.api_client.schematisations_revisions_commit(revision_pk, schematisation_pk, data)
+        return commit

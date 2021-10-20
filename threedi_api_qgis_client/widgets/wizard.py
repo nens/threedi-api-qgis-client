@@ -212,14 +212,16 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.dd_groundwater.addItem("")
             self.cb_saved_states.addItem("")
             tc = ThreediCalls(self.parent_page.parent_wizard.parent_dock.api_client)
-            rasters = tc.fetch_initial_waterlevels(self.parent_page.parent_wizard.parent_dock.current_model.id)
+            rasters = tc.fetch_3di_model_initial_waterlevels(
+                self.parent_page.parent_wizard.parent_dock.current_model.id
+            )
             for raster in rasters or []:
                 raster_filename = raster.file.filename
                 self.rasters[raster_filename] = raster
                 self.dd_2d.addItem(raster_filename)
                 self.dd_groundwater.addItem(raster_filename)
 
-            states = tc.fetch_saved_states(self.parent_page.parent_wizard.parent_dock.current_model.id)
+            states = tc.fetch_3di_model_saved_states(self.parent_page.parent_wizard.parent_dock.current_model.id)
             for state in states or []:
                 state_name = state.name
                 self.saved_states[state_name] = state
@@ -1823,7 +1825,7 @@ class SimulationWizard(QWizard):
                     ) = self.wind_page.main_widget.get_wind_data()
                 tc = ThreediCalls(self.parent_dock.api_client)
                 sim_name = f"{name}_{i}" if self.init_conditions.multiple_simulations is True else name
-                new_simulation = tc.new_simulation(
+                new_simulation = tc.create_simulation(
                     name=sim_name,
                     tags=tags,
                     threedimodel=threedimodel_id,
@@ -1831,14 +1833,16 @@ class SimulationWizard(QWizard):
                     organisation=organisation_uuid,
                     duration=duration,
                 )
-                current_status = tc.simulation_current_status(new_simulation.id)
+                current_status = tc.fetch_simulation_status(new_simulation.id)
                 sim_id = new_simulation.id
                 if self.init_conditions.basic_processed_results:
-                    tc.add_post_processing_lizard_basic(sim_id, scenario_name=sim_name, process_basic_results=True)
+                    tc.create_simulation_post_processing_lizard_basic(
+                        sim_id, scenario_name=sim_name, process_basic_results=True
+                    )
                 if self.init_conditions.arrival_time_map:
-                    tc.add_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=True)
+                    tc.create_simulation_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=True)
                 if self.init_conditions.damage_estimation:
-                    tc.add_post_processing_lizard_damage(
+                    tc.create_simulation_post_processing_lizard_damage(
                         sim_id,
                         basic_post_processing=True,
                         cost_type=self.init_conditions.cost_type,
@@ -1848,36 +1852,40 @@ class SimulationWizard(QWizard):
                         repair_time_buildings=self.init_conditions.repair_time_buildings,
                     )
                 if self.init_conditions.generate_saved_state:
-                    tc.add_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
+                    tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
                 if self.init_conditions.include_initial_conditions:
                     if self.init_conditions_page.main_widget.cb_1d.isChecked():
                         if self.init_conditions_page.main_widget.dd_1d.currentText() == "Global value":
-                            tc.add_initial_1d_water_level_constant(sim_id, value=global_value_1d)
+                            tc.create_simulation_initial_1d_water_level_constant(sim_id, value=global_value_1d)
                         else:
-                            tc.add_initial_1d_water_level_predefined(sim_id)
+                            tc.create_simulation_initial_1d_water_level_predefined(sim_id)
                     if self.init_conditions_page.main_widget.cb_2d.isChecked():
                         aggregation_method = self.init_conditions_page.main_widget.cb_2d_aggregation.currentText()
                         if self.init_conditions_page.main_widget.dd_2d.currentText() == "":
-                            tc.add_initial_2d_water_level_constant(sim_id, value=global_value_2d)
+                            tc.create_simulation_initial_2d_water_level_constant(sim_id, value=global_value_2d)
                         else:
-                            tc.add_initial_2d_water_level_raster(
+                            tc.create_simulation_initial_2d_water_level_raster(
                                 sim_id, aggregation_method=aggregation_method, initial_waterlevel=raster_2d.url
                             )
                     if self.init_conditions_page.main_widget.cb_groundwater.isChecked():
                         aggregation_method = self.init_conditions_page.main_widget.cb_gwater_aggregation.currentText()
                         if self.init_conditions_page.main_widget.dd_groundwater.currentText() == "":
-                            tc.add_initial_groundwater_level_constant(sim_id, value=global_value_groundwater)
+                            tc.create_simulation_initial_groundwater_level_constant(
+                                sim_id, value=global_value_groundwater
+                            )
                         else:
-                            tc.add_initial_groundwater_level_raster(
+                            tc.create_simulation_initial_groundwater_level_raster(
                                 sim_id, aggregation_method=aggregation_method, initial_waterlevel=raster_groundwater.url
                             )
                     if self.init_conditions.load_from_saved_state and saved_state:
                         saved_state_id = saved_state.url.strip("/").split("/")[-1]
-                        tc.add_initial_saved_state(sim_id, saved_state=saved_state_id)
+                        tc.create_simulation_initial_saved_state(sim_id, saved_state=saved_state_id)
                 if self.init_conditions.include_laterals:
                     lateral_values = list(laterals.values())
                     write_laterals_to_json(lateral_values, LATERALS_FILE_TEMPLATE)
-                    upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_laterals.json", offset=0)
+                    upload_event_file = tc.create_simulation_lateral_file(
+                        sim_id, filename=f"{sim_name}_laterals.json", offset=0
+                    )
                     upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
                     for ti in range(int(laterals_timeout // 2)):
                         uploaded_lateral = tc.fetch_lateral_files(sim_id)[0]
@@ -1888,7 +1896,9 @@ class SimulationWizard(QWizard):
                 if self.init_conditions.include_dwf:
                     dwf_values = list(dwf.values())
                     write_laterals_to_json(dwf_values, DWF_FILE_TEMPLATE)
-                    upload_event_file = tc.add_lateral_file(sim_id, filename=f"{sim_name}_dwf.json", offset=0)
+                    upload_event_file = tc.create_simulation_lateral_file(
+                        sim_id, filename=f"{sim_name}_dwf.json", offset=0
+                    )
                     upload_file(upload_event_file, DWF_FILE_TEMPLATE)
                     for ti in range(int(laterals_timeout // 2)):
                         uploaded_dwf = tc.fetch_lateral_files(sim_id)[0]
@@ -1897,9 +1907,9 @@ class SimulationWizard(QWizard):
                         else:
                             time.sleep(2)
                 if self.init_conditions.include_breaches:
-                    breach_obj = tc.fetch_single_potential_breach(threedimodel_id, int(breach_id))
+                    breach_obj = tc.fetch_3di_model_potential_breach(threedimodel_id, int(breach_id))
                     breach = breach_obj.to_dict()
-                    tc.add_breaches(
+                    tc.create_simulation_breaches(
                         sim_id,
                         potential_breach=breach["url"],
                         duration_till_max_depth=d_duration,
@@ -1907,12 +1917,12 @@ class SimulationWizard(QWizard):
                         offset=breach_offset,
                     )
                 if ptype == CONSTANT:
-                    tc.add_constant_precipitation(
+                    tc.create_simulation_constant_precipitation(
                         sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset
                     )
                 elif ptype == CUSTOM:
                     if pcsv:
-                        tc.add_custom_precipitation(
+                        tc.create_simulation_custom_precipitation(
                             sim_id,
                             values=pvalues,
                             units=punits,
@@ -1922,14 +1932,14 @@ class SimulationWizard(QWizard):
                         )
                     else:
                         filename = os.path.basename(pfpath)
-                        upload = tc.add_custom_netcdf_precipitation(sim_id, filename=filename)
+                        upload = tc.create_simulation_custom_netcdf_precipitation(sim_id, filename=filename)
                         upload_file(upload, pfpath)
                 elif ptype == DESIGN:
-                    tc.add_custom_precipitation(
+                    tc.create_simulation_custom_precipitation(
                         sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset
                     )
                 elif ptype == RADAR:
-                    tc.add_radar_precipitation(
+                    tc.create_simulation_radar_precipitation(
                         sim_id,
                         reference_uuid=RADAR_ID,
                         units=punits,
@@ -1938,9 +1948,9 @@ class SimulationWizard(QWizard):
                         start_datetime=pstart,
                     )
                 if self.init_conditions.include_wind:
-                    tc.add_initial_wind_drag_coefficient(sim_id, value=wdrag_coeff)
+                    tc.create_simulation_initial_wind_drag_coefficient(sim_id, value=wdrag_coeff)
                 if wtype == CONSTANT:
-                    tc.add_constant_wind(
+                    tc.create_simulation_constant_wind(
                         sim_id,
                         offset=woffset,
                         duration=wduration,
@@ -1949,7 +1959,7 @@ class SimulationWizard(QWizard):
                         direction_value=wdirection,
                     )
                 elif wtype == CUSTOM:
-                    tc.add_custom_wind(
+                    tc.create_simulation_custom_wind(
                         sim_id,
                         offset=woffset,
                         values=wvalues,
@@ -1958,10 +1968,10 @@ class SimulationWizard(QWizard):
                         direction_interpolate=widirection,
                     )
                 try:
-                    tc.make_action_on_simulation(sim_id, name="start")
+                    tc.create_simulation_action(sim_id, name="start")
                 except ApiException as e:
                     if e.status == 429:
-                        tc.make_action_on_simulation(sim_id, name="queue")
+                        tc.create_simulation_action(sim_id, name="queue")
                     else:
                         raise e
                 self.new_simulations.append(new_simulation)

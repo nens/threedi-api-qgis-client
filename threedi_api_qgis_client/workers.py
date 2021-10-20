@@ -48,7 +48,7 @@ class WSProgressesSentinel(QObject):
                 ]
                 logger.debug(f"We have {len(self.simulations_list)} simulations left")
 
-            result = self.tc.all_simulations_progress(self.simulations_list)
+            result = self.tc.fetch_simulations_progresses(self.simulations_list)
             self.progresses_fetched.emit(result)
         except ApiException as e:
             error_msg = f"Error: {e}"
@@ -97,8 +97,8 @@ class WSProgressesSentinel(QObject):
             for sim_id_str, sim_data in simulations.items():
                 sim_id = int(sim_id_str)
                 sim = json.loads(sim_data)
-                simulation = self.tc.fetch_single_simulation(sim_id)
-                current_status = self.tc.simulation_current_status(sim_id)
+                simulation = self.tc.fetch_simulation(sim_id)
+                current_status = self.tc.fetch_simulation_status(sim_id)
                 status_name = current_status.name
                 status_time = current_status.time
                 if status_time is None:
