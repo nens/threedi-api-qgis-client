@@ -144,7 +144,9 @@ class LogInDialog(uicls_log, basecls_log):
         tc = ThreediCalls(self.api_client)
         offset = (self.page_sbox.value() - 1) * self.TABLE_LIMIT
         text = self.search_le.text()
-        threedi_models, models_count = tc.fetch_3di_models(limit=self.TABLE_LIMIT, offset=offset, name_contains=text)
+        threedi_models, models_count = tc.fetch_3di_models_with_count(
+            limit=self.TABLE_LIMIT, offset=offset, name_contains=text
+        )
         pages_nr = ceil(models_count / self.TABLE_LIMIT) or 1
         self.page_sbox.setMaximum(pages_nr)
         self.page_sbox.setSuffix(f" / {pages_nr}")
@@ -223,9 +225,9 @@ class LogInDialog(uicls_log, basecls_log):
             tc = ThreediCalls(self.api_client)
             model_id = self.current_model.id
             if geojson_name == "breaches":
-                download = tc.fetch_geojson_breaches_download(model_id)
+                download = tc.fetch_3di_model_geojson_breaches_download(model_id)
             elif geojson_name == "cells":
-                download = tc.fetch_geojson_cells_download(model_id)
+                download = tc.fetch_3di_model_geojson_cells_download(model_id)
             else:
                 return cached_file_path
             filename = f"{geojson_name}_{model_id}_{download.etag}.json"

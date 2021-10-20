@@ -71,7 +71,7 @@ def test_fetch_simulations(mock_simulations_list):
 def test_new_simulation():
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
-    sim = tc.new_simulation(**SINGLE_SIM_DATA)
+    sim = tc.create_simulation(**SINGLE_SIM_DATA)
     assert isinstance(sim, Simulation)
 
 
@@ -80,7 +80,7 @@ def test_make_action_on_simulation():
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
     pk = 1200
-    action = tc.make_action_on_simulation(pk, **ACTION_DATA)
+    action = tc.create_simulation_action(pk, **ACTION_DATA)
     assert isinstance(action, Action)
     assert action.name == "start"
 
@@ -91,7 +91,7 @@ def test_simulations_progress(mock_simulations_progress_list):
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
     pk = 1200
-    progress = tc.simulations_progress(pk)
+    progress = tc.fetch_simulation_progress(pk)
     assert isinstance(progress, Progress)
     assert progress.percentage == 25
     assert progress.time == 18000
@@ -111,7 +111,7 @@ def test_all_simulations_progress(mock_simulations_status_list, mock_simulations
     mock_simulations_progress_list.side_effect = [prog1]
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
-    progress_dict = tc.all_simulations_progress([])
+    progress_dict = tc.fetch_simulations_progresses([])
     assert all(s.id in progress_dict for s in sims)
     s1, cs1, p1 = progress_dict[sim1.id]
     s2, cs2, p2 = progress_dict[sim2.id]
@@ -124,7 +124,7 @@ def test_all_simulations_progress(mock_simulations_status_list, mock_simulations
     bad_results = [Simulation(**BAD_SIM_DATA)]
     mock_simulations_list.return_value = Mock(results=bad_results, count=len(bad_results))
     with pytest.raises(ApiException):
-        tc.all_simulations_progress([])
+        tc.fetch_simulations_progresses([])
 
 
 @patch.object(
@@ -133,7 +133,7 @@ def test_all_simulations_progress(mock_simulations_status_list, mock_simulations
 def test_add_constant_precipitation():
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
-    constant_rain = tc.add_constant_precipitation(1200, **CONSTANT_RAIN_DATA)
+    constant_rain = tc.create_simulation_constant_precipitation(1200, **CONSTANT_RAIN_DATA)
     assert isinstance(constant_rain, ConstantRain)
     for k, v in CONSTANT_RAIN_DATA.items():
         assert getattr(constant_rain, k) == v
@@ -145,7 +145,7 @@ def test_add_constant_precipitation():
 def test_add_custom_precipitation():
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
-    custom_rain = tc.add_custom_precipitation(1200, **TIME_SERIES_RAIN_DATA)
+    custom_rain = tc.create_simulation_custom_precipitation(1200, **TIME_SERIES_RAIN_DATA)
     assert isinstance(custom_rain, TimeseriesRain)
     for k, v in TIME_SERIES_RAIN_DATA.items():
         assert getattr(custom_rain, k) == v
