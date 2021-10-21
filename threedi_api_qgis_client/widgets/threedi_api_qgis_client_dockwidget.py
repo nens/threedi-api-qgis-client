@@ -4,7 +4,7 @@ import os
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QThread, pyqtSignal
 
-from threedi_api_qgis_client.widgets.upload import UploadDialog
+from threedi_api_qgis_client.widgets.upload_status import UploadDialog
 from .log_in import LogInDialog
 from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults

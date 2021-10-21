@@ -9,7 +9,7 @@ from qgis.PyQt.QtWidgets import QMessageBox
 from openapi_client import ApiException, Progress
 
 from threedi_api_qgis_client.widgets.simulation_init import SimulationInit
-from .wizard import SimulationWizard
+from .simulation_wizard import SimulationWizard
 from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import load_saved_templates

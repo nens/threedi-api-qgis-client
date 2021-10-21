@@ -3,7 +3,7 @@ from qgis.PyQt import uic
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_dialog.ui"))
+uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_status.ui"))
 
 
 class UploadDialog(uicls_log, basecls_log):

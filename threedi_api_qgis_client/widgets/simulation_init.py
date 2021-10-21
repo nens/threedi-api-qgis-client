@@ -3,7 +3,7 @@ from collections import OrderedDict
 from qgis.PyQt import uic
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "init_dialog.ui"))
+uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "init_dialog.ui"))
 
 
 class SimulationInit(uicls, basecls):
