@@ -6,7 +6,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from qgis.PyQt.QtWidgets import QMessageBox
-from openapi_client import ApiException, Progress
+from threedi_api_client.openapi import ApiException, Progress
 
 from threedi_api_qgis_client.widgets.simulation_init import SimulationInit
 from .simulation_wizard import SimulationWizard
@@ -28,7 +28,7 @@ class SimulationOverview(uicls, basecls):
         super().__init__(parent)
         self.setupUi(self)
         self.parent_dock = parent_dock
-        self.api_client = self.parent_dock.api_client
+        self.threedi_api = self.parent_dock.threedi_api
         self.user = self.parent_dock.label_user.text()
         self.simulation_init_wizard = None
         self.simulation_wizard = None
@@ -139,7 +139,7 @@ class SimulationOverview(uicls, basecls):
             try:
                 name_item = self.tv_model.item(index.row(), 0)
                 sim_id = name_item.data(Qt.UserRole)
-                tc = ThreediCalls(self.parent_dock.api_client)
+                tc = ThreediCalls(self.parent_dock.threedi_api)
                 tc.create_simulation_action(sim_id, name="shutdown")
                 msg = f"Simulation {name_item.text()} stopped!"
                 self.parent_dock.communication.bar_info(msg)

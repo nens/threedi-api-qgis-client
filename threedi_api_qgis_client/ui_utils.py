@@ -2,7 +2,7 @@
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
 from qgis.PyQt.QtGui import QIcon, QColor
-from qgis.PyQt.QtCore import QDate, QTime
+from qgis.PyQt.QtCore import QDate, QTime, QSettings
 from qgis.PyQt.QtWidgets import (
     QLineEdit,
     QDateEdit,
@@ -13,6 +13,7 @@ from qgis.PyQt.QtWidgets import (
     QComboBox,
     QWidget,
     QRadioButton,
+    QFileDialog,
 )
 
 
@@ -89,3 +90,27 @@ def set_widgets_parameters(main_widget, **widget_parameters):
             widget.setTime(QTime.fromString(value, "H:m"))
         elif isinstance(widget, (QSpinBox, QDoubleSpinBox)):
             widget.setValue(value)
+
+
+def get_filepath(parent, extension_filter=None, extension=None, save=False, dialog_title=None):
+    """Opening dialog to get a filepath."""
+    if extension_filter is None:
+        extension_filter = "All Files (*.*)"
+
+    if dialog_title is None:
+        dialog_title = "Choose file"
+
+    starting_dir = QSettings().value("threedi/last_schematisation_folder", os.path.expanduser("~"), type=str)
+    if save is True:
+        file_name, __ = QFileDialog.getSaveFileName(parent, dialog_title, starting_dir, extension_filter)
+    else:
+        file_name, __ = QFileDialog.getOpenFileName(parent, dialog_title, starting_dir, extension_filter)
+    if len(file_name) == 0:
+        return None
+
+    if extension:
+        if not file_name.endswith(extension):
+            file_name += extension
+
+    QSettings().setValue("threedi/last_schematisation_folder", os.path.dirname(file_name))
+    return file_name

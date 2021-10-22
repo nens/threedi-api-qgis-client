@@ -29,7 +29,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.communication = UICommunication(self.iface, "3Di MI", self.lv_log)
         self.simulations_progresses_thread = None
         self.simulations_progresses_sentinel = None
-        self.api_client = None
+        self.threedi_api = None
         self.threedi_models = None
         self.current_model = None
         self.current_model_cells = None
@@ -64,7 +64,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Method for logging in 3Di API."""
         self.log_in_dlg = LogInDialog(self)
         self.log_in_dlg.exec_()
-        self.api_client = self.log_in_dlg.api_client
+        self.threedi_api = self.log_in_dlg.threedi_api
         self.threedi_models = self.log_in_dlg.threedi_models
         self.current_model = self.log_in_dlg.current_model
         self.current_model_cells = self.log_in_dlg.current_model_cells
@@ -100,7 +100,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.cells_layer = None
             self.log_in_dlg.unload_cached_layers()
         self.log_in_dlg = None
-        self.api_client = None
+        self.threedi_api = None
         self.current_model = None
         self.current_model_cells = None
         self.current_model_breaches = None
@@ -136,7 +136,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.terminate_fetching_simulations_progresses_thread()
         self.simulations_progresses_thread = QThread()
         self.simulations_progresses_sentinel = WSProgressesSentinel(
-            self.api_client, self.plugin_settings.wss_url, model_id=self.current_model.id
+            self.threedi_api, self.plugin_settings.wss_url, model_id=self.current_model.id
         )
         self.simulations_progresses_sentinel.moveToThread(self.simulations_progresses_thread)
         self.simulations_progresses_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)

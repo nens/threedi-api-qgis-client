@@ -67,7 +67,7 @@
     </widget>
    </item>
    <item row="4" column="0">
-    <widget class="QListView" name="listView"/>
+    <widget class="QListView" name="lv_upload_description"/>
    </item>
    <item row="6" column="0">
     <layout class="QGridLayout" name="gridLayout_2">
@@ -75,7 +75,7 @@
       <number>0</number>
      </property>
      <item row="0" column="0">
-      <widget class="QRadioButton" name="radioButton">
+      <widget class="QRadioButton" name="rb_upload_only">
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -89,7 +89,7 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QRadioButton" name="radioButton_2">
+      <widget class="QRadioButton" name="rb_upload_process">
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -129,7 +129,7 @@
       <number>10</number>
      </property>
      <item row="1" column="3">
-      <widget class="QCheckBox" name="checkBox">
+      <widget class="QCheckBox" name="ckb_spatialite_upload">
        <property name="text">
         <string>Upload</string>
        </property>
@@ -144,7 +144,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QLineEdit" name="lineEdit">
+        <widget class="QLineEdit" name="le_dem_path">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -154,7 +154,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="pb_dem_browse">
          <property name="text">
           <string>...</string>
          </property>
@@ -163,7 +163,7 @@
       </layout>
      </item>
      <item row="3" column="3">
-      <widget class="QPushButton" name="pushButton_2">
+      <widget class="QPushButton" name="pb_update_reference">
        <property name="text">
         <string>Update reference</string>
        </property>
@@ -197,7 +197,7 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLabel" name="label_5">
+      <widget class="QLabel" name="lbl_spatialite_status">
        <property name="text">
         <string>CHANGES DETECTED</string>
        </property>
@@ -211,14 +211,14 @@
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QLabel" name="label_10">
+      <widget class="QLabel" name="lbl_friction_coef_status">
        <property name="text">
         <string>NO CHANGES DETECTED</string>
        </property>
       </widget>
      </item>
      <item row="5" column="1">
-      <widget class="QLabel" name="label_12">
+      <widget class="QLabel" name="lbl_interception_status">
        <property name="text">
         <string>NO CHANGES DETECTED</string>
        </property>
@@ -245,7 +245,7 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QLabel" name="label_8">
+      <widget class="QLabel" name="lbl_dem_status">
        <property name="text">
         <string>INVALID REFERENCE!</string>
        </property>
@@ -279,30 +279,57 @@
       </widget>
      </item>
      <item row="7" column="1">
-      <widget class="QLabel" name="label_16">
+      <widget class="QLabel" name="lbl_infiltration_status">
        <property name="text">
         <string>NEW</string>
        </property>
       </widget>
      </item>
      <item row="8" column="1">
-      <widget class="QLabel" name="label_17">
+      <widget class="QLabel" name="lbl_max_infiltration_status">
        <property name="text">
         <string>DELETED LOCALLY</string>
        </property>
       </widget>
      </item>
      <item row="7" column="3">
-      <widget class="QCheckBox" name="checkBox_2">
+      <widget class="QCheckBox" name="ckb_infiltration_upload">
        <property name="text">
         <string>Upload</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
      <item row="8" column="3">
-      <widget class="QCheckBox" name="checkBox_3">
+      <widget class="QCheckBox" name="ckb_max_infiltration_delete">
        <property name="text">
         <string>Delete online</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QCheckBox" name="ckb_spatialite_ignore">
+       <property name="text">
+        <string>Ignore</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="2">
+      <widget class="QCheckBox" name="ckb_infiltration_ignore">
+       <property name="text">
+        <string>Ignore</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="2">
+      <widget class="QCheckBox" name="ckb_max_infiltration_ignore">
+       <property name="text">
+        <string>Ignore</string>
        </property>
       </widget>
      </item>

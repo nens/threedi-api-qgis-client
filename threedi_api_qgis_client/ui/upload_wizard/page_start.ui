@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>720</width>
-    <height>393</height>
+    <height>400</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -22,7 +22,7 @@
   <property name="minimumSize">
    <size>
     <width>720</width>
-    <height>0</height>
+    <height>400</height>
    </size>
   </property>
   <property name="font">
@@ -91,7 +91,7 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLabel" name="label_40">
+      <widget class="QLabel" name="lbl_online_revision">
        <property name="text">
         <string>{revision number}</string>
        </property>
@@ -114,7 +114,7 @@
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QLabel" name="label_41">
+      <widget class="QLabel" name="lbl_online_commit_date">
        <property name="text">
         <string>{commit date}</string>
        </property>
@@ -143,7 +143,7 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QLabel" name="label_45">
+      <widget class="QLabel" name="lbl_online_commit_by">
        <property name="text">
         <string>{commit user}</string>
        </property>
@@ -166,7 +166,7 @@
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QLabel" name="label_47">
+      <widget class="QLabel" name="lbl_online_commit_msg">
        <property name="text">
         <string>{commit message}</string>
        </property>
@@ -212,7 +212,7 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLabel" name="label_27">
+      <widget class="QLabel" name="lbl_local_revision">
        <property name="text">
         <string>{revision number}</string>
        </property>
@@ -235,7 +235,7 @@
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QLabel" name="label_28">
+      <widget class="QLabel" name="lbl_local_commit_data">
        <property name="text">
         <string>{commit date}</string>
        </property>
@@ -264,7 +264,7 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QLabel" name="label_32">
+      <widget class="QLabel" name="lbl_local_commit_by">
        <property name="text">
         <string>{commit user}</string>
        </property>
@@ -287,7 +287,7 @@
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QLabel" name="label_34">
+      <widget class="QLabel" name="lbl_local_commit_msg">
        <property name="text">
         <string>{commit message}</string>
        </property>
@@ -312,7 +312,7 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QLabel" name="label_11">
+      <widget class="QLabel" name="lbl_schematisation">
        <property name="text">
         <string>{schematisation name} ({schematistion owner})</string>
        </property>
@@ -332,7 +332,7 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLabel" name="label_18">
+      <widget class="QLabel" name="lbl_model_dir">
        <property name="text">
         <string>{model directory path}</string>
        </property>
@@ -346,7 +346,7 @@
       <number>0</number>
      </property>
      <item row="0" column="0">
-      <widget class="QRadioButton" name="radioButton_2">
+      <widget class="QRadioButton" name="rb_use_revision">
        <property name="font">
         <font>
          <pointsize>10</pointsize>
@@ -363,7 +363,7 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QRadioButton" name="radioButton">
+      <widget class="QRadioButton" name="rb_create_revision">
        <property name="font">
         <font>
          <pointsize>10</pointsize>

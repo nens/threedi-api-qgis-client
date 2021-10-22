@@ -8,7 +8,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QDateTime
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.core import QgsVectorLayer, QgsProject, QgsMapLayer
-from openapi_client import ApiException
+from threedi_api_client.openapi import ApiException
 from ..utils import get_download_file, file_cached, CACHE_PATH
 from ..ui_utils import set_named_style
 from ..api_calls.threedi_calls import get_api_client, ThreediCalls
@@ -31,7 +31,7 @@ class LogInDialog(uicls_log, basecls_log):
         self.parent_dock = parent_dock
         self.communication = self.parent_dock.communication
         self.user = None
-        self.api_client = None
+        self.threedi_api = None
         self.repositories = None
         self.organisations = None
         self.organisation = None
@@ -117,31 +117,31 @@ class LogInDialog(uicls_log, basecls_log):
 
     def fetch_organisations(self):
         """Fetching organisations list."""
-        tc = ThreediCalls(self.api_client)
+        tc = ThreediCalls(self.threedi_api)
         organisations = tc.fetch_organisations()
         return organisations
 
     def fetch_repositories(self):
         """Fetching repositories list."""
-        tc = ThreediCalls(self.api_client)
+        tc = ThreediCalls(self.threedi_api)
         repositories = tc.fetch_repositories()
         return repositories
 
     def fetch_simulations(self):
         """Fetching simulations list."""
-        tc = ThreediCalls(self.api_client)
+        tc = ThreediCalls(self.threedi_api)
         running_simulations = tc.fetch_simulations()
         return running_simulations
 
     def fetch_revisions(self):
         """Fetching revisions list."""
-        tc = ThreediCalls(self.api_client)
+        tc = ThreediCalls(self.threedi_api)
         revisions = tc.fetch_revisions()
         return revisions
 
     def fetch_3di_models(self):
         """Fetching 3Di models list."""
-        tc = ThreediCalls(self.api_client)
+        tc = ThreediCalls(self.threedi_api)
         offset = (self.page_sbox.value() - 1) * self.TABLE_LIMIT
         text = self.search_le.text()
         threedi_models, models_count = tc.fetch_3di_models_with_count(
@@ -222,7 +222,7 @@ class LogInDialog(uicls_log, basecls_log):
         """Get model data that should be cached."""
         cached_file_path = None
         try:
-            tc = ThreediCalls(self.api_client)
+            tc = ThreediCalls(self.threedi_api)
             model_id = self.current_model.id
             if geojson_name == "breaches":
                 download = tc.fetch_3di_model_geojson_breaches_download(model_id)
@@ -261,7 +261,7 @@ class LogInDialog(uicls_log, basecls_log):
             self.le_user.setText("")
             self.le_pass.setText("")
             self.log_pbar.setValue(20)
-            self.api_client = get_api_client(username, password, self.parent_dock.plugin_settings.api_url)
+            self.threedi_api = get_api_client(username, password, self.parent_dock.plugin_settings.api_url)
             self.user = username
             self.fetch_msg.show()
             self.wait_widget.update()

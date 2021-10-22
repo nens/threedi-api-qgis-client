@@ -2,7 +2,7 @@
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import pytest
 from unittest.mock import Mock, patch
-from openapi_client import (
+from threedi_api_client.openapi import (
     ApiException,
     Repository,
     Simulation,

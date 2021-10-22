@@ -13,7 +13,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, Qt, QSize
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
-from openapi_client import ApiException
+from threedi_api_client.openapi import ApiException
 from ..ui_utils import (
     icon_path,
     set_widget_background_color,
@@ -211,7 +211,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.dd_2d.addItem("")
             self.dd_groundwater.addItem("")
             self.cb_saved_states.addItem("")
-            tc = ThreediCalls(self.parent_page.parent_wizard.parent_dock.api_client)
+            tc = ThreediCalls(self.parent_page.parent_wizard.parent_dock.threedi_api)
             rasters = tc.fetch_3di_model_initial_waterlevels(
                 self.parent_page.parent_wizard.parent_dock.current_model.id
             )
@@ -1823,7 +1823,7 @@ class SimulationWizard(QWizard):
                         widirection,
                         wvalues,
                     ) = self.wind_page.main_widget.get_wind_data()
-                tc = ThreediCalls(self.parent_dock.api_client)
+                tc = ThreediCalls(self.parent_dock.threedi_api)
                 sim_name = f"{name}_{i}" if self.init_conditions.multiple_simulations is True else name
                 new_simulation = tc.create_simulation(
                     name=sim_name,

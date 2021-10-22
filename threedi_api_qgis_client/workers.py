@@ -7,7 +7,7 @@ import requests
 from qgis.PyQt.QtCore import QObject, QUrl, QByteArray, pyqtSignal, pyqtSlot
 from qgis.PyQt import QtNetwork
 from PyQt5 import QtWebSockets
-from openapi_client import ApiException, Progress
+from threedi_api_client.openapi import ApiException, Progress
 from .api_calls.threedi_calls import ThreediCalls
 
 
@@ -26,7 +26,7 @@ class WSProgressesSentinel(QObject):
 
     def __init__(self, api_client, wss_url, model_id=None):
         super().__init__()
-        self.api_client = api_client
+        self.threedi_api = api_client
         self.wss_url = wss_url
         self.tc = None
         self.ws_client = None
@@ -38,7 +38,7 @@ class WSProgressesSentinel(QObject):
     def run(self):
         """Checking running simulations progresses."""
         try:
-            self.tc = ThreediCalls(self.api_client)
+            self.tc = ThreediCalls(self.threedi_api)
             if self.model_id:
                 logger.debug(f"Fetching simulations list and filtering it on model id {self.model_id}")
                 full_simulations_list = self.tc.fetch_simulations()
@@ -62,7 +62,7 @@ class WSProgressesSentinel(QObject):
     def start_listening(self):
         """Start listening of active simulations websocket."""
         identifier = "Bearer"
-        api_key = self.tc.api_client.configuration.api_key["Authorization"]
+        api_key = self.tc.threedi_api.api_client.configuration.api_key["Authorization"]
         token_with_prefix = f"{identifier} {api_key}"
         ws_request = QtNetwork.QNetworkRequest(QUrl(f"{self.wss_url}/active-simulations/"))
         ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(token_with_prefix))

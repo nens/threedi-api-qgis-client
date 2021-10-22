@@ -6,7 +6,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QSettings, QThread
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.PyQt.QtWidgets import QFileDialog
-from openapi_client import ApiException
+from threedi_api_client.openapi import ApiException
 from .custom_items import DownloadProgressDelegate
 from ..api_calls.threedi_calls import ThreediCalls
 from ..workers import DownloadProgressWorker
@@ -24,7 +24,7 @@ class SimulationResults(uicls, basecls):
         super().__init__(parent)
         self.setupUi(self)
         self.parent_dock = parent_dock
-        self.api_client = self.parent_dock.api_client
+        self.api_client = self.parent_dock.threedi_api
         self.download_results_thread = None
         self.download_worker = None
         self.finished_simulations = {}
@@ -133,7 +133,7 @@ class SimulationResults(uicls, basecls):
             simulation_name = simulation.name.replace(" ", "_")
             simulation_subdirectory = os.path.join(directory, f"sim_{sim_id}_{simulation_name}")
             simulation_model_id = int(simulation.threedimodel_id)
-            tc = ThreediCalls(self.parent_dock.api_client)
+            tc = ThreediCalls(self.parent_dock.threedi_api)
             downloads = tc.fetch_simulation_downloads(sim_id)
             gridadmin_downloads = tc.fetch_3di_model_gridadmin_download(simulation_model_id)
             downloads.append(gridadmin_downloads)
