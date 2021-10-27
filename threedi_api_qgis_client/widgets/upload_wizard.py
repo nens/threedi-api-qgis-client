@@ -93,12 +93,14 @@ class SelectFilesPage(QWizardPage):
 class UploadWizard(QWizard):
     """New upload wizard."""
 
-    def __init__(self, parent_dock, parent=None):
+    def __init__(self, parent_dock, schematisation_name, latest_revision, parent=None):
         super().__init__(parent)
         self.settings = QSettings()
         self.setWizardStyle(QWizard.ClassicStyle)
         self.parent_dock = parent_dock
         self.start_page = StartPage(self)
+        self.start_page.main_widget.lbl_schematisation.setText(schematisation_name)
+        self.start_page.main_widget.lbl_online_revision.setText(str(latest_revision))
         self.check_model_page = CheckModelPage(self)
         self.select_files_page = SelectFilesPage(self)
         self.addPage(self.start_page)
@@ -110,7 +112,7 @@ class UploadWizard(QWizard):
         self.finish_btn.clicked.connect(self.start_upload)
         self.cancel_btn = self.button(QWizard.CancelButton)
         self.cancel_btn.clicked.connect(self.cancel_wizard)
-        self.new_upload = None
+        self.new_upload = defaultdict(lambda: None)
         self.new_upload_statuses = None
         self.setWindowTitle("New upload")
         # self.setStyleSheet("background-color:#F0F0F0")
@@ -118,7 +120,9 @@ class UploadWizard(QWizard):
         self.resize(self.settings.value("threedi/upload_wizard_size", QSize(800, 600)))
 
     def start_upload(self):
-        print("Upload this!")
+        self.new_upload.clear()
+        self.new_upload["schematisation_name"] = self.start_page.main_widget.lbl_schematisation.text()
+        self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""

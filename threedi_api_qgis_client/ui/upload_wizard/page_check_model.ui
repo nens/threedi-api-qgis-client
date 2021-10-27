@@ -56,7 +56,7 @@
       <item row="0" column="1">
        <widget class="QProgressBar" name="pbar_check_spatialite">
         <property name="value">
-         <number>24</number>
+         <number>0</number>
         </property>
        </widget>
       </item>
@@ -70,7 +70,7 @@
       <item row="1" column="1">
        <widget class="QProgressBar" name="pbar_check_rasters">
         <property name="value">
-         <number>24</number>
+         <number>0</number>
         </property>
        </widget>
       </item>

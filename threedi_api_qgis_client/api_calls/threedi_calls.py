@@ -406,6 +406,10 @@ class ThreediCalls:
         schematisation_revision = self.threedi_api.schematisations_revisions_read(revision_pk, schematisation_pk)
         return schematisation_revision
 
+    def fetch_schematisation_latest_revision(self, schematisation_pk: int) -> SchematisationRevision:
+        schematisation_revision = self.threedi_api.schematisations_latest_revision(schematisation_pk)
+        return schematisation_revision
+
     def create_schematisation_revision(
         self, schematisation_pk: int, empty: bool = False, **data
     ) -> SchematisationRevision:
