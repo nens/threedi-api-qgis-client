@@ -93,14 +93,17 @@ class SelectFilesPage(QWizardPage):
 class UploadWizard(QWizard):
     """New upload wizard."""
 
-    def __init__(self, parent_dock, schematisation_name, latest_revision, parent=None):
+    def __init__(self, parent_dock, upload_dialog, parent=None):
         super().__init__(parent)
         self.settings = QSettings()
         self.setWizardStyle(QWizard.ClassicStyle)
         self.parent_dock = parent_dock
+        self.upload_dialog = upload_dialog
+        self.tc = self.upload_dialog.tc
+        self.latest_revision = 4 # self.tc.fetch_schematisation_latest_revision(self.upload_dialog.schematisation.id).number
         self.start_page = StartPage(self)
-        self.start_page.main_widget.lbl_schematisation.setText(schematisation_name)
-        self.start_page.main_widget.lbl_online_revision.setText(str(latest_revision))
+        self.start_page.main_widget.lbl_schematisation.setText(self.upload_dialog.schematisation.name)
+        self.start_page.main_widget.lbl_online_revision.setText(str(self.latest_revision))
         self.check_model_page = CheckModelPage(self)
         self.select_files_page = SelectFilesPage(self)
         self.addPage(self.start_page)
@@ -123,6 +126,8 @@ class UploadWizard(QWizard):
         self.new_upload.clear()
         self.new_upload["schematisation_name"] = self.start_page.main_widget.lbl_schematisation.text()
         self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
+        self.new_upload["owner"] = self.upload_dialog.schematisation.owner
+        self.new_upload["latest_revision"] = self.latest_revision
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""
