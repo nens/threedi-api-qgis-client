@@ -445,6 +445,10 @@ class ThreediCalls:
         commit = self.threedi_api.schematisations_revisions_commit(revision_pk, schematisation_pk, data)
         return commit
 
-    def create_schematisation_revision_3di_model(self, schematisation_pk: int, revision_pk: int, **data) -> ThreediModel:
-        threedi_model = self.threedi_api.schematisations_revisions_create_threedimodel(revision_pk, schematisation_pk, data)
+    def create_schematisation_revision_3di_model(
+        self, schematisation_pk: int, revision_pk: int, **data
+    ) -> ThreediModel:
+        threedi_model = self.threedi_api.schematisations_revisions_create_threedimodel(
+            revision_pk, schematisation_pk, data
+        )
         return threedi_model

@@ -4,10 +4,11 @@ import logging
 import os
 import json
 import requests
-from qgis.PyQt.QtCore import QObject, QUrl, QByteArray, pyqtSignal, pyqtSlot
+from qgis.PyQt.QtCore import QObject, QRunnable, QUrl, QByteArray, pyqtSignal, pyqtSlot
 from qgis.PyQt import QtNetwork
 from PyQt5 import QtWebSockets
 from threedi_api_client.openapi import ApiException, Progress
+from threedi_api_client.files import upload_file
 from .api_calls.threedi_calls import ThreediCalls
 
 
@@ -24,9 +25,9 @@ class WSProgressesSentinel(QObject):
     thread_failed = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
 
-    def __init__(self, api_client, wss_url, model_id=None):
+    def __init__(self, threedi_api, wss_url, model_id=None):
         super().__init__()
-        self.threedi_api = api_client
+        self.threedi_api = threedi_api
         self.wss_url = wss_url
         self.tc = None
         self.ws_client = None
@@ -178,3 +179,89 @@ class DownloadProgressWorker(QObject):
         if self.success is True:
             self.download_progress.emit(self.FINISHED)
             self.thread_finished.emit(finished_message)
+
+
+class RunnableWorkerSignals(QObject):
+    thread_finished = pyqtSignal(str)
+    upload_failed = pyqtSignal(str)
+    upload_progress = pyqtSignal(int, str, float, float)  # upload row index, task name, task progress, total progress
+
+
+class UploadProgressWorker(QRunnable):
+    """Worker object responsible for uploading models."""
+
+    CHUNK_SIZE = 1024 ** 2
+
+    def __init__(self, threedi_api, upload_specification, upload_row_idx):
+        super().__init__()
+        self.threedi_api = threedi_api
+        self.upload_specification = upload_specification
+        self.upload_idx = upload_row_idx
+        self.current_task = "NO TASK"
+        self.current_task_progress = 0.0
+        self.total_progress = 0.0
+        self.tc = None
+        self.signals = RunnableWorkerSignals()
+
+    @pyqtSlot()
+    def run(self):
+        """Uploading model to the schematisation."""
+        self.tc = ThreediCalls(self.threedi_api)
+        schematisation = self.upload_specification["schematisation"]
+        schematisation_sqlite = self.upload_specification["sqlite_filepath"]
+        sqlite_file = os.path.basename(schematisation_sqlite)
+        commit_message = self.upload_specification["commit_message"]
+        try:
+            self.current_task = "CREATE REVISION"
+            self.current_task_progress = 0.0
+            self.total_progress = 0.0
+            self.report_upload_progress()
+            revision = self.tc.create_schematisation_revision(schematisation.id)
+            new_rev_id = revision.id
+            self.current_task_progress = 100.0
+            self.total_progress = 10.0
+            self.report_upload_progress()
+
+            self.current_task = "DELETE REVISION SQLITE IF EXIST"
+            self.current_task_progress = 0.0
+            self.report_upload_progress()
+            self.tc.delete_schematisation_revision_sqlite(schematisation.id, new_rev_id)
+            self.current_task_progress = 100.0
+            self.total_progress = 20.0
+            self.report_upload_progress()
+
+            self.current_task = "UPLOAD SPATIALITE"
+            self.current_task_progress = 0.0
+            self.report_upload_progress()
+            upload = self.tc.upload_schematisation_revision_sqlite(schematisation.id, new_rev_id, sqlite_file)
+            upload_file(
+                upload.put_url, schematisation_sqlite, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress
+            )
+            self.current_task_progress = 100.0
+            self.total_progress = 80.0
+            self.report_upload_progress()
+
+            self.current_task = "COMMIT REVISION"
+            self.current_task_progress = 0.0
+            self.report_upload_progress()
+            self.tc.commit_schematisation_revision(schematisation.id, new_rev_id, commit_message=commit_message)
+            self.current_task_progress = 100.0
+            self.total_progress = 100.0
+            self.report_upload_progress()
+            self.current_task = "DONE"
+            self.report_upload_progress()
+
+            self.signals.thread_finished.emit("Model upload finished!")
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.signals.upload_failed.emit(error_msg)
+
+    def report_upload_progress(self):
+        self.signals.upload_progress.emit(
+            self.upload_idx, self.current_task, self.current_task_progress, self.total_progress
+        )
+
+    def monitor_upload_progress(self, chunk_size, total_size):
+        upload_progress = chunk_size / total_size * 100
+        self.current_task_progress = upload_progress
+        self.report_upload_progress()

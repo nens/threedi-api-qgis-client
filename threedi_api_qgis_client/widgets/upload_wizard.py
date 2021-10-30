@@ -14,8 +14,12 @@ from ..api_calls.threedi_calls import ThreediCalls
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_start_page, basecls_start_page = uic.loadUiType(os.path.join(base_dir, "ui", "upload_wizard", "page_start.ui"))
-uicls_check_page, basecls_check_page = uic.loadUiType(os.path.join(base_dir, "ui", "upload_wizard", "page_check_model.ui"))
-uicls_files_page, basecls_files_page = uic.loadUiType(os.path.join(base_dir, "ui", "upload_wizard", "page_select_files.ui"))
+uicls_check_page, basecls_check_page = uic.loadUiType(
+    os.path.join(base_dir, "ui", "upload_wizard", "page_check_model.ui")
+)
+uicls_files_page, basecls_files_page = uic.loadUiType(
+    os.path.join(base_dir, "ui", "upload_wizard", "page_select_files.ui")
+)
 
 
 class StartWidget(uicls_start_page, basecls_start_page):
@@ -100,7 +104,7 @@ class UploadWizard(QWizard):
         self.parent_dock = parent_dock
         self.upload_dialog = upload_dialog
         self.tc = self.upload_dialog.tc
-        self.latest_revision = 4 # self.tc.fetch_schematisation_latest_revision(self.upload_dialog.schematisation.id).number
+        self.latest_revision = self.tc.fetch_schematisation_latest_revision(self.upload_dialog.schematisation.id).number
         self.start_page = StartPage(self)
         self.start_page.main_widget.lbl_schematisation.setText(self.upload_dialog.schematisation.name)
         self.start_page.main_widget.lbl_online_revision.setText(str(self.latest_revision))
@@ -118,16 +122,15 @@ class UploadWizard(QWizard):
         self.new_upload = defaultdict(lambda: None)
         self.new_upload_statuses = None
         self.setWindowTitle("New upload")
-        # self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.resize(self.settings.value("threedi/upload_wizard_size", QSize(800, 600)))
 
     def start_upload(self):
         self.new_upload.clear()
-        self.new_upload["schematisation_name"] = self.start_page.main_widget.lbl_schematisation.text()
+        self.new_upload["schematisation"] = self.upload_dialog.schematisation
         self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
-        self.new_upload["owner"] = self.upload_dialog.schematisation.owner
         self.new_upload["latest_revision"] = self.latest_revision
+        self.new_upload["sqlite_filepath"] = self.upload_dialog.schematisation_sqlite
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""

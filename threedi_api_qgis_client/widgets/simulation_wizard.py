@@ -38,8 +38,12 @@ from ..api_calls.threedi_calls import ThreediCalls
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_name.ui"))
-uicls_duration_page, basecls_duration_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_duration.ui"))
-uicls_initial_conds, basecls_initial_conds = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_initial_conditions.ui"))
+uicls_duration_page, basecls_duration_page = uic.loadUiType(
+    os.path.join(base_dir, "ui", "simulation_wizard", "page_duration.ui")
+)
+uicls_initial_conds, basecls_initial_conds = uic.loadUiType(
+    os.path.join(base_dir, "ui", "simulation_wizard", "page_initial_conditions.ui")
+)
 uicls_laterals, basecls_laterals = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_laterals.ui"))
 uicls_dwf, basecls_dwf = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_dwf.ui"))
 uicls_breaches, basecls_breaches = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_breaches.ui"))
@@ -47,7 +51,9 @@ uicls_precipitation_page, basecls_precipitation_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_precipitation.ui")
 )
 uicls_wind_page, basecls_wind_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_wind.ui"))
-uicls_summary_page, basecls_summary_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_initiation.ui"))
+uicls_summary_page, basecls_summary_page = uic.loadUiType(
+    os.path.join(base_dir, "ui", "simulation_wizard", "page_initiation.ui")
+)
 
 
 CONSTANT = "Constant"
