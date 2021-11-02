@@ -181,7 +181,7 @@ class DownloadProgressWorker(QObject):
             self.thread_finished.emit(finished_message)
 
 
-class RunnableWorkerSignals(QObject):
+class WorkerSignals(QObject):
     thread_finished = pyqtSignal(str)
     upload_failed = pyqtSignal(str)
     upload_progress = pyqtSignal(int, str, float, float)  # upload row index, task name, task progress, total progress
@@ -201,7 +201,7 @@ class UploadProgressWorker(QRunnable):
         self.current_task_progress = 0.0
         self.total_progress = 0.0
         self.tc = None
-        self.signals = RunnableWorkerSignals()
+        self.signals = WorkerSignals()
 
     @pyqtSlot()
     def run(self):
@@ -238,7 +238,7 @@ class UploadProgressWorker(QRunnable):
                 upload.put_url, schematisation_sqlite, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress
             )
             self.current_task_progress = 100.0
-            self.total_progress = 80.0
+            self.total_progress = 60.0
             self.report_upload_progress()
 
             self.current_task = "COMMIT REVISION"
@@ -246,8 +246,17 @@ class UploadProgressWorker(QRunnable):
             self.report_upload_progress()
             self.tc.commit_schematisation_revision(schematisation.id, new_rev_id, commit_message=commit_message)
             self.current_task_progress = 100.0
+            self.total_progress = 80.0
+            self.report_upload_progress()
+
+            self.current_task = "MAKE MODEL READY FOR SIMULATION"
+            self.current_task_progress = 0.0
+            self.report_upload_progress()
+            self.tc.create_schematisation_revision_3di_model(schematisation.id, new_rev_id)
+            self.current_task_progress = 100.0
             self.total_progress = 100.0
             self.report_upload_progress()
+
             self.current_task = "DONE"
             self.report_upload_progress()
 

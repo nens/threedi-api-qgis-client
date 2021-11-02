@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>739</width>
-    <height>564</height>
+    <height>568</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -31,7 +31,7 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>Check model</string>
+   <string>Select files</string>
   </property>
   <property name="autoFillBackground">
    <bool>true</bool>
@@ -72,7 +72,7 @@
       <number>0</number>
      </property>
      <item row="0" column="0">
-      <widget class="QRadioButton" name="rb_upload_only">
+      <widget class="QPushButton" name="pb_upload_only">
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -83,10 +83,19 @@
        <property name="text">
         <string>UPLOAD ONLY</string>
        </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+       <property name="autoExclusive">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QRadioButton" name="rb_upload_process">
+      <widget class="QPushButton" name="pb_upload_and_process">
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -97,7 +106,13 @@
        <property name="text">
         <string>UPLOAD AND PROCESS</string>
        </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
        <property name="checked">
+        <bool>true</bool>
+       </property>
+       <property name="autoExclusive">
         <bool>true</bool>
        </property>
       </widget>
@@ -333,7 +348,15 @@
     </layout>
    </item>
    <item row="4" column="0">
-    <widget class="QTextEdit" name="te_upload_description"/>
+    <widget class="QTextEdit" name="te_upload_description">
+     <property name="html">
+      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Segoe UI'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Commit message&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

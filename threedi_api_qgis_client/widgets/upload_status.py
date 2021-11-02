@@ -88,7 +88,7 @@ class UploadDialog(uicls_log, basecls_log):
         self.upload_wizard = UploadWizard(self.parent_dock, self)
         self.upload_wizard.exec_()
         new_upload = self.upload_wizard.new_upload
-        if new_upload is None:
+        if not new_upload:
             return
         self.add_upload_to_model(new_upload)
 

@@ -198,6 +198,12 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.initialize_simulation_results()
         self.simulation_results_dlg.show()
 
-    def show_upload_dialog(self):
+    def initialize_upload_status(self):
+        """Initialization of the Upload Status dialog."""
         self.upload_dlg = UploadDialog(self)
-        self.upload_dlg.exec_()
+
+    def show_upload_dialog(self):
+        """Show upload status dialog."""
+        if self.upload_dlg is None:
+            self.initialize_upload_status()
+        self.upload_dlg.show()
