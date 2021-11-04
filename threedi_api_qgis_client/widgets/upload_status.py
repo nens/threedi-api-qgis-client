@@ -52,7 +52,7 @@ class UploadDialog(uicls_log, basecls_log):
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
-        self.tv_model = QStandardItemModel(0, 4)
+        self.tv_model = QStandardItemModel(0, 3)
         self.tv_model.setHorizontalHeaderLabels(["Schematisation name", "Owner", "Revision", "Commit message"])
         self.tv_uploads.setModel(self.tv_model)
         self.tv_uploads.selectionModel().selectionChanged.connect(self.change_upload_context)

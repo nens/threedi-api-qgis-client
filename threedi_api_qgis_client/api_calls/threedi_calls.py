@@ -45,6 +45,7 @@ from threedi_api_client.openapi import (
     SchematisationRevision,
     SqliteFileUpload,
     RasterCreate,
+    RevisionTask,
     Commit,
 )
 
@@ -429,17 +430,26 @@ class ThreediCalls:
     def delete_schematisation_revision_sqlite(self, schematisation_pk: int, revision_pk: int):
         self.threedi_api.schematisations_revisions_sqlite_delete(revision_pk, schematisation_pk)
 
-    def upload_schematisation_revision_raster(
+    def create_schematisation_revision_raster(
         self, schematisation_pk: int, revision_pk: int, name: str, raster_type: str = "dem_file", **data
     ) -> RasterCreate:
         data.update({"name": name, "type": raster_type})
-        raster_file_upload = self.threedi_api.schematisations_revisions_raster_upload(
+        raster_create = self.threedi_api.schematisations_revisions_rasters_create(
             revision_pk, schematisation_pk, data
+        )
+        return raster_create
+
+    def upload_schematisation_revision_raster(
+        self, raster_pk: int, schematisation_pk: int, revision_pk: int, filename: str
+    ) -> Upload:
+        data = {"filename": filename}
+        raster_file_upload = self.threedi_api.schematisations_revisions_rasters_upload(
+            raster_pk, revision_pk, schematisation_pk, data
         )
         return raster_file_upload
 
     def delete_schematisation_revision_raster(self, schematisation_pk: int, revision_pk: int):
-        self.threedi_api.schematisations_revisions_raster_delete(revision_pk, schematisation_pk)
+        self.threedi_api.schematisations_revisions_rasters_delete(revision_pk, schematisation_pk)
 
     def commit_schematisation_revision(self, schematisation_pk: int, revision_pk: int, **data) -> Commit:
         commit = self.threedi_api.schematisations_revisions_commit(revision_pk, schematisation_pk, data)
@@ -452,3 +462,9 @@ class ThreediCalls:
             revision_pk, schematisation_pk, data
         )
         return threedi_model
+
+    def fetch_schematisation_revision_tasks(self, schematisation_pk: int, revision_pk: int) -> List[RevisionTask]:
+        revision_tasks_list = self.paginated_fetch(
+            self.threedi_api.schematisations_revisions_tasks_list, revision_pk, schematisation_pk
+        )
+        return revision_tasks_list

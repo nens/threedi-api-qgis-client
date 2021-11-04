@@ -227,7 +227,7 @@
         </font>
        </property>
        <property name="text">
-        <string>CREATE NEW RVISION</string>
+        <string>CREATE NEW REVISION</string>
        </property>
        <property name="checkable">
         <bool>true</bool>

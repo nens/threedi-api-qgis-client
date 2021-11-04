@@ -6,7 +6,7 @@ from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, Qt, QSize
-from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
+from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog, QLabel, QPushButton, QLineEdit
 from threedi_api_client.openapi import ApiException
 from ..ui_utils import get_filepath, set_widget_background_color
 from ..api_calls.threedi_calls import ThreediCalls
@@ -49,7 +49,119 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.initialize_widgets()
         # set_widget_background_color(self)
+
+    @property
+    def general_files(self):
+        files_info = OrderedDict(
+            (
+                ("spatialite", "Spatialite"),
+            )
+        )
+        return files_info
+
+    @property
+    def terrain_model_files(self):
+        files_info = OrderedDict(
+            (
+                ("dem_file", "Digital Elevation Model"),
+                ("frict_coef_file", "Friction coefficient"),
+                ("initial_groundwater_level_file", "Initial groundwater level"),
+                ("initial_waterlevel_file", "Initial waterlevel"),
+                ("interception_file", "Interception"),
+
+            )
+        )
+        return files_info
+
+    @property
+    def simple_infiltration_files(self):
+        files_info = OrderedDict(
+            (
+                ("infiltration_rate_file", "Infiltration rate"),
+                ("max_infiltration_capacity_file", "Max infiltration capacity"),
+            )
+        )
+        return files_info
+
+    @property
+    def groundwater_files(self):
+        files_info = OrderedDict(
+            (
+                ("equilibrium_infiltration_rate_file", "Equilibrium infiltration rate"),
+                ("groundwater_hydro_connectivity_file", "Groundwater hydro connectivity"),
+                ("groundwater_impervious_layer_level_file", "Groundwater impervious layer level"),
+                ("infiltration_decay_period_file", "Infiltration decay period"),
+                ("initial_infiltration_rate_file", "Initial infiltration rate"),
+                ("leakage_file", "Leakage"),
+                ("phreatic_storage_capacity_file", "Phreatic storage capacity"),
+
+            )
+        )
+        return files_info
+
+    @property
+    def interflow_files(self):
+        files_info = OrderedDict(
+            (
+                ("hydraulic_conductivity_file", "Hydraulic conductivity"),
+                ("porosity_file", "Porosity"),
+
+            )
+        )
+        return files_info
+
+    def initialize_widgets(self):
+        files_widgets = [self.widget_terrain_model, self.widget_simple_infiltration, self.widget_groundwater, self.widget_interflow]
+        files_info_collection = [self.terrain_model_files, self.simple_infiltration_files, self.groundwater_files, self.interflow_files]
+        for widget, files_info in zip(files_widgets, files_info_collection):
+            widget_layout = widget.layout()
+            for i, (field_name, name) in enumerate(files_info.items(), start=1):
+                name_normalized = name.lower().replace(" ", "_")
+                name_label = QLabel(name)
+                name_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+
+                status_label = QLabel("NO CHANGES DETECTED")
+                status_label.setObjectName(f"{name_normalized}_status")
+                status_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+
+                filepath_line_edit = QLineEdit()
+                filepath_line_edit.setObjectName(f"{name_normalized}_path")
+                filepath_line_edit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+
+                browse_pb = QPushButton("...")
+                browse_pb.setObjectName(f"{name_normalized}_browse")
+
+                update_ref_pb = QPushButton("Update reference")
+                update_ref_pb.setObjectName(f"{name_normalized}_update_reference")
+
+                ignore_pb = QPushButton("Ignore")
+                ignore_pb.setObjectName(f"{name_normalized}_ignore_changes")
+                ignore_pb.setCheckable(True)
+                ignore_pb.setAutoExclusive(True)
+
+                apply_pb = QPushButton("Upload")
+                apply_pb.setObjectName(f"{name_normalized}_apply_changes")
+                apply_pb.setCheckable(True)
+                apply_pb.setAutoExclusive(True)
+                apply_pb.setChecked(True)
+
+                invalid_ref_sublayout = QGridLayout()
+                filepath_sublayout = QGridLayout()
+                filepath_sublayout.addWidget(filepath_line_edit, 0, 0)
+                filepath_sublayout.addWidget(browse_pb, 0, 1)
+                invalid_ref_sublayout.addLayout(filepath_sublayout, 0, 0)
+                invalid_ref_sublayout.addWidget(update_ref_pb, 0, 1)
+
+                changes_sublayout = QGridLayout()
+                changes_sublayout.addWidget(ignore_pb, 0, 0)
+                changes_sublayout.addWidget(apply_pb, 0, 1)
+                widget_layout.addWidget(name_label, i, 0)
+                widget_layout.addWidget(status_label, i, 1)
+
+                # widget_layout.addLayout(invalid_ref_sublayout, i, 2)
+                widget_layout.addLayout(changes_sublayout, i, 2)
 
 
 class StartPage(QWizardPage):
