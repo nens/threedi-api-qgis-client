@@ -6,8 +6,9 @@ from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, Qt, QSize
-from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog, QLabel, QPushButton, QLineEdit
+from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QWidget, QGridLayout, QSizePolicy, QFileDialog, QLabel, QPushButton, QLineEdit
 from threedi_api_client.openapi import ApiException
+from ..utils import is_file_checksum_equal, sqlite_layer
 from ..ui_utils import get_filepath, set_widget_background_color
 from ..api_calls.threedi_calls import ThreediCalls
 
@@ -49,6 +50,10 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.latest_revision_number = self.parent_page.parent_wizard.latest_revision_number
+        self.schematisation = self.parent_page.parent_wizard.upload_dialog.schematisation
+        self.schematisation_sqlite = self.parent_page.parent_wizard.upload_dialog.schematisation_sqlite
+        self.tc = self.parent_page.parent_wizard.tc
         self.initialize_widgets()
         # set_widget_background_color(self)
 
@@ -112,6 +117,31 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         )
         return files_info
 
+    def check_files_states(self):
+        files_ref_tables = OrderedDict(
+            (
+                ("v2_global_settings", self.terrain_model_files),
+                ("v2_simple_infiltration", self.simple_infiltration_files),
+                ("v2_groundwater", self.groundwater_files),
+                ("v2_interflow", self.interflow_files),
+            )
+        )
+        files_info = OrderedDict()
+        remote_rasters = self.tc.fetch_schematisation_revision_rasters(self.schematisation.id, self.latest_revision_number)
+        sqlite_localisation = os.path.dirname(self.schematisation_sqlite)
+        for sqlite_table, files_fields in files_ref_tables.items():
+            sqlite_table_lyr = sqlite_layer(self.schematisation_sqlite, sqlite_table, geom_column=None)
+            try:
+                first_feat = next(sqlite_table_lyr.getFeatures())
+            except StopIteration:
+                continue
+            for file_field in files_fields:
+                file_relative_path = first_feat[file_field]
+                if not file_relative_path:
+                    continue
+                filepath = os.path.join(sqlite_localisation, file_relative_path)
+                # TODO: Needs to be finished
+
     def initialize_widgets(self):
         files_widgets = [self.widget_terrain_model, self.widget_simple_infiltration, self.widget_groundwater, self.widget_interflow]
         files_info_collection = [self.terrain_model_files, self.simple_infiltration_files, self.groundwater_files, self.interflow_files]
@@ -147,6 +177,12 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 apply_pb.setAutoExclusive(True)
                 apply_pb.setChecked(True)
 
+                changes_action_widget = QWidget()
+                changes_sublayout = QGridLayout()
+                changes_action_widget.setLayout(changes_sublayout)
+                changes_sublayout.addWidget(ignore_pb, 0, 0)
+                changes_sublayout.addWidget(apply_pb, 0, 1)
+
                 invalid_ref_sublayout = QGridLayout()
                 filepath_sublayout = QGridLayout()
                 filepath_sublayout.addWidget(filepath_line_edit, 0, 0)
@@ -154,14 +190,11 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 invalid_ref_sublayout.addLayout(filepath_sublayout, 0, 0)
                 invalid_ref_sublayout.addWidget(update_ref_pb, 0, 1)
 
-                changes_sublayout = QGridLayout()
-                changes_sublayout.addWidget(ignore_pb, 0, 0)
-                changes_sublayout.addWidget(apply_pb, 0, 1)
                 widget_layout.addWidget(name_label, i, 0)
                 widget_layout.addWidget(status_label, i, 1)
 
                 # widget_layout.addLayout(invalid_ref_sublayout, i, 2)
-                widget_layout.addLayout(changes_sublayout, i, 2)
+                widget_layout.addWidget(changes_action_widget, i, 2)
 
 
 class StartPage(QWizardPage):
@@ -216,10 +249,10 @@ class UploadWizard(QWizard):
         self.parent_dock = parent_dock
         self.upload_dialog = upload_dialog
         self.tc = self.upload_dialog.tc
-        self.latest_revision = self.tc.fetch_schematisation_latest_revision(self.upload_dialog.schematisation.id).number
+        self.latest_revision_number = self.tc.fetch_schematisation_latest_revision(self.upload_dialog.schematisation.id).number  # Add handling of the first revision case
         self.start_page = StartPage(self)
         self.start_page.main_widget.lbl_schematisation.setText(self.upload_dialog.schematisation.name)
-        self.start_page.main_widget.lbl_online_revision.setText(str(self.latest_revision))
+        self.start_page.main_widget.lbl_online_revision.setText(str(self.latest_revision_no))
         self.check_model_page = CheckModelPage(self)
         self.select_files_page = SelectFilesPage(self)
         self.addPage(self.start_page)
@@ -241,7 +274,7 @@ class UploadWizard(QWizard):
         self.new_upload.clear()
         self.new_upload["schematisation"] = self.upload_dialog.schematisation
         self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
-        self.new_upload["latest_revision"] = self.latest_revision
+        self.new_upload["latest_revision"] = self.latest_revision_no
         self.new_upload["sqlite_filepath"] = self.upload_dialog.schematisation_sqlite
 
     def cancel_wizard(self):

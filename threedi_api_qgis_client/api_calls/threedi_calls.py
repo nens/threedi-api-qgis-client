@@ -32,6 +32,7 @@ from threedi_api_client.openapi import (
     GroundWaterRaster,
     TimedSavedStateUpdate,
     ThreediModelSavedState,
+    ThreediModelTask,
     InitialSavedState,
     PotentialBreach,
     LizardRasterRain,
@@ -46,6 +47,7 @@ from threedi_api_client.openapi import (
     SqliteFileUpload,
     RasterCreate,
     RevisionTask,
+    RevisionRaster,
     Commit,
 )
 
@@ -232,6 +234,11 @@ class ThreediCalls:
         states = self.paginated_fetch(self.threedi_api.threedimodels_saved_states_list, threedimodel_id)
         return states
 
+    def fetch_3di_model_tasks(self, threedimodel_id: str) -> List[ThreediModelTask]:
+        """Fetch tasks list."""
+        tasks = self.paginated_fetch(self.threedi_api.threedimodels_tasks_list, threedimodel_id)
+        return tasks
+
     def fetch_revisions(self) -> List[Revision]:
         """Fetch all Revisions available for current user."""
         revisions_list = self.paginated_fetch(self.threedi_api.revisions_list)
@@ -412,7 +419,7 @@ class ThreediCalls:
         return schematisation_revision
 
     def create_schematisation_revision(
-        self, schematisation_pk: int, empty: bool = False, **data
+        self, schematisation_pk: int, empty: bool = True, **data
     ) -> SchematisationRevision:
         data["empty"] = empty
         schematisation_revision = self.threedi_api.schematisations_revisions_create(schematisation_pk, data)
@@ -430,9 +437,16 @@ class ThreediCalls:
     def delete_schematisation_revision_sqlite(self, schematisation_pk: int, revision_pk: int):
         self.threedi_api.schematisations_revisions_sqlite_delete(revision_pk, schematisation_pk)
 
+    def fetch_schematisation_revision_rasters(self, schematisation_pk: int, revision_pk: int) -> List[RevisionRaster]:
+        revision_rasters_list = self.paginated_fetch(
+            self.threedi_api.schematisations_revisions_rasters_list, revision_pk, schematisation_pk
+        )
+        return revision_rasters_list
+
     def create_schematisation_revision_raster(
-        self, schematisation_pk: int, revision_pk: int, name: str, raster_type: str = "dem_file", **data
+        self, schematisation_pk: int, revision_pk: int, name: str, raster_type: str = "dem_raw_file", **data
     ) -> RasterCreate:
+        raster_type = "dem_raw_file" if raster_type == "dem_file" else raster_type
         data.update({"name": name, "type": raster_type})
         raster_create = self.threedi_api.schematisations_revisions_rasters_create(
             revision_pk, schematisation_pk, data
@@ -448,8 +462,8 @@ class ThreediCalls:
         )
         return raster_file_upload
 
-    def delete_schematisation_revision_raster(self, schematisation_pk: int, revision_pk: int):
-        self.threedi_api.schematisations_revisions_rasters_delete(revision_pk, schematisation_pk)
+    def delete_schematisation_revision_raster(self, raster_pk: int, schematisation_pk: int, revision_pk: int):
+        self.threedi_api.schematisations_revisions_rasters_delete(raster_pk, revision_pk, schematisation_pk)
 
     def commit_schematisation_revision(self, schematisation_pk: int, revision_pk: int, **data) -> Commit:
         commit = self.threedi_api.schematisations_revisions_commit(revision_pk, schematisation_pk, data)

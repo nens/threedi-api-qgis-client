@@ -6,6 +6,7 @@ import hashlib
 import requests
 from collections import OrderedDict
 from datetime import datetime
+from qgis.core import QgsDataSourceUri, QgsVectorLayer
 
 PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))
 CACHE_PATH = os.path.join(PLUGIN_PATH, "_cached_data")
@@ -114,13 +115,12 @@ def get_download_file(download, file_path):
                 f.write(chunk)
 
 
-def check_download_checksum(download, filename):
-    """Checking if Download object MD5 checksum matches checksum calculated for a cached file."""
-    file_path = os.path.join(CACHE_PATH, filename)
+def is_file_checksum_equal(file_path, etag):
+    """Checking if etag (MD5 checksum) matches checksum calculated for a given file."""
     with open(file_path, "rb") as file_to_check:
         data = file_to_check.read()
         md5_returned = hashlib.md5(data).hexdigest()
-        return download.etag == md5_returned
+        return etag == md5_returned
 
 
 def extract_error_message(e):
@@ -170,3 +170,13 @@ def apply_24h_timeseries(start_datetime, end_datetime, timeseries):
         else:
             break
     return new_timeseries
+
+
+def sqlite_layer(sqlite_path, table_name, layer_name=None, geom_column="the_geom", schema=""):
+    """Creating vector layer out of Spatialite source."""
+    uri = QgsDataSourceUri()
+    uri.setDatabase(sqlite_path)
+    uri.setDataSource(schema, table_name, geom_column)
+    layer_name = table_name if layer_name is None else layer_name
+    vlayer = QgsVectorLayer(uri.uri(), layer_name, "spatialite")
+    return vlayer
