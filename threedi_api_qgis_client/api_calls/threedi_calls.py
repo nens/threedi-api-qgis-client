@@ -425,6 +425,10 @@ class ThreediCalls:
         schematisation_revision = self.threedi_api.schematisations_revisions_create(schematisation_pk, data)
         return schematisation_revision
 
+    def download_schematisation_revision_sqlite(self, schematisation_pk: int, revision_pk: int) -> Download:
+        sqlite_download = self.threedi_api.schematisations_revisions_sqlite_download(revision_pk, schematisation_pk)
+        return sqlite_download
+
     def upload_schematisation_revision_sqlite(
         self, schematisation_pk: int, revision_pk: int, filename: str, **data
     ) -> SqliteFileUpload:
@@ -448,9 +452,7 @@ class ThreediCalls:
     ) -> RasterCreate:
         raster_type = "dem_raw_file" if raster_type == "dem_file" else raster_type
         data.update({"name": name, "type": raster_type})
-        raster_create = self.threedi_api.schematisations_revisions_rasters_create(
-            revision_pk, schematisation_pk, data
-        )
+        raster_create = self.threedi_api.schematisations_revisions_rasters_create(revision_pk, schematisation_pk, data)
         return raster_create
 
     def upload_schematisation_revision_raster(

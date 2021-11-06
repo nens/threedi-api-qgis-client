@@ -81,8 +81,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.label_user.setText(self.log_in_dlg.user)
         self.label_repo.setText(self.current_model.repository_slug)
         self.label_schematisation_id.setText(f"{self.current_model.schematisation_id}")
-        revision = self.log_in_dlg.revisions[self.current_model.revision_hash]
-        self.label_rev.setText(f"{revision.number}")
         self.label_db.setText(self.current_model.model_ini)
         self.initialize_simulations_progresses_thread()
         self.initialize_simulation_overview()

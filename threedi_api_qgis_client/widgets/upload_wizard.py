@@ -1,12 +1,22 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
+from enum import Enum
 from collections import OrderedDict, defaultdict
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, Qt, QSize
-from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QWidget, QGridLayout, QSizePolicy, QFileDialog, QLabel, QPushButton, QLineEdit
+from qgis.PyQt.QtWidgets import (
+    QWizardPage,
+    QWizard,
+    QWidget,
+    QGridLayout,
+    QSizePolicy,
+    QLabel,
+    QPushButton,
+    QLineEdit,
+)
 from threedi_api_client.openapi import ApiException
 from ..utils import is_file_checksum_equal, sqlite_layer
 from ..ui_utils import get_filepath, set_widget_background_color
@@ -21,6 +31,19 @@ uicls_check_page, basecls_check_page = uic.loadUiType(
 uicls_files_page, basecls_files_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "upload_wizard", "page_select_files.ui")
 )
+
+
+class UploadFileState(Enum):
+    NO_CHANGES_DETECTED = "NO CHANGES DETECTED"
+    CHANGES_DETECTED = "CHANGES DETECTED"
+    NEW = "NEW"
+    DELETED_LOCALLY = "DELETED LOCALLY"
+    INVALID_REFERENCE = "INVALID REFERENCE!"
+
+
+class UploadFileType(Enum):
+    DB = "DB"
+    RASTER = "RASTER"
 
 
 class StartWidget(uicls_start_page, basecls_start_page):
@@ -50,20 +73,17 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.latest_revision_number = self.parent_page.parent_wizard.latest_revision_number
+        self.latest_revision = self.parent_page.parent_wizard.latest_revision
         self.schematisation = self.parent_page.parent_wizard.upload_dialog.schematisation
         self.schematisation_sqlite = self.parent_page.parent_wizard.upload_dialog.schematisation_sqlite
         self.tc = self.parent_page.parent_wizard.tc
+        self.detected_files = self.check_files_states()
         self.initialize_widgets()
         # set_widget_background_color(self)
 
     @property
     def general_files(self):
-        files_info = OrderedDict(
-            (
-                ("spatialite", "Spatialite"),
-            )
-        )
+        files_info = OrderedDict((("spatialite", "Spatialite"),))
         return files_info
 
     @property
@@ -75,7 +95,6 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 ("initial_groundwater_level_file", "Initial groundwater level"),
                 ("initial_waterlevel_file", "Initial waterlevel"),
                 ("interception_file", "Interception"),
-
             )
         )
         return files_info
@@ -101,7 +120,6 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 ("initial_infiltration_rate_file", "Initial infiltration rate"),
                 ("leakage_file", "Leakage"),
                 ("phreatic_storage_capacity_file", "Phreatic storage capacity"),
-
             )
         )
         return files_info
@@ -112,12 +130,12 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
             (
                 ("hydraulic_conductivity_file", "Hydraulic conductivity"),
                 ("porosity_file", "Porosity"),
-
             )
         )
         return files_info
 
-    def check_files_states(self):
+    @property
+    def files_reference_tables(self):
         files_ref_tables = OrderedDict(
             (
                 ("v2_global_settings", self.terrain_model_files),
@@ -126,10 +144,32 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 ("v2_interflow", self.interflow_files),
             )
         )
-        files_info = OrderedDict()
-        remote_rasters = self.tc.fetch_schematisation_revision_rasters(self.schematisation.id, self.latest_revision_number)
+        return files_ref_tables
+
+    def check_files_states(self):
+        files_states = OrderedDict()
+        remote_rasters = self.tc.fetch_schematisation_revision_rasters(self.schematisation.id, self.latest_revision.id)
+        remote_rasters_by_type = {raster.type: raster for raster in remote_rasters}
+        if "dem_raw_file" in remote_rasters_by_type:
+            remote_rasters_by_type["dem_file"] = remote_rasters_by_type["dem_raw_file"]
+            del remote_rasters_by_type["dem_raw_file"]
         sqlite_localisation = os.path.dirname(self.schematisation_sqlite)
-        for sqlite_table, files_fields in files_ref_tables.items():
+        if self.latest_revision.sqlite:
+            remote_sqlite = self.tc.download_schematisation_revision_sqlite(
+                self.schematisation.id, self.latest_revision.id
+            )
+            files_matching = is_file_checksum_equal(self.schematisation_sqlite, remote_sqlite.etag)
+            status = UploadFileState.NO_CHANGES_DETECTED if files_matching else UploadFileState.CHANGES_DETECTED
+        else:
+            status = UploadFileState.NEW
+        files_states["spatialite"] = {
+            "status": status,
+            "filepath": self.schematisation_sqlite,
+            "type": UploadFileType.DB,
+            "remote_id": None,
+        }
+
+        for sqlite_table, files_fields in self.files_reference_tables.items():
             sqlite_table_lyr = sqlite_layer(self.schematisation_sqlite, sqlite_table, geom_column=None)
             try:
                 first_feat = next(sqlite_table_lyr.getFeatures())
@@ -137,64 +177,117 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 continue
             for file_field in files_fields:
                 file_relative_path = first_feat[file_field]
-                if not file_relative_path:
+                remote_raster = remote_rasters_by_type.get(file_field)
+                if not file_relative_path and not remote_raster:
                     continue
-                filepath = os.path.join(sqlite_localisation, file_relative_path)
-                # TODO: Needs to be finished
+                filepath = os.path.join(sqlite_localisation, file_relative_path) if file_relative_path else None
+                raster_id = remote_raster.id if remote_rasters else None
+                if filepath:
+                    if os.path.exists(filepath):
+                        if remote_raster and remote_raster.file:
+                            files_matching = is_file_checksum_equal(filepath, remote_raster.file.etag)
+                            status = (
+                                UploadFileState.NO_CHANGES_DETECTED
+                                if files_matching
+                                else UploadFileState.CHANGES_DETECTED
+                            )
+                        else:
+                            status = UploadFileState.NEW
+                    else:
+                        status = UploadFileState.INVALID_REFERENCE
+                else:
+                    status = UploadFileState.DELETED_LOCALLY
+                files_states[file_field] = {
+                    "status": status,
+                    "filepath": filepath,
+                    "type": UploadFileType.RASTER,
+                    "remote_id": raster_id,
+                }
+        return files_states
 
     def initialize_widgets(self):
-        files_widgets = [self.widget_terrain_model, self.widget_simple_infiltration, self.widget_groundwater, self.widget_interflow]
-        files_info_collection = [self.terrain_model_files, self.simple_infiltration_files, self.groundwater_files, self.interflow_files]
+        files_widgets = [
+            self.widget_general,
+            self.widget_terrain_model,
+            self.widget_simple_infiltration,
+            self.widget_groundwater,
+            self.widget_interflow,
+        ]
+        files_info_collection = [
+            self.general_files,
+            self.terrain_model_files,
+            self.simple_infiltration_files,
+            self.groundwater_files,
+            self.interflow_files,
+        ]
+        for widget in files_widgets:
+            widget.hide()
+
         for widget, files_info in zip(files_widgets, files_info_collection):
             widget_layout = widget.layout()
             for i, (field_name, name) in enumerate(files_info.items(), start=1):
+                try:
+                    file_state = self.detected_files[field_name]
+                except KeyError:
+                    continue
+                status = file_state["status"]
+                widget.show()
                 name_normalized = name.lower().replace(" ", "_")
                 name_label = QLabel(name)
                 name_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+                widget_layout.addWidget(name_label, i, 0)
 
-                status_label = QLabel("NO CHANGES DETECTED")
+                status_label = QLabel(status.value)
                 status_label.setObjectName(f"{name_normalized}_status")
                 status_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-
-                filepath_line_edit = QLineEdit()
-                filepath_line_edit.setObjectName(f"{name_normalized}_path")
-                filepath_line_edit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-
-                browse_pb = QPushButton("...")
-                browse_pb.setObjectName(f"{name_normalized}_browse")
-
-                update_ref_pb = QPushButton("Update reference")
-                update_ref_pb.setObjectName(f"{name_normalized}_update_reference")
-
-                ignore_pb = QPushButton("Ignore")
-                ignore_pb.setObjectName(f"{name_normalized}_ignore_changes")
-                ignore_pb.setCheckable(True)
-                ignore_pb.setAutoExclusive(True)
-
-                apply_pb = QPushButton("Upload")
-                apply_pb.setObjectName(f"{name_normalized}_apply_changes")
-                apply_pb.setCheckable(True)
-                apply_pb.setAutoExclusive(True)
-                apply_pb.setChecked(True)
-
-                changes_action_widget = QWidget()
-                changes_sublayout = QGridLayout()
-                changes_action_widget.setLayout(changes_sublayout)
-                changes_sublayout.addWidget(ignore_pb, 0, 0)
-                changes_sublayout.addWidget(apply_pb, 0, 1)
-
-                invalid_ref_sublayout = QGridLayout()
-                filepath_sublayout = QGridLayout()
-                filepath_sublayout.addWidget(filepath_line_edit, 0, 0)
-                filepath_sublayout.addWidget(browse_pb, 0, 1)
-                invalid_ref_sublayout.addLayout(filepath_sublayout, 0, 0)
-                invalid_ref_sublayout.addWidget(update_ref_pb, 0, 1)
-
-                widget_layout.addWidget(name_label, i, 0)
                 widget_layout.addWidget(status_label, i, 1)
 
-                # widget_layout.addLayout(invalid_ref_sublayout, i, 2)
-                widget_layout.addWidget(changes_action_widget, i, 2)
+                if status == UploadFileState.NO_CHANGES_DETECTED:
+                    empty_label = QLabel()
+                    widget_layout.addWidget(empty_label, i, 2)
+                elif status == UploadFileState.INVALID_REFERENCE:
+                    filepath_line_edit = QLineEdit()
+                    filepath_line_edit.setObjectName(f"{name_normalized}_path")
+                    filepath_line_edit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+
+                    browse_pb = QPushButton("...")
+                    browse_pb.setObjectName(f"{name_normalized}_browse")
+
+                    update_ref_pb = QPushButton("Update reference")
+                    update_ref_pb.setObjectName(f"{name_normalized}_update_reference")
+
+                    invalid_ref_sublayout = QGridLayout()
+                    filepath_sublayout = QGridLayout()
+                    filepath_sublayout.addWidget(filepath_line_edit, 0, 0)
+                    filepath_sublayout.addWidget(browse_pb, 0, 1)
+                    invalid_ref_sublayout.addLayout(filepath_sublayout, 0, 0)
+                    invalid_ref_sublayout.addWidget(update_ref_pb, 0, 1)
+
+                    widget_layout.addLayout(invalid_ref_sublayout, i, 2)
+                else:
+                    no_action_pb_name = "Ignore"
+                    if status == UploadFileState.DELETED_LOCALLY:
+                        action_pb_name = "Delete online"
+                    else:
+                        action_pb_name = "Upload"
+                    no_action_pb = QPushButton(no_action_pb_name)
+                    no_action_pb.setObjectName(f"{name_normalized}_no_action")
+                    no_action_pb.setCheckable(True)
+                    no_action_pb.setAutoExclusive(True)
+
+                    action_pb = QPushButton(action_pb_name)
+                    action_pb.setObjectName(f"{name_normalized}_action")
+                    action_pb.setCheckable(True)
+                    action_pb.setAutoExclusive(True)
+                    action_pb.setChecked(True)
+
+                    actions_widget = QWidget()
+                    actions_sublayout = QGridLayout()
+                    actions_widget.setLayout(actions_sublayout)
+                    actions_sublayout.addWidget(no_action_pb, 0, 0)
+                    actions_sublayout.addWidget(action_pb, 0, 1)
+
+                    widget_layout.addWidget(actions_widget, i, 2)
 
 
 class StartPage(QWizardPage):
@@ -249,10 +342,11 @@ class UploadWizard(QWizard):
         self.parent_dock = parent_dock
         self.upload_dialog = upload_dialog
         self.tc = self.upload_dialog.tc
-        self.latest_revision_number = self.tc.fetch_schematisation_latest_revision(self.upload_dialog.schematisation.id).number  # Add handling of the first revision case
+        # TODO: Add handling of the first revision case
+        self.latest_revision = self.tc.fetch_schematisation_latest_revision(self.upload_dialog.schematisation.id)
         self.start_page = StartPage(self)
         self.start_page.main_widget.lbl_schematisation.setText(self.upload_dialog.schematisation.name)
-        self.start_page.main_widget.lbl_online_revision.setText(str(self.latest_revision_no))
+        self.start_page.main_widget.lbl_online_revision.setText(str(self.latest_revision.number))
         self.check_model_page = CheckModelPage(self)
         self.select_files_page = SelectFilesPage(self)
         self.addPage(self.start_page)
@@ -274,7 +368,7 @@ class UploadWizard(QWizard):
         self.new_upload.clear()
         self.new_upload["schematisation"] = self.upload_dialog.schematisation
         self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
-        self.new_upload["latest_revision"] = self.latest_revision_no
+        self.new_upload["latest_revision"] = self.latest_revision.number
         self.new_upload["sqlite_filepath"] = self.upload_dialog.schematisation_sqlite
 
     def cancel_wizard(self):
