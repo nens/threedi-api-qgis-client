@@ -5,8 +5,7 @@ from enum import Enum
 from collections import OrderedDict, defaultdict
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
-from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtCore import QSettings, Qt, QSize
+from qgis.PyQt.QtCore import QSettings, QSize
 from qgis.PyQt.QtWidgets import (
     QWizardPage,
     QWizard,
@@ -17,10 +16,7 @@ from qgis.PyQt.QtWidgets import (
     QPushButton,
     QLineEdit,
 )
-from threedi_api_client.openapi import ApiException
 from ..utils import is_file_checksum_equal, sqlite_layer
-from ..ui_utils import get_filepath, set_widget_background_color
-from ..api_calls.threedi_calls import ThreediCalls
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
