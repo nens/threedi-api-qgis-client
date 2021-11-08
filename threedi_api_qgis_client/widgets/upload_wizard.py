@@ -19,8 +19,13 @@ from qgis.PyQt.QtWidgets import (
     QPushButton,
     QLineEdit,
 )
+from sqlalchemy.exc import OperationalError
+from threedi_modelchecker.threedi_database import ThreediDatabase
+from threedi_modelchecker.model_checks import ThreediModelChecker
+from threedi_modelchecker import errors
 from ..utils import is_file_checksum_equal, sqlite_layer
 from ..ui_utils import get_filepath
+from ..communication import CheckerCommunication
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -63,7 +68,71 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.schematisation_sqlite = self.parent_page.parent_wizard.upload_dialog.schematisation_sqlite
+        self.checker_logger = CheckerCommunication(self.lv_check_result)
+        self.pb_check_model.clicked.connect(self.check_schematisation)
         # set_widget_background_color(self)
+
+    def check_schematisation(self):
+        db_type = "spatialite"
+        db_settings = {"db_path": self.schematisation_sqlite}
+        threedi_db = ThreediDatabase(db_settings, db_type=db_type)
+        try:
+            model_checker = ThreediModelChecker(threedi_db)
+            model_checker.db.check_connection()
+        except OperationalError as exc:
+            self.checker_logger.log_error("Failed to start a connection with the database.")
+            self.checker_logger.log_error(
+                "Something went wrong trying to connect to the database, please check"
+                " the connection settings: %s" % exc.args[0]
+            )
+            return
+        except errors.MigrationMissingError:
+            self.checker_logger.log_error(
+                "The selected 3Di model does not have the latest migration"
+            )
+            self.checker_logger.log_error(
+                "The selected 3Di model does not have the latest migration, please "
+                "migrate your model to the latest version. Download the latest "
+                "version of the model here: <a href='https://3di.lizard.net/models/'>https://3di.lizard.net/models/</a>"
+                # noqa
+            )
+            return
+        except errors.MigrationTooHighError:
+            self.checker_logger.log_error(
+                "The selected 3Di model has a higher migration than expected."
+            )
+            self.checker_logger.log_error(
+                "The 3Di model has a higher migration than expected, do you have "
+                "the latest version of ThreediToolbox?"
+            )
+            return
+        except errors.MigrationNameError:
+            self.checker_logger.log_error(
+                "Unexpected migration name, but migration id is matching. "
+                "We are gonna continue for now and hope for the best."
+            )
+            return
+        session = model_checker.db.get_session()
+        total_checks = len(model_checker.config.checks)
+        self.pbar_check_spatialite.setMaximum(total_checks)
+        self.pbar_check_spatialite.setValue(0)
+        check_header = ["id", "table", "column", "value", "description", "type of check"]
+        for i, check in enumerate(model_checker.checks(), start=1):
+            model_errors = check.get_invalid(session)
+            for error_row in model_errors:
+                self.checker_logger.log_error(
+                    repr([
+                        error_row.id,
+                        check.table.name,
+                        check.column.name,
+                        getattr(error_row, check.column.name),
+                        check.description(),
+                        check,
+                    ])
+                )
+            self.pbar_check_spatialite.setValue(i)
+        self.checker_logger.log_info("Successfully finished running threedi-modelchecker")
 
 
 class SelectFilesWidget(uicls_files_page, basecls_files_page):
@@ -156,6 +225,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         return table_mapping
 
     def check_files_states(self):
+        """Check raster (and spatialite) files presence and compare local and remote data."""
         files_states = OrderedDict()
         remote_rasters = self.tc.fetch_schematisation_revision_rasters(self.schematisation.id, self.latest_revision.id)
         remote_rasters_by_type = {raster.type: raster for raster in remote_rasters}

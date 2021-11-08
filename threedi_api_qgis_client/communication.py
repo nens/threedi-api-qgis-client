@@ -97,3 +97,39 @@ class UICommunication(object):
         if accept is False:
             return None
         return item
+
+
+class CheckerCommunication(object):
+    """Class with methods for handling messages using QGIS interface and logging list view."""
+
+    def __init__(self, list_view=None):
+        self.list_view = list_view
+        self.model = QStandardItemModel()
+        self.list_view.setModel(self.model)
+
+    def log_info(self, msg, log_text_color=QColor(Qt.black)):
+        """Showing info message bar."""
+        if self.list_view is not None:
+            item = QStandardItem(msg)
+            item.setForeground(QBrush(log_text_color))
+            self.model.appendRow([item])
+        else:
+            print(msg)
+
+    def log_warn(self, msg, log_text_color=QColor(Qt.black)):
+        """Showing warning message bar."""
+        if self.list_view is not None:
+            item = QStandardItem(msg)
+            item.setForeground(QBrush(log_text_color))
+            self.model.appendRow([item])
+        else:
+            print(msg)
+
+    def log_error(self, msg, log_text_color=QColor(Qt.black)):
+        """Showing error message bar."""
+        if self.list_view is not None:
+            item = QStandardItem(msg)
+            item.setForeground(QBrush(log_text_color))
+            self.model.appendRow([item])
+        else:
+            print(msg)

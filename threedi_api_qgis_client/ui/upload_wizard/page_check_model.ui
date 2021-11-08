@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>720</width>
-    <height>457</height>
+    <height>474</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -92,6 +92,13 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="1">
       <widget class="QPushButton" name="pb_check_model">
        <property name="sizePolicy">
@@ -99,6 +106,12 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>50</height>
+        </size>
        </property>
        <property name="font">
         <font>
@@ -112,12 +125,18 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string/>
+     <item row="1" column="1">
+      <spacer name="verticalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
        </property>
-      </widget>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </item>
