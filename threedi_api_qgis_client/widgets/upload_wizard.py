@@ -1,9 +1,12 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
+import shutil
 from enum import Enum
 from collections import OrderedDict, defaultdict
+from functools import partial
 from qgis.PyQt.QtSvg import QSvgWidget
+from qgis.utils import plugins
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QSettings, QSize
 from qgis.PyQt.QtWidgets import (
@@ -15,9 +18,9 @@ from qgis.PyQt.QtWidgets import (
     QLabel,
     QPushButton,
     QLineEdit,
-    QFileDialog,
 )
 from ..utils import is_file_checksum_equal, sqlite_layer
+from ..ui_utils import get_filepath
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -145,12 +148,12 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         return files_ref_tables
 
     @property
-    def files_to_tables(self):
-        file_table_mapping = {}
+    def file_table_mapping(self):
+        table_mapping = {}
         for table_name, raster_files_references in self.files_reference_tables.items():
             for raster_type in raster_files_references.keys():
-                file_table_mapping[raster_type] = table_name
-        return file_table_mapping
+                table_mapping[raster_type] = table_name
+        return table_mapping
 
     def check_files_states(self):
         files_states = OrderedDict()
@@ -172,7 +175,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
             "status": status,
             "filepath": self.schematisation_sqlite,
             "type": UploadFileType.DB,
-            "remote_id": None,
+            "remote_raster": None,
         }
 
         for sqlite_table, files_fields in self.files_reference_tables.items():
@@ -187,7 +190,6 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 if not file_relative_path and not remote_raster:
                     continue
                 filepath = os.path.join(sqlite_localisation, file_relative_path) if file_relative_path else None
-                raster_id = remote_raster.id if remote_rasters else None
                 if filepath:
                     if os.path.exists(filepath):
                         if remote_raster and remote_raster.file:
@@ -207,11 +209,12 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                     "status": status,
                     "filepath": filepath,
                     "type": UploadFileType.RASTER,
-                    "remote_id": raster_id,
+                    "remote_raster": remote_raster,
                 }
         return files_states
 
     def initialize_widgets(self):
+        """Dynamically set up widgets based on detected files."""
         self.widgets_per_file.clear()
         files_widgets = [
             self.widget_general,
@@ -283,14 +286,15 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
 
                 filepath_sublayout = QGridLayout()
                 filepath_line_edit = QLineEdit()
-                filepath_line_edit.setReadOnly(True)
                 filepath_line_edit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
                 browse_pb = QPushButton("...")
+                browse_pb.clicked.connect(partial(self.browse_for_raster, field_name))
                 filepath_sublayout.addWidget(filepath_line_edit, 0, 0)
                 filepath_sublayout.addWidget(browse_pb, 0, 1)
                 invalid_ref_sublayout.addLayout(filepath_sublayout, 0, 0)
 
                 update_ref_pb = QPushButton("Update reference")
+                update_ref_pb.clicked.connect(partial(self.update_raster_reference, field_name))
                 invalid_ref_sublayout.addWidget(update_ref_pb, 0, 1)
 
                 actions_sublayout.addWidget(valid_ref_widget, 0, 0)
@@ -304,15 +308,90 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                     valid_ref_widget.hide()
                 else:
                     invalid_ref_widget.hide()
-
-                self.widgets_per_file[field_name] = (name_label, status_label, valid_ref_widget, invalid_ref_widget)
+                self.widgets_per_file[field_name] = (
+                    name_label,
+                    status_label,
+                    valid_ref_widget,
+                    action_pb,
+                    invalid_ref_widget,
+                    filepath_line_edit,
+                )
                 current_main_layout_row += 1
 
     def browse_for_raster(self, raster_type):
-        pass
+        """Browse for raster file for a given raster type."""
+        name_filter = "GeoTIFF (*.tif *.TIF *.tiff *.TIFF)"
+        title = "Select reference raster file"
+        raster_file = get_filepath(None, extension_filter=name_filter, dialog_title=title)
+        if raster_file:
+            filepath_line_edit = self.widgets_per_file[raster_type][-1]
+            filepath_line_edit.setText(raster_file)
 
     def update_raster_reference(self, raster_type):
-        pass
+        """
+        Update raster reference and copy file to the raster subdirectory if it lays outside of it.
+        """
+        (
+            name_label,
+            status_label,
+            valid_ref_widget,
+            action_pb,
+            invalid_ref_widget,
+            filepath_line_edit,
+        ) = self.widgets_per_file[raster_type]
+        new_filepath = filepath_line_edit.text()
+        if new_filepath:
+            new_file = os.path.basename(new_filepath)
+            main_dir = os.path.dirname(self.schematisation_sqlite)
+            relative_filepath = f"rasters/{new_file}"
+            target_filepath = os.path.join(main_dir, "rasters", new_file)
+            filepath_exists = os.path.exists(new_filepath)
+            if filepath_exists:
+                if not os.path.exists(target_filepath):
+                    shutil.copyfile(new_filepath, target_filepath)
+        else:
+            relative_filepath = None
+            target_filepath = None
+            filepath_exists = False
+        reference_table = self.file_table_mapping[raster_type]
+        table_lyr = sqlite_layer(self.schematisation_sqlite, reference_table, geom_column=None)
+        first_feat = next(table_lyr.getFeatures())
+        field_idx = table_lyr.fields().lookupField(raster_type)
+        fid = first_feat.id()
+        table_lyr.startEditing()
+        table_lyr.changeAttributeValue(fid, field_idx, relative_filepath)
+        table_lyr.commitChanges()
+        files_refs = self.detected_files[raster_type]
+        remote_raster = files_refs["remote_raster"]
+        files_refs["filepath"] = target_filepath
+        if not relative_filepath:
+            if not remote_raster:
+                files_refs["status"] = UploadFileState.NO_CHANGES_DETECTED
+                status_label.setText(UploadFileState.NO_CHANGES_DETECTED.value)
+                invalid_ref_widget.hide()
+            else:
+                files_refs["status"] = UploadFileState.DELETED_LOCALLY
+                status_label.setText(UploadFileState.DELETED_LOCALLY.value)
+                action_pb.setText("Delete online")
+                invalid_ref_widget.hide()
+                valid_ref_widget.show()
+        else:
+            if filepath_exists:
+                if not remote_raster:
+                    files_refs["status"] = UploadFileState.NEW
+                    status_label.setText(UploadFileState.NEW.value)
+                    invalid_ref_widget.hide()
+                    valid_ref_widget.show()
+                else:
+                    if is_file_checksum_equal(new_filepath, remote_raster.file.etag):
+                        files_refs["status"] = UploadFileState.NO_CHANGES_DETECTED
+                        status_label.setText(UploadFileState.NO_CHANGES_DETECTED.value)
+                        invalid_ref_widget.hide()
+                    else:
+                        files_refs["status"] = UploadFileState.CHANGES_DETECTED
+                        status_label.setText(UploadFileState.CHANGES_DETECTED.value)
+                        invalid_ref_widget.hide()
+                        valid_ref_widget.show()
 
 
 class StartPage(QWizardPage):
