@@ -15,6 +15,7 @@ from qgis.PyQt.QtWidgets import (
     QLabel,
     QPushButton,
     QLineEdit,
+    QFileDialog,
 )
 from ..utils import is_file_checksum_equal, sqlite_layer
 
@@ -74,6 +75,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         self.schematisation_sqlite = self.parent_page.parent_wizard.upload_dialog.schematisation_sqlite
         self.tc = self.parent_page.parent_wizard.tc
         self.detected_files = self.check_files_states()
+        self.widgets_per_file = {}
         self.initialize_widgets()
         # set_widget_background_color(self)
 
@@ -142,6 +144,14 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         )
         return files_ref_tables
 
+    @property
+    def files_to_tables(self):
+        file_table_mapping = {}
+        for table_name, raster_files_references in self.files_reference_tables.items():
+            for raster_type in raster_files_references.keys():
+                file_table_mapping[raster_type] = table_name
+        return file_table_mapping
+
     def check_files_states(self):
         files_states = OrderedDict()
         remote_rasters = self.tc.fetch_schematisation_revision_rasters(self.schematisation.id, self.latest_revision.id)
@@ -202,6 +212,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         return files_states
 
     def initialize_widgets(self):
+        self.widgets_per_file.clear()
         files_widgets = [
             self.widget_general,
             self.widget_terrain_model,
@@ -219,71 +230,89 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         for widget in files_widgets:
             widget.hide()
 
+        current_main_layout_row = 1
         for widget, files_info in zip(files_widgets, files_info_collection):
             widget_layout = widget.layout()
-            for i, (field_name, name) in enumerate(files_info.items(), start=1):
+            for field_name, name in files_info.items():
                 try:
                     file_state = self.detected_files[field_name]
                 except KeyError:
                     continue
                 status = file_state["status"]
                 widget.show()
-                name_normalized = name.lower().replace(" ", "_")
                 name_label = QLabel(name)
                 name_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-                widget_layout.addWidget(name_label, i, 0)
+                widget_layout.addWidget(name_label, current_main_layout_row, 0)
 
                 status_label = QLabel(status.value)
-                status_label.setObjectName(f"{name_normalized}_status")
                 status_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-                widget_layout.addWidget(status_label, i, 1)
+                widget_layout.addWidget(status_label, current_main_layout_row, 1)
 
-                if status == UploadFileState.NO_CHANGES_DETECTED:
-                    empty_label = QLabel()
-                    widget_layout.addWidget(empty_label, i, 2)
-                elif status == UploadFileState.INVALID_REFERENCE:
-                    filepath_line_edit = QLineEdit()
-                    filepath_line_edit.setObjectName(f"{name_normalized}_path")
-                    filepath_line_edit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+                empty_label = QLabel()
+                widget_layout.addWidget(empty_label, current_main_layout_row, 2)
 
-                    browse_pb = QPushButton("...")
-                    browse_pb.setObjectName(f"{name_normalized}_browse")
-
-                    update_ref_pb = QPushButton("Update reference")
-                    update_ref_pb.setObjectName(f"{name_normalized}_update_reference")
-
-                    invalid_ref_sublayout = QGridLayout()
-                    filepath_sublayout = QGridLayout()
-                    filepath_sublayout.addWidget(filepath_line_edit, 0, 0)
-                    filepath_sublayout.addWidget(browse_pb, 0, 1)
-                    invalid_ref_sublayout.addLayout(filepath_sublayout, 0, 0)
-                    invalid_ref_sublayout.addWidget(update_ref_pb, 0, 1)
-
-                    widget_layout.addLayout(invalid_ref_sublayout, i, 2)
+                no_action_pb_name = "Ignore"
+                if status == UploadFileState.DELETED_LOCALLY:
+                    action_pb_name = "Delete online"
                 else:
-                    no_action_pb_name = "Ignore"
-                    if status == UploadFileState.DELETED_LOCALLY:
-                        action_pb_name = "Delete online"
-                    else:
-                        action_pb_name = "Upload"
-                    no_action_pb = QPushButton(no_action_pb_name)
-                    no_action_pb.setObjectName(f"{name_normalized}_no_action")
-                    no_action_pb.setCheckable(True)
-                    no_action_pb.setAutoExclusive(True)
+                    action_pb_name = "Upload"
+                # Add valid reference widgets
+                all_actions_widget = QWidget()
+                actions_sublayout = QGridLayout()
+                all_actions_widget.setLayout(actions_sublayout)
 
-                    action_pb = QPushButton(action_pb_name)
-                    action_pb.setObjectName(f"{name_normalized}_action")
-                    action_pb.setCheckable(True)
-                    action_pb.setAutoExclusive(True)
-                    action_pb.setChecked(True)
+                valid_ref_widget = QWidget()
+                valid_ref_sublayout = QGridLayout()
+                valid_ref_widget.setLayout(valid_ref_sublayout)
+                no_action_pb = QPushButton(no_action_pb_name)
+                no_action_pb.setCheckable(True)
+                no_action_pb.setAutoExclusive(True)
 
-                    actions_widget = QWidget()
-                    actions_sublayout = QGridLayout()
-                    actions_widget.setLayout(actions_sublayout)
-                    actions_sublayout.addWidget(no_action_pb, 0, 0)
-                    actions_sublayout.addWidget(action_pb, 0, 1)
+                action_pb = QPushButton(action_pb_name)
+                action_pb.setCheckable(True)
+                action_pb.setAutoExclusive(True)
+                action_pb.setChecked(True)
 
-                    widget_layout.addWidget(actions_widget, i, 2)
+                valid_ref_sublayout.addWidget(no_action_pb, 0, 0)
+                valid_ref_sublayout.addWidget(action_pb, 0, 1)
+
+                # Add invalid reference widgets
+                invalid_ref_widget = QWidget()
+                invalid_ref_sublayout = QGridLayout()
+                invalid_ref_widget.setLayout(invalid_ref_sublayout)
+
+                filepath_sublayout = QGridLayout()
+                filepath_line_edit = QLineEdit()
+                filepath_line_edit.setReadOnly(True)
+                filepath_line_edit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+                browse_pb = QPushButton("...")
+                filepath_sublayout.addWidget(filepath_line_edit, 0, 0)
+                filepath_sublayout.addWidget(browse_pb, 0, 1)
+                invalid_ref_sublayout.addLayout(filepath_sublayout, 0, 0)
+
+                update_ref_pb = QPushButton("Update reference")
+                invalid_ref_sublayout.addWidget(update_ref_pb, 0, 1)
+
+                actions_sublayout.addWidget(valid_ref_widget, 0, 0)
+                actions_sublayout.addWidget(invalid_ref_widget, 1, 0)
+                # Add all actions widget into the main widget layout
+                widget_layout.addWidget(all_actions_widget, current_main_layout_row, 2)
+                # Hide some of the widgets based on files states
+                if status == UploadFileState.NO_CHANGES_DETECTED:
+                    all_actions_widget.hide()
+                elif status == UploadFileState.INVALID_REFERENCE:
+                    valid_ref_widget.hide()
+                else:
+                    invalid_ref_widget.hide()
+
+                self.widgets_per_file[field_name] = (name_label, status_label, valid_ref_widget, invalid_ref_widget)
+                current_main_layout_row += 1
+
+    def browse_for_raster(self, raster_type):
+        pass
+
+    def update_raster_reference(self, raster_type):
+        pass
 
 
 class StartPage(QWizardPage):
