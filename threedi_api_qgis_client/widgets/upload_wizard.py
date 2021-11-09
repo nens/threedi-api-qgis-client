@@ -2,7 +2,6 @@
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
 import shutil
-from enum import Enum
 from collections import OrderedDict, defaultdict
 from functools import partial
 from qgis.PyQt.QtSvg import QSvgWidget
@@ -23,7 +22,7 @@ from sqlalchemy.exc import OperationalError
 from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker import errors
-from ..utils import is_file_checksum_equal, sqlite_layer
+from ..utils import is_file_checksum_equal, sqlite_layer, UploadFileType, UploadFileStatus
 from ..ui_utils import get_filepath
 from ..communication import CheckerCommunication
 
@@ -36,19 +35,6 @@ uicls_check_page, basecls_check_page = uic.loadUiType(
 uicls_files_page, basecls_files_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "upload_wizard", "page_select_files.ui")
 )
-
-
-class UploadFileState(Enum):
-    NO_CHANGES_DETECTED = "NO CHANGES DETECTED"
-    CHANGES_DETECTED = "CHANGES DETECTED"
-    NEW = "NEW"
-    DELETED_LOCALLY = "DELETED LOCALLY"
-    INVALID_REFERENCE = "INVALID REFERENCE!"
-
-
-class UploadFileType(Enum):
-    DB = "DB"
-    RASTER = "RASTER"
 
 
 class StartWidget(uicls_start_page, basecls_start_page):
@@ -88,9 +74,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             )
             return
         except errors.MigrationMissingError:
-            self.checker_logger.log_error(
-                "The selected 3Di model does not have the latest migration"
-            )
+            self.checker_logger.log_error("The selected 3Di model does not have the latest migration")
             self.checker_logger.log_error(
                 "The selected 3Di model does not have the latest migration, please "
                 "migrate your model to the latest version. Download the latest "
@@ -99,9 +83,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             )
             return
         except errors.MigrationTooHighError:
-            self.checker_logger.log_error(
-                "The selected 3Di model has a higher migration than expected."
-            )
+            self.checker_logger.log_error("The selected 3Di model has a higher migration than expected.")
             self.checker_logger.log_error(
                 "The 3Di model has a higher migration than expected, do you have "
                 "the latest version of ThreediToolbox?"
@@ -122,14 +104,16 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             model_errors = check.get_invalid(session)
             for error_row in model_errors:
                 self.checker_logger.log_error(
-                    repr([
-                        error_row.id,
-                        check.table.name,
-                        check.column.name,
-                        getattr(error_row, check.column.name),
-                        check.description(),
-                        check,
-                    ])
+                    repr(
+                        [
+                            error_row.id,
+                            check.table.name,
+                            check.column.name,
+                            getattr(error_row, check.column.name),
+                            check.description(),
+                            check,
+                        ]
+                    )
                 )
             self.pbar_check_spatialite.setValue(i)
         self.checker_logger.log_info("Successfully finished running threedi-modelchecker")
@@ -238,14 +222,15 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 self.schematisation.id, self.latest_revision.id
             )
             files_matching = is_file_checksum_equal(self.schematisation_sqlite, remote_sqlite.etag)
-            status = UploadFileState.NO_CHANGES_DETECTED if files_matching else UploadFileState.CHANGES_DETECTED
+            status = UploadFileStatus.NO_CHANGES_DETECTED if files_matching else UploadFileStatus.CHANGES_DETECTED
         else:
-            status = UploadFileState.NEW
+            status = UploadFileStatus.NEW
         files_states["spatialite"] = {
             "status": status,
             "filepath": self.schematisation_sqlite,
             "type": UploadFileType.DB,
             "remote_raster": None,
+            "make_action": True,
         }
 
         for sqlite_table, files_fields in self.files_reference_tables.items():
@@ -265,21 +250,22 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                         if remote_raster and remote_raster.file:
                             files_matching = is_file_checksum_equal(filepath, remote_raster.file.etag)
                             status = (
-                                UploadFileState.NO_CHANGES_DETECTED
+                                UploadFileStatus.NO_CHANGES_DETECTED
                                 if files_matching
-                                else UploadFileState.CHANGES_DETECTED
+                                else UploadFileStatus.CHANGES_DETECTED
                             )
                         else:
-                            status = UploadFileState.NEW
+                            status = UploadFileStatus.NEW
                     else:
-                        status = UploadFileState.INVALID_REFERENCE
+                        status = UploadFileStatus.INVALID_REFERENCE
                 else:
-                    status = UploadFileState.DELETED_LOCALLY
+                    status = UploadFileStatus.DELETED_LOCALLY
                 files_states[file_field] = {
                     "status": status,
                     "filepath": filepath,
                     "type": UploadFileType.RASTER,
                     "remote_raster": remote_raster,
+                    "make_action": True,
                 }
         return files_states
 
@@ -325,7 +311,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 widget_layout.addWidget(empty_label, current_main_layout_row, 2)
 
                 no_action_pb_name = "Ignore"
-                if status == UploadFileState.DELETED_LOCALLY:
+                if status == UploadFileStatus.DELETED_LOCALLY:
                     action_pb_name = "Delete online"
                 else:
                     action_pb_name = "Upload"
@@ -340,11 +326,13 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 no_action_pb = QPushButton(no_action_pb_name)
                 no_action_pb.setCheckable(True)
                 no_action_pb.setAutoExclusive(True)
+                no_action_pb.clicked.connect(partial(self.toggle_action, field_name, False))
 
                 action_pb = QPushButton(action_pb_name)
                 action_pb.setCheckable(True)
                 action_pb.setAutoExclusive(True)
                 action_pb.setChecked(True)
+                action_pb.clicked.connect(partial(self.toggle_action, field_name, True))
 
                 valid_ref_sublayout.addWidget(no_action_pb, 0, 0)
                 valid_ref_sublayout.addWidget(action_pb, 0, 1)
@@ -372,9 +360,9 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 # Add all actions widget into the main widget layout
                 widget_layout.addWidget(all_actions_widget, current_main_layout_row, 2)
                 # Hide some of the widgets based on files states
-                if status == UploadFileState.NO_CHANGES_DETECTED:
+                if status == UploadFileStatus.NO_CHANGES_DETECTED:
                     all_actions_widget.hide()
-                elif status == UploadFileState.INVALID_REFERENCE:
+                elif status == UploadFileStatus.INVALID_REFERENCE:
                     valid_ref_widget.hide()
                 else:
                     invalid_ref_widget.hide()
@@ -387,6 +375,10 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                     filepath_line_edit,
                 )
                 current_main_layout_row += 1
+
+    def toggle_action(self, raster_type, make_action):
+        files_refs = self.detected_files[raster_type]
+        files_refs["make_action"] = make_action
 
     def browse_for_raster(self, raster_type):
         """Browse for raster file for a given raster type."""
@@ -431,35 +423,47 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         table_lyr.startEditing()
         table_lyr.changeAttributeValue(fid, field_idx, relative_filepath)
         table_lyr.commitChanges()
+        (
+            spatialite_name_label,
+            spatialite_status_label,
+            spatialite_valid_ref_widget,
+            spatialite_action_pb,
+            spatialite_invalid_ref_widget,
+            spatialite_filepath_line_edit,
+        ) = self.widgets_per_file["spatialite"]
+        spatialite_files_refs = self.detected_files["spatialite"]
+        spatialite_files_refs["status"] = UploadFileStatus.CHANGES_DETECTED
+        spatialite_status_label.setText(UploadFileStatus.CHANGES_DETECTED.value)
+        spatialite_valid_ref_widget.show()
         files_refs = self.detected_files[raster_type]
         remote_raster = files_refs["remote_raster"]
         files_refs["filepath"] = target_filepath
         if not relative_filepath:
             if not remote_raster:
-                files_refs["status"] = UploadFileState.NO_CHANGES_DETECTED
-                status_label.setText(UploadFileState.NO_CHANGES_DETECTED.value)
+                files_refs["status"] = UploadFileStatus.NO_CHANGES_DETECTED
+                status_label.setText(UploadFileStatus.NO_CHANGES_DETECTED.value)
                 invalid_ref_widget.hide()
             else:
-                files_refs["status"] = UploadFileState.DELETED_LOCALLY
-                status_label.setText(UploadFileState.DELETED_LOCALLY.value)
+                files_refs["status"] = UploadFileStatus.DELETED_LOCALLY
+                status_label.setText(UploadFileStatus.DELETED_LOCALLY.value)
                 action_pb.setText("Delete online")
                 invalid_ref_widget.hide()
                 valid_ref_widget.show()
         else:
             if filepath_exists:
                 if not remote_raster:
-                    files_refs["status"] = UploadFileState.NEW
-                    status_label.setText(UploadFileState.NEW.value)
+                    files_refs["status"] = UploadFileStatus.NEW
+                    status_label.setText(UploadFileStatus.NEW.value)
                     invalid_ref_widget.hide()
                     valid_ref_widget.show()
                 else:
                     if is_file_checksum_equal(new_filepath, remote_raster.file.etag):
-                        files_refs["status"] = UploadFileState.NO_CHANGES_DETECTED
-                        status_label.setText(UploadFileState.NO_CHANGES_DETECTED.value)
+                        files_refs["status"] = UploadFileStatus.NO_CHANGES_DETECTED
+                        status_label.setText(UploadFileStatus.NO_CHANGES_DETECTED.value)
                         invalid_ref_widget.hide()
                     else:
-                        files_refs["status"] = UploadFileState.CHANGES_DETECTED
-                        status_label.setText(UploadFileState.CHANGES_DETECTED.value)
+                        files_refs["status"] = UploadFileStatus.CHANGES_DETECTED
+                        status_label.setText(UploadFileStatus.CHANGES_DETECTED.value)
                         invalid_ref_widget.hide()
                         valid_ref_widget.show()
 
@@ -543,7 +547,7 @@ class UploadWizard(QWizard):
         self.new_upload["schematisation"] = self.upload_dialog.schematisation
         self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
         self.new_upload["latest_revision"] = self.latest_revision.number
-        self.new_upload["sqlite_filepath"] = self.upload_dialog.schematisation_sqlite
+        self.new_upload["selected_files"] = self.select_files_page.main_widget.detected_files
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""

@@ -484,3 +484,9 @@ class ThreediCalls:
             self.threedi_api.schematisations_revisions_tasks_list, revision_pk, schematisation_pk
         )
         return revision_tasks_list
+
+    def fetch_schematisation_revision_task(
+        self, task_pk: int, schematisation_pk: int, revision_pk: int
+    ) -> RevisionTask:
+        revision_task = self.threedi_api.schematisations_revisions_tasks_read(task_pk, revision_pk, schematisation_pk)
+        return revision_task

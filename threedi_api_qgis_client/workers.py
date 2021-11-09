@@ -3,13 +3,16 @@
 import logging
 import os
 import json
+import time
 import requests
+from functools import partial
 from qgis.PyQt.QtCore import QObject, QRunnable, QUrl, QByteArray, pyqtSignal, pyqtSlot
 from qgis.PyQt import QtNetwork
 from PyQt5 import QtWebSockets
 from threedi_api_client.openapi import ApiException, Progress
 from threedi_api_client.files import upload_file
 from .api_calls.threedi_calls import ThreediCalls
+from .utils import UploadFileStatus
 
 
 logger = logging.getLogger(__name__)
@@ -187,6 +190,10 @@ class WorkerSignals(QObject):
     upload_progress = pyqtSignal(int, str, float, float)  # upload row index, task name, task progress, total progress
 
 
+class RevisionUploadError(Exception):
+    pass
+
+
 class UploadProgressWorker(QRunnable):
     """Worker object responsible for uploading models."""
 
@@ -201,69 +208,152 @@ class UploadProgressWorker(QRunnable):
         self.current_task_progress = 0.0
         self.total_progress = 0.0
         self.tc = None
+        self.schematisation = self.upload_specification["schematisation"]
+        self.revision = None
         self.signals = WorkerSignals()
 
     @pyqtSlot()
     def run(self):
         """Uploading model to the schematisation."""
         self.tc = ThreediCalls(self.threedi_api)
-        schematisation = self.upload_specification["schematisation"]
-        schematisation_sqlite = self.upload_specification["sqlite_filepath"]
-        sqlite_file = os.path.basename(schematisation_sqlite)
-        commit_message = self.upload_specification["commit_message"]
+        tasks_list = self.build_tasks_list()
+        progress_per_task = 1 / len(tasks_list) * 100
         try:
-            self.current_task = "CREATE REVISION"
-            self.current_task_progress = 0.0
-            self.total_progress = 0.0
-            self.report_upload_progress()
-            revision = self.tc.create_schematisation_revision(schematisation.id)
-            new_rev_id = revision.id
-            self.current_task_progress = 100.0
-            self.total_progress = 10.0
-            self.report_upload_progress()
-
-            self.current_task = "DELETE REVISION SQLITE IF EXIST"
-            self.current_task_progress = 0.0
-            self.report_upload_progress()
-            self.tc.delete_schematisation_revision_sqlite(schematisation.id, new_rev_id)
-            self.current_task_progress = 100.0
-            self.total_progress = 20.0
-            self.report_upload_progress()
-
-            self.current_task = "UPLOAD SPATIALITE"
-            self.current_task_progress = 0.0
-            self.report_upload_progress()
-            upload = self.tc.upload_schematisation_revision_sqlite(schematisation.id, new_rev_id, sqlite_file)
-            upload_file(
-                upload.put_url, schematisation_sqlite, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress
-            )
-            self.current_task_progress = 100.0
-            self.total_progress = 60.0
-            self.report_upload_progress()
-
-            self.current_task = "COMMIT REVISION"
-            self.current_task_progress = 0.0
-            self.report_upload_progress()
-            self.tc.commit_schematisation_revision(schematisation.id, new_rev_id, commit_message=commit_message)
-            self.current_task_progress = 100.0
-            self.total_progress = 80.0
-            self.report_upload_progress()
-
-            self.current_task = "MAKE MODEL READY FOR SIMULATION"
-            self.current_task_progress = 0.0
-            self.report_upload_progress()
-            self.tc.create_schematisation_revision_3di_model(schematisation.id, new_rev_id)
-            self.current_task_progress = 100.0
+            for i, task in enumerate(tasks_list, start=1):
+                task()
+                self.total_progress = progress_per_task * i
+            self.current_task = "DONE"
             self.total_progress = 100.0
             self.report_upload_progress()
-
-            self.current_task = "DONE"
-            self.report_upload_progress()
-
             self.signals.thread_finished.emit("Model upload finished!")
         except Exception as e:
             error_msg = f"Error: {e}"
             self.signals.upload_failed.emit(error_msg)
+
+    def build_tasks_list(self):
+        tasks = list()
+        tasks.append(self.create_revision_task)
+        for file_name, file_state in self.upload_specification["selected_files"].items():
+            make_action_on_file = file_state["make_action"]
+            file_status = file_state["status"]
+            if make_action_on_file is False:
+                continue
+            if file_status == UploadFileStatus.NEW or file_status == UploadFileStatus.CHANGES_DETECTED:
+                if file_name == "spatialite":
+                    tasks.append(self.upload_sqlite_task)
+                else:
+                    tasks.append(partial(self.upload_raster_task, file_name))
+            elif file_status == UploadFileStatus.DELETED_LOCALLY:
+                tasks.append(partial(self.delete_raster_task, file_name))
+            else:
+                continue
+        tasks.append(self.commit_revision_task)
+        tasks.append(self.create_3di_model_task)
+        return tasks
+
+    def create_revision_task(self):
+        self.current_task = "CREATE REVISION"
+        self.current_task_progress = 0.0
+        self.report_upload_progress()
+        self.revision = self.tc.create_schematisation_revision(self.schematisation.id)
+        self.current_task_progress = 100.0
+        self.report_upload_progress()
+
+    def upload_sqlite_task(self):
+        self.current_task = "UPLOAD SPATIALITE"
+        self.current_task_progress = 0.0
+        self.report_upload_progress()
+        schematisation_sqlite = self.upload_specification["selected_files"]["spatialite"]["filepath"]
+        sqlite_file = os.path.basename(schematisation_sqlite)
+        upload = self.tc.upload_schematisation_revision_sqlite(self.schematisation.id, self.revision.id, sqlite_file)
+        upload_file(upload.put_url, schematisation_sqlite, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress)
+
+    def upload_raster_task(self, raster_type):
+        self.current_task = f"UPLOAD RASTER {raster_type}"
+        self.current_task_progress = 0.0
+        self.report_upload_progress()
+        raster_filepath = self.upload_specification["selected_files"][raster_type]["filepath"]
+        raster_file = os.path.basename(raster_filepath)
+        raster_revision = self.tc.create_schematisation_revision_raster(
+            self.schematisation.id, self.revision.id, raster_file, raster_type=raster_type
+        )
+        raster_upload = self.tc.upload_schematisation_revision_raster(
+            raster_revision.id, self.schematisation.id, self.revision.id, raster_file
+        )
+        upload_file(raster_upload.put_url, raster_filepath, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress)
+
+    def delete_raster_task(self, raster_type):
+        self.current_task = f"DELETE RASTER {raster_type}"
+        self.current_task_progress = 0.0
+        self.report_upload_progress()
+        revision_raster = self.upload_specification["selected_files"][raster_type]["remote_raster"]
+        self.tc.delete_schematisation_revision_raster(revision_raster.id, self.schematisation.id, self.revision.id)
+        self.current_task_progress = 100.0
+        self.report_upload_progress()
+
+    def commit_revision_task(self, tries=3, request_time_span=5):
+        self.current_task = "COMMIT REVISION"
+        self.current_task_progress = 0.0
+        self.report_upload_progress()
+        commit_message = self.upload_specification["commit_message"]
+        self.tc.commit_schematisation_revision(self.schematisation.id, self.revision.id, commit_message=commit_message)
+        model_checker_task = None
+        revision_tasks = self.tc.fetch_schematisation_revision_tasks(self.schematisation.id, self.revision.id)
+        for i in range(tries):
+            for rtask in revision_tasks:
+                if rtask.name == "modelchecker":
+                    model_checker_task = rtask
+                    break
+            if model_checker_task:
+                break
+            else:
+                time.sleep(request_time_span)
+        if model_checker_task:
+            status = model_checker_task.status
+            while status != "success":
+                model_checker_task = self.tc.fetch_schematisation_revision_task(
+                    model_checker_task.id, self.schematisation.id, self.revision.id
+                )
+                status = model_checker_task.status
+                self.monitor_upload_progress(model_checker_task.detail["progress"], 1)
+                if status == "failure":
+                    err = RevisionUploadError("\n".join(model_checker_task.detail["result"]["errors"]))
+                    raise err
+                time.sleep(request_time_span)
+            self.monitor_upload_progress(model_checker_task.detail["progress"], 1)
+        else:
+            err = RevisionUploadError("'modelchecker' task was not started properly!")
+            raise err
+
+    def create_3di_model_task(self, request_time_span=5):
+        self.current_task = "MAKE MODEL READY FOR SIMULATION"
+        self.current_task_progress = 0.0
+        self.report_upload_progress()
+        model = self.tc.create_schematisation_revision_3di_model(
+            self.schematisation.id, self.revision.id, **self.revision.to_dict()
+        )
+        finished_tasks = {
+            "make_gridadmin": False,
+            "make_tables": False,
+            "make_aggregations": False,
+            "make_cog": False,
+            "make_geojson": False,
+            "make_simulation_templates": False,
+        }
+        expected_tasks_number = len(finished_tasks)
+        while not all(finished_tasks.values()):
+            model_tasks = self.tc.fetch_3di_model_tasks(model.id)
+            for task in model_tasks:
+                task_status = task.status
+                if task_status == "success":
+                    finished_tasks[task.name] = True
+                elif task_status == "failure":
+                    err = RevisionUploadError("\n".join(task.detail["result"]["errors"]))
+                    raise err
+            finished_tasks_count = len([val for val in finished_tasks.values() if val])
+            self.monitor_upload_progress(finished_tasks_count, expected_tasks_number)
+            if finished_tasks_count != expected_tasks_number:
+                time.sleep(request_time_span)
 
     def report_upload_progress(self):
         self.signals.upload_progress.emit(

@@ -4,6 +4,7 @@ import os
 import json
 import hashlib
 import requests
+from enum import Enum
 from collections import OrderedDict
 from datetime import datetime
 from qgis.core import QgsDataSourceUri, QgsVectorLayer
@@ -180,3 +181,16 @@ def sqlite_layer(sqlite_path, table_name, layer_name=None, geom_column="the_geom
     layer_name = table_name if layer_name is None else layer_name
     vlayer = QgsVectorLayer(uri.uri(), layer_name, "spatialite")
     return vlayer
+
+
+class UploadFileStatus(Enum):
+    NO_CHANGES_DETECTED = "NO CHANGES DETECTED"
+    CHANGES_DETECTED = "CHANGES DETECTED"
+    NEW = "NEW"
+    DELETED_LOCALLY = "DELETED LOCALLY"
+    INVALID_REFERENCE = "INVALID REFERENCE!"
+
+
+class UploadFileType(Enum):
+    DB = "DB"
+    RASTER = "RASTER"
