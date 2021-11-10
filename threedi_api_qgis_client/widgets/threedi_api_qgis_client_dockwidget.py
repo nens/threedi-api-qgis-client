@@ -80,7 +80,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btn_upload.setEnabled(True)
         self.label_user.setText(self.log_in_dlg.user)
         self.label_repo.setText(self.current_model.repository_slug)
-        self.label_schematisation_id.setText(f"{self.current_model.schematisation_id or 10}")
+        self.label_schematisation_id.setText(f"{self.current_model.schematisation_id or 10}")  # TODO: Remove dummy ID
         self.label_db.setText(self.current_model.model_ini)
         self.initialize_simulations_progresses_thread()
         self.initialize_simulation_overview()
