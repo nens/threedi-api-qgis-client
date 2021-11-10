@@ -5,8 +5,6 @@ import shutil
 from operator import attrgetter
 from collections import OrderedDict, defaultdict
 from functools import partial
-from qgis.PyQt.QtSvg import QSvgWidget
-from qgis.utils import plugins
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QSettings, QSize
 from qgis.PyQt.QtWidgets import (
@@ -19,10 +17,7 @@ from qgis.PyQt.QtWidgets import (
     QPushButton,
     QLineEdit,
 )
-from sqlalchemy.exc import OperationalError
-from threedi_modelchecker.threedi_database import ThreediDatabase
-from threedi_modelchecker.model_checks import ThreediModelChecker
-from threedi_modelchecker import errors
+
 from ..utils import is_file_checksum_equal, sqlite_layer, UploadFileType, UploadFileStatus
 from ..ui_utils import get_filepath
 from ..communication import CheckerCommunication
@@ -63,10 +58,35 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.parent_page = parent_page
         self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
         self.checker_logger = CheckerCommunication(self.lv_check_result)
-        self.pb_check_model.clicked.connect(self.check_schematisation)
+        self.pb_check_model.clicked.connect(self.run_model_checks)
+        self.test_external_imports()
         # set_widget_background_color(self)
 
+    def test_external_imports(self):
+        try:
+            import threedi_modelchecker
+            import ThreeDiToolbox
+
+            self.lbl_on_import_error.hide()
+            self.pb_check_model.setEnabled(True)
+        except ImportError:
+            self.lbl_on_import_error.show()
+            self.pb_check_model.setDisabled(True)
+
+    def run_model_checks(self):
+        self.pbar_check_spatialite.setValue(0)
+        self.pbar_check_rasters.setValue(0)
+        self.check_schematisation()
+        self.check_rasters()
+
     def check_schematisation(self):
+        try:
+            from sqlalchemy.exc import OperationalError
+            from threedi_modelchecker.threedi_database import ThreediDatabase
+            from threedi_modelchecker.model_checks import ThreediModelChecker
+            from threedi_modelchecker import errors
+        except ImportError:
+            raise
         db_type = "spatialite"
         db_settings = {"db_path": self.schematisation_sqlite}
         threedi_db = ThreediDatabase(db_settings, db_type=db_type)
@@ -126,6 +146,22 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                 )
             self.pbar_check_spatialite.setValue(i)
         self.checker_logger.log_info("Successfully finished running threedi-modelchecker")
+
+    def check_rasters(self):
+        try:
+            from ThreeDiToolbox.tool_commands.raster_checker.raster_checker_main import RasterChecker
+            from ThreeDiToolbox.utils.threedi_database import ThreediDatabase
+        except ImportError:
+            raise
+        self.pbar_check_rasters.setMaximum(0)
+        db_type = "spatialite"
+        db_settings = {"db_path": self.schematisation_sqlite}
+        db = ThreediDatabase(db_settings, db_type)
+        checker = RasterChecker(db)
+        msg = checker.run(["check all rasters"])
+        self.pbar_check_rasters.setMaximum(100)
+        self.pbar_check_rasters.setValue(100)
+        self.checker_logger.log_info(msg)
 
 
 class SelectFilesWidget(uicls_files_page, basecls_files_page):

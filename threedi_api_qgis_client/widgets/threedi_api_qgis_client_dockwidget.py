@@ -98,12 +98,14 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.breaches_layer = None
             self.cells_layer = None
             self.log_in_dlg.unload_cached_layers()
+        if self.upload_dlg:
+            self.upload_dlg.hide()
+            self.upload_dlg = None
         self.log_in_dlg = None
         self.threedi_api = None
         self.current_model = None
         self.current_model_cells = None
         self.current_model_breaches = None
-        self.upload_dlg = None
         self.widget_unauthorized.show()
         self.widget_authorized.hide()
         self.btn_simulate.setDisabled(True)

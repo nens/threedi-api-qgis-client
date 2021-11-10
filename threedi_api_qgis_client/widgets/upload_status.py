@@ -41,10 +41,13 @@ class UploadDialog(uicls_log, basecls_log):
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
-        self.tv_model = QStandardItemModel(0, 2)
+        nr_of_columns = 3
+        self.tv_model = QStandardItemModel(0, nr_of_columns - 1)
         self.tv_model.setHorizontalHeaderLabels(["Schematisation name", "Revision", "Commit message"])
         self.tv_uploads.setModel(self.tv_model)
         self.tv_uploads.selectionModel().selectionChanged.connect(self.change_upload_context)
+        for i in range(nr_of_columns):
+            self.tv_uploads.resizeColumnToContents(i)
 
     def change_upload_context(self):
         selected_indexes = self.tv_uploads.selectedIndexes()
@@ -66,7 +69,9 @@ class UploadDialog(uicls_log, basecls_log):
         self.tv_model.appendRow([schema_name_item, revision_item, commit_msg_item])
         upload_row_number = self.tv_model.rowCount()
         upload_row_idx = self.tv_model.index(upload_row_number - 1, 0)
-        self.tv_uploads.selectionModel().select(upload_row_idx, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows)
+        self.tv_uploads.selectionModel().select(
+            upload_row_idx, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows
+        )
         worker = UploadProgressWorker(self.threedi_api, upload_specification, upload_row_number)
         worker.signals.upload_progress.connect(self.on_update_upload_progress)
         worker.signals.thread_finished.connect(self.on_upload_finished_success)
