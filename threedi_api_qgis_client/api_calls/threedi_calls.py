@@ -419,7 +419,7 @@ class ThreediCalls:
         return schematisation_revision
 
     def create_schematisation_revision(
-        self, schematisation_pk: int, empty: bool = True, **data
+        self, schematisation_pk: int, empty: bool = False, **data
     ) -> SchematisationRevision:
         data["empty"] = empty
         schematisation_revision = self.threedi_api.schematisations_revisions_create(schematisation_pk, data)

@@ -2,6 +2,7 @@
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
 import shutil
+from operator import attrgetter
 from collections import OrderedDict, defaultdict
 from functools import partial
 from qgis.PyQt.QtSvg import QSvgWidget
@@ -44,6 +45,12 @@ class StartWidget(uicls_start_page, basecls_start_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
+        self.latest_revision = self.parent_page.parent_wizard.latest_revision
+        self.lbl_online_commit_date.setText(str(self.latest_revision.commit_date or "") or "")
+        self.lbl_online_commit_by.setText(self.latest_revision.commit_user or "")
+        self.lbl_online_commit_msg.setText(self.latest_revision.commit_message or "")
+        self.lbl_model_dir.setText(os.path.dirname(self.schematisation_sqlite))
         # set_widget_background_color(self)
 
 
@@ -54,7 +61,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.schematisation_sqlite = self.parent_page.parent_wizard.upload_dialog.schematisation_sqlite
+        self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
         self.checker_logger = CheckerCommunication(self.lv_check_result)
         self.pb_check_model.clicked.connect(self.check_schematisation)
         # set_widget_background_color(self)
@@ -102,6 +109,8 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         check_header = ["id", "table", "column", "value", "description", "type of check"]
         for i, check in enumerate(model_checker.checks(), start=1):
             model_errors = check.get_invalid(session)
+            if model_errors:
+                self.checker_logger.log_error(repr(check_header))
             for error_row in model_errors:
                 self.checker_logger.log_error(
                     repr(
@@ -127,8 +136,8 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         self.setupUi(self)
         self.parent_page = parent_page
         self.latest_revision = self.parent_page.parent_wizard.latest_revision
-        self.schematisation = self.parent_page.parent_wizard.upload_dialog.schematisation
-        self.schematisation_sqlite = self.parent_page.parent_wizard.upload_dialog.schematisation_sqlite
+        self.schematisation = self.parent_page.parent_wizard.schematisation
+        self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
         self.tc = self.parent_page.parent_wizard.tc
         self.detected_files = self.check_files_states()
         self.widgets_per_file = {}
@@ -519,12 +528,19 @@ class UploadWizard(QWizard):
         self.setWizardStyle(QWizard.ClassicStyle)
         self.parent_dock = parent_dock
         self.upload_dialog = upload_dialog
+        self.schematisation = self.upload_dialog.schematisation
+        self.schematisation_sqlite = self.upload_dialog.schematisation_sqlite
         self.tc = self.upload_dialog.tc
-        # TODO: Add handling of the first revision case
-        self.latest_revision = self.tc.fetch_schematisation_latest_revision(self.upload_dialog.schematisation.id)
+        available_revisions = self.tc.fetch_schematisation_revisions(self.schematisation.id)
+        if available_revisions:
+            self.latest_revision = max(available_revisions, key=attrgetter("id"))
+        else:
+            self.latest_revision = self.tc.create_schematisation_revision(self.schematisation.id, empty=True)
         self.start_page = StartPage(self)
-        self.start_page.main_widget.lbl_schematisation.setText(self.upload_dialog.schematisation.name)
+        self.start_page.main_widget.lbl_schematisation.setText(self.schematisation.name)
         self.start_page.main_widget.lbl_online_revision.setText(str(self.latest_revision.number))
+        if self.latest_revision.is_valid is True:
+            self.start_page.main_widget.pb_use_revision.setDisabled(True)
         self.check_model_page = CheckModelPage(self)
         self.select_files_page = SelectFilesPage(self)
         self.addPage(self.start_page)
@@ -544,10 +560,12 @@ class UploadWizard(QWizard):
 
     def start_upload(self):
         self.new_upload.clear()
-        self.new_upload["schematisation"] = self.upload_dialog.schematisation
-        self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
-        self.new_upload["latest_revision"] = self.latest_revision.number
+        self.new_upload["schematisation"] = self.schematisation
+        self.new_upload["latest_revision"] = self.latest_revision
         self.new_upload["selected_files"] = self.select_files_page.main_widget.detected_files
+        self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
+        self.new_upload["create_revision"] = self.start_page.main_widget.pb_create_revision.isChecked()
+        self.new_upload["upload_only"] = self.select_files_page.main_widget.pb_upload_only.isChecked()
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""

@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QThreadPool
+from qgis.PyQt.QtCore import Qt, QThreadPool, QItemSelectionModel
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from .upload_wizard import UploadWizard
 from ..workers import UploadProgressWorker
@@ -14,17 +14,6 @@ uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_sta
 
 class UploadDialog(uicls_log, basecls_log):
     """Upload dialog."""
-
-    UPLOAD_STEPS = (
-        "CREATE NEW REVISION",
-        "UPLOAD SPATIALITE",
-        "UPLOAD INFILTRATION CAPACITY",
-        "COMMIT REVISION",
-        "CHECK REVISION VALIDITY",
-        "CREATE COMPUTATIONAL GRID",
-        "MAKE MODEL READY FOR SIMULATION",
-        "CREATE SIMULATION TEMPLATE",
-    )
 
     def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
@@ -52,8 +41,8 @@ class UploadDialog(uicls_log, basecls_log):
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
-        self.tv_model = QStandardItemModel(0, 3)
-        self.tv_model.setHorizontalHeaderLabels(["Schematisation name", "Owner", "Revision", "Commit message"])
+        self.tv_model = QStandardItemModel(0, 2)
+        self.tv_model.setHorizontalHeaderLabels(["Schematisation name", "Revision", "Commit message"])
         self.tv_uploads.setModel(self.tv_model)
         self.tv_uploads.selectionModel().selectionChanged.connect(self.change_upload_context)
 
@@ -66,15 +55,19 @@ class UploadDialog(uicls_log, basecls_log):
             self.on_update_upload_progress(self.current_upload_row, *self.upload_progresses[self.current_upload_row])
 
     def add_upload_to_model(self, upload_specification):
+        create_revision = upload_specification["create_revision"]
+        upload_only = upload_specification["upload_only"]
         schematisation = upload_specification["schematisation"]
         schema_name_item = QStandardItem(f"{schematisation.name}")
-        owner_item = QStandardItem(f"{schematisation.owner}")
-        revision_id = upload_specification["latest_revision"] or 1
-        revision_item = QStandardItem(f"{revision_id}")
+        revision = upload_specification["latest_revision"]
+        revision_number = revision.number + 1 if create_revision and not upload_only else revision.number
+        revision_item = QStandardItem(f"{revision_number}")
         commit_msg_item = QStandardItem(f"{upload_specification['commit_message']}")
-        self.tv_model.appendRow([schema_name_item, owner_item, revision_item, commit_msg_item])
-        upload_row_idx = self.tv_model.rowCount()
-        worker = UploadProgressWorker(self.threedi_api, upload_specification, upload_row_idx)
+        self.tv_model.appendRow([schema_name_item, revision_item, commit_msg_item])
+        upload_row_number = self.tv_model.rowCount()
+        upload_row_idx = self.tv_model.index(upload_row_number - 1, 0)
+        self.tv_uploads.selectionModel().select(upload_row_idx, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows)
+        worker = UploadProgressWorker(self.threedi_api, upload_specification, upload_row_number)
         worker.signals.upload_progress.connect(self.on_update_upload_progress)
         worker.signals.thread_finished.connect(self.on_upload_finished_success)
         worker.signals.upload_failed.connect(self.on_upload_failed)
