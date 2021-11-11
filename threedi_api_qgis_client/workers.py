@@ -310,15 +310,19 @@ class UploadProgressWorker(QRunnable):
         upload_file(raster_upload.put_url, raster_filepath, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress)
 
     def delete_raster_task(self, raster_type):
+        types_to_delete = [raster_type]
+        if raster_type == "dem_file":
+            types_to_delete.append("dem_raw_file")  # We need to remove legacy 'dem_raw_file` as well
         self.current_task = f"DELETE RASTER\n({raster_type})"
         self.current_task_progress = 0.0
         self.report_upload_progress()
-        revision_raster = None
-        for rev_raster in self.revision.rasters:
-            if rev_raster.type == raster_type:
-                revision_raster = rev_raster
+        for revision_raster in self.revision.rasters:
+            revision_type = revision_raster.type
+            if revision_type in types_to_delete:
+                self.tc.delete_schematisation_revision_raster(
+                    revision_raster.id, self.schematisation.id, self.revision.id
+                )
                 break
-        self.tc.delete_schematisation_revision_raster(revision_raster.id, self.schematisation.id, self.revision.id)
         self.current_task_progress = 100.0
         self.report_upload_progress()
 
@@ -349,7 +353,7 @@ class UploadProgressWorker(QRunnable):
                 )
                 status = model_checker_task.status
                 if status == "failure":
-                    err = RevisionUploadError("\n".join(model_checker_task.detail["result"]["errors"]))
+                    err = RevisionUploadError(model_checker_task.detail["message"])
                     raise err
                 time.sleep(request_time_span)
             self.current_task_progress = 100.0
@@ -381,7 +385,7 @@ class UploadProgressWorker(QRunnable):
                 if task_status == "success":
                     finished_tasks[task.name] = True
                 elif task_status == "failure":
-                    err = RevisionUploadError("\n".join(task.detail["result"]["errors"]))
+                    err = RevisionUploadError(task.detail["message"])
                     raise err
             finished_tasks_count = len([val for val in finished_tasks.values() if val])
             self.monitor_upload_progress(finished_tasks_count, expected_tasks_number)

@@ -124,8 +124,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.cells_layer = self.log_in_dlg.cells_layer
             self.breaches_layer = self.log_in_dlg.breaches_layer
             self.label_repo.setText(self.current_model.repository_slug)
-            revision = self.log_in_dlg.revisions[self.current_model.revision_hash]
-            self.label_rev.setText(f"{revision.number}")
             self.label_db.setText(self.current_model.model_ini)
 
     def clear_log(self):
