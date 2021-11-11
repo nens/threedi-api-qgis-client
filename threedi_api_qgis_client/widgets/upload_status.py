@@ -41,9 +41,9 @@ class UploadDialog(uicls_log, basecls_log):
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
-        nr_of_columns = 3
+        nr_of_columns = 4
         self.tv_model = QStandardItemModel(0, nr_of_columns - 1)
-        self.tv_model.setHorizontalHeaderLabels(["Schematisation name", "Revision", "Commit message"])
+        self.tv_model.setHorizontalHeaderLabels(["Schematisation name", "Revision", "Commit message", "Status"])
         self.tv_uploads.setModel(self.tv_model)
         self.tv_uploads.selectionModel().selectionChanged.connect(self.change_upload_context)
         for i in range(nr_of_columns):
@@ -66,7 +66,8 @@ class UploadDialog(uicls_log, basecls_log):
         revision_number = revision.number + 1 if create_revision and not upload_only else revision.number
         revision_item = QStandardItem(f"{revision_number}")
         commit_msg_item = QStandardItem(f"{upload_specification['commit_message']}")
-        self.tv_model.appendRow([schema_name_item, revision_item, commit_msg_item])
+        status_item = QStandardItem("In progress")
+        self.tv_model.appendRow([schema_name_item, revision_item, commit_msg_item, status_item])
         upload_row_number = self.tv_model.rowCount()
         upload_row_idx = self.tv_model.index(upload_row_number - 1, 0)
         self.tv_uploads.selectionModel().select(
@@ -90,15 +91,19 @@ class UploadDialog(uicls_log, basecls_log):
             return
         self.add_upload_to_model(new_upload)
 
-    def on_update_upload_progress(self, upload_row_index, task_name, task_progress, total_progress):
-        self.upload_progresses[upload_row_index] = (task_name, task_progress, total_progress)
-        if self.current_upload_row == upload_row_index:
+    def on_update_upload_progress(self, upload_row_number, task_name, task_progress, total_progress):
+        self.upload_progresses[upload_row_number] = (task_name, task_progress, total_progress)
+        if self.current_upload_row == upload_row_number:
             self.lbl_current_task.setText(task_name)
             self.pbar_current_task.setValue(task_progress)
             self.pbar_total_upload.setValue(total_progress)
 
-    def on_upload_finished_success(self, msg):
+    def on_upload_finished_success(self, upload_row_number, msg):
         self.parent_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
+        item = self.tv_model.item(upload_row_number - 1, 3)
+        item.setText("Success")
 
-    def on_upload_failed(self, msg):
+    def on_upload_failed(self, upload_row_number, msg):
+        item = self.tv_model.item(upload_row_number - 1, 3)
+        item.setText("Failure")
         self.parent_dock.communication.bar_error(msg, log_text_color=Qt.red)

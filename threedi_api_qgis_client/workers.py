@@ -185,9 +185,9 @@ class DownloadProgressWorker(QObject):
 
 
 class WorkerSignals(QObject):
-    thread_finished = pyqtSignal(str)
-    upload_failed = pyqtSignal(str)
-    upload_progress = pyqtSignal(int, str, float, float)  # upload row index, task name, task progress, total progress
+    thread_finished = pyqtSignal(int, str)
+    upload_failed = pyqtSignal(int, str)
+    upload_progress = pyqtSignal(int, str, float, float)  # upload row number, task name, task progress, total progress
 
 
 class RevisionUploadError(Exception):
@@ -199,11 +199,11 @@ class UploadProgressWorker(QRunnable):
 
     CHUNK_SIZE = 1024 ** 2
 
-    def __init__(self, threedi_api, upload_specification, upload_row_idx):
+    def __init__(self, threedi_api, upload_specification, upload_row_number):
         super().__init__()
         self.threedi_api = threedi_api
         self.upload_specification = upload_specification
-        self.upload_idx = upload_row_idx
+        self.upload_row_number = upload_row_number
         self.current_task = "NO TASK"
         self.current_task_progress = 0.0
         self.total_progress = 0.0
@@ -222,7 +222,7 @@ class UploadProgressWorker(QRunnable):
             self.current_task_progress = 100.0
             self.total_progress = 100.0
             self.report_upload_progress()
-            self.signals.thread_finished.emit("Nothing to upload or process!")
+            self.signals.thread_finished.emit(self.upload_row_number, "Nothing to upload or process!")
             return
         progress_per_task = 1 / len(tasks_list) * 100
         try:
@@ -233,10 +233,10 @@ class UploadProgressWorker(QRunnable):
             self.total_progress = 100.0
             self.report_upload_progress()
             msg = f"Schematisation '{self.schematisation.name}' (revision: {self.revision.number}) files uploaded!"
-            self.signals.thread_finished.emit(msg)
+            self.signals.thread_finished.emit(self.upload_row_number, msg)
         except Exception as e:
             error_msg = f"Error: {e}"
-            self.signals.upload_failed.emit(error_msg)
+            self.signals.upload_failed.emit(self.upload_row_number, error_msg)
 
     def build_tasks_list(self):
         tasks = list()
@@ -394,7 +394,7 @@ class UploadProgressWorker(QRunnable):
 
     def report_upload_progress(self):
         self.signals.upload_progress.emit(
-            self.upload_idx, self.current_task, self.current_task_progress, self.total_progress
+            self.upload_row_number, self.current_task, self.current_task_progress, self.total_progress
         )
 
     def monitor_upload_progress(self, chunk_size, total_size):
