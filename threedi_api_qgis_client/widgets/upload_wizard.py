@@ -63,6 +63,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         # set_widget_background_color(self)
 
     def test_external_imports(self):
+        """Check availability of an external checkers."""
         try:
             import threedi_modelchecker
             import ThreeDiToolbox
@@ -74,12 +75,14 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             self.pb_check_model.setDisabled(True)
 
     def run_model_checks(self):
+        """Run all model checks."""
         self.pbar_check_spatialite.setValue(0)
         self.pbar_check_rasters.setValue(0)
         self.check_schematisation()
         self.check_rasters()
 
     def check_schematisation(self):
+        """Run schematisation checker."""
         try:
             from sqlalchemy.exc import OperationalError
             from threedi_modelchecker.threedi_database import ThreediDatabase
@@ -130,6 +133,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         for i, check in enumerate(model_checker.checks(), start=1):
             model_errors = check.get_invalid(session)
             if model_errors:
+                self.checker_logger.log_error("Schematisation checker errors:")
                 self.checker_logger.log_error(repr(check_header))
             for error_row in model_errors:
                 self.checker_logger.log_error(
@@ -148,6 +152,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.checker_logger.log_info("Successfully finished running threedi-modelchecker")
 
     def check_rasters(self):
+        """Run rasters checker."""
         try:
             from ThreeDiToolbox.tool_commands.raster_checker.raster_checker_main import RasterChecker
             from ThreeDiToolbox.utils.threedi_database import ThreediDatabase
@@ -156,12 +161,16 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.pbar_check_rasters.setMaximum(0)
         db_type = "spatialite"
         db_settings = {"db_path": self.schematisation_sqlite}
-        db = ThreediDatabase(db_settings, db_type)
-        checker = RasterChecker(db)
-        msg = checker.run(["check all rasters"])
+        try:
+            db = ThreediDatabase(db_settings, db_type)
+            checker = RasterChecker(db)
+            msg = checker.run(["check all rasters"])
+            self.checker_logger.log_info(msg)
+        except Exception as e:
+            self.checker_logger.log_error("\nRaster checker errors:")
+            self.checker_logger.log_info(f"{e}")
         self.pbar_check_rasters.setMaximum(100)
         self.pbar_check_rasters.setValue(100)
-        self.checker_logger.log_info(msg)
 
 
 class SelectFilesWidget(uicls_files_page, basecls_files_page):
@@ -182,11 +191,13 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
 
     @property
     def general_files(self):
+        """Files mapping for the General group widget."""
         files_info = OrderedDict((("spatialite", "Spatialite"),))
         return files_info
 
     @property
     def terrain_model_files(self):
+        """Files mapping for the Terrain Model group widget."""
         files_info = OrderedDict(
             (
                 ("dem_file", "Digital Elevation Model"),
@@ -200,6 +211,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
 
     @property
     def simple_infiltration_files(self):
+        """Files mapping for the Infiltration group widget."""
         files_info = OrderedDict(
             (
                 ("infiltration_rate_file", "Infiltration rate"),
@@ -210,6 +222,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
 
     @property
     def groundwater_files(self):
+        """Files mapping for the Groundwater group widget."""
         files_info = OrderedDict(
             (
                 ("equilibrium_infiltration_rate_file", "Equilibrium infiltration rate"),
@@ -225,6 +238,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
 
     @property
     def interflow_files(self):
+        """Files mapping for the Interflow group widget."""
         files_info = OrderedDict(
             (
                 ("hydraulic_conductivity_file", "Hydraulic conductivity"),
@@ -235,6 +249,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
 
     @property
     def files_reference_tables(self):
+        """Spatialite tables mapping with references to the files."""
         files_ref_tables = OrderedDict(
             (
                 ("v2_global_settings", self.terrain_model_files),
@@ -247,6 +262,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
 
     @property
     def file_table_mapping(self):
+        """Files to spatialite tables mapping."""
         table_mapping = {}
         for table_name, raster_files_references in self.files_reference_tables.items():
             for raster_type in raster_files_references.keys():
@@ -285,7 +301,10 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
             except StopIteration:
                 continue
             for file_field in files_fields:
-                file_relative_path = first_feat[file_field]
+                try:
+                    file_relative_path = first_feat[file_field]
+                except KeyError:
+                    continue
                 remote_raster = remote_rasters_by_type.get(file_field)
                 if not file_relative_path and not remote_raster:
                     continue
@@ -422,6 +441,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 current_main_layout_row += 1
 
     def toggle_action(self, raster_type, make_action):
+        """Update detected files info after particular action change."""
         files_refs = self.detected_files[raster_type]
         files_refs["make_action"] = make_action
 
@@ -595,6 +615,7 @@ class UploadWizard(QWizard):
         self.resize(self.settings.value("threedi/upload_wizard_size", QSize(800, 600)))
 
     def start_upload(self):
+        """Build dictionary with new upload parameters."""
         self.new_upload.clear()
         self.new_upload["schematisation"] = self.schematisation
         self.new_upload["latest_revision"] = self.latest_revision

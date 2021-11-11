@@ -12,8 +12,8 @@ base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_status.ui"))
 
 
-class UploadDialog(uicls_log, basecls_log):
-    """Upload dialog."""
+class UploadStatus(uicls_log, basecls_log):
+    """Upload status dialog."""
 
     def __init__(self, parent_dock, parent=None):
         super().__init__(parent)
@@ -50,6 +50,7 @@ class UploadDialog(uicls_log, basecls_log):
             self.tv_uploads.resizeColumnToContents(i)
 
     def change_upload_context(self):
+        """Updating progress bars based on upload selection change."""
         selected_indexes = self.tv_uploads.selectedIndexes()
         if selected_indexes:
             current_index = selected_indexes[0]
@@ -58,6 +59,7 @@ class UploadDialog(uicls_log, basecls_log):
             self.on_update_upload_progress(self.current_upload_row, *self.upload_progresses[self.current_upload_row])
 
     def add_upload_to_model(self, upload_specification):
+        """Initializing a new upload."""
         create_revision = upload_specification["create_revision"]
         upload_only = upload_specification["upload_only"]
         schematisation = upload_specification["schematisation"]
@@ -80,6 +82,7 @@ class UploadDialog(uicls_log, basecls_log):
         self.upload_thread_pool.start(worker)
 
     def upload_new_model(self):
+        """Initializing new upload wizard."""
         self.schematisation_sqlite = get_filepath(None, extension_filter="Spatialite Files (*.sqlite *.SQLITE)")
         if not self.schematisation_sqlite:
             return
@@ -92,6 +95,7 @@ class UploadDialog(uicls_log, basecls_log):
         self.add_upload_to_model(new_upload)
 
     def on_update_upload_progress(self, upload_row_number, task_name, task_progress, total_progress):
+        """Handling actions on upload progress update."""
         self.upload_progresses[upload_row_number] = (task_name, task_progress, total_progress)
         if self.current_upload_row == upload_row_number:
             self.lbl_current_task.setText(task_name)
@@ -99,11 +103,13 @@ class UploadDialog(uicls_log, basecls_log):
             self.pbar_total_upload.setValue(total_progress)
 
     def on_upload_finished_success(self, upload_row_number, msg):
-        self.parent_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
+        """Handling action on upload success."""
         item = self.tv_model.item(upload_row_number - 1, 3)
         item.setText("Success")
+        self.parent_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
 
     def on_upload_failed(self, upload_row_number, msg):
+        """Handling action on upload failure."""
         item = self.tv_model.item(upload_row_number - 1, 3)
         item.setText("Failure")
         self.parent_dock.communication.bar_error(msg, log_text_color=Qt.red)

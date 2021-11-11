@@ -235,7 +235,7 @@ class ThreediCalls:
         return states
 
     def fetch_3di_model_tasks(self, threedimodel_id: str) -> List[ThreediModelTask]:
-        """Fetch tasks list."""
+        """Fetch 3Di model tasks list."""
         tasks = self.paginated_fetch(self.threedi_api.threedimodels_tasks_list, threedimodel_id)
         return tasks
 
@@ -392,46 +392,55 @@ class ThreediCalls:
 
     # V3-beta API methods
     def fetch_schematisations(self, **data) -> List[Schematisation]:
+        """Get list of the schematisations."""
         schematisations_list = self.paginated_fetch(self.threedi_api.schematisations_list, **data)
         return schematisations_list
 
     def fetch_schematisation(self, schematisation_pk: int, **data) -> Schematisation:
+        """Get schematisation with given id."""
         schematisation = self.threedi_api.schematisations_read(id=schematisation_pk, **data)
         return schematisation
 
     def create_schematisation(self, name: str, owner: str, **data) -> Schematisation:
+        """Create a new schematisation."""
         data.update({"name": name, "owner": owner})
         schematisation = self.threedi_api.schematisations_create(data)
         return schematisation
 
     def fetch_schematisation_revisions(self, schematisation_pk: int, **data) -> List[SchematisationRevision]:
+        """Get list of the schematisation revisions."""
         schematisation_revisions = self.paginated_fetch(
             self.threedi_api.schematisations_revisions_list, schematisation_pk, **data
         )
         return schematisation_revisions
 
     def fetch_schematisation_revision(self, schematisation_pk: int, revision_pk: int) -> SchematisationRevision:
+        """Get schematisation revision."""
         schematisation_revision = self.threedi_api.schematisations_revisions_read(revision_pk, schematisation_pk)
         return schematisation_revision
 
     def fetch_schematisation_latest_revision(self, schematisation_pk: int) -> SchematisationRevision:
+        """Get latest schematisation revision."""
         schematisation_revision = self.threedi_api.schematisations_latest_revision(schematisation_pk)
         return schematisation_revision
 
     def create_schematisation_revision(
         self, schematisation_pk: int, empty: bool = False, **data
     ) -> SchematisationRevision:
+        """Create a new schematisation revision."""
         data["empty"] = empty
         schematisation_revision = self.threedi_api.schematisations_revisions_create(schematisation_pk, data)
         return schematisation_revision
 
     def download_schematisation_revision_sqlite(self, schematisation_pk: int, revision_pk: int) -> Download:
+        """Get schematisation revision sqlite Download object."""
         sqlite_download = self.threedi_api.schematisations_revisions_sqlite_download(revision_pk, schematisation_pk)
         return sqlite_download
 
     def upload_schematisation_revision_sqlite(
         self, schematisation_pk: int, revision_pk: int, filename: str, **data
     ) -> SqliteFileUpload:
+        """Create a new schematisation revision SqliteFileUpload."""
         data["filename"] = filename
         sqlite_file_upload = self.threedi_api.schematisations_revisions_sqlite_upload(
             revision_pk, schematisation_pk, data
@@ -439,9 +448,11 @@ class ThreediCalls:
         return sqlite_file_upload
 
     def delete_schematisation_revision_sqlite(self, schematisation_pk: int, revision_pk: int):
+        """Remove schematisation revision sqlite file."""
         self.threedi_api.schematisations_revisions_sqlite_delete(revision_pk, schematisation_pk)
 
     def fetch_schematisation_revision_rasters(self, schematisation_pk: int, revision_pk: int) -> List[RevisionRaster]:
+        """Get list of the schematisation revision rasters."""
         revision_rasters_list = self.paginated_fetch(
             self.threedi_api.schematisations_revisions_rasters_list, revision_pk, schematisation_pk
         )
@@ -450,6 +461,7 @@ class ThreediCalls:
     def create_schematisation_revision_raster(
         self, schematisation_pk: int, revision_pk: int, name: str, raster_type: str = "dem_raw_file", **data
     ) -> RasterCreate:
+        """Create a new schematisation revision raster."""
         raster_type = "dem_raw_file" if raster_type == "dem_file" else raster_type
         data.update({"name": name, "type": raster_type})
         raster_create = self.threedi_api.schematisations_revisions_rasters_create(revision_pk, schematisation_pk, data)
@@ -458,6 +470,7 @@ class ThreediCalls:
     def upload_schematisation_revision_raster(
         self, raster_pk: int, schematisation_pk: int, revision_pk: int, filename: str
     ) -> Upload:
+        """Create a new schematisation revision raster Upload object."""
         data = {"filename": filename}
         raster_file_upload = self.threedi_api.schematisations_revisions_rasters_upload(
             raster_pk, revision_pk, schematisation_pk, data
@@ -465,15 +478,18 @@ class ThreediCalls:
         return raster_file_upload
 
     def delete_schematisation_revision_raster(self, raster_pk: int, schematisation_pk: int, revision_pk: int):
+        """Remove schematisation revision raster."""
         self.threedi_api.schematisations_revisions_rasters_delete(raster_pk, revision_pk, schematisation_pk)
 
     def commit_schematisation_revision(self, schematisation_pk: int, revision_pk: int, **data) -> Commit:
+        """Commit schematisation revision."""
         commit = self.threedi_api.schematisations_revisions_commit(revision_pk, schematisation_pk, data)
         return commit
 
     def create_schematisation_revision_3di_model(
         self, schematisation_pk: int, revision_pk: int, **data
     ) -> ThreediModel:
+        """Create a new 3Di model out of committed revision."""
         threedi_model = self.threedi_api.schematisations_revisions_create_threedimodel(
             revision_pk, schematisation_pk, data
         )
@@ -483,10 +499,12 @@ class ThreediCalls:
         revision_tasks_list = self.paginated_fetch(
             self.threedi_api.schematisations_revisions_tasks_list, revision_pk, schematisation_pk
         )
+        """Get list of the schematisation revision tasks."""
         return revision_tasks_list
 
     def fetch_schematisation_revision_task(
         self, task_pk: int, schematisation_pk: int, revision_pk: int
     ) -> RevisionTask:
+        """Get schematisation revision task."""
         revision_task = self.threedi_api.schematisations_revisions_tasks_read(task_pk, revision_pk, schematisation_pk)
         return revision_task

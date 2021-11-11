@@ -184,6 +184,8 @@ def sqlite_layer(sqlite_path, table_name, layer_name=None, geom_column="the_geom
 
 
 class UploadFileStatus(Enum):
+    """Possible actions on files upload."""
+
     NO_CHANGES_DETECTED = "NO CHANGES DETECTED"
     CHANGES_DETECTED = "CHANGES DETECTED"
     NEW = "NEW"
@@ -192,5 +194,7 @@ class UploadFileStatus(Enum):
 
 
 class UploadFileType(Enum):
+    """File types of the uploaded files."""
+
     DB = "DB"
     RASTER = "RASTER"

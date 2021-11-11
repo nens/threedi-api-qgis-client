@@ -184,13 +184,17 @@ class DownloadProgressWorker(QObject):
             self.thread_finished.emit(finished_message)
 
 
-class WorkerSignals(QObject):
+class UploadWorkerSignals(QObject):
+    """Definition of the upload worker signals."""
+
     thread_finished = pyqtSignal(int, str)
     upload_failed = pyqtSignal(int, str)
     upload_progress = pyqtSignal(int, str, float, float)  # upload row number, task name, task progress, total progress
 
 
 class RevisionUploadError(Exception):
+    """Custom revision upload exception."""
+
     pass
 
 
@@ -198,6 +202,8 @@ class UploadProgressWorker(QRunnable):
     """Worker object responsible for uploading models."""
 
     CHUNK_SIZE = 1024 ** 2
+    TASK_CHECK_INTERVAL = 2.5
+    TASK_CHECK_RETRIES = 4
 
     def __init__(self, threedi_api, upload_specification, upload_row_number):
         super().__init__()
@@ -210,11 +216,11 @@ class UploadProgressWorker(QRunnable):
         self.tc = None
         self.schematisation = self.upload_specification["schematisation"]
         self.revision = self.upload_specification["latest_revision"]
-        self.signals = WorkerSignals()
+        self.signals = UploadWorkerSignals()
 
     @pyqtSlot()
     def run(self):
-        """Uploading model to the schematisation."""
+        """Run all schematisation upload tasks."""
         self.tc = ThreediCalls(self.threedi_api)
         tasks_list = self.build_tasks_list()
         if not tasks_list:
@@ -222,7 +228,7 @@ class UploadProgressWorker(QRunnable):
             self.current_task_progress = 100.0
             self.total_progress = 100.0
             self.report_upload_progress()
-            self.signals.thread_finished.emit(self.upload_row_number, "Nothing to upload or process!")
+            self.signals.thread_finished.emit(self.upload_row_number, "Nothing to upload or process")
             return
         progress_per_task = 1 / len(tasks_list) * 100
         try:
@@ -232,13 +238,14 @@ class UploadProgressWorker(QRunnable):
             self.current_task = "DONE"
             self.total_progress = 100.0
             self.report_upload_progress()
-            msg = f"Schematisation '{self.schematisation.name}' (revision: {self.revision.number}) files uploaded!"
+            msg = f"Schematisation '{self.schematisation.name}' (revision: {self.revision.number}) files uploaded"
             self.signals.thread_finished.emit(self.upload_row_number, msg)
         except Exception as e:
             error_msg = f"Error: {e}"
             self.signals.upload_failed.emit(self.upload_row_number, error_msg)
 
     def build_tasks_list(self):
+        """Build upload tasks list."""
         tasks = list()
         create_revision = self.upload_specification["create_revision"]
         upload_only = self.upload_specification["upload_only"]
@@ -271,6 +278,7 @@ class UploadProgressWorker(QRunnable):
         return tasks
 
     def create_revision_task(self):
+        """Run creation of the new revision task."""
         self.current_task = "CREATE REVISION"
         self.current_task_progress = 0.0
         self.report_upload_progress()
@@ -279,6 +287,7 @@ class UploadProgressWorker(QRunnable):
         self.report_upload_progress()
 
     def upload_sqlite_task(self):
+        """Run sqlite file upload task."""
         self.current_task = "UPLOAD SPATIALITE"
         self.current_task_progress = 0.0
         self.report_upload_progress()
@@ -288,6 +297,7 @@ class UploadProgressWorker(QRunnable):
         upload_file(upload.put_url, schematisation_sqlite, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress)
 
     def delete_sqlite_task(self):
+        """Run sqlite file deletion task."""
         self.current_task = "DELETE SPATIALITE"
         self.current_task_progress = 0.0
         self.report_upload_progress()
@@ -296,6 +306,7 @@ class UploadProgressWorker(QRunnable):
         self.report_upload_progress()
 
     def upload_raster_task(self, raster_type):
+        """Run raster file upload task."""
         self.current_task = f"UPLOAD RASTER\n({raster_type})"
         self.current_task_progress = 0.0
         self.report_upload_progress()
@@ -310,6 +321,7 @@ class UploadProgressWorker(QRunnable):
         upload_file(raster_upload.put_url, raster_filepath, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress)
 
     def delete_raster_task(self, raster_type):
+        """Run raster file deletion task."""
         types_to_delete = [raster_type]
         if raster_type == "dem_file":
             types_to_delete.append("dem_raw_file")  # We need to remove legacy 'dem_raw_file` as well
@@ -326,7 +338,8 @@ class UploadProgressWorker(QRunnable):
         self.current_task_progress = 100.0
         self.report_upload_progress()
 
-    def commit_revision_task(self, tries=3, request_time_span=2.5):
+    def commit_revision_task(self):
+        """Run committing revision task."""
         self.current_task = "COMMIT REVISION"
         self.current_task_progress = 0.0
         self.report_upload_progress()
@@ -336,7 +349,7 @@ class UploadProgressWorker(QRunnable):
         revision_tasks = self.tc.fetch_schematisation_revision_tasks(self.schematisation.id, self.revision.id)
         self.current_task_progress = 50.0
         self.report_upload_progress()
-        for i in range(tries):
+        for i in range(self.TASK_CHECK_RETRIES):
             for rtask in revision_tasks:
                 if rtask.name == "modelchecker":
                     model_checker_task = rtask
@@ -344,7 +357,7 @@ class UploadProgressWorker(QRunnable):
             if model_checker_task:
                 break
             else:
-                time.sleep(request_time_span)
+                time.sleep(self.TASK_CHECK_INTERVAL)
         if model_checker_task:
             status = model_checker_task.status
             while status != "success":
@@ -352,17 +365,25 @@ class UploadProgressWorker(QRunnable):
                     model_checker_task.id, self.schematisation.id, self.revision.id
                 )
                 status = model_checker_task.status
-                if status == "failure":
+                if status == "success":
+                    break
+                elif status == "failure":
                     err = RevisionUploadError(model_checker_task.detail["message"])
                     raise err
-                time.sleep(request_time_span)
+                else:
+                    time.sleep(self.TASK_CHECK_INTERVAL)
+            checker_errors = model_checker_task.detail["result"]["errors"]
+            if checker_errors:
+                err = RevisionUploadError("'modelchecker' errors detected - please check your schematisation")
+                raise err
             self.current_task_progress = 100.0
             self.report_upload_progress()
         else:
-            err = RevisionUploadError("'modelchecker' task was not started properly!")
+            err = RevisionUploadError("'modelchecker' task was not started properly")
             raise err
 
-    def create_3di_model_task(self, request_time_span=2.5):
+    def create_3di_model_task(self):
+        """Run creation of the new model out of revision data."""
         self.current_task = "MAKE 3DI MODEL"
         self.current_task_progress = 0.0
         self.report_upload_progress()
@@ -390,14 +411,16 @@ class UploadProgressWorker(QRunnable):
             finished_tasks_count = len([val for val in finished_tasks.values() if val])
             self.monitor_upload_progress(finished_tasks_count, expected_tasks_number)
             if finished_tasks_count != expected_tasks_number:
-                time.sleep(request_time_span)
+                time.sleep(self.TASK_CHECK_INTERVAL)
 
     def report_upload_progress(self):
+        """Report upload progress."""
         self.signals.upload_progress.emit(
             self.upload_row_number, self.current_task, self.current_task_progress, self.total_progress
         )
 
     def monitor_upload_progress(self, chunk_size, total_size):
+        """Upload progress callback method."""
         upload_progress = chunk_size / total_size * 100
         self.current_task_progress = upload_progress
         self.report_upload_progress()
