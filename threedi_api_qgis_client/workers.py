@@ -272,8 +272,8 @@ class UploadProgressWorker(QRunnable):
                 tasks.append(partial(self.delete_raster_task, file_name))
             else:
                 continue
+        tasks.append(self.commit_revision_task)
         if not upload_only:
-            tasks.append(self.commit_revision_task)
             tasks.append(self.create_3di_model_task)
         return tasks
 
@@ -295,6 +295,8 @@ class UploadProgressWorker(QRunnable):
         sqlite_file = os.path.basename(schematisation_sqlite)
         upload = self.tc.upload_schematisation_revision_sqlite(self.schematisation.id, self.revision.id, sqlite_file)
         upload_file(upload.put_url, schematisation_sqlite, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress)
+        self.current_task_progress = 100.0
+        self.report_upload_progress()
 
     def delete_sqlite_task(self):
         """Run sqlite file deletion task."""
@@ -307,7 +309,7 @@ class UploadProgressWorker(QRunnable):
 
     def upload_raster_task(self, raster_type):
         """Run raster file upload task."""
-        self.current_task = f"UPLOAD RASTER\n({raster_type})"
+        self.current_task = f"UPLOAD RASTER ({raster_type})"
         self.current_task_progress = 0.0
         self.report_upload_progress()
         raster_filepath = self.upload_specification["selected_files"][raster_type]["filepath"]
@@ -319,13 +321,15 @@ class UploadProgressWorker(QRunnable):
             raster_revision.id, self.schematisation.id, self.revision.id, raster_file
         )
         upload_file(raster_upload.put_url, raster_filepath, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress)
+        self.current_task_progress = 100.0
+        self.report_upload_progress()
 
     def delete_raster_task(self, raster_type):
         """Run raster file deletion task."""
         types_to_delete = [raster_type]
         if raster_type == "dem_file":
             types_to_delete.append("dem_raw_file")  # We need to remove legacy 'dem_raw_file` as well
-        self.current_task = f"DELETE RASTER\n({raster_type})"
+        self.current_task = f"DELETE RASTER ({raster_type})"
         self.current_task_progress = 0.0
         self.report_upload_progress()
         for revision_raster in self.revision.rasters:
@@ -374,7 +378,8 @@ class UploadProgressWorker(QRunnable):
                     time.sleep(self.TASK_CHECK_INTERVAL)
             checker_errors = model_checker_task.detail["result"]["errors"]
             if checker_errors:
-                err = RevisionUploadError("'modelchecker' errors detected - please check your schematisation")
+                error_msg = "\n".join(error["description"] for error in checker_errors)
+                err = RevisionUploadError(error_msg)
                 raise err
             self.current_task_progress = 100.0
             self.report_upload_progress()

@@ -99,15 +99,19 @@ class UICommunication(object):
         return item
 
 
-class CheckerCommunication(object):
-    """Class with methods for handling messages using QGIS interface and logging list view."""
+class ListViewLogger(object):
+    """Class with methods for handling messages using list view."""
 
     def __init__(self, list_view=None):
         self.list_view = list_view
         self.model = QStandardItemModel()
         self.list_view.setModel(self.model)
 
-    def log_info(self, msg, log_text_color=QColor(Qt.black)):
+    def clear(self):
+        """Clear list view model."""
+        self.list_view.model().clear()
+
+    def log_info(self, msg, log_text_color=QColor(Qt.darkGreen)):
         """Showing info message bar."""
         if self.list_view is not None:
             item = QStandardItem(msg)
@@ -116,7 +120,7 @@ class CheckerCommunication(object):
         else:
             print(msg)
 
-    def log_warn(self, msg, log_text_color=QColor(Qt.black)):
+    def log_warn(self, msg, log_text_color=QColor(Qt.darkYellow)):
         """Showing warning message bar."""
         if self.list_view is not None:
             item = QStandardItem(msg)
@@ -125,7 +129,7 @@ class CheckerCommunication(object):
         else:
             print(msg)
 
-    def log_error(self, msg, log_text_color=QColor(Qt.black)):
+    def log_error(self, msg, log_text_color=QColor(Qt.red)):
         """Showing error message bar."""
         if self.list_view is not None:
             item = QStandardItem(msg)

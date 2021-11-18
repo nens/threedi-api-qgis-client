@@ -17,10 +17,10 @@ from qgis.PyQt.QtWidgets import (
     QPushButton,
     QLineEdit,
 )
-
+from threedi_api_client.openapi import ApiException
 from ..utils import is_file_checksum_equal, sqlite_layer, UploadFileType, UploadFileStatus
 from ..ui_utils import get_filepath
-from ..communication import CheckerCommunication
+from ..communication import ListViewLogger
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -57,7 +57,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.setupUi(self)
         self.parent_page = parent_page
         self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
-        self.checker_logger = CheckerCommunication(self.lv_check_result)
+        self.checker_logger = ListViewLogger(self.lv_check_result)
         self.pb_check_model.clicked.connect(self.run_model_checks)
         self.test_external_imports()
         # set_widget_background_color(self)
@@ -279,11 +279,14 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
             del remote_rasters_by_type["dem_raw_file"]
         sqlite_localisation = os.path.dirname(self.schematisation_sqlite)
         if self.latest_revision.sqlite:
-            remote_sqlite = self.tc.download_schematisation_revision_sqlite(
-                self.schematisation.id, self.latest_revision.id
-            )
-            files_matching = is_file_checksum_equal(self.schematisation_sqlite, remote_sqlite.etag)
-            status = UploadFileStatus.NO_CHANGES_DETECTED if files_matching else UploadFileStatus.CHANGES_DETECTED
+            try:
+                remote_sqlite = self.tc.download_schematisation_revision_sqlite(
+                    self.schematisation.id, self.latest_revision.id
+                )
+                files_matching = is_file_checksum_equal(self.schematisation_sqlite, remote_sqlite.etag)
+                status = UploadFileStatus.NO_CHANGES_DETECTED if files_matching else UploadFileStatus.CHANGES_DETECTED
+            except ApiException:
+                status = UploadFileStatus.CHANGES_DETECTED
         else:
             status = UploadFileStatus.NEW
         files_states["spatialite"] = {
@@ -592,14 +595,14 @@ class UploadWizard(QWizard):
             self.latest_revision = max(available_revisions, key=attrgetter("id"))
         else:
             self.latest_revision = self.tc.create_schematisation_revision(self.schematisation.id, empty=True)
-        self.start_page = StartPage(self)
-        self.start_page.main_widget.lbl_schematisation.setText(self.schematisation.name)
-        self.start_page.main_widget.lbl_online_revision.setText(str(self.latest_revision.number))
-        if self.latest_revision.is_valid is True:
-            self.start_page.main_widget.pb_use_revision.setDisabled(True)
+        # self.start_page = StartPage(self)
+        # self.start_page.main_widget.lbl_schematisation.setText(self.schematisation.name)
+        # self.start_page.main_widget.lbl_online_revision.setText(str(self.latest_revision.number))
+        # if self.latest_revision.is_valid is True:
+        #     self.start_page.main_widget.pb_use_revision.setDisabled(True)
         self.check_model_page = CheckModelPage(self)
         self.select_files_page = SelectFilesPage(self)
-        self.addPage(self.start_page)
+        # self.addPage(self.start_page)
         self.addPage(self.check_model_page)
         self.addPage(self.select_files_page)
 
@@ -621,7 +624,7 @@ class UploadWizard(QWizard):
         self.new_upload["latest_revision"] = self.latest_revision
         self.new_upload["selected_files"] = self.select_files_page.main_widget.detected_files
         self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
-        self.new_upload["create_revision"] = self.start_page.main_widget.pb_create_revision.isChecked()
+        self.new_upload["create_revision"] = True  # self.start_page.main_widget.pb_create_revision.isChecked()
         self.new_upload["upload_only"] = self.select_files_page.main_widget.pb_upload_only.isChecked()
 
     def cancel_wizard(self):
