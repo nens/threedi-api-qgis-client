@@ -10,6 +10,7 @@ from threedi_api_client.openapi import ApiException, Progress
 
 from threedi_api_qgis_client.widgets.simulation_init import SimulationInit
 from .simulation_wizard import SimulationWizard
+from .model_selection import ThreediModelSelection
 from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import load_saved_templates
@@ -24,12 +25,13 @@ class SimulationOverview(uicls, basecls):
 
     PROGRESS_COLUMN_IDX = 2
 
-    def __init__(self, parent_dock, parent=None):
+    def __init__(self, plugin, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.parent_dock = parent_dock
-        self.threedi_api = self.parent_dock.threedi_api
-        self.user = self.parent_dock.label_user.text()
+        self.plugin = plugin
+        self.threedi_api = self.plugin.threedi_api
+        self.user = self.plugin.label_user.text()
+        self.model_selection_dlg = ThreediModelSelection(self.plugin)
         self.simulation_init_wizard = None
         self.simulation_wizard = None
         self.simulations_keys = {}
@@ -37,7 +39,7 @@ class SimulationOverview(uicls, basecls):
         self.simulations_without_progress = set()
         self.tv_model = None
         self.setup_view_model()
-        self.parent_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_progress)
+        self.plugin.simulations_progresses_sentinel.progresses_fetched.connect(self.update_progress)
         self.pb_new_sim.clicked.connect(self.new_wizard_init)
         self.pb_load_template.clicked.connect(self.new_wizard_from_template)
         self.pb_stop_sim.clicked.connect(self.stop_simulation)
@@ -89,23 +91,26 @@ class SimulationOverview(uicls, basecls):
             if status_name == "finished":
                 self.simulations_without_progress.add(sim_id)
                 msg = f"Simulation {sim.name} finished!"
-                self.parent_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
+                self.plugin.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
 
     def new_wizard_init(self):
         """Open new simulation initiation options dialog."""
-        self.simulation_init_wizard = SimulationInit(self)
-        self.simulation_init_wizard.exec_()
-        if self.simulation_init_wizard.open_wizard:
-            self.new_simulation()
+        self.model_selection_dlg.show()
+        if self.model_selection_dlg.model_is_loaded:
+            self.model_selection_dlg.unload_cached_layers()
+            self.simulation_init_wizard = SimulationInit(self)
+            self.simulation_init_wizard.exec_()
+            if self.simulation_init_wizard.open_wizard:
+                self.new_simulation()
 
     def new_wizard_from_template(self):
         """Start new simulation wizard from template."""
         template_items = load_saved_templates()
         items_keys = list(template_items.keys())
         if not items_keys:
-            self.parent_dock.communication.show_warn("There are no any templates available!")
+            self.plugin.communication.show_warn("There are no any templates available!")
             return
-        template = self.parent_dock.communication.pick_item("Load template", "Pick template to load", None, *items_keys)
+        template = self.plugin.communication.pick_item("Load template", "Pick template to load", None, *items_keys)
         if template:
             simulation_template = template_items[template]
             self.simulation_init_wizard = SimulationInit(self)
@@ -115,7 +120,7 @@ class SimulationOverview(uicls, basecls):
 
     def new_simulation(self, simulation_template=None):
         """Opening a wizard which allows defining and running new simulations."""
-        self.simulation_wizard = SimulationWizard(self.parent_dock, self.simulation_init_wizard)
+        self.simulation_wizard = SimulationWizard(self.plugin, self.model_selection_dlg, self.simulation_init_wizard)
         if simulation_template:
             self.simulation_wizard.load_template_parameters(simulation_template)
         self.close()
@@ -134,20 +139,20 @@ class SimulationOverview(uicls, basecls):
             return
         title = "Warning"
         question = "This simulation is now running.\nAre you sure you want to stop it?"
-        answer = self.parent_dock.communication.ask(self, title, question, QMessageBox.Warning)
+        answer = self.plugin.communication.ask(self, title, question, QMessageBox.Warning)
         if answer is True:
             try:
                 name_item = self.tv_model.item(index.row(), 0)
                 sim_id = name_item.data(Qt.UserRole)
-                tc = ThreediCalls(self.parent_dock.threedi_api)
+                tc = ThreediCalls(self.plugin.threedi_api)
                 tc.create_simulation_action(sim_id, name="shutdown")
                 msg = f"Simulation {name_item.text()} stopped!"
-                self.parent_dock.communication.bar_info(msg)
+                self.plugin.communication.bar_info(msg)
             except ApiException as e:
                 error_body = e.body
                 error_details = error_body["details"] if "details" in error_body else error_body
                 error_msg = f"Error: {error_details}"
-                self.parent_dock.communication.show_error(error_msg)
+                self.plugin.communication.show_error(error_msg)
             except Exception as e:
                 error_msg = f"Error: {e}"
-                self.parent_dock.communication.show_error(error_msg)
+                self.plugin.communication.show_error(error_msg)

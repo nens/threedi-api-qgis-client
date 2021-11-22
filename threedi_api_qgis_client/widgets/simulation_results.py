@@ -20,18 +20,18 @@ class SimulationResults(uicls, basecls):
 
     PROGRESS_COLUMN_IDX = 3
 
-    def __init__(self, parent_dock, parent=None):
+    def __init__(self, plugin, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.parent_dock = parent_dock
-        self.api_client = self.parent_dock.threedi_api
+        self.plugin = plugin
+        self.api_client = self.plugin.threedi_api
         self.download_results_thread = None
         self.download_worker = None
         self.finished_simulations = {}
         self.tv_model = None
         self.last_progress_item = None
         self.setup_view_model()
-        self.parent_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_finished_list)
+        self.plugin.simulations_progresses_sentinel.progresses_fetched.connect(self.update_finished_list)
         self.pb_cancel.clicked.connect(self.close)
         self.pb_download.clicked.connect(self.download_results)
         self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_download_results)
@@ -84,11 +84,11 @@ class SimulationResults(uicls, basecls):
             row = self.last_progress_item.index().row()
             name_text = self.tv_model.item(row, 0).text()
             msg = f"Downloading results of {name_text} started!"
-            self.parent_dock.communication.bar_info(msg)
+            self.plugin.communication.bar_info(msg)
 
     def on_download_finished_success(self, msg):
         """Reporting finish successfully status and closing download thread."""
-        self.parent_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
+        self.plugin.communication.bar_info(msg, log_text_color=Qt.darkGreen)
         self.download_results_thread.quit()
         self.download_results_thread.wait()
         self.download_results_thread = None
@@ -97,7 +97,7 @@ class SimulationResults(uicls, basecls):
 
     def on_download_finished_failed(self, msg):
         """Reporting failure and closing download thread."""
-        self.parent_dock.communication.bar_error(msg, log_text_color=Qt.red)
+        self.plugin.communication.bar_error(msg, log_text_color=Qt.red)
         self.download_results_thread.quit()
         self.download_results_thread.wait()
         self.download_results_thread = None
@@ -107,11 +107,11 @@ class SimulationResults(uicls, basecls):
     def terminate_download_thread(self):
         """Forcing termination of download background thread."""
         if self.download_results_thread is not None and self.download_results_thread.isRunning():
-            self.parent_dock.communication.bar_info("Terminating download thread.")
+            self.plugin.communication.bar_info("Terminating download thread.")
             self.download_results_thread.terminate()
-            self.parent_dock.communication.bar_info("Waiting for download thread termination.")
+            self.plugin.communication.bar_info("Waiting for download thread termination.")
             self.download_results_thread.wait()
-            self.parent_dock.communication.bar_info("Download worker terminated.")
+            self.plugin.communication.bar_info("Download worker terminated.")
             self.download_results_thread = None
             self.download_worker = None
 
@@ -133,7 +133,7 @@ class SimulationResults(uicls, basecls):
             simulation_name = simulation.name.replace(" ", "_")
             simulation_subdirectory = os.path.join(directory, f"sim_{sim_id}_{simulation_name}")
             simulation_model_id = int(simulation.threedimodel_id)
-            tc = ThreediCalls(self.parent_dock.threedi_api)
+            tc = ThreediCalls(self.plugin.threedi_api)
             downloads = tc.fetch_simulation_downloads(sim_id)
             gridadmin_downloads = tc.fetch_3di_model_gridadmin_download(simulation_model_id)
             downloads.append(gridadmin_downloads)
@@ -143,11 +143,11 @@ class SimulationResults(uicls, basecls):
             error_body = e.body
             error_details = error_body["details"] if "details" in error_body else error_body
             error_msg = f"Error: {error_details}"
-            self.parent_dock.communication.show_error(error_msg)
+            self.plugin.communication.show_error(error_msg)
             return
         except Exception as e:
             error_msg = f"Error: {e}"
-            self.parent_dock.communication.show_error(error_msg)
+            self.plugin.communication.show_error(error_msg)
             return
         self.pb_download.setDisabled(True)
         self.download_results_thread = QThread()

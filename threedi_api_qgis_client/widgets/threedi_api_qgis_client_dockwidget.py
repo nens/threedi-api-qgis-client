@@ -1,9 +1,9 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
+from functools import wraps
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QThread, pyqtSignal
-
 from threedi_api_qgis_client.widgets.upload_status import UploadStatus
 from .log_in import LogInDialog
 from .simulation_overview import SimulationOverview
@@ -14,6 +14,33 @@ from ..workers import WSProgressesSentinel
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, "ui", "threedi_api_qgis_client_dockwidget_base.ui"))
+
+
+def api_client_required(fn):
+    """Decorator for limiting functionality access to logged in user (with option to log in)."""
+
+    @wraps(fn)
+    def wrapper(self):
+        threedi_api = getattr(self, "threedi_api", None)
+        if threedi_api is None:
+            self.communication.bar_info("Action reserved for logged in users. Please log-in before proceeding.")
+            log_in_dialog = LogInDialog(self)
+            accepted = log_in_dialog.exec_()
+            if accepted:
+                setattr(self, "threedi_api", log_in_dialog.threedi_api)
+                setattr(self, "current_user", log_in_dialog.user)
+                setattr(self, "organisation", log_in_dialog.organisation)
+                self.initialize_authorized_view()
+            else:
+                self.communication.bar_warn("Logging-in canceled. Action aborted!")
+
+                def do_nothing():
+                    pass
+
+                return do_nothing
+        return fn(self)
+
+    return wrapper
 
 
 class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
@@ -30,21 +57,11 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulations_progresses_thread = None
         self.simulations_progresses_sentinel = None
         self.threedi_api = None
-        self.threedi_models = None
-        self.current_model = None
-        self.current_model_cells = None
-        self.current_model_breaches = None
-        self.cells_layer = None
-        self.breaches_layer = None
         self.organisation = None
-        self.log_in_dlg = None
         self.simulation_overview_dlg = None
         self.simulation_results_dlg = None
         self.upload_dlg = None
-        self.widget_authorized.hide()
-        self.btn_start.clicked.connect(self.log_in)
         self.btn_log_out.clicked.connect(self.log_out)
-        self.btn_change_repo.clicked.connect(self.change_model)
         self.btn_simulate.clicked.connect(self.show_simulation_overview)
         self.btn_results.clicked.connect(self.show_simulation_results)
         self.btn_clear_log.clicked.connect(self.clear_log)
@@ -56,32 +73,16 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         set_icon(self.btn_results, "results.svg")
 
     def closeEvent(self, event):
-        self.log_out()
+        if self.threedi_api is not None:
+            self.log_out()
         self.closingPlugin.emit()
         event.accept()
 
-    def log_in(self):
-        """Method for logging in 3Di API."""
-        self.log_in_dlg = LogInDialog(self)
-        self.log_in_dlg.exec_()
-        self.threedi_api = self.log_in_dlg.threedi_api
-        self.threedi_models = self.log_in_dlg.threedi_models
-        self.current_model = self.log_in_dlg.current_model
-        self.current_model_cells = self.log_in_dlg.current_model_cells
-        self.current_model_breaches = self.log_in_dlg.current_model_breaches
-        self.cells_layer = self.log_in_dlg.cells_layer
-        self.breaches_layer = self.log_in_dlg.breaches_layer
-        if self.current_model is None:
-            return
-        self.widget_unauthorized.hide()
-        self.widget_authorized.show()
-        self.btn_simulate.setEnabled(True)
-        self.btn_results.setEnabled(True)
-        self.btn_upload.setEnabled(True)
-        self.label_user.setText(self.log_in_dlg.user)
-        self.label_repo.setText(self.current_model.repository_slug)
-        self.label_schematisation_id.setText(f"{self.current_model.schematisation_id or 10}")  # TODO: Remove dummy ID
-        self.label_db.setText(self.current_model.model_ini)
+    def initialize_authorized_view(self):
+        """Method for initializing processes after logging in 3Di API."""
+        self.btn_log_out.setEnabled(True)
+        self.label_user.setText(self.current_user)
+        self.label_schematisation.setText(f"{8 or 10}")  # TODO: Remove dummy ID
         self.initialize_simulations_progresses_thread()
         self.initialize_simulation_overview()
         self.initialize_simulation_results()
@@ -90,41 +91,16 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Logging out."""
         if self.simulations_progresses_thread is not None:
             self.stop_fetching_simulations_progresses()
+            self.simulation_overview_dlg.model_selection_dlg.unload_cached_layers()
             self.simulation_overview_dlg = None
         if self.simulation_results_dlg is not None:
             self.simulation_results_dlg.terminate_download_thread()
             self.simulation_results_dlg = None
-        if self.log_in_dlg:
-            self.breaches_layer = None
-            self.cells_layer = None
-            self.log_in_dlg.unload_cached_layers()
         if self.upload_dlg:
             self.upload_dlg.hide()
             self.upload_dlg = None
-        self.log_in_dlg = None
         self.threedi_api = None
-        self.current_model = None
-        self.current_model_cells = None
-        self.current_model_breaches = None
-        self.widget_unauthorized.show()
-        self.widget_authorized.hide()
-        self.btn_simulate.setDisabled(True)
-        self.btn_results.setDisabled(True)
-        self.btn_upload.setDisabled(True)
-
-    def change_model(self):
-        """Changing current model."""
-        if self.log_in_dlg is None:
-            self.log_in()
-        else:
-            self.log_in_dlg.exec_()
-            self.current_model = self.log_in_dlg.current_model
-            self.current_model_cells = self.log_in_dlg.current_model_cells
-            self.current_model_breaches = self.log_in_dlg.current_model_breaches
-            self.cells_layer = self.log_in_dlg.cells_layer
-            self.breaches_layer = self.log_in_dlg.breaches_layer
-            self.label_repo.setText(self.current_model.repository_slug)
-            self.label_db.setText(self.current_model.model_ini)
+        self.btn_log_out.setDisabled(True)
 
     def clear_log(self):
         """Clearing message log box."""
@@ -135,9 +111,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulations_progresses_thread is not None:
             self.terminate_fetching_simulations_progresses_thread()
         self.simulations_progresses_thread = QThread()
-        self.simulations_progresses_sentinel = WSProgressesSentinel(
-            self.threedi_api, self.plugin_settings.wss_url, model_id=self.current_model.id
-        )
+        self.simulations_progresses_sentinel = WSProgressesSentinel(self.threedi_api, self.plugin_settings.wss_url)
         self.simulations_progresses_sentinel.moveToThread(self.simulations_progresses_thread)
         self.simulations_progresses_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
         self.simulations_progresses_sentinel.thread_failed.connect(self.on_fetching_simulations_progresses_failed)
@@ -175,10 +149,11 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def initialize_simulation_overview(self):
         """Initialization of the Simulation Overview window."""
         self.simulation_overview_dlg = SimulationOverview(self)
-        self.simulation_overview_dlg.label_user.setText(self.log_in_dlg.user)
-        self.organisation = self.log_in_dlg.organisation
+        self.simulation_overview_dlg.label_user.setText(self.current_user)
+        self.organisation = self.organisation
         self.simulation_overview_dlg.label_organisation.setText(self.organisation.name)
 
+    @api_client_required
     def show_simulation_overview(self):
         """Showing Simulation Overview with running simulations progresses."""
         if self.simulation_overview_dlg is None:
@@ -188,9 +163,9 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def initialize_simulation_results(self):
         """Initialization of the Simulations Results window."""
         self.simulation_results_dlg = SimulationResults(self)
-        self.organisation = self.log_in_dlg.organisation
         self.simulation_results_dlg.label_organisation.setText(self.organisation.name)
 
+    @api_client_required
     def show_simulation_results(self):
         """Showing finished simulations."""
         if self.simulation_results_dlg is None:
@@ -201,6 +176,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Initialization of the Upload Status dialog."""
         self.upload_dlg = UploadStatus(self)
 
+    @api_client_required
     def show_upload_dialog(self):
         """Show upload status dialog."""
         if self.upload_dlg is None:

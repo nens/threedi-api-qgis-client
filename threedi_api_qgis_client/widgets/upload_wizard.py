@@ -581,11 +581,11 @@ class SelectFilesPage(QWizardPage):
 class UploadWizard(QWizard):
     """New upload wizard."""
 
-    def __init__(self, parent_dock, upload_dialog, parent=None):
+    def __init__(self, plugin, upload_dialog, parent=None):
         super().__init__(parent)
         self.settings = QSettings()
         self.setWizardStyle(QWizard.ClassicStyle)
-        self.parent_dock = parent_dock
+        self.plugin = plugin
         self.upload_dialog = upload_dialog
         self.schematisation = self.upload_dialog.schematisation
         self.schematisation_sqlite = self.upload_dialog.schematisation_sqlite

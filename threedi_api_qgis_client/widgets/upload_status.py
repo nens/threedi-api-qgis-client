@@ -17,13 +17,13 @@ uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_sta
 class UploadStatus(uicls_log, basecls_log):
     """Upload status dialog."""
 
-    def __init__(self, parent_dock, parent=None):
+    def __init__(self, plugin, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.parent_dock = parent_dock
-        self.threedi_api = self.parent_dock.threedi_api
-        self.tc = ThreediCalls(self.parent_dock.threedi_api)
-        self.communication = self.parent_dock.communication
+        self.plugin = plugin
+        self.threedi_api = self.plugin.threedi_api
+        self.tc = ThreediCalls(self.plugin.threedi_api)
+        self.communication = self.plugin.communication
         self.feedback_logger = ListViewLogger(self.lv_upload_feedback)
         self.upload_thread_pool = QThreadPool()
         self.ended_tasks = OrderedDict()
@@ -33,10 +33,10 @@ class UploadStatus(uicls_log, basecls_log):
         self.schematisation_sqlite = None
         self.schematisation = None
         try:
-            schematisation_id = int(self.parent_dock.label_schematisation_id.text())
+            schematisation_id = int(self.plugin.label_schematisation.text())
             self.schematisation = self.tc.fetch_schematisation(schematisation_id)
         except ValueError:
-            schematisation_name = self.parent_dock.label_db.text().rsplit(".ini")[0]
+            schematisation_name = self.plugin.label_db.text().rsplit(".ini")[0]
             self.schematisation = self.tc.fetch_schematisations(name=schematisation_name)[0]
         self.pb_new_upload.clicked.connect(self.upload_new_model)
         self.tv_model = None
@@ -99,8 +99,7 @@ class UploadStatus(uicls_log, basecls_log):
         self.schematisation_sqlite = get_filepath(None, extension_filter="Spatialite Files (*.sqlite *.SQLITE)")
         if not self.schematisation_sqlite:
             return
-
-        self.upload_wizard = UploadWizard(self.parent_dock, self)
+        self.upload_wizard = UploadWizard(self.plugin, self)
         self.upload_wizard.exec_()
         new_upload = self.upload_wizard.new_upload
         if not new_upload:
@@ -132,13 +131,13 @@ class UploadStatus(uicls_log, basecls_log):
         """Handling action on upload success."""
         item = self.tv_model.item(upload_row_number - 1, 3)
         item.setText("Success")
-        self.parent_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
+        self.plugin.communication.bar_info(msg, log_text_color=Qt.darkGreen)
 
     def on_upload_failed(self, upload_row_number, error_message):
         """Handling action on upload failure."""
         item = self.tv_model.item(upload_row_number - 1, 3)
         item.setText("Failure")
-        self.parent_dock.communication.bar_error(error_message, log_text_color=Qt.red)
+        self.plugin.communication.bar_error(error_message, log_text_color=Qt.red)
         success = False
         failed_task_name = self.upload_progresses[self.current_upload_row][0]
         enriched_error_message = f"{failed_task_name} ==> failed\n{error_message}"
