@@ -13,13 +13,13 @@ from ..ui_utils import set_named_style
 from ..api_calls.threedi_calls import ThreediCalls
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "model_selection.ui"))
+uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "model_selection.ui"))
 
 
 logger = logging.getLogger(__name__)
 
 
-class ThreediModelSelection(uicls_log, basecls_log):
+class ThreediModelSelection(uicls, basecls):
     """Dialog with widgets and methods used in logging process."""
 
     TABLE_LIMIT = 10
@@ -37,6 +37,8 @@ class ThreediModelSelection(uicls_log, basecls_log):
         self.current_model_breaches = None
         self.cells_layer = None
         self.breaches_layer = None
+        self.organisations = None
+        self.organisation = None
         self.model_is_loaded = False
         self.tv_model = QStandardItemModel()
         self.models_tv.setModel(self.tv_model)
@@ -44,9 +46,10 @@ class ThreediModelSelection(uicls_log, basecls_log):
         self.pb_next_page.clicked.connect(self.move_forward)
         self.page_sbox.valueChanged.connect(self.fetch_3di_models)
         self.pb_load.clicked.connect(self.load_model)
-        self.pb_cancel_load.clicked.connect(self.reject)
+        self.pb_cancel_load.clicked.connect(self.cancel_load_model)
         self.search_le.returnPressed.connect(self.search_model)
         self.models_tv.selectionModel().selectionChanged.connect(self.toggle_load_model)
+        self.fetch_organisations()
         self.fetch_3di_models()
 
     def toggle_load_model(self):
@@ -64,6 +67,24 @@ class ThreediModelSelection(uicls_log, basecls_log):
     def move_forward(self):
         """Moving to the next results page."""
         self.page_sbox.setValue(self.page_sbox.value() + 1)
+
+    def fetch_organisations(self):
+        """Fetching organisations list and populating them inside combo box."""
+        try:
+            tc = ThreediCalls(self.threedi_api)
+            self.organisations = {org.unique_id: org for org in tc.fetch_organisations()}
+            for org in self.organisations.values():
+                self.organisations_box.addItem(org.name, org)
+        except ApiException as e:
+            self.close()
+            error_body = e.body
+            error_details = error_body["details"] if "details" in error_body else error_body
+            error_msg = f"Error: {error_details}"
+            self.communication.show_error(error_msg)
+        except Exception as e:
+            self.close()
+            error_msg = f"Error: {e}"
+            self.communication.show_error(error_msg)
 
     def fetch_3di_models(self):
         """Fetching 3Di models list."""
@@ -146,6 +167,7 @@ class ThreediModelSelection(uicls_log, basecls_log):
         """Loading selected model."""
         index = self.models_tv.currentIndex()
         if index.isValid():
+            self.organisation = self.organisations_box.currentData()
             self.unload_cached_layers()
             current_row = index.row()
             name_item = self.tv_model.item(current_row, 0)

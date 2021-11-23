@@ -39,10 +39,9 @@ class SimulationInit(uicls, basecls):
         )
     )
 
-    def __init__(self, plugin, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.plugin = plugin
         self.open_wizard = False
         self.initial_conditions = None
         self.multiple_simulations_widget.setVisible(False)

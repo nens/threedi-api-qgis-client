@@ -6,6 +6,7 @@ from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QThread, pyqtSignal
 from threedi_api_qgis_client.widgets.upload_status import UploadStatus
 from .log_in import LogInDialog
+from .build_options import BuildOptionsDialog
 from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
 from ..ui_utils import set_icon
@@ -29,7 +30,6 @@ def api_client_required(fn):
             if accepted:
                 setattr(self, "threedi_api", log_in_dialog.threedi_api)
                 setattr(self, "current_user", log_in_dialog.user)
-                setattr(self, "organisation", log_in_dialog.organisation)
                 self.initialize_authorized_view()
             else:
                 self.communication.bar_warn("Logging-in canceled. Action aborted!")
@@ -37,7 +37,7 @@ def api_client_required(fn):
                 def do_nothing():
                     pass
 
-                return do_nothing
+                return do_nothing()
         return fn(self)
 
     return wrapper
@@ -57,15 +57,19 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulations_progresses_thread = None
         self.simulations_progresses_sentinel = None
         self.threedi_api = None
-        self.organisation = None
+        self.current_user = None
+        self.build_options_dlg = None
         self.simulation_overview_dlg = None
         self.simulation_results_dlg = None
         self.upload_dlg = None
-        self.btn_log_out.clicked.connect(self.log_out)
+        self.btn_log_in.clicked.connect(self.on_log_in)
+        self.btn_log_out.clicked.connect(self.on_log_out)
+        self.btn_build.clicked.connect(self.show_build_options)
         self.btn_simulate.clicked.connect(self.show_simulation_overview)
         self.btn_results.clicked.connect(self.show_simulation_results)
         self.btn_clear_log.clicked.connect(self.clear_log)
         self.btn_upload.clicked.connect(self.show_upload_dialog)
+        self.btn_log_out.hide()
         set_icon(self.btn_build, "build.svg")
         set_icon(self.btn_check, "check.svg")
         set_icon(self.btn_upload, "upload.svg")
@@ -74,21 +78,27 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def closeEvent(self, event):
         if self.threedi_api is not None:
-            self.log_out()
+            self.on_log_out()
+            self.build_options_dlg = None
         self.closingPlugin.emit()
         event.accept()
 
-    def initialize_authorized_view(self):
-        """Method for initializing processes after logging in 3Di API."""
-        self.btn_log_out.setEnabled(True)
-        self.label_user.setText(self.current_user)
-        self.label_schematisation.setText(f"{8 or 10}")  # TODO: Remove dummy ID
-        self.initialize_simulations_progresses_thread()
-        self.initialize_simulation_overview()
-        self.initialize_simulation_results()
+    def clear_log(self):
+        """Clearing message log box."""
+        self.lv_log.model().clear()
 
-    def log_out(self):
-        """Logging out."""
+    def on_log_in(self):
+        """Handle logging-in."""
+        log_in_dialog = LogInDialog(self)
+        accepted = log_in_dialog.exec_()
+        if accepted:
+            self.threedi_api = log_in_dialog.threedi_api
+            self.current_user = log_in_dialog.user
+            self.initialize_authorized_view()
+
+    @api_client_required
+    def on_log_out(self):
+        """Handle logging-out."""
         if self.simulations_progresses_thread is not None:
             self.stop_fetching_simulations_progresses()
             self.simulation_overview_dlg.model_selection_dlg.unload_cached_layers()
@@ -100,11 +110,21 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.upload_dlg.hide()
             self.upload_dlg = None
         self.threedi_api = None
-        self.btn_log_out.setDisabled(True)
+        self.current_user = None
+        self.label_user.setText("")
+        self.label_schematisation.setText("")
+        self.btn_log_out.hide()
+        self.btn_log_in.show()
 
-    def clear_log(self):
-        """Clearing message log box."""
-        self.lv_log.model().clear()
+    def initialize_authorized_view(self):
+        """Method for initializing processes after logging in 3Di API."""
+        self.label_user.setText(self.current_user)
+        self.label_schematisation.setText(f"{8 or 10}")  # TODO: Remove dummy ID
+        self.initialize_simulations_progresses_thread()
+        self.initialize_simulation_overview()
+        self.initialize_simulation_results()
+        self.btn_log_in.hide()
+        self.btn_log_out.show()
 
     def initialize_simulations_progresses_thread(self):
         """Initializing of the background thread."""
@@ -146,12 +166,20 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.simulations_progresses_thread = None
             self.simulations_progresses_sentinel = None
 
+    def initialize_build_options(self):
+        """Initialization of the Build Options window."""
+        self.build_options_dlg = BuildOptionsDialog(self)
+
+    def show_build_options(self):
+        """Showing Build Options dialog."""
+        if self.build_options_dlg is None:
+            self.initialize_build_options()
+        self.build_options_dlg.show()
+
     def initialize_simulation_overview(self):
         """Initialization of the Simulation Overview window."""
         self.simulation_overview_dlg = SimulationOverview(self)
         self.simulation_overview_dlg.label_user.setText(self.current_user)
-        self.organisation = self.organisation
-        self.simulation_overview_dlg.label_organisation.setText(self.organisation.name)
 
     @api_client_required
     def show_simulation_overview(self):
@@ -163,7 +191,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def initialize_simulation_results(self):
         """Initialization of the Simulations Results window."""
         self.simulation_results_dlg = SimulationResults(self)
-        self.simulation_results_dlg.label_organisation.setText(self.organisation.name)
 
     @api_client_required
     def show_simulation_results(self):

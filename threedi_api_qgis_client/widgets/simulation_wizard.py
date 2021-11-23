@@ -218,14 +218,18 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.dd_groundwater.addItem("")
             self.cb_saved_states.addItem("")
             tc = ThreediCalls(self.parent_page.parent_wizard.plugin.threedi_api)
-            rasters = tc.fetch_3di_model_initial_waterlevels(self.parent_page.parent_wizard.plugin.current_model.id)
+            rasters = tc.fetch_3di_model_initial_waterlevels(
+                self.parent_page.parent_wizard.model_selection_dlg.current_model.id
+            )
             for raster in rasters or []:
                 raster_filename = raster.file.filename
                 self.rasters[raster_filename] = raster
                 self.dd_2d.addItem(raster_filename)
                 self.dd_groundwater.addItem(raster_filename)
 
-            states = tc.fetch_3di_model_saved_states(self.parent_page.parent_wizard.plugin.current_model.id)
+            states = tc.fetch_3di_model_saved_states(
+                self.parent_page.parent_wizard.model_selection_dlg.current_model.id
+            )
             for state in states or []:
                 state_name = state.name
                 self.saved_states[state_name] = state
@@ -616,7 +620,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.values = dict()
-        self.breaches_layer = parent_page.parent_wizard.plugin.breaches_layer
+        self.breaches_layer = parent_page.parent_wizard.model_selection_dlg.breaches_layer
         self.dd_breach_id = FilteredComboBox(self)
         self.breach_lout.addWidget(self.dd_breach_id)
         self.dd_breach_id.currentIndexChanged.connect(self.write_values_into_dict)
@@ -1666,7 +1670,7 @@ class SimulationWizard(QWizard):
 
     def set_overview_database(self):
         """Setting up database name label in the summary page."""
-        database = self.plugin.current_model.name
+        database = self.model_selection_dlg.current_model.name
         self.summary_page.main_widget.sim_database.setText(database)
 
     def set_overview_duration(self):
@@ -1765,8 +1769,8 @@ class SimulationWizard(QWizard):
         laterals_timeout = self.settings.value("threedi/laterals_timeout", 45, type=int)
         name = self.name_page.main_widget.le_sim_name.text()
         tags = self.name_page.main_widget.le_tags.text()
-        threedimodel_id = self.plugin.current_model.id
-        organisation_uuid = self.plugin.organisation.unique_id
+        threedimodel_id = self.model_selection_dlg.current_model.id
+        organisation_uuid = self.model_selection_dlg.organisation.unique_id
         start_datetime, end_datetime = self.duration_page.main_widget.to_datetime()
         duration = self.duration_page.main_widget.calculate_simulation_duration()
         # initial conditions page attributes

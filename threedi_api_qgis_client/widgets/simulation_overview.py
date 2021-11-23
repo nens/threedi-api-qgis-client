@@ -31,7 +31,7 @@ class SimulationOverview(uicls, basecls):
         self.plugin = plugin
         self.threedi_api = self.plugin.threedi_api
         self.user = self.plugin.label_user.text()
-        self.model_selection_dlg = ThreediModelSelection(self.plugin)
+        self.model_selection_dlg = ThreediModelSelection(self.plugin, parent=self)
         self.simulation_init_wizard = None
         self.simulation_wizard = None
         self.simulations_keys = {}
@@ -95,10 +95,9 @@ class SimulationOverview(uicls, basecls):
 
     def new_wizard_init(self):
         """Open new simulation initiation options dialog."""
-        self.model_selection_dlg.show()
+        self.model_selection_dlg.exec_()
         if self.model_selection_dlg.model_is_loaded:
-            self.model_selection_dlg.unload_cached_layers()
-            self.simulation_init_wizard = SimulationInit(self)
+            self.simulation_init_wizard = SimulationInit(parent=self)
             self.simulation_init_wizard.exec_()
             if self.simulation_init_wizard.open_wizard:
                 self.new_simulation()
