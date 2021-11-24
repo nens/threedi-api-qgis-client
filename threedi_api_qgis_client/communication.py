@@ -3,19 +3,20 @@
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QMessageBox, QInputDialog
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
-from qgis.core import QgsMessageLog, Qgis
+from qgis.core import Qgis
 
 
 class UICommunication(object):
     """Class with methods for handling messages using QGIS interface and logging list view."""
 
-    def __init__(self, iface, context, list_view):
+    def __init__(self, iface, context, list_view=None):
         self.iface = iface
         self.context = context
-        self.list_view = list_view
-        self.model = QStandardItemModel()
-        self.list_view.setModel(self.model)
         self.message_bar = self.iface.messageBar()
+        self.list_view = list_view
+        if self.list_view:
+            self.model = QStandardItemModel()
+            self.list_view.setModel(self.model)
 
     def show_info(self, msg, parent=None, context=None):
         """Showing info dialog."""
@@ -48,9 +49,10 @@ class UICommunication(object):
         """Showing info message bar."""
         if self.iface is not None:
             self.message_bar.pushMessage(self.context, msg, level=Qgis.Info, duration=dur)
-            item = QStandardItem(msg)
-            item.setForeground(QBrush(log_text_color))
-            self.model.appendRow([item])
+            if self.list_view:
+                item = QStandardItem(msg)
+                item.setForeground(QBrush(log_text_color))
+                self.model.appendRow([item])
         else:
             print(msg)
 
@@ -58,9 +60,10 @@ class UICommunication(object):
         """Showing warning message bar."""
         if self.iface is not None:
             self.message_bar.pushMessage(self.context, msg, level=Qgis.Warning, duration=dur)
-            item = QStandardItem(msg)
-            item.setForeground(QBrush(log_text_color))
-            self.model.appendRow([item])
+            if self.list_view:
+                item = QStandardItem(msg)
+                item.setForeground(QBrush(log_text_color))
+                self.model.appendRow([item])
         else:
             print(msg)
 
@@ -68,9 +71,10 @@ class UICommunication(object):
         """Showing error message bar."""
         if self.iface is not None:
             self.message_bar.pushMessage(self.context, msg, level=Qgis.Critical, duration=dur)
-            item = QStandardItem(msg)
-            item.setForeground(QBrush(log_text_color))
-            self.model.appendRow([item])
+            if self.list_view:
+                item = QStandardItem(msg)
+                item.setForeground(QBrush(log_text_color))
+                self.model.appendRow([item])
         else:
             print(msg)
 

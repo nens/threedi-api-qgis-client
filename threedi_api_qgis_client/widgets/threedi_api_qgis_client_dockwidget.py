@@ -69,12 +69,17 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btn_results.clicked.connect(self.show_simulation_results)
         self.btn_clear_log.clicked.connect(self.clear_log)
         self.btn_upload.clicked.connect(self.show_upload_dialog)
+        self.plugin_settings.settings_saved.connect(self.update_working_dir)
         self.btn_log_out.hide()
         set_icon(self.btn_build, "build.svg")
         set_icon(self.btn_check, "check.svg")
         set_icon(self.btn_upload, "upload.svg")
         set_icon(self.btn_simulate, "api.svg")
         set_icon(self.btn_results, "results.svg")
+        self.update_working_dir()
+
+    def update_working_dir(self):
+        self.label_directory.setText(self.plugin_settings.working_dir)
 
     def closeEvent(self, event):
         if self.threedi_api is not None:

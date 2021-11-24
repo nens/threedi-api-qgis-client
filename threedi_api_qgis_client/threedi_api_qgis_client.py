@@ -24,7 +24,8 @@ class ThreediQgisClient:
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
-        self.plugin_settings = SettingsDialog()
+        # initialize plugin settings
+        self.plugin_settings = SettingsDialog(self.iface)
         # initialize locale
         locale = QSettings().value("locale/userLocale")[0:2]
         locale_path = os.path.join(self.plugin_dir, "i18n", f"ThreediQgisClient_{locale}.qm")
@@ -39,7 +40,6 @@ class ThreediQgisClient:
         self.menu = self.tr("&3Di API Client")
         self.toolbar = self.iface.addToolBar("ThreediQgisClient")
         self.toolbar.setObjectName("ThreediQgisClient")
-
         self.pluginIsActive = False
         self.dockwidget = None
 
@@ -165,12 +165,14 @@ class ThreediQgisClient:
         patch_wheel_imports()
         from threedi_api_qgis_client.widgets.threedi_api_qgis_client_dockwidget import ThreediQgisClientDockWidget
 
+        if not self.plugin_settings.settings_are_valid():
+            self.settings()
+
         if not self.pluginIsActive:
             self.pluginIsActive = True
             if self.dockwidget is None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = ThreediQgisClientDockWidget(self.iface, self.plugin_settings)
-
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
