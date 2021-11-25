@@ -79,7 +79,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.update_working_dir()
 
     def update_working_dir(self):
-        self.label_directory.setText(self.plugin_settings.working_dir)
+        """Updating working directory line edit widget."""
+        self.le_directory.setText(self.plugin_settings.working_dir)
 
     def closeEvent(self, event):
         if self.threedi_api is not None:
