@@ -1,6 +1,7 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
+from uuid import uuid4
 from tempfile import gettempdir
 from qgis.PyQt.QtWidgets import QDialog, QFileDialog
 from qgis.PyQt.QtCore import QSettings, pyqtSignal
@@ -37,6 +38,17 @@ class SettingsDialog(QDialog):
         """Set working directory path widget."""
         work_dir = QFileDialog.getExistingDirectory(self, "Select Working Directory", self.working_dir)
         if work_dir:
+            try:
+                test_filename = f"{uuid4()}.txt"
+                test_file_path = os.path.join(work_dir, test_filename)
+                with open(test_file_path, "w") as test_file:
+                    test_file.write("")
+                os.remove(test_file_path)
+            except (PermissionError, OSError):
+                self.settings_communication.bar_warn(
+                    "Can't write to the selected location. Please select a folder to which you have write permission."
+                )
+                return
             self.working_dir_le.setText(work_dir)
 
     def load_settings(self):
