@@ -124,7 +124,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def initialize_authorized_view(self):
         """Method for initializing processes after logging in 3Di API."""
         self.label_user.setText(self.current_user)
-        self.label_schematisation.setText(f"{8 or 10}")  # TODO: Remove dummy ID
+        self.label_schematisation.setText(f"{10}")  # TODO: Remove dummy ID
         self.initialize_simulations_progresses_thread()
         self.initialize_simulation_overview()
         self.initialize_simulation_results()
