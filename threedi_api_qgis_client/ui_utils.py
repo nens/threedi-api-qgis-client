@@ -100,7 +100,8 @@ def get_filepath(parent, extension_filter=None, extension=None, save=False, dial
     if dialog_title is None:
         dialog_title = "Choose file"
 
-    starting_dir = QSettings().value("threedi/last_schematisation_folder", os.path.expanduser("~"), type=str)
+    working_dir = QSettings().value("threedi/working_dir", os.path.expanduser("~"), type=str)
+    starting_dir = QSettings().value("threedi/last_schematisation_folder", working_dir, type=str)
     if save is True:
         file_name, __ = QFileDialog.getSaveFileName(parent, dialog_title, starting_dir, extension_filter)
     else:

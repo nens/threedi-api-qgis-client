@@ -31,6 +31,10 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulations_progresses_sentinel = None
         self.threedi_api = None
         self.current_user = None
+        self.current_schematisation_id = None
+        self.current_schematisation_name = None
+        self.current_schematisation_revision = None
+        self.current_schematisation_sqlite = None
         self.build_options_dlg = None
         self.simulation_overview_dlg = None
         self.simulation_results_dlg = None
@@ -51,20 +55,25 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         set_icon(self.btn_results, "results.svg")
         self.update_working_dir()
 
-    def update_working_dir(self):
-        """Updating working directory line edit widget."""
-        self.le_directory.setText(self.plugin_settings.working_dir)
-
     def closeEvent(self, event):
         if self.threedi_api is not None:
             self.on_log_out()
             self.build_options_dlg = None
+        self.current_schematisation_id = None
+        self.current_schematisation_name = None
+        self.current_schematisation_revision = None
+        self.current_schematisation_sqlite = None
+        self.update_schematisation_view()
         self.closingPlugin.emit()
         event.accept()
 
     def clear_log(self):
         """Clearing message log box."""
         self.lv_log.model().clear()
+
+    def update_working_dir(self):
+        """Updating working directory line edit widget."""
+        self.le_directory.setText(self.plugin_settings.working_dir)
 
     def on_log_in(self):
         """Handle logging-in."""
@@ -95,10 +104,14 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btn_log_out.hide()
         self.btn_log_in.show()
 
+    def update_schematisation_view(self):
+        """Method for updating loaded schematisation labels."""
+        self.label_schematisation.setText(str(self.current_schematisation_name) or "")
+        self.label_revision.setText(str(self.current_schematisation_revision) or "")
+
     def initialize_authorized_view(self):
         """Method for initializing processes after logging in 3Di API."""
         self.label_user.setText(self.current_user)
-        self.label_schematisation.setText(f"{10}")  # TODO: Remove dummy ID
         self.initialize_simulations_progresses_thread()
         self.initialize_simulation_overview()
         self.initialize_simulation_results()
@@ -187,4 +200,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Show upload status dialog."""
         if self.upload_dlg is None:
             self.initialize_upload_status()
+        if self.current_schematisation_sqlite:
+            self.upload_dlg.pb_new_upload.setEnabled(True)
+        else:
+            self.upload_dlg.pb_new_upload.setDisabled(True)
         self.upload_dlg.show()

@@ -4,6 +4,8 @@ import logging
 import os
 from qgis.PyQt import uic
 from .log_in import api_client_required
+from ..utils import get_local_schematisation_info
+from ..ui_utils import get_filepath
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "build_options.ui"))
@@ -24,11 +26,28 @@ class BuildOptionsDialog(uicls, basecls):
 
     @api_client_required
     def new_schematisation(self):
+        """Create a new schematisation."""
         pass
 
     def load_local_schematisation(self):
-        pass
+        """Load locally stored schematisation."""
+        schematisation_sqlite = get_filepath(self, extension_filter="Spatialite Files (*.sqlite *.SQLITE)")
+        if schematisation_sqlite:
+            try:
+                schematisation_id, schematisation_name, revision_number = get_local_schematisation_info(
+                    schematisation_sqlite
+                )
+                self.plugin.current_schematisation_id = schematisation_id
+                self.plugin.current_schematisation_name = schematisation_name
+                self.plugin.current_schematisation_revision = revision_number
+                self.plugin.current_schematisation_sqlite = schematisation_sqlite
+            except (TypeError, ValueError):
+                error_msg = "Invalid schematisation directory structure. Loading local schematisation canceled."
+                self.plugin.communication.show_error(error_msg)
+            self.plugin.update_schematisation_view()
+            self.close()
 
     @api_client_required
     def load_web_schematisation(self):
+        """Download an existing schematisation."""
         pass
