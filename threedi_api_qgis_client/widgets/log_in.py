@@ -2,6 +2,7 @@
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import logging
 import os
+from functools import wraps
 from time import sleep
 from qgis.PyQt import uic
 from threedi_api_client.openapi import ApiException
@@ -11,6 +12,35 @@ base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "log_in.ui"))
 
 logger = logging.getLogger(__name__)
+
+
+def api_client_required(fn):
+    """Decorator for limiting functionality access to logged in user (with option to log in)."""
+
+    @wraps(fn)
+    def wrapper(self):
+        if hasattr(self, "plugin"):
+            plugin_instance = getattr(self, "plugin")
+        else:
+            plugin_instance = self
+        threedi_api = getattr(plugin_instance, "threedi_api", None)
+        if threedi_api is None:
+            plugin_instance.communication.bar_info(
+                "Action reserved for logged in users. Please log-in before proceeding."
+            )
+            log_in_dialog = LogInDialog(plugin_instance)
+            accepted = log_in_dialog.exec_()
+            if accepted:
+                plugin_instance.threedi_api = log_in_dialog.threedi_api
+                plugin_instance.current_user = log_in_dialog.user
+                plugin_instance.initialize_authorized_view()
+            else:
+                plugin_instance.communication.bar_warn("Logging-in canceled. Action aborted!")
+                return
+
+        return fn(self)
+
+    return wrapper
 
 
 class LogInDialog(uicls, basecls):

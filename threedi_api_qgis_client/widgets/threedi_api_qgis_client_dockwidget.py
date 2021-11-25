@@ -1,11 +1,10 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
-from functools import wraps
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QThread, pyqtSignal
 from threedi_api_qgis_client.widgets.upload_status import UploadStatus
-from .log_in import LogInDialog
+from .log_in import LogInDialog, api_client_required
 from .build_options import BuildOptionsDialog
 from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
@@ -15,32 +14,6 @@ from ..workers import WSProgressesSentinel
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, "ui", "threedi_api_qgis_client_dockwidget_base.ui"))
-
-
-def api_client_required(fn):
-    """Decorator for limiting functionality access to logged in user (with option to log in)."""
-
-    @wraps(fn)
-    def wrapper(self):
-        threedi_api = getattr(self, "threedi_api", None)
-        if threedi_api is None:
-            self.communication.bar_info("Action reserved for logged in users. Please log-in before proceeding.")
-            log_in_dialog = LogInDialog(self)
-            accepted = log_in_dialog.exec_()
-            if accepted:
-                setattr(self, "threedi_api", log_in_dialog.threedi_api)
-                setattr(self, "current_user", log_in_dialog.user)
-                self.initialize_authorized_view()
-            else:
-                self.communication.bar_warn("Logging-in canceled. Action aborted!")
-
-                def do_nothing():
-                    pass
-
-                return do_nothing()
-        return fn(self)
-
-    return wrapper
 
 
 class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):

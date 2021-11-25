@@ -3,6 +3,7 @@
 import logging
 import os
 from qgis.PyQt import uic
+from .log_in import api_client_required
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "build_options.ui"))
@@ -17,6 +18,17 @@ class BuildOptionsDialog(uicls, basecls):
         super().__init__(parent)
         self.setupUi(self)
         self.plugin = plugin
-        self.communication = self.plugin.communication
-        self.user = None
-        self.threedi_api = None
+        self.pb_new.clicked.connect(self.new_schematisation)
+        self.pb_load_local.clicked.connect(self.load_local_schematisation)
+        self.pb_load_web.clicked.connect(self.load_web_schematisation)
+
+    @api_client_required
+    def new_schematisation(self):
+        pass
+
+    def load_local_schematisation(self):
+        pass
+
+    @api_client_required
+    def load_web_schematisation(self):
+        pass
