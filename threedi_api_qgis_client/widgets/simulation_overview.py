@@ -111,11 +111,13 @@ class SimulationOverview(uicls, basecls):
             return
         template = self.plugin.communication.pick_item("Load template", "Pick template to load", None, *items_keys)
         if template:
-            simulation_template = template_items[template]
-            self.simulation_init_wizard = SimulationInit(self)
-            set_widgets_parameters(self.simulation_init_wizard, **simulation_template["options"])
-            self.simulation_init_wizard.start_wizard()
-            self.new_simulation(simulation_template)
+            self.model_selection_dlg.exec_()
+            if self.model_selection_dlg.model_is_loaded:
+                simulation_template = template_items[template]
+                self.simulation_init_wizard = SimulationInit(self)
+                set_widgets_parameters(self.simulation_init_wizard, **simulation_template["options"])
+                self.simulation_init_wizard.start_wizard()
+                self.new_simulation(simulation_template)
 
     def new_simulation(self, simulation_template=None):
         """Opening a wizard which allows defining and running new simulations."""

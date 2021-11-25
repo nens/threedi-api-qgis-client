@@ -12,7 +12,7 @@ from .communication import UICommunication
 class SettingsDialog(QDialog):
     """Dialog with plugin settings."""
 
-    DEFAULT_API_URL = "https://api.3di.live/v3.0"
+    DEFAULT_API_URL = "https://api.3di.live"
     DEFAULT_LATERALS_TIMEOUT = 45
 
     settings_saved = pyqtSignal()

@@ -134,8 +134,11 @@ def extract_error_message(e):
             error_details = error_body["details"]
         elif "errors" in error_body:
             errors = error_body["errors"]
-            error_parts = [f"{err['reason']} ({err['instance']['related_object']})" for err in errors]
-            error_details = "\n".join(error_parts)
+            try:
+                error_parts = [f"{err['reason']} ({err['instance']['related_object']})" for err in errors]
+            except TypeError:
+                error_parts = list(errors.values())
+            error_details = "\n" + "\n".join(error_parts)
         else:
             error_details = str(error_body)
     except json.JSONDecodeError:
