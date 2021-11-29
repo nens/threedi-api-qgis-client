@@ -5,7 +5,7 @@ import os
 from qgis.PyQt import uic
 from .log_in import api_client_required
 from ..utils import get_local_schematisation_info
-from ..ui_utils import get_filepath
+from ..utils_ui import get_filepath
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "build_options.ui"))

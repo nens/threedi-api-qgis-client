@@ -14,7 +14,7 @@ from .model_selection import ThreediModelSelection
 from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import load_saved_templates
-from ..ui_utils import set_widgets_parameters
+from ..utils_ui import set_widgets_parameters
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_overview.ui"))

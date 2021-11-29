@@ -8,7 +8,7 @@ from .log_in import LogInDialog, api_client_required
 from .build_options import BuildOptionsDialog
 from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
-from ..ui_utils import set_icon
+from ..utils_ui import set_icon
 from ..communication import UICommunication
 from ..workers import WSProgressesSentinel
 

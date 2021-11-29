@@ -7,7 +7,6 @@ import requests
 from enum import Enum
 from collections import OrderedDict
 from datetime import datetime
-from qgis.core import QgsDataSourceUri, QgsVectorLayer
 
 PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))
 CACHE_PATH = os.path.join(PLUGIN_PATH, "_cached_data")
@@ -174,16 +173,6 @@ def apply_24h_timeseries(start_datetime, end_datetime, timeseries):
         else:
             break
     return new_timeseries
-
-
-def sqlite_layer(sqlite_path, table_name, layer_name=None, geom_column="the_geom", schema=""):
-    """Creating vector layer out of Spatialite source."""
-    uri = QgsDataSourceUri()
-    uri.setDatabase(sqlite_path)
-    uri.setDataSource(schema, table_name, geom_column)
-    layer_name = table_name if layer_name is None else layer_name
-    vlayer = QgsVectorLayer(uri.uri(), layer_name, "spatialite")
-    return vlayer
 
 
 class UploadFileStatus(Enum):

@@ -9,7 +9,7 @@ from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.core import QgsVectorLayer, QgsProject, QgsMapLayer
 from threedi_api_client.openapi import ApiException
 from ..utils import get_download_file, file_cached, CACHE_PATH
-from ..ui_utils import set_named_style
+from ..utils_ui import set_named_style
 from ..api_calls.threedi_calls import ThreediCalls
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
