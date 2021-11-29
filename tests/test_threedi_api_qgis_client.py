@@ -13,10 +13,8 @@ from threedi_api_client.openapi import (
     TimeseriesRain,
     ThreediModel,
     CurrentStatus,
-    RepositoriesApi,
-    SimulationsApi,
-    RevisionsApi,
 )
+from threedi_api_client.openapi.api.v3_api import V3Api
 from threedi_api_qgis_client.api_calls.threedi_calls import (
     get_api_client,
     ThreediCalls,
@@ -37,7 +35,7 @@ from .conftest import (
 )
 
 
-@patch.object(RepositoriesApi, "repositories_list")
+@patch.object(V3Api, "repositories_list")
 def test_fetch_repositories(mock_repositories_list):
     repos = [Repository(**data) for data in REPO_DATA_LIST]
     mock_repositories_list.return_value = Mock(results=repos, count=len(repos))
@@ -52,7 +50,7 @@ def test_fetch_repositories(mock_repositories_list):
     assert results == repos
 
 
-@patch.object(SimulationsApi, "simulations_list")
+@patch.object(V3Api, "simulations_list")
 def test_fetch_simulations(mock_simulations_list):
     sims = [Simulation(**data) for data in SIM_DATA_LIST]
     mock_simulations_list.return_value = Mock(results=sims, count=len(sims))
@@ -67,7 +65,7 @@ def test_fetch_simulations(mock_simulations_list):
     assert results == sims
 
 
-@patch.object(SimulationsApi, "simulations_create", new=lambda self, data: data)
+@patch.object(V3Api, "simulations_create", new=lambda self, data: data)
 def test_new_simulation():
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
@@ -75,7 +73,7 @@ def test_new_simulation():
     assert isinstance(sim, Simulation)
 
 
-@patch.object(SimulationsApi, "simulations_actions_create", new=lambda self, pk, data: Action(**data))
+@patch.object(V3Api, "simulations_actions_create", new=lambda self, pk, data: Action(**data))
 def test_make_action_on_simulation():
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
@@ -85,7 +83,7 @@ def test_make_action_on_simulation():
     assert action.name == "start"
 
 
-@patch.object(SimulationsApi, "simulations_progress_list")
+@patch.object(V3Api, "simulations_progress_list")
 def test_simulations_progress(mock_simulations_progress_list):
     mock_simulations_progress_list.return_value = Progress(**PROGRESS_DATA)
     api = get_api_client(*TEST_API_PARAMETERS)
@@ -97,9 +95,9 @@ def test_simulations_progress(mock_simulations_progress_list):
     assert progress.time == 18000
 
 
-@patch.object(SimulationsApi, "simulations_list")
-@patch.object(SimulationsApi, "simulations_progress_list")
-@patch.object(SimulationsApi, "simulations_status_list")
+@patch.object(V3Api, "simulations_list")
+@patch.object(V3Api, "simulations_progress_list")
+@patch.object(V3Api, "simulations_status_list")
 def test_all_simulations_progress(mock_simulations_status_list, mock_simulations_progress_list, mock_simulations_list):
     statuses = [CurrentStatus(**data) for data in CURRENT_STATUSES_LIST]
     mock_simulations_status_list.side_effect = statuses + [ApiException(500)]
@@ -127,9 +125,7 @@ def test_all_simulations_progress(mock_simulations_status_list, mock_simulations
         tc.fetch_simulations_progresses([])
 
 
-@patch.object(
-    SimulationsApi, "simulations_events_rain_constant_create", new=lambda self, pk, data: ConstantRain(**data)
-)
+@patch.object(V3Api, "simulations_events_rain_constant_create", new=lambda self, pk, data: ConstantRain(**data))
 def test_add_constant_precipitation():
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
@@ -139,9 +135,7 @@ def test_add_constant_precipitation():
         assert getattr(constant_rain, k) == v
 
 
-@patch.object(
-    SimulationsApi, "simulations_events_rain_timeseries_create", new=lambda self, pk, data: TimeseriesRain(**data)
-)
+@patch.object(V3Api, "simulations_events_rain_timeseries_create", new=lambda self, pk, data: TimeseriesRain(**data))
 def test_add_custom_precipitation():
     api = get_api_client(*TEST_API_PARAMETERS)
     tc = ThreediCalls(api)
@@ -151,7 +145,7 @@ def test_add_custom_precipitation():
         assert getattr(custom_rain, k) == v
 
 
-@patch.object(RevisionsApi, "revisions_list")
+@patch.object(V3Api, "revisions_list")
 def test_fetch_revisions(mock_revisions_list):
     revs = [Revision(**data) for data in REVISION_DATA_LIST]
     mock_revisions_list.return_value = Mock(results=revs, count=len(revs))
@@ -167,7 +161,7 @@ def test_fetch_revisions(mock_revisions_list):
     assert results == revs
 
 
-@patch.object(RevisionsApi, "revisions_threedimodels")
+@patch.object(V3Api, "revisions_threedimodels")
 def test_fetch_revision_3di_models(mock_revisions_threedimodels):
     models = [ThreediModel(**data) for data in MODEL_DATA_LIST]
     mock_revisions_threedimodels.return_value = models
