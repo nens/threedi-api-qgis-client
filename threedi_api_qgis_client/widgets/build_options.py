@@ -4,6 +4,7 @@ import logging
 import os
 from qgis.PyQt import uic
 from .log_in import api_client_required
+from ..widgets.new_schematisation_wizard import NewSchematisationWizard
 from ..utils import get_local_schematisation_info
 from ..utils_ui import get_filepath
 
@@ -20,6 +21,7 @@ class BuildOptionsDialog(uicls, basecls):
         super().__init__(parent)
         self.setupUi(self)
         self.plugin = plugin
+        self.new_schematisation_wizard = None
         self.pb_new.clicked.connect(self.new_schematisation)
         self.pb_load_local.clicked.connect(self.load_local_schematisation)
         self.pb_load_web.clicked.connect(self.load_web_schematisation)
@@ -27,7 +29,9 @@ class BuildOptionsDialog(uicls, basecls):
     @api_client_required
     def new_schematisation(self):
         """Create a new schematisation."""
-        pass
+        self.new_schematisation_wizard = NewSchematisationWizard(self.plugin)
+        self.close()
+        self.new_schematisation_wizard.exec_()
 
     def load_local_schematisation(self):
         """Load locally stored schematisation."""

@@ -13,6 +13,8 @@ CACHE_PATH = os.path.join(PLUGIN_PATH, "_cached_data")
 TEMPLATE_PATH = os.path.join(CACHE_PATH, "templates.json")
 LATERALS_FILE_TEMPLATE = os.path.join(CACHE_PATH, "laterals.json")
 DWF_FILE_TEMPLATE = os.path.join(CACHE_PATH, "dwf.json")
+DATA_PATH = os.path.join(PLUGIN_PATH, "_data")
+EMPTY_DB_PATH = os.path.join(DATA_PATH, "empty.sqlite")
 CHUNK_SIZE = 1024 ** 2
 
 
@@ -200,7 +202,7 @@ def schematisation_revision_dir(working_dir, schematisation_pk, schematisation_n
     return schematisation_dir_path
 
 
-def make_schematisation_dirs(working_dir, schematisation_pk, schematisation_name, revision_number):
+def make_schematisation_dirs(working_dir, schematisation_pk, schematisation_name, revision_number=1):
     """Function for schematisation dir structure creation."""
     schematisation_path = schematisation_revision_dir(
         working_dir, schematisation_pk, schematisation_name, revision_number
@@ -210,6 +212,8 @@ def make_schematisation_dirs(working_dir, schematisation_pk, schematisation_name
     for subpaths in revision_paths:
         full_subpath = os.path.join(schematisation_path, *subpaths)
         os.makedirs(full_subpath, exist_ok=True)
+    schematisation_db_filepath = os.path.join(schematisation_path, "schematisation")
+    return schematisation_db_filepath
 
 
 def get_local_schematisation_info(schematisation_sqlite_path):

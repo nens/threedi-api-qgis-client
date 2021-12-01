@@ -3,6 +3,7 @@
 import os
 from qgis.PyQt.QtGui import QIcon, QColor
 from qgis.PyQt.QtCore import QDate, QTime, QSettings
+from qgis.gui import QgsProjectionSelectionWidget, QgsFileWidget
 from qgis.PyQt.QtWidgets import (
     QLineEdit,
     QDateEdit,
@@ -14,6 +15,7 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
     QRadioButton,
     QFileDialog,
+    QGroupBox,
 )
 
 
@@ -66,6 +68,18 @@ def scan_widgets_parameters(main_widget):
             parameters[obj_name] = widget.time().toString("H:m")
         elif isinstance(widget, (QSpinBox, QDoubleSpinBox)):
             parameters[obj_name] = widget.value()
+        elif isinstance(widget, QgsProjectionSelectionWidget):
+            parameters[obj_name] = widget.crs()
+        elif isinstance(widget, QgsFileWidget):
+            parameters[obj_name] = widget.filePath()
+        elif isinstance(widget, QGroupBox):
+            if widget.isCheckable():
+                is_checked = widget.isChecked()
+                parameters[obj_name] = is_checked
+                if is_checked:
+                    parameters.update(scan_widgets_parameters(widget))
+            else:
+                parameters.update(scan_widgets_parameters(widget))
         elif isinstance(widget, QWidget):
             parameters.update(scan_widgets_parameters(widget))
     return parameters
