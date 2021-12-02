@@ -212,7 +212,7 @@ def make_schematisation_dirs(working_dir, schematisation_pk, schematisation_name
     for subpaths in revision_paths:
         full_subpath = os.path.join(schematisation_path, *subpaths)
         os.makedirs(full_subpath, exist_ok=True)
-    schematisation_db_filepath = os.path.join(schematisation_path, "schematisation")
+    schematisation_db_filepath = os.path.join(schematisation_path, "schematisation", f"{schematisation_name}.sqlite")
     return schematisation_db_filepath
 
 

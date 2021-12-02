@@ -30,6 +30,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulations_progresses_thread = None
         self.simulations_progresses_sentinel = None
         self.threedi_api = None
+        self.organisations = None
         self.current_user = None
         self.current_schematisation_id = None
         self.current_schematisation_name = None
@@ -99,6 +100,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.upload_dlg = None
         self.threedi_api = None
         self.current_user = None
+        self.organisations = None
         self.label_user.setText("")
         self.label_schematisation.setText("")
         self.btn_log_out.hide()

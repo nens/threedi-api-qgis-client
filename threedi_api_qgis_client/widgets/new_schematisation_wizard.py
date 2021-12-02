@@ -2,6 +2,7 @@
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 import os
 import shutil
+import time
 from collections import defaultdict
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
@@ -16,7 +17,7 @@ from qgis.core import QgsFeature
 from threedi_api_client.openapi import ApiException
 from ..utils import make_schematisation_dirs, extract_error_message, EMPTY_DB_PATH
 from ..utils_ui import scan_widgets_parameters
-from ..utils_qgis import sqlite_layer
+from ..utils_qgis import sqlite_layer, execute_sqlite_query
 from ..api_calls.threedi_calls import ThreediCalls
 
 
@@ -29,6 +30,10 @@ uicls_schema_settings_page, basecls_schema_settings_page = uic.loadUiType(
 )
 
 
+class CommitErrors(Exception):
+    pass
+
+
 class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page):
     """Widget for the Schematisation Name and tags page."""
 
@@ -36,12 +41,21 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.organisations = self.parent_page.organisations
+        self.populate_organisations()
+
+    def populate_organisations(self):
+        """Populating organisations."""
+        for org in self.organisations.values():
+            self.cbo_organisations.addItem(org.name, org)
 
     def get_new_schematisation_name_data(self):
-        """Return new schematisation name and tags."""
+        """Return new schematisation name, tags and owner."""
         name = self.le_schematisation_name.text()
         tags = self.le_tags.text()
-        return name, tags
+        organisation = self.cbo_organisations.currentData()
+        owner = organisation.unique_id
+        return name, tags, owner
 
 
 class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_settings_page):
@@ -199,8 +213,8 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             user_settings["use_0d_inflow"] = 2 if use_0d_inflow_surfaces else 1
         else:
             user_settings["use_0d_inflow"] = 0
-        user_settings["use_1d_inflow"] = 1 if use_1d_checked else 0
-        user_settings["use_2d_inflow"] = 1 if use_2d_checked else 0
+        user_settings["use_1d_flow"] = 1 if use_1d_checked else 0
+        user_settings["use_2d_flow"] = 1 if use_2d_checked else 0
         user_settings["use_2d_rain"] = 1 if use_2d_checked else 0
         sloping_checked = user_settings["frict_shallow_water_correction_sloping"]
         user_settings["frict_shallow_water_correction"] = 3 if sloping_checked else 0
@@ -234,9 +248,10 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
 class SchematisationNamePage(QWizardPage):
     """New schematisation name and tags definition page."""
 
-    def __init__(self, parent=None):
+    def __init__(self, organisations, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
+        self.organisations = organisations
         self.main_widget = SchematisationNameWidget(self)
         layout = QGridLayout()
         layout.addWidget(self.main_widget)
@@ -272,7 +287,8 @@ class NewSchematisationWizard(QWizard):
         self.working_dir = self.plugin.plugin_settings.working_dir
         self.tc = ThreediCalls(self.plugin.threedi_api)
         self.new_schematisation = None
-        self.schematisation_name_page = SchematisationNamePage(self)
+        self.new_schematisation_sqlite = None
+        self.schematisation_name_page = SchematisationNamePage(self.plugin.organisations, self)
         self.schematisation_settings_page = SchematisationSettingsPage(self)
         self.addPage(self.schematisation_name_page)
         self.addPage(self.schematisation_settings_page)
@@ -287,22 +303,44 @@ class NewSchematisationWizard(QWizard):
         self.resize(self.settings.value("threedi/new_schematisation_wizard_size", QSize(1000, 700)))
 
     def create_schematisation(self):
-        name, tags = self.schematisation_name_page.main_widget.get_new_schematisation_name_data()
+        name, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_name_data()
         schematisation_settings = self.schematisation_settings_page.main_widget.collect_new_schematisation_settings()
+        aggregation_settings_query = self.schematisation_settings_page.main_widget.aggregation_settings_query
         try:
-            self.new_schematisation = self.tc.create_schematisation(name, tags=tags)
-            schematisation_db_filepath = make_schematisation_dirs(self.working_dir, self.new_schematisation.id, name)
-            shutil.copyfile(EMPTY_DB_PATH, schematisation_db_filepath)
+            schematisation = self.tc.create_schematisation(name, owner, tags=tags)
+            schematisation_sqlite = make_schematisation_dirs(self.working_dir, schematisation.id, name)
+            shutil.copyfile(EMPTY_DB_PATH, schematisation_sqlite)
             for table_name, table_settings in schematisation_settings.items():
-                table_layer = sqlite_layer(schematisation_db_filepath, table_name, geom_column=None)
+                table_layer = sqlite_layer(schematisation_sqlite, table_name, geom_column=None)
+                table_layer.startEditing()
                 table_fields = table_layer.fields()
+                table_fields_names = {f.name() for f in table_fields}
                 new_settings_feat = QgsFeature(table_fields)
+                for field_name, field_value in table_settings.items():
+                    if field_name in table_fields_names:
+                        new_settings_feat[field_name] = field_value
+                table_layer.addFeature(new_settings_feat)
+                table_layer.commitChanges()
+                commit_errors = table_layer.commitErrors()
+                if commit_errors:
+                    if len(commit_errors) > 1 or commit_errors[0].startswith("SUCCESS:") is False:
+                        errors_str = "\n".join(commit_errors)
+                        error = CommitErrors(f"{table_name} commit errors:\n{errors_str}")
+                        raise error
+            time.sleep(0.5)
+            execute_sqlite_query(schematisation_sqlite, aggregation_settings_query)
+            self.new_schematisation = schematisation
+            self.new_schematisation_sqlite = schematisation_sqlite
+            msg = f"Schematisation '{name} ({schematisation.id})' created!"
+            self.plugin.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
         except ApiException as e:
             self.new_schematisation = None
+            self.new_schematisation_sqlite = None
             error_msg = extract_error_message(e)
             self.plugin.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         except Exception as e:
             self.new_schematisation = None
+            self.new_schematisation_sqlite = None
             error_msg = f"Error: {e}"
             self.plugin.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
 

@@ -401,9 +401,9 @@ class ThreediCalls:
         schematisation = self.threedi_api.schematisations_read(id=schematisation_pk, **data)
         return schematisation
 
-    def create_schematisation(self, name: str, **data) -> Schematisation:
+    def create_schematisation(self, name: str, owner: str, **data) -> Schematisation:
         """Create a new schematisation."""
-        data.update({"name": name})
+        data.update({"name": name, "owner": owner})
         schematisation = self.threedi_api.schematisations_create(data)
         return schematisation
 

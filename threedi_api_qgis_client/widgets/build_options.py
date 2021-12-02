@@ -29,9 +29,17 @@ class BuildOptionsDialog(uicls, basecls):
     @api_client_required
     def new_schematisation(self):
         """Create a new schematisation."""
-        self.new_schematisation_wizard = NewSchematisationWizard(self.plugin)
-        self.close()
+        self.new_schematisation_wizard = NewSchematisationWizard(self.plugin, self)
         self.new_schematisation_wizard.exec_()
+        new_schematisation = self.new_schematisation_wizard.new_schematisation
+        if new_schematisation is not None:
+            new_schematisation_sqlite = self.new_schematisation_wizard.new_schematisation_sqlite
+            self.plugin.current_schematisation_id = new_schematisation.id
+            self.plugin.current_schematisation_name = new_schematisation.name
+            self.plugin.current_schematisation_revision = 1
+            self.plugin.current_schematisation_sqlite = new_schematisation_sqlite
+            self.plugin.update_schematisation_view()
+            self.close()
 
     def load_local_schematisation(self):
         """Load locally stored schematisation."""

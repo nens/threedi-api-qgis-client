@@ -407,6 +407,24 @@
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="fetch_msg">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>12</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Fetching organisations..</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QLabel" name="done_msg">
            <property name="font">
             <font>

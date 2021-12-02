@@ -31,13 +31,13 @@ class ThreediModelSelection(uicls, basecls):
         self.communication = self.plugin.communication
         self.current_user = self.plugin.current_user
         self.threedi_api = self.plugin.threedi_api
+        self.organisations = self.plugin.organisations
         self.threedi_models = None
         self.current_model = None
         self.current_model_cells = None
         self.current_model_breaches = None
         self.cells_layer = None
         self.breaches_layer = None
-        self.organisations = None
         self.organisation = None
         self.model_is_loaded = False
         self.tv_model = QStandardItemModel()
@@ -70,21 +70,8 @@ class ThreediModelSelection(uicls, basecls):
 
     def fetch_organisations(self):
         """Fetching organisations list and populating them inside combo box."""
-        try:
-            tc = ThreediCalls(self.threedi_api)
-            self.organisations = {org.unique_id: org for org in tc.fetch_organisations()}
-            for org in self.organisations.values():
-                self.organisations_box.addItem(org.name, org)
-        except ApiException as e:
-            self.close()
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
-            self.communication.show_error(error_msg)
-        except Exception as e:
-            self.close()
-            error_msg = f"Error: {e}"
-            self.communication.show_error(error_msg)
+        for org in self.organisations.values():
+            self.organisations_box.addItem(org.name, org)
 
     def fetch_3di_models(self):
         """Fetching 3Di models list."""

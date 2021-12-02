@@ -6,7 +6,7 @@ from functools import wraps
 from time import sleep
 from qgis.PyQt import uic
 from threedi_api_client.openapi import ApiException
-from ..api_calls.threedi_calls import get_api_client
+from ..api_calls.threedi_calls import get_api_client, ThreediCalls
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "log_in.ui"))
@@ -33,6 +33,7 @@ def api_client_required(fn):
             if accepted:
                 plugin_instance.threedi_api = log_in_dialog.threedi_api
                 plugin_instance.current_user = log_in_dialog.user
+                plugin_instance.organisations = log_in_dialog.organisations
                 plugin_instance.initialize_authorized_view()
             else:
                 plugin_instance.communication.bar_warn("Logging-in canceled. Action aborted!")
@@ -53,6 +54,7 @@ class LogInDialog(uicls, basecls):
         self.communication = self.plugin.communication
         self.user = None
         self.threedi_api = None
+        self.organisations = {}
         self.log_in_widget.hide()
         self.wait_widget.hide()
         self.pb_log_in.clicked.connect(self.log_in_threedi)
@@ -74,6 +76,7 @@ class LogInDialog(uicls, basecls):
         """Method which runs all logging widgets methods and setting up needed variables."""
         try:
             self.show_wait_widget()
+            self.fetch_msg.hide()
             self.done_msg.hide()
             username = self.le_user.text()
             password = self.le_pass.text()
@@ -81,9 +84,12 @@ class LogInDialog(uicls, basecls):
             self.le_pass.setText("")
             self.log_pbar.setValue(25)
             self.threedi_api = get_api_client(username, password, self.plugin.plugin_settings.api_url)
+            tc = ThreediCalls(self.threedi_api)
             self.user = username
             self.wait_widget.update()
             self.log_pbar.setValue(75)
+            self.fetch_msg.show()
+            self.organisations = {org.unique_id: org for org in tc.fetch_organisations()}
             self.done_msg.show()
             self.wait_widget.update()
             self.log_pbar.setValue(100)
