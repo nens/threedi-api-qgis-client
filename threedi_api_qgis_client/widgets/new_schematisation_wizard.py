@@ -68,6 +68,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
 
     @property
     def aggregation_settings_query(self):
+        """Aggregation settings query."""
         sql_qry = """
             INSERT INTO v2_aggregation_settings(global_settings_id, var_name, flow_variable, aggregation_method, aggregation_in_space, timestep)
             SELECT id, 'pump_discharge_cum', 'pump_discharge', 'cum', 0, output_time_step FROM v2_global_settings
@@ -186,6 +187,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
 
     @property
     def settings_tables_defaults(self):
+        """Settings tables defaults map."""
         tables_defaults = {
             "v2_global_settings": self.global_settings_defaults,
             "v2_numerical_settings": self.numerical_settings_defaults,
@@ -194,6 +196,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
 
     @property
     def user_input_settings(self):
+        """Get user input settings."""
         user_settings = scan_widgets_parameters(self)
         use_1d_checked = self.use_1d_flow_group.isChecked()
         use_2d_checked = self.use_2d_flow_group.isChecked()
@@ -234,6 +237,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         return user_settings
 
     def collect_new_schematisation_settings(self):
+        """Get all needed settings."""
         all_schematisation_settings = defaultdict(dict)
         user_settings = self.user_input_settings
         for table_name, settings in self.settings_tables_defaults.items():
@@ -303,6 +307,7 @@ class NewSchematisationWizard(QWizard):
         self.resize(self.settings.value("threedi/new_schematisation_wizard_size", QSize(1000, 700)))
 
     def create_schematisation(self):
+        """Get settings from the wizard and create new schematisation (locally and remotely)."""
         name, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_name_data()
         schematisation_settings = self.schematisation_settings_page.main_widget.collect_new_schematisation_settings()
         aggregation_settings_query = self.schematisation_settings_page.main_widget.aggregation_settings_query
