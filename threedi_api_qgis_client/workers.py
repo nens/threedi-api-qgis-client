@@ -12,7 +12,7 @@ from PyQt5 import QtWebSockets
 from threedi_api_client.openapi import ApiException, Progress
 from threedi_api_client.files import upload_file
 from .api_calls.threedi_calls import ThreediCalls
-from .utils import UploadFileStatus
+from .utils import UploadFileStatus, CHUNK_SIZE
 
 
 logger = logging.getLogger(__name__)
@@ -137,8 +137,6 @@ class DownloadProgressWorker(QObject):
     download_failed = pyqtSignal(str)
     download_progress = pyqtSignal(float)
 
-    CHUNK_SIZE = 1024 ** 2
-
     NOT_STARTED = -1
     FINISHED = 100
     FAILED = 101
@@ -167,7 +165,7 @@ class DownloadProgressWorker(QObject):
                 os.makedirs(self.directory, exist_ok=True)
                 file_data = requests.get(download.get_url, stream=True, timeout=15)
                 with open(filename_path, "wb") as f:
-                    for chunk in file_data.iter_content(chunk_size=self.CHUNK_SIZE):
+                    for chunk in file_data.iter_content(chunk_size=CHUNK_SIZE):
                         if chunk:
                             f.write(chunk)
                             size += len(chunk)
@@ -201,7 +199,6 @@ class RevisionUploadError(Exception):
 class UploadProgressWorker(QRunnable):
     """Worker object responsible for uploading models."""
 
-    CHUNK_SIZE = 1024 ** 2
     TASK_CHECK_INTERVAL = 2.5
     TASK_CHECK_RETRIES = 4
 
@@ -294,7 +291,7 @@ class UploadProgressWorker(QRunnable):
         schematisation_sqlite = self.upload_specification["selected_files"]["spatialite"]["filepath"]
         sqlite_file = os.path.basename(schematisation_sqlite)
         upload = self.tc.upload_schematisation_revision_sqlite(self.schematisation.id, self.revision.id, sqlite_file)
-        upload_file(upload.put_url, schematisation_sqlite, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress)
+        upload_file(upload.put_url, schematisation_sqlite, CHUNK_SIZE, callback_func=self.monitor_upload_progress)
         self.current_task_progress = 100.0
         self.report_upload_progress()
 
@@ -320,7 +317,7 @@ class UploadProgressWorker(QRunnable):
         raster_upload = self.tc.upload_schematisation_revision_raster(
             raster_revision.id, self.schematisation.id, self.revision.id, raster_file
         )
-        upload_file(raster_upload.put_url, raster_filepath, self.CHUNK_SIZE, callback_func=self.monitor_upload_progress)
+        upload_file(raster_upload.put_url, raster_filepath, CHUNK_SIZE, callback_func=self.monitor_upload_progress)
         self.current_task_progress = 100.0
         self.report_upload_progress()
 

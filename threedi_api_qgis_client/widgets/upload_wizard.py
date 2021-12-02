@@ -18,8 +18,9 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit,
 )
 from threedi_api_client.openapi import ApiException
-from ..utils import is_file_checksum_equal, sqlite_layer, UploadFileType, UploadFileStatus
-from ..ui_utils import get_filepath
+from ..utils import is_file_checksum_equal, UploadFileType, UploadFileStatus
+from ..utils_ui import get_filepath
+from ..utils_qgis import sqlite_layer
 from ..communication import ListViewLogger
 
 

@@ -13,7 +13,7 @@ def patch_wheel_imports():
     try:
         import pyqtgraph
     except ImportError:
-        deps_path = os.path.join(main_dir, "pyqtgraph-0.10.0-py3-none-any.whl")
+        deps_path = os.path.join(main_dir, "pyqtgraph-0.11.1-py2.py3-none-any.whl")
         sys.path.append(deps_path)
 
     try:

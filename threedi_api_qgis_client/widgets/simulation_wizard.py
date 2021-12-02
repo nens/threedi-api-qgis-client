@@ -14,7 +14,7 @@ from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, Qt, QSize
 from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
 from threedi_api_client.openapi import ApiException
-from ..ui_utils import (
+from ..utils_ui import (
     icon_path,
     set_widget_background_color,
     scan_widgets_parameters,

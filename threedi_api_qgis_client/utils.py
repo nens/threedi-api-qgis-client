@@ -7,13 +7,14 @@ import requests
 from enum import Enum
 from collections import OrderedDict
 from datetime import datetime
-from qgis.core import QgsDataSourceUri, QgsVectorLayer
 
 PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))
 CACHE_PATH = os.path.join(PLUGIN_PATH, "_cached_data")
 TEMPLATE_PATH = os.path.join(CACHE_PATH, "templates.json")
 LATERALS_FILE_TEMPLATE = os.path.join(CACHE_PATH, "laterals.json")
 DWF_FILE_TEMPLATE = os.path.join(CACHE_PATH, "dwf.json")
+DATA_PATH = os.path.join(PLUGIN_PATH, "_data")
+EMPTY_DB_PATH = os.path.join(DATA_PATH, "empty.sqlite")
 CHUNK_SIZE = 1024 ** 2
 
 
@@ -176,16 +177,6 @@ def apply_24h_timeseries(start_datetime, end_datetime, timeseries):
     return new_timeseries
 
 
-def sqlite_layer(sqlite_path, table_name, layer_name=None, geom_column="the_geom", schema=""):
-    """Creating vector layer out of Spatialite source."""
-    uri = QgsDataSourceUri()
-    uri.setDatabase(sqlite_path)
-    uri.setDataSource(schema, table_name, geom_column)
-    layer_name = table_name if layer_name is None else layer_name
-    vlayer = QgsVectorLayer(uri.uri(), layer_name, "spatialite")
-    return vlayer
-
-
 class UploadFileStatus(Enum):
     """Possible actions on files upload."""
 
@@ -201,3 +192,37 @@ class UploadFileType(Enum):
 
     DB = "DB"
     RASTER = "RASTER"
+
+
+def schematisation_revision_dir(working_dir, schematisation_pk, schematisation_name, revision_number):
+    """Getting schematisation revision main directory."""
+    schematisation_dir_path = os.path.join(
+        working_dir, f"{schematisation_name} ({schematisation_pk})", f"revision {revision_number}"
+    )
+    return schematisation_dir_path
+
+
+def make_schematisation_dirs(working_dir, schematisation_pk, schematisation_name, revision_number=1):
+    """Function for schematisation dir structure creation."""
+    schematisation_path = schematisation_revision_dir(
+        working_dir, schematisation_pk, schematisation_name, revision_number
+    )
+    os.makedirs(schematisation_path, exist_ok=True)
+    revision_paths = [["admin"], ["grid"], ["results"], ["schematisation", "rasters"]]
+    for subpaths in revision_paths:
+        full_subpath = os.path.join(schematisation_path, *subpaths)
+        os.makedirs(full_subpath, exist_ok=True)
+    schematisation_db_filepath = os.path.join(schematisation_path, "schematisation", f"{schematisation_name}.sqlite")
+    return schematisation_db_filepath
+
+
+def get_local_schematisation_info(schematisation_sqlite_path):
+    """Getting local schematisation info based on schematisation sqlite file path."""
+    revision_dir_path = os.path.dirname(os.path.dirname(schematisation_sqlite_path))
+    schematisation_dir_path = os.path.dirname(revision_dir_path)
+    revision_dir = os.path.basename(revision_dir_path)
+    schematisation_dir = os.path.basename(schematisation_dir_path)
+    revision_number = int(revision_dir.rsplit(maxsplit=1)[-1])
+    schematisation_name, schematisation_id_str = schematisation_dir.rsplit(maxsplit=1)
+    schematisation_id = int(schematisation_id_str.strip("()"))
+    return schematisation_id, schematisation_name, revision_number

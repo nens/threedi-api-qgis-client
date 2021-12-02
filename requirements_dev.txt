@@ -7,11 +7,12 @@ tox==3.14.0
 coverage==4.5.4
 Sphinx==1.8.5
 twine==1.14.0
-threedi-api-client==3.0.23
+threedi-api-client==3.0.30
 pytest==4.6.5
 pytest-runner==5.1
-pyqtgraph==0.10.0
+pyqtgraph==0.11.1
 python-dateutil==2.8.1
 requests==2.23.0
 zest.releaser==6.20.1
 qgispluginreleaser==1.0
+typing-extensions==4.0.0

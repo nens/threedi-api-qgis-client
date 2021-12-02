@@ -5,7 +5,6 @@ from qgis.PyQt.QtCore import Qt, QThreadPool, QItemSelectionModel
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from .upload_wizard import UploadWizard
 from ..workers import UploadProgressWorker
-from ..ui_utils import get_filepath
 from ..api_calls.threedi_calls import ThreediCalls
 from ..communication import ListViewLogger
 
@@ -30,14 +29,10 @@ class UploadStatus(uicls_log, basecls_log):
         self.upload_progresses = defaultdict(lambda: ("NO TASK", 0.0, 0.0))
         self.current_upload_row = 0
         self.upload_wizard = None
-        self.schematisation_sqlite = None
         self.schematisation = None
-        try:
-            schematisation_id = int(self.plugin.label_schematisation.text())
-            self.schematisation = self.tc.fetch_schematisation(schematisation_id)
-        except ValueError:
-            schematisation_name = self.plugin.label_db.text().rsplit(".ini")[0]
-            self.schematisation = self.tc.fetch_schematisations(name=schematisation_name)[0]
+        self.schematisation_sqlite = None
+        self.schematisation_id = None
+        self.schematisation = None
         self.pb_new_upload.clicked.connect(self.upload_new_model)
         self.tv_model = None
         self.setup_view_model()
@@ -96,7 +91,9 @@ class UploadStatus(uicls_log, basecls_log):
 
     def upload_new_model(self):
         """Initializing new upload wizard."""
-        self.schematisation_sqlite = get_filepath(None, extension_filter="Spatialite Files (*.sqlite *.SQLITE)")
+        self.schematisation_sqlite = self.plugin.current_schematisation_sqlite
+        self.schematisation_id = self.plugin.current_schematisation_id
+        self.schematisation = self.tc.fetch_schematisation(self.schematisation_id)
         if not self.schematisation_sqlite:
             return
         self.upload_wizard = UploadWizard(self.plugin, self)
