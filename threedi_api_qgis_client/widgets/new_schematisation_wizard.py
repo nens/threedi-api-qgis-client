@@ -17,7 +17,7 @@ from qgis.core import QgsFeature
 from threedi_api_client.openapi import ApiException
 from ..utils import make_schematisation_dirs, extract_error_message, EMPTY_DB_PATH
 from ..utils_ui import scan_widgets_parameters
-from ..utils_qgis import sqlite_layer, execute_sqlite_query
+from ..utils_qgis import sqlite_layer, execute_sqlite_queries
 from ..api_calls.threedi_calls import ThreediCalls
 
 
@@ -67,9 +67,10 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         self.parent_page = parent_page
 
     @property
-    def aggregation_settings_query(self):
+    def aggregation_settings_queries(self):
         """Aggregation settings query."""
         sql_qry = """
+            DELETE FROM v2_aggregation_settings;
             INSERT INTO v2_aggregation_settings(global_settings_id, var_name, flow_variable, aggregation_method, aggregation_in_space, timestep)
             SELECT id, 'pump_discharge_cum', 'pump_discharge', 'cum', 0, output_time_step FROM v2_global_settings
             UNION
@@ -94,8 +95,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             SELECT id, 'qsss_cum_pos', 'surface_source_sink_discharge', 'cum_positive', 0, output_time_step FROM v2_global_settings
             UNION
             SELECT id, 'qsss_cum_neg', 'surface_source_sink_discharge', 'cum_negative', 0, output_time_step FROM v2_global_settings
-            ;
-            """
+            ;"""
         return sql_qry
 
     @property
@@ -107,7 +107,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "advection_2d": 1,
             "control_group_id": None,
             "dem_file": None,
-            "dem_obstacle_detection": False,
+            "dem_obstacle_detection": 0,
             "dem_obstacle_height": None,
             "dist_calc_points": 1000.0,
             "embedded_cutoff_threshold": 0.05,
@@ -141,11 +141,11 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "sim_time_step": None,
             "simple_infiltration_settings_id": None,
             "start_date": QDate.fromString("2000-01-01", "yyyy-MM-dd"),
-            "start_time": QTime.fromString("00:00:00", "HH:mm:ss"),
+            "start_time": QTime.fromString("00:00:00", "HH:MM:SS"),
             "table_step_size": None,
             "table_step_size_1d": 0.01,
             "table_step_size_volume_2d": None,
-            "timestep_plus": False,
+            "timestep_plus": 0,
             "use_0d_inflow": None,
             "use_1d_flow": None,
             "use_2d_flow": None,
@@ -319,7 +319,7 @@ class NewSchematisationWizard(QWizard):
         name, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_name_data()
         schematisation_settings = self.schematisation_settings_page.main_widget.collect_new_schematisation_settings()
         raster_filepaths = self.schematisation_settings_page.main_widget.rasters_filepaths()
-        aggregation_settings_query = self.schematisation_settings_page.main_widget.aggregation_settings_query
+        aggregation_settings_queries = self.schematisation_settings_page.main_widget.aggregation_settings_queries
         try:
             schematisation = self.tc.create_schematisation(name, owner, tags=tags)
             schematisation_sqlite = make_schematisation_dirs(self.working_dir, schematisation.id, name)
@@ -347,7 +347,7 @@ class NewSchematisationWizard(QWizard):
                         error = CommitErrors(f"{table_name} commit errors:\n{errors_str}")
                         raise error
             time.sleep(0.5)
-            execute_sqlite_query(schematisation_sqlite, aggregation_settings_query)
+            execute_sqlite_queries(schematisation_sqlite, aggregation_settings_queries)
             self.new_schematisation = schematisation
             self.new_schematisation_sqlite = schematisation_sqlite
             msg = f"Schematisation '{name} ({schematisation.id})' created!"

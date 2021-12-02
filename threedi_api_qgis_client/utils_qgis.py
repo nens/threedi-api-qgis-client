@@ -14,10 +14,10 @@ def sqlite_layer(sqlite_path, table_name, layer_name=None, geom_column="the_geom
     return vlayer
 
 
-def execute_sqlite_query(sqlite_filepath, sql_query):
-    """Run SQL query on sqlite database."""
+def execute_sqlite_queries(sqlite_filepath, sql_script):
+    """Run SQL queries on sqlite database."""
     connection = sqlite3.connect(sqlite_filepath)
     c = connection.cursor()
-    c.executescript(sql_query)
+    c.executescript(sql_script)
     connection.commit()
     connection.close()
