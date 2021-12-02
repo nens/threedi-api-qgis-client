@@ -202,10 +202,12 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         use_2d_checked = self.use_2d_flow_group.isChecked()
         user_settings["advection_1d"] = 1 if use_1d_checked else 0
         user_settings["advection_2d"] = 1 if use_2d_checked else 0
-        user_settings["dem_file"] = user_settings["dem_file"] or None
+        dem_file = os.path.basename(user_settings["dem_file"])
+        user_settings["dem_file"] = f"rasters/{dem_file}" if dem_file else None
         frict_type_text = user_settings["frict_type_text"]
         user_settings["frict_type"] = int(frict_type_text.split(":")[0])
-        user_settings["frict_coef_file"] = user_settings["frict_coef_file"] or None
+        frict_coef_file = os.path.basename(user_settings["frict_coef_file"])
+        user_settings["frict_coef_file"] = f"rasters/{frict_coef_file}" if frict_coef_file else None
         if not (self.use_1d_flow_group.isChecked() and not self.use_2d_flow_group.isChecked()):
             user_settings["manhole_storage_area"] = None
         output_time_step_text = user_settings["output_time_step_text"]
@@ -235,6 +237,12 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             max_degree = 5
         user_settings["max_degree"] = max_degree
         return user_settings
+
+    def rasters_filepaths(self):
+        """Get rasters filepahts."""
+        dem_file = self.dem_file.filePath()
+        frict_coef_file = self.frict_coef_file.filePath()
+        return dem_file, frict_coef_file
 
     def collect_new_schematisation_settings(self):
         """Get all needed settings."""
@@ -310,11 +318,17 @@ class NewSchematisationWizard(QWizard):
         """Get settings from the wizard and create new schematisation (locally and remotely)."""
         name, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_name_data()
         schematisation_settings = self.schematisation_settings_page.main_widget.collect_new_schematisation_settings()
+        raster_filepaths = self.schematisation_settings_page.main_widget.rasters_filepaths()
         aggregation_settings_query = self.schematisation_settings_page.main_widget.aggregation_settings_query
         try:
             schematisation = self.tc.create_schematisation(name, owner, tags=tags)
             schematisation_sqlite = make_schematisation_dirs(self.working_dir, schematisation.id, name)
+            rasters_dir = os.path.join(os.path.dirname(schematisation_sqlite), "rasters")
             shutil.copyfile(EMPTY_DB_PATH, schematisation_sqlite)
+            for raster_filepath in raster_filepaths:
+                if raster_filepath:
+                    new_raster_filepath = os.path.join(rasters_dir, os.path.basename(raster_filepath))
+                    shutil.copyfile(raster_filepath, new_raster_filepath)
             for table_name, table_settings in schematisation_settings.items():
                 table_layer = sqlite_layer(schematisation_sqlite, table_name, geom_column=None)
                 table_layer.startEditing()
