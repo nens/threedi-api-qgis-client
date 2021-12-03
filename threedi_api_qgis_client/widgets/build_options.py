@@ -5,6 +5,7 @@ import os
 from qgis.PyQt import uic
 from .log_in import api_client_required
 from ..widgets.new_schematisation_wizard import NewSchematisationWizard
+from ..widgets.schematisation_download import SchematisationDownload
 from ..utils import get_local_schematisation_info
 from ..utils_ui import get_filepath
 
@@ -62,4 +63,5 @@ class BuildOptionsDialog(uicls, basecls):
     @api_client_required
     def load_web_schematisation(self):
         """Download an existing schematisation."""
-        pass
+        schematisation_download = SchematisationDownload(self.plugin)
+        schematisation_download.exec_()

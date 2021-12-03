@@ -114,7 +114,7 @@ class ThreediCalls:
         if offset is not None:
             params["offset"] = offset
         if name_contains is not None:
-            params["name__contains"] = name_contains.lower()
+            params["name__icontains"] = name_contains.lower()
         logger.debug("Fetching 3di models for current user...")
         response = self.threedi_api.threedimodels_list(**params)
         models_list = response.results
@@ -395,6 +395,23 @@ class ThreediCalls:
         """Get list of the schematisations."""
         schematisations_list = self.paginated_fetch(self.threedi_api.schematisations_list, **data)
         return schematisations_list
+
+    def fetch_schematisations_with_count(
+        self, limit: int = None, offset: int = None, name_contains: str = None
+    ) -> Tuple[List[Schematisation], int]:
+        """Get list of the schematisations with count."""
+        params = {}
+        if limit is not None:
+            params["limit"] = limit
+        if offset is not None:
+            params["offset"] = offset
+        if name_contains is not None:
+            params["name__icontains"] = name_contains.lower()
+        logger.debug("Fetching schematisations...")
+        response = self.threedi_api.schematisations_list(**params)
+        schematisations_list = response.results
+        schematisations_count = response.count
+        return schematisations_list, schematisations_count
 
     def fetch_schematisation(self, schematisation_pk: int, **data) -> Schematisation:
         """Get schematisation with given id."""

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class ThreediModelSelection(uicls, basecls):
-    """Dialog with widgets and methods used in logging process."""
+    """Dialog for model selection."""
 
     TABLE_LIMIT = 10
 
