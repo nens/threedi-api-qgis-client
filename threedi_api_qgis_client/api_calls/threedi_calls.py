@@ -432,7 +432,10 @@ class ThreediCalls:
         return schematisation_revisions
 
     def fetch_schematisation_revisions_with_count(
-        self, schematisation_pk: int, limit: int = None, offset: int = None,
+        self,
+        schematisation_pk: int,
+        limit: int = None,
+        offset: int = None,
     ) -> Tuple[List[SchematisationRevision], int]:
         """Get list of the schematisation revisions with count."""
         params = {}
@@ -512,6 +515,13 @@ class ThreediCalls:
     def delete_schematisation_revision_raster(self, raster_pk: int, schematisation_pk: int, revision_pk: int):
         """Remove schematisation revision raster."""
         self.threedi_api.schematisations_revisions_rasters_delete(raster_pk, revision_pk, schematisation_pk)
+
+    def download_schematisation_revision_raster(self, raster_pk: int, schematisation_pk: int, revision_pk: int):
+        """Download schematisation revision raster."""
+        raster_download = self.threedi_api.schematisations_revisions_rasters_download(
+            raster_pk, revision_pk, schematisation_pk
+        )
+        return raster_download
 
     def commit_schematisation_revision(self, schematisation_pk: int, revision_pk: int, **data) -> Commit:
         """Commit schematisation revision."""

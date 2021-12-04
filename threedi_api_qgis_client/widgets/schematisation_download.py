@@ -3,11 +3,13 @@
 import logging
 import os
 from math import ceil
+from time import sleep
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from threedi_api_client.openapi import ApiException
 from ..api_calls.threedi_calls import ThreediCalls
+from ..utils import make_schematisation_dirs, get_download_file
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "schematisation_download.ui"))
@@ -25,12 +27,12 @@ class SchematisationDownload(uicls, basecls):
         super().__init__(parent)
         self.setupUi(self)
         self.plugin = plugin
+        self.working_dir = self.plugin.plugin_settings.working_dir
         self.communication = self.plugin.communication
         self.threedi_api = self.plugin.threedi_api
         self.schematisations = None
         self.revisions = None
-        self.selected_schematisation = None
-        self.selected_revision = None
+        self.downloaded_schematisation_filepath = None
         self.tv_schematisations_model = QStandardItemModel()
         self.schematisations_tv.setModel(self.tv_schematisations_model)
         self.tv_revisions_model = QStandardItemModel()
@@ -130,11 +132,11 @@ class SchematisationDownload(uicls, basecls):
 
     def fetch_revisions(self):
         """Fetching schematisation revisions list."""
-        self.get_selected_schematisation()
         try:
             tc = ThreediCalls(self.threedi_api)
             offset = (self.revisions_page_sbox.value() - 1) * self.TABLE_LIMIT
-            schematisation_pk = self.selected_schematisation.id
+            selected_schematisation = self.get_selected_schematisation()
+            schematisation_pk = selected_schematisation.id
             revisions, revisions_count = tc.fetch_schematisation_revisions_with_count(
                 schematisation_pk, limit=self.TABLE_LIMIT, offset=offset
             )
@@ -168,22 +170,76 @@ class SchematisationDownload(uicls, basecls):
 
     def get_selected_schematisation(self):
         """Get currently selected schematisation."""
-        self.selected_schematisation = None
         index = self.schematisations_tv.currentIndex()
         if index.isValid():
             current_row = index.row()
             name_item = self.tv_schematisations_model.item(current_row, 0)
-            self.selected_schematisation = name_item.data(Qt.UserRole)
-        return self.selected_schematisation
+            selected_schematisation = name_item.data(Qt.UserRole)
+        else:
+            selected_schematisation = None
+        return selected_schematisation
 
-    def download_schematisation_revision(self):
-        """Downloading selected schematisation revision."""
+    def get_selected_revision(self):
+        """Get currently selected revision."""
         index = self.revisions_tv.currentIndex()
         if index.isValid():
             current_row = index.row()
-            name_item = self.tv_schematisations_model.item(current_row, 0)
-            self.selected_revision = name_item.data(Qt.UserRole)
+            name_item = self.tv_revisions_model.item(current_row, 0)
+            selected_revisions = name_item.data(Qt.UserRole)
+        else:
+            selected_revisions = None
+        return selected_revisions
+
+    def download_schematisation_revision(self):
+        """Downloading selected schematisation revision."""
+        selected_schematisation = self.get_selected_schematisation()
+        selected_revision = self.get_selected_revision()
+        self.download_required_files(selected_schematisation, selected_revision)
+        if self.downloaded_schematisation_filepath:
             self.close()
+
+    def download_required_files(self, schematisation, revision):
+        """Download required schematisation revision files."""
+        try:
+            tc = ThreediCalls(self.threedi_api)
+            schematisation_pk = schematisation.id
+            schematisation_name = schematisation.name
+            revision_pk = revision.id
+            revision_number = revision.number
+            sqlite_download = tc.download_schematisation_revision_sqlite(schematisation_pk, revision_pk)
+            rasters_downloads = []
+            for raster_file in revision.rasters or []:
+                raster_download = tc.download_schematisation_revision_raster(
+                    raster_file.id, schematisation_pk, revision_pk
+                )
+                rasters_downloads.append((raster_file.name, raster_download))
+            sqlite_filepath = make_schematisation_dirs(
+                self.working_dir, schematisation_pk, schematisation_name, revision_number
+            )
+            schematisation_dir = os.path.dirname(sqlite_filepath)
+            self.pbar_download.setMaximum(len(rasters_downloads) + 1)
+            current_progress = 0
+            self.pbar_download.setValue(current_progress)
+            get_download_file(sqlite_download, sqlite_filepath)
+            current_progress += 1
+            self.pbar_download.setValue(current_progress)
+            for raster_filename, raster_download in rasters_downloads:
+                raster_filepath = os.path.join(schematisation_dir, "rasters", raster_filename)
+                get_download_file(raster_download, raster_filepath)
+                current_progress += 1
+                self.pbar_download.setValue(current_progress)
+            self.downloaded_schematisation_filepath = sqlite_filepath
+            sleep(1)
+            msg = f"Schematisation '{schematisation_name} (revision {revision_number})' downloaded!"
+            self.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
+        except ApiException as e:
+            error_body = e.body
+            error_details = error_body["details"] if "details" in error_body else error_body
+            error_msg = f"Error: {error_details}"
+            self.communication.show_error(error_msg)
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.communication.show_error(error_msg)
 
     def cancel_download_schematisation_revision(self):
         """Cancel schematisation revision download."""
