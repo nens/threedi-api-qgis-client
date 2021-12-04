@@ -431,6 +431,21 @@ class ThreediCalls:
         )
         return schematisation_revisions
 
+    def fetch_schematisation_revisions_with_count(
+        self, schematisation_pk: int, limit: int = None, offset: int = None,
+    ) -> Tuple[List[SchematisationRevision], int]:
+        """Get list of the schematisation revisions with count."""
+        params = {}
+        if limit is not None:
+            params["limit"] = limit
+        if offset is not None:
+            params["offset"] = offset
+        logger.debug("Fetching schematisations...")
+        response = self.threedi_api.schematisations_revisions_list(schematisation_pk, **params)
+        schematisation_revisions_list = response.results
+        schematisation_revisions_count = response.count
+        return schematisation_revisions_list, schematisation_revisions_count
+
     def fetch_schematisation_revision(self, schematisation_pk: int, revision_pk: int) -> SchematisationRevision:
         """Get schematisation revision."""
         schematisation_revision = self.threedi_api.schematisations_revisions_read(revision_pk, schematisation_pk)
