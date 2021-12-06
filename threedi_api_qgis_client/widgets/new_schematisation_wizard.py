@@ -198,6 +198,9 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
     def user_input_settings(self):
         """Get user input settings."""
         user_settings = scan_widgets_parameters(self)
+        crs = user_settings["crs"]
+        epsg = crs.authid()
+        user_settings["epsg_code"] = int(epsg(":")[-1]) if epsg else 0
         use_1d_checked = self.use_1d_flow_group.isChecked()
         use_2d_checked = self.use_2d_flow_group.isChecked()
         user_settings["advection_1d"] = 1 if use_1d_checked else 0

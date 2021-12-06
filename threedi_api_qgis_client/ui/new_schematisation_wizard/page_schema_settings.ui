@@ -495,7 +495,7 @@
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QgsProjectionSelectionWidget" name="epsg_code">
+          <widget class="QgsProjectionSelectionWidget" name="crs">
            <property name="minimumSize">
             <size>
              <width>0</width>
