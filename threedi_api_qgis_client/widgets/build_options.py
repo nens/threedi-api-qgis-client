@@ -69,3 +69,4 @@ class BuildOptionsDialog(uicls, basecls):
         schematisation_sqlite = schematisation_download.downloaded_schematisation_filepath
         if schematisation_sqlite is not None:
             self.load_local_schematisation(schematisation_sqlite)
+            self.close()
