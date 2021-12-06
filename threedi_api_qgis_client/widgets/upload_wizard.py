@@ -17,7 +17,7 @@ from qgis.PyQt.QtWidgets import (
     QPushButton,
     QLineEdit,
 )
-from threedi_api_client.openapi import ApiException
+from threedi_api_client.openapi import ApiException, SchematisationRevision
 from ..utils import is_file_checksum_equal, UploadFileType, UploadFileStatus
 from ..utils_ui import get_filepath
 from ..utils_qgis import sqlite_layer
@@ -273,7 +273,12 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
     def check_files_states(self):
         """Check raster (and spatialite) files presence and compare local and remote data."""
         files_states = OrderedDict()
-        remote_rasters = self.tc.fetch_schematisation_revision_rasters(self.schematisation.id, self.latest_revision.id)
+        if self.latest_revision.number > 0:
+            remote_rasters = self.tc.fetch_schematisation_revision_rasters(
+                self.schematisation.id, self.latest_revision.id
+            )
+        else:
+            remote_rasters = []
         remote_rasters_by_type = {raster.type: raster for raster in remote_rasters}
         if "dem_raw_file" in remote_rasters_by_type:
             remote_rasters_by_type["dem_file"] = remote_rasters_by_type["dem_raw_file"]
@@ -595,12 +600,7 @@ class UploadWizard(QWizard):
         if available_revisions:
             self.latest_revision = max(available_revisions, key=attrgetter("id"))
         else:
-            self.latest_revision = self.tc.create_schematisation_revision(self.schematisation.id, empty=True)
-        # self.start_page = StartPage(self)
-        # self.start_page.main_widget.lbl_schematisation.setText(self.schematisation.name)
-        # self.start_page.main_widget.lbl_online_revision.setText(str(self.latest_revision.number))
-        # if self.latest_revision.is_valid is True:
-        #     self.start_page.main_widget.pb_use_revision.setDisabled(True)
+            self.latest_revision = SchematisationRevision(number=0)
         self.check_model_page = CheckModelPage(self)
         self.select_files_page = SelectFilesPage(self)
         # self.addPage(self.start_page)

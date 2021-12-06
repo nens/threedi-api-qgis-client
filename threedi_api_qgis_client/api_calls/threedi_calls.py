@@ -424,16 +424,19 @@ class ThreediCalls:
         schematisation = self.threedi_api.schematisations_create(data)
         return schematisation
 
-    def fetch_schematisation_revisions(self, schematisation_pk: int, **data) -> List[SchematisationRevision]:
+    def fetch_schematisation_revisions(
+        self, schematisation_pk: int, committed: bool = True, **data
+    ) -> List[SchematisationRevision]:
         """Get list of the schematisation revisions."""
         schematisation_revisions = self.paginated_fetch(
-            self.threedi_api.schematisations_revisions_list, schematisation_pk, **data
+            self.threedi_api.schematisations_revisions_list, schematisation_pk, committed=committed, **data
         )
         return schematisation_revisions
 
     def fetch_schematisation_revisions_with_count(
         self,
         schematisation_pk: int,
+        committed: bool = True,
         limit: int = None,
         offset: int = None,
     ) -> Tuple[List[SchematisationRevision], int]:
@@ -444,7 +447,7 @@ class ThreediCalls:
         if offset is not None:
             params["offset"] = offset
         logger.debug("Fetching schematisations...")
-        response = self.threedi_api.schematisations_revisions_list(schematisation_pk, **params)
+        response = self.threedi_api.schematisations_revisions_list(schematisation_pk, committed=committed, **params)
         schematisation_revisions_list = response.results
         schematisation_revisions_count = response.count
         return schematisation_revisions_list, schematisation_revisions_count

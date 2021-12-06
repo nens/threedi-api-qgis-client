@@ -28,7 +28,6 @@ class UploadStatus(uicls_log, basecls_log):
         self.ended_tasks = OrderedDict()
         self.upload_progresses = defaultdict(lambda: ("NO TASK", 0.0, 0.0))
         self.current_upload_row = 0
-        self.upload_wizard = None
         self.schematisation = None
         self.schematisation_sqlite = None
         self.schematisation_id = None
@@ -69,11 +68,10 @@ class UploadStatus(uicls_log, basecls_log):
     def add_upload_to_model(self, upload_specification):
         """Initializing a new upload."""
         create_revision = upload_specification["create_revision"]
-        upload_only = upload_specification["upload_only"]
         schematisation = upload_specification["schematisation"]
         schema_name_item = QStandardItem(f"{schematisation.name}")
         revision = upload_specification["latest_revision"]
-        revision_number = revision.number + 1 if create_revision and not upload_only else revision.number
+        revision_number = revision.number + 1 if create_revision is True else revision.number
         revision_item = QStandardItem(f"{revision_number}")
         commit_msg_item = QStandardItem(f"{upload_specification['commit_message']}")
         status_item = QStandardItem("In progress")
@@ -96,9 +94,9 @@ class UploadStatus(uicls_log, basecls_log):
         self.schematisation = self.tc.fetch_schematisation(self.schematisation_id)
         if not self.schematisation_sqlite:
             return
-        self.upload_wizard = UploadWizard(self.plugin, self)
-        self.upload_wizard.exec_()
-        new_upload = self.upload_wizard.new_upload
+        upload_wizard_dialog = UploadWizard(self.plugin, self)
+        upload_wizard_dialog.exec_()
+        new_upload = upload_wizard_dialog.new_upload
         if not new_upload:
             return
         self.add_upload_to_model(new_upload)
