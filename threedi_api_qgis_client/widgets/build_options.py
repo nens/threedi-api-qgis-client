@@ -5,6 +5,7 @@ import os
 from qgis.PyQt import uic
 from .log_in import api_client_required
 from ..widgets.new_schematisation_wizard import NewSchematisationWizard
+from ..widgets.schematisation_download import SchematisationDownload
 from ..utils import get_local_schematisation_info
 from ..utils_ui import get_filepath
 
@@ -41,9 +42,10 @@ class BuildOptionsDialog(uicls, basecls):
             self.plugin.update_schematisation_view()
             self.close()
 
-    def load_local_schematisation(self):
+    def load_local_schematisation(self, schematisation_sqlite=None):
         """Load locally stored schematisation."""
-        schematisation_sqlite = get_filepath(self, extension_filter="Spatialite Files (*.sqlite *.SQLITE)")
+        if not schematisation_sqlite:
+            schematisation_sqlite = get_filepath(self, extension_filter="Spatialite Files (*.sqlite *.SQLITE)")
         if schematisation_sqlite:
             try:
                 schematisation_id, schematisation_name, revision_number = get_local_schematisation_info(
@@ -54,7 +56,7 @@ class BuildOptionsDialog(uicls, basecls):
                 self.plugin.current_schematisation_revision = revision_number
                 self.plugin.current_schematisation_sqlite = schematisation_sqlite
             except (TypeError, ValueError):
-                error_msg = "Invalid schematisation directory structure. Loading local schematisation canceled."
+                error_msg = "Invalid schematisation directory structure. Loading schematisation canceled."
                 self.plugin.communication.show_error(error_msg)
             self.plugin.update_schematisation_view()
             self.close()
@@ -62,4 +64,9 @@ class BuildOptionsDialog(uicls, basecls):
     @api_client_required
     def load_web_schematisation(self):
         """Download an existing schematisation."""
-        pass
+        schematisation_download = SchematisationDownload(self.plugin)
+        schematisation_download.exec_()
+        schematisation_sqlite = schematisation_download.downloaded_schematisation_filepath
+        if schematisation_sqlite is not None:
+            self.load_local_schematisation(schematisation_sqlite)
+            self.close()

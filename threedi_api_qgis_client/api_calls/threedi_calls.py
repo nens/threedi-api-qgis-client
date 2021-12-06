@@ -114,7 +114,7 @@ class ThreediCalls:
         if offset is not None:
             params["offset"] = offset
         if name_contains is not None:
-            params["name__contains"] = name_contains.lower()
+            params["name__icontains"] = name_contains.lower()
         logger.debug("Fetching 3di models for current user...")
         response = self.threedi_api.threedimodels_list(**params)
         models_list = response.results
@@ -396,6 +396,23 @@ class ThreediCalls:
         schematisations_list = self.paginated_fetch(self.threedi_api.schematisations_list, **data)
         return schematisations_list
 
+    def fetch_schematisations_with_count(
+        self, limit: int = None, offset: int = None, name_contains: str = None
+    ) -> Tuple[List[Schematisation], int]:
+        """Get list of the schematisations with count."""
+        params = {}
+        if limit is not None:
+            params["limit"] = limit
+        if offset is not None:
+            params["offset"] = offset
+        if name_contains is not None:
+            params["name__icontains"] = name_contains.lower()
+        logger.debug("Fetching schematisations...")
+        response = self.threedi_api.schematisations_list(**params)
+        schematisations_list = response.results
+        schematisations_count = response.count
+        return schematisations_list, schematisations_count
+
     def fetch_schematisation(self, schematisation_pk: int, **data) -> Schematisation:
         """Get schematisation with given id."""
         schematisation = self.threedi_api.schematisations_read(id=schematisation_pk, **data)
@@ -407,12 +424,33 @@ class ThreediCalls:
         schematisation = self.threedi_api.schematisations_create(data)
         return schematisation
 
-    def fetch_schematisation_revisions(self, schematisation_pk: int, **data) -> List[SchematisationRevision]:
+    def fetch_schematisation_revisions(
+        self, schematisation_pk: int, committed: bool = True, **data
+    ) -> List[SchematisationRevision]:
         """Get list of the schematisation revisions."""
         schematisation_revisions = self.paginated_fetch(
-            self.threedi_api.schematisations_revisions_list, schematisation_pk, **data
+            self.threedi_api.schematisations_revisions_list, schematisation_pk, committed=committed, **data
         )
         return schematisation_revisions
+
+    def fetch_schematisation_revisions_with_count(
+        self,
+        schematisation_pk: int,
+        committed: bool = True,
+        limit: int = None,
+        offset: int = None,
+    ) -> Tuple[List[SchematisationRevision], int]:
+        """Get list of the schematisation revisions with count."""
+        params = {}
+        if limit is not None:
+            params["limit"] = limit
+        if offset is not None:
+            params["offset"] = offset
+        logger.debug("Fetching schematisations...")
+        response = self.threedi_api.schematisations_revisions_list(schematisation_pk, committed=committed, **params)
+        schematisation_revisions_list = response.results
+        schematisation_revisions_count = response.count
+        return schematisation_revisions_list, schematisation_revisions_count
 
     def fetch_schematisation_revision(self, schematisation_pk: int, revision_pk: int) -> SchematisationRevision:
         """Get schematisation revision."""
@@ -480,6 +518,13 @@ class ThreediCalls:
     def delete_schematisation_revision_raster(self, raster_pk: int, schematisation_pk: int, revision_pk: int):
         """Remove schematisation revision raster."""
         self.threedi_api.schematisations_revisions_rasters_delete(raster_pk, revision_pk, schematisation_pk)
+
+    def download_schematisation_revision_raster(self, raster_pk: int, schematisation_pk: int, revision_pk: int):
+        """Download schematisation revision raster."""
+        raster_download = self.threedi_api.schematisations_revisions_rasters_download(
+            raster_pk, revision_pk, schematisation_pk
+        )
+        return raster_download
 
     def commit_schematisation_revision(self, schematisation_pk: int, revision_pk: int, **data) -> Commit:
         """Commit schematisation revision."""
