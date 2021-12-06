@@ -16,13 +16,13 @@ uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_sta
 class UploadStatus(uicls_log, basecls_log):
     """Upload status dialog."""
 
-    def __init__(self, plugin, parent=None):
+    def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.plugin = plugin
-        self.threedi_api = self.plugin.threedi_api
-        self.tc = ThreediCalls(self.plugin.threedi_api)
-        self.communication = self.plugin.communication
+        self.plugin_dock = plugin_dock
+        self.threedi_api = self.plugin_dock.threedi_api
+        self.tc = ThreediCalls(self.plugin_dock.threedi_api)
+        self.communication = self.plugin_dock.communication
         self.feedback_logger = ListViewLogger(self.lv_upload_feedback)
         self.upload_thread_pool = QThreadPool()
         self.ended_tasks = OrderedDict()
@@ -89,12 +89,12 @@ class UploadStatus(uicls_log, basecls_log):
 
     def upload_new_model(self):
         """Initializing new upload wizard."""
-        self.schematisation_sqlite = self.plugin.current_schematisation_sqlite
-        self.schematisation_id = self.plugin.current_schematisation_id
+        self.schematisation_sqlite = self.plugin_dock.current_schematisation_sqlite
+        self.schematisation_id = self.plugin_dock.current_schematisation_id
         self.schematisation = self.tc.fetch_schematisation(self.schematisation_id)
         if not self.schematisation_sqlite:
             return
-        upload_wizard_dialog = UploadWizard(self.plugin, self)
+        upload_wizard_dialog = UploadWizard(self.plugin_dock, self)
         upload_wizard_dialog.exec_()
         new_upload = upload_wizard_dialog.new_upload
         if not new_upload:
@@ -126,13 +126,13 @@ class UploadStatus(uicls_log, basecls_log):
         """Handling action on upload success."""
         item = self.tv_model.item(upload_row_number - 1, 3)
         item.setText("Success")
-        self.plugin.communication.bar_info(msg, log_text_color=Qt.darkGreen)
+        self.plugin_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
 
     def on_upload_failed(self, upload_row_number, error_message):
         """Handling action on upload failure."""
         item = self.tv_model.item(upload_row_number - 1, 3)
         item.setText("Failure")
-        self.plugin.communication.bar_error(error_message, log_text_color=Qt.red)
+        self.plugin_dock.communication.bar_error(error_message, log_text_color=Qt.red)
         success = False
         failed_task_name = self.upload_progresses[self.current_upload_row][0]
         enriched_error_message = f"{failed_task_name} ==> failed\n{error_message}"

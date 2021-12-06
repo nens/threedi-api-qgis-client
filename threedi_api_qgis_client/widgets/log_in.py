@@ -19,24 +19,22 @@ def api_client_required(fn):
 
     @wraps(fn)
     def wrapper(self):
-        if hasattr(self, "plugin"):
-            plugin_instance = getattr(self, "plugin")
+        if hasattr(self, "plugin_dock"):
+            plugin_dock = getattr(self, "plugin_dock")
         else:
-            plugin_instance = self
-        threedi_api = getattr(plugin_instance, "threedi_api", None)
+            plugin_dock = self
+        threedi_api = getattr(plugin_dock, "threedi_api", None)
         if threedi_api is None:
-            plugin_instance.communication.bar_info(
-                "Action reserved for logged in users. Please log-in before proceeding."
-            )
-            log_in_dialog = LogInDialog(plugin_instance)
+            plugin_dock.communication.bar_info("Action reserved for logged in users. Please log-in before proceeding.")
+            log_in_dialog = LogInDialog(plugin_dock)
             accepted = log_in_dialog.exec_()
             if accepted:
-                plugin_instance.threedi_api = log_in_dialog.threedi_api
-                plugin_instance.current_user = log_in_dialog.user
-                plugin_instance.organisations = log_in_dialog.organisations
-                plugin_instance.initialize_authorized_view()
+                plugin_dock.threedi_api = log_in_dialog.threedi_api
+                plugin_dock.current_user = log_in_dialog.user
+                plugin_dock.organisations = log_in_dialog.organisations
+                plugin_dock.initialize_authorized_view()
             else:
-                plugin_instance.communication.bar_warn("Logging-in canceled. Action aborted!")
+                plugin_dock.communication.bar_warn("Logging-in canceled. Action aborted!")
                 return
 
         return fn(self)
@@ -47,11 +45,11 @@ def api_client_required(fn):
 class LogInDialog(uicls, basecls):
     """Dialog with widgets and methods used in logging process."""
 
-    def __init__(self, plugin, parent=None):
+    def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.plugin = plugin
-        self.communication = self.plugin.communication
+        self.plugin_dock = plugin_dock
+        self.communication = self.plugin_dock.communication
         self.user = None
         self.threedi_api = None
         self.organisations = {}
@@ -83,7 +81,7 @@ class LogInDialog(uicls, basecls):
             self.le_user.setText("")
             self.le_pass.setText("")
             self.log_pbar.setValue(25)
-            self.threedi_api = get_api_client(username, password, self.plugin.plugin_settings.api_url)
+            self.threedi_api = get_api_client(username, password, self.plugin_dock.plugin_settings.api_url)
             tc = ThreediCalls(self.threedi_api)
             self.user = username
             self.wait_widget.update()

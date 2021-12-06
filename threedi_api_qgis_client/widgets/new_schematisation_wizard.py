@@ -200,7 +200,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         user_settings = scan_widgets_parameters(self)
         crs = user_settings["crs"]
         epsg = crs.authid()
-        user_settings["epsg_code"] = int(epsg(":")[-1]) if epsg else 0
+        user_settings["epsg_code"] = int(epsg.split(":")[-1]) if epsg else 0
         use_1d_checked = self.use_1d_flow_group.isChecked()
         use_2d_checked = self.use_2d_flow_group.isChecked()
         user_settings["advection_1d"] = 1 if use_1d_checked else 0
@@ -294,16 +294,16 @@ class SchematisationSettingsPage(QWizardPage):
 class NewSchematisationWizard(QWizard):
     """New schematisation wizard."""
 
-    def __init__(self, plugin, parent=None):
+    def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
         self.settings = QSettings()
         self.setWizardStyle(QWizard.ClassicStyle)
-        self.plugin = plugin
-        self.working_dir = self.plugin.plugin_settings.working_dir
-        self.tc = ThreediCalls(self.plugin.threedi_api)
+        self.plugin_dock = plugin_dock
+        self.working_dir = self.plugin_dock.plugin_settings.working_dir
+        self.tc = ThreediCalls(self.plugin_dock.threedi_api)
         self.new_schematisation = None
         self.new_schematisation_sqlite = None
-        self.schematisation_name_page = SchematisationNamePage(self.plugin.organisations, self)
+        self.schematisation_name_page = SchematisationNamePage(self.plugin_dock.organisations, self)
         self.schematisation_settings_page = SchematisationSettingsPage(self)
         self.addPage(self.schematisation_name_page)
         self.addPage(self.schematisation_settings_page)
@@ -354,17 +354,17 @@ class NewSchematisationWizard(QWizard):
             self.new_schematisation = schematisation
             self.new_schematisation_sqlite = schematisation_sqlite
             msg = f"Schematisation '{name} ({schematisation.id})' created!"
-            self.plugin.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
+            self.plugin_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
         except ApiException as e:
             self.new_schematisation = None
             self.new_schematisation_sqlite = None
             error_msg = extract_error_message(e)
-            self.plugin.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+            self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         except Exception as e:
             self.new_schematisation = None
             self.new_schematisation_sqlite = None
             error_msg = f"Error: {e}"
-            self.plugin.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+            self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""

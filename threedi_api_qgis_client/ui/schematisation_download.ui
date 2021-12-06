@@ -369,6 +369,11 @@
       </item>
       <item row="5" column="0">
        <widget class="QTreeView" name="revisions_tv">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>

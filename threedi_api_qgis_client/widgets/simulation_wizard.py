@@ -217,7 +217,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.dd_2d.addItem("")
             self.dd_groundwater.addItem("")
             self.cb_saved_states.addItem("")
-            tc = ThreediCalls(self.parent_page.parent_wizard.plugin.threedi_api)
+            tc = ThreediCalls(self.parent_page.parent_wizard.plugin_dock.threedi_api)
             rasters = tc.fetch_3di_model_initial_waterlevels(
                 self.parent_page.parent_wizard.model_selection_dlg.current_model.id
             )
@@ -240,10 +240,10 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             error_body = e.body
             error_details = error_body["details"] if "details" in error_body else error_body
             error_msg = f"Error: {error_details}"
-            self.parent_page.parent_wizard.plugin.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+            self.parent_page.parent_wizard.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         except Exception as e:
             error_msg = f"Error: {e}"
-            self.parent_page.parent_wizard.plugin.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+            self.parent_page.parent_wizard.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         self.dd_1d.addItems(["From spatialite", "Global value"])
 
     def dropdown_1d_changed(self):
@@ -415,7 +415,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if not laterals_list:
             error_message = "Laterals list is empty!"
             if log_error:
-                self.parent_page.parent_wizard.plugin.communication.show_warn(error_message)
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
             return error_message
         header = laterals_list[0]
         if laterals_type == "1D":
@@ -432,7 +432,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 laterals_list.pop(0)
         else:
             if log_error:
-                self.parent_page.parent_wizard.plugin.communication.show_warn(error_message)
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
         return error_message
 
     def open_upload_dialog(self):
@@ -551,7 +551,7 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         if not dwf_laterals_list:
             error_message = "Dry Weather Flow timeseries list is empty!"
             if log_error:
-                self.parent_page.parent_wizard.plugin.communication.show_warn(error_message)
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
             return error_message
         header = dwf_laterals_list[0]
         if len(header) != 3:
@@ -564,7 +564,7 @@ class DWFWidget(uicls_dwf, basecls_dwf):
                 dwf_laterals_list.pop(0)
         else:
             if log_error:
-                self.parent_page.parent_wizard.plugin.communication.show_warn(error_message)
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
         return error_message
 
     def open_upload_dialog(self):
@@ -667,9 +667,9 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             "offset": offset,
         }
         if self.breaches_layer is not None:
-            self.parent_page.parent_wizard.plugin.iface.setActiveLayer(self.breaches_layer)
+            self.parent_page.parent_wizard.plugin_dock.iface.setActiveLayer(self.breaches_layer)
             self.breaches_layer.selectByExpression(f'"content_pk"={breach_id}')
-            self.parent_page.parent_wizard.plugin.iface.actionZoomToSelected().trigger()
+            self.parent_page.parent_wizard.plugin_dock.iface.actionZoomToSelected().trigger()
 
     def simulation_changed(self):
         """Handle simulation change."""
@@ -1599,14 +1599,14 @@ class SummaryPage(QWizardPage):
 class SimulationWizard(QWizard):
     """New simulation wizard."""
 
-    def __init__(self, plugin, model_selection_dlg, init_conditions_dlg, parent=None):
+    def __init__(self, plugin_dock, model_selection_dlg, init_conditions_dlg, parent=None):
         super().__init__(parent)
         self.settings = QSettings()
         self.setWizardStyle(QWizard.ClassicStyle)
         self.model_selection_dlg = model_selection_dlg
         self.init_conditions_dlg = init_conditions_dlg
         init_conditions = self.init_conditions_dlg.initial_conditions
-        self.plugin = plugin
+        self.plugin_dock = plugin_dock
         self.name_page = NamePage(self)
         self.duration_page = SimulationDurationPage(self)
         self.addPage(self.name_page)
@@ -1832,7 +1832,7 @@ class SimulationWizard(QWizard):
                         widirection,
                         wvalues,
                     ) = self.wind_page.main_widget.get_wind_data()
-                tc = ThreediCalls(self.plugin.threedi_api)
+                tc = ThreediCalls(self.plugin_dock.threedi_api)
                 sim_name = f"{name}_{i}" if self.init_conditions.multiple_simulations is True else name
                 new_simulation = tc.create_simulation(
                     name=sim_name,
@@ -1986,17 +1986,17 @@ class SimulationWizard(QWizard):
                 self.new_simulations.append(new_simulation)
                 self.new_simulation_statuses[new_simulation.id] = current_status
                 msg = f"Simulation {new_simulation.name} added to queue!"
-                self.plugin.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
+                self.plugin_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
         except ApiException as e:
             self.new_simulations = None
             self.new_simulation_statuses = None
             error_msg = extract_error_message(e)
-            self.plugin.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+            self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         except Exception as e:
             self.new_simulations = None
             self.new_simulation_statuses = None
             error_msg = f"Error: {e}"
-            self.plugin.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+            self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""

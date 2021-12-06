@@ -24,14 +24,14 @@ class ThreediModelSelection(uicls, basecls):
 
     TABLE_LIMIT = 10
 
-    def __init__(self, plugin, parent=None):
+    def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.plugin = plugin
-        self.communication = self.plugin.communication
-        self.current_user = self.plugin.current_user
-        self.threedi_api = self.plugin.threedi_api
-        self.organisations = self.plugin.organisations
+        self.plugin_dock = plugin_dock
+        self.communication = self.plugin_dock.communication
+        self.current_user = self.plugin_dock.current_user
+        self.threedi_api = self.plugin_dock.threedi_api
+        self.organisations = self.plugin_dock.organisations
         self.threedi_models = None
         self.current_model = None
         self.current_model_cells = None
@@ -134,8 +134,8 @@ class ThreediModelSelection(uicls, basecls):
             QgsProject.instance().layerTreeRoot().insertLayer(0, self.breaches_layer)
             self.breaches_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
         if self.current_model_cells is not None:
-            self.plugin.iface.setActiveLayer(self.cells_layer)
-            self.plugin.iface.zoomToActiveLayer()
+            self.plugin_dock.iface.setActiveLayer(self.cells_layer)
+            self.plugin_dock.iface.zoomToActiveLayer()
 
     def unload_cached_layers(self):
         """Removing model related vector layers from map canvas."""
@@ -146,7 +146,7 @@ class ThreediModelSelection(uicls, basecls):
             if self.cells_layer is not None:
                 QgsProject.instance().removeMapLayer(self.cells_layer)
                 self.cells_layer = None
-            self.plugin.iface.mapCanvas().refresh()
+            self.plugin_dock.iface.mapCanvas().refresh()
         except AttributeError:
             pass
 

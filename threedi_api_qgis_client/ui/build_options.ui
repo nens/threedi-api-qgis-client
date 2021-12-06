@@ -112,7 +112,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Load web schematisation</string>
+         <string>Download schematisation</string>
         </property>
        </widget>
       </item>

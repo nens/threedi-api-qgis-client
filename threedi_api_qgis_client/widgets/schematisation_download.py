@@ -23,13 +23,13 @@ class SchematisationDownload(uicls, basecls):
 
     TABLE_LIMIT = 10
 
-    def __init__(self, plugin, parent=None):
+    def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.plugin = plugin
-        self.working_dir = self.plugin.plugin_settings.working_dir
-        self.communication = self.plugin.communication
-        self.threedi_api = self.plugin.threedi_api
+        self.plugin_dock = plugin_dock
+        self.working_dir = self.plugin_dock.plugin_settings.working_dir
+        self.communication = self.plugin_dock.communication
+        self.threedi_api = self.plugin_dock.threedi_api
         self.schematisations = None
         self.revisions = None
         self.downloaded_schematisation_filepath = None
@@ -61,6 +61,7 @@ class SchematisationDownload(uicls, basecls):
         self.tv_revisions_model.clear()
         self.revisions_page_sbox.setMaximum(1)
         self.revisions_page_sbox.setSuffix(" / 1")
+        self.toggle_download_schematisation_revision()
 
     def toggle_download_schematisation_revision(self):
         """Toggle download button if any schematisation revision is selected."""
@@ -107,13 +108,14 @@ class SchematisationDownload(uicls, basecls):
             self.schematisations_page_sbox.setMaximum(pages_nr)
             self.schematisations_page_sbox.setSuffix(f" / {pages_nr}")
             self.tv_schematisations_model.clear()
-            header = ["Schematisation", "Slug", "Owner", "Created by"]
+            header = ["Schematisation name", "Slug", "Owner", "Created by"]
             self.tv_schematisations_model.setHorizontalHeaderLabels(header)
             for schematisation in schematisations:
                 name_item = QStandardItem(schematisation.name)
                 name_item.setData(schematisation, role=Qt.UserRole)
                 slug_item = QStandardItem(schematisation.slug)
-                owner_item = QStandardItem(schematisation.owner)
+                organisation = self.plugin_dock.organisations[schematisation.owner]
+                owner_item = QStandardItem(organisation.name)
                 created_by_item = QStandardItem(schematisation.created_by)
                 self.tv_schematisations_model.appendRow([name_item, slug_item, owner_item, created_by_item])
             for i in range(len(header)):
@@ -144,7 +146,7 @@ class SchematisationDownload(uicls, basecls):
             self.revisions_page_sbox.setMaximum(pages_nr)
             self.revisions_page_sbox.setSuffix(f" / {pages_nr}")
             self.tv_revisions_model.clear()
-            header = ["Revision number", "Commit message", "Commit user", "Commit date"]
+            header = ["Revision number", "Commit message", "Committed by", "Commit date"]
             self.tv_revisions_model.setHorizontalHeaderLabels(header)
             for revision in revisions:
                 number_item = QStandardItem(str(revision.number))

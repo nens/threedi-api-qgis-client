@@ -519,7 +519,9 @@ class ThreediCalls:
         """Remove schematisation revision raster."""
         self.threedi_api.schematisations_revisions_rasters_delete(raster_pk, revision_pk, schematisation_pk)
 
-    def download_schematisation_revision_raster(self, raster_pk: int, schematisation_pk: int, revision_pk: int):
+    def download_schematisation_revision_raster(
+        self, raster_pk: int, schematisation_pk: int, revision_pk: int
+    ) -> Download:
         """Download schematisation revision raster."""
         raster_download = self.threedi_api.schematisations_revisions_rasters_download(
             raster_pk, revision_pk, schematisation_pk
