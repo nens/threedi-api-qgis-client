@@ -43,6 +43,8 @@ class BuildOptionsDialog(uicls, basecls):
         """Load locally stored schematisation."""
         if not sqlite_filepath:
             sqlite_filepath = get_filepath(self, extension_filter="Spatialite Files (*.sqlite *.SQLITE)")
+        else:
+            sqlite_filepath = os.path.normpath(sqlite_filepath)
         if sqlite_filepath:
             try:
                 schematisation_id, schematisation_name, revision_number = get_local_schematisation_info(sqlite_filepath)
