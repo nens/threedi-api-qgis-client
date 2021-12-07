@@ -283,12 +283,33 @@ class SchematisationSettingsPage(QWizardPage):
         super().__init__(parent)
         self.parent_wizard = parent
         self.main_widget = SchematisationSettingsWidget(self)
+        self.settings_are_valid = False
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout = QGridLayout()
         layout.addWidget(self.main_widget)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.adjustSize()
+
+    def validatePage(self):
+        """Overriding page validation logic."""
+        non_zero_widgets = [
+            ("Computational Cell Size", self.main_widget.grid_space),
+            ("Global 2D friction coefficient", self.main_widget.frict_coef),
+            ("Simulation timestep", self.main_widget.sim_time_step),
+        ]
+        non_zero_settings = []
+        for setting_name, setting_widget in non_zero_widgets:
+            if not setting_widget.value() > 0:
+                non_zero_settings.append(setting_name)
+        if non_zero_settings:
+            self.settings_are_valid = False
+            warn = "\n".join(f"'{setting_name}' value have to be greater than 0" for setting_name in non_zero_settings)
+            self.parent_wizard.plugin_dock.communication.show_warn(warn)
+            return False
+        else:
+            self.settings_are_valid = True
+            return True
 
 
 class NewSchematisationWizard(QWizard):
@@ -319,6 +340,8 @@ class NewSchematisationWizard(QWizard):
 
     def create_schematisation(self):
         """Get settings from the wizard and create new schematisation (locally and remotely)."""
+        if not self.schematisation_settings_page.settings_are_valid:
+            return
         name, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_name_data()
         schematisation_settings = self.schematisation_settings_page.main_widget.collect_new_schematisation_settings()
         raster_filepaths = self.schematisation_settings_page.main_widget.rasters_filepaths()
