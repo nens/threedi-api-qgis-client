@@ -49,7 +49,7 @@ class ThreediModelSelection(uicls, basecls):
         self.pb_cancel_load.clicked.connect(self.cancel_load_model)
         self.search_le.returnPressed.connect(self.search_model)
         self.models_tv.selectionModel().selectionChanged.connect(self.toggle_load_model)
-        self.fetch_organisations()
+        self.populate_organisations()
         self.fetch_3di_models()
 
     def toggle_load_model(self):
@@ -68,8 +68,8 @@ class ThreediModelSelection(uicls, basecls):
         """Moving to the next results page."""
         self.page_sbox.setValue(self.page_sbox.value() + 1)
 
-    def fetch_organisations(self):
-        """Fetching organisations list and populating them inside combo box."""
+    def populate_organisations(self):
+        """Populating organisations list inside combo box."""
         for org in self.organisations.values():
             self.organisations_box.addItem(org.name, org)
 

@@ -30,8 +30,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulations_progresses_thread = None
         self.simulations_progresses_sentinel = None
         self.threedi_api = None
-        self.organisations = None
         self.current_user = None
+        self.organisations = {}
         self.current_schematisation_id = None
         self.current_schematisation_name = None
         self.current_schematisation_revision = None
@@ -83,6 +83,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if accepted:
             self.threedi_api = log_in_dialog.threedi_api
             self.current_user = log_in_dialog.user
+            self.organisations = log_in_dialog.organisations
             self.initialize_authorized_view()
 
     @api_client_required
@@ -100,7 +101,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.upload_dlg = None
         self.threedi_api = None
         self.current_user = None
-        self.organisations = None
+        self.organisations.clear()
         self.label_user.setText("")
         self.label_schematisation.setText("")
         self.btn_log_out.hide()
