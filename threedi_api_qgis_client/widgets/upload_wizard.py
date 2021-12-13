@@ -18,7 +18,7 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit,
 )
 from threedi_api_client.openapi import ApiException, SchematisationRevision
-from ..utils import is_file_checksum_equal, UploadFileType, UploadFileStatus
+from ..utils import is_file_checksum_equal, UploadFileType, UploadFileStatus, zip_sqlite
 from ..utils_ui import get_filepath
 from ..utils_qgis import sqlite_layer
 from ..communication import ListViewLogger
@@ -286,11 +286,13 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         sqlite_localisation = os.path.dirname(self.schematisation_sqlite)
         if self.latest_revision.sqlite:
             try:
-                remote_sqlite = self.tc.download_schematisation_revision_sqlite(
+                zipped_sqlite = zip_sqlite(self.schematisation_sqlite)
+                sqlite_download = self.tc.download_schematisation_revision_sqlite(
                     self.schematisation.id, self.latest_revision.id
                 )
-                files_matching = is_file_checksum_equal(self.schematisation_sqlite, remote_sqlite.etag)
+                files_matching = is_file_checksum_equal(zipped_sqlite, sqlite_download.etag)
                 status = UploadFileStatus.NO_CHANGES_DETECTED if files_matching else UploadFileStatus.CHANGES_DETECTED
+                os.remove(zipped_sqlite)
             except ApiException:
                 status = UploadFileStatus.CHANGES_DETECTED
         else:

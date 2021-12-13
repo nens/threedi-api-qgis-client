@@ -4,6 +4,7 @@ import os
 import json
 import hashlib
 import requests
+from zipfile import ZipFile, ZIP_DEFLATED
 from enum import Enum
 from collections import OrderedDict
 from datetime import datetime
@@ -123,6 +124,23 @@ def is_file_checksum_equal(file_path, etag):
         data = file_to_check.read()
         md5_returned = hashlib.md5(data).hexdigest()
         return etag == md5_returned
+
+
+def zip_sqlite(sqlite_filepath, compression=ZIP_DEFLATED):
+    """Zip sqlite file."""
+    sqlite_file = os.path.basename(sqlite_filepath)
+    zip_filepath = sqlite_filepath.rsplit(".", 1)[0] + ".zip"
+    with ZipFile(zip_filepath, "w", compression=compression) as zf:
+        zf.write(sqlite_filepath, arcname=sqlite_file)
+    return zip_filepath
+
+
+def unzip_sqlite(zip_filepath, location=None):
+    """Unzip sqlite file."""
+    if not location:
+        location = os.path.dirname(zip_filepath)
+    with ZipFile(zip_filepath, "r") as zf:
+        zf.extractall(location)
 
 
 def extract_error_message(e):

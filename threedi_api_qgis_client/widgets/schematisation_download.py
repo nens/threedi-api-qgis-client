@@ -9,7 +9,7 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from threedi_api_client.openapi import ApiException
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import make_schematisation_dirs, get_download_file
+from ..utils import make_schematisation_dirs, get_download_file, unzip_sqlite
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "schematisation_download.ui"))
@@ -219,10 +219,13 @@ class SchematisationDownload(uicls, basecls):
                 self.working_dir, schematisation_pk, schematisation_name, revision_number
             )
             schematisation_dir = os.path.dirname(sqlite_filepath)
+            zip_filepath = sqlite_filepath.rsplit(".", 1)[0] + ".zip"
             self.pbar_download.setMaximum(len(rasters_downloads) + 1)
             current_progress = 0
             self.pbar_download.setValue(current_progress)
-            get_download_file(sqlite_download, sqlite_filepath)
+            get_download_file(sqlite_download, zip_filepath)
+            unzip_sqlite(zip_filepath)
+            os.remove(zip_filepath)
             current_progress += 1
             self.pbar_download.setValue(current_progress)
             for raster_filename, raster_download in rasters_downloads:
