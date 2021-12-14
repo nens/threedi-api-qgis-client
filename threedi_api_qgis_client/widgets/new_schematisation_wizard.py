@@ -348,8 +348,9 @@ class NewSchematisationWizard(QWizard):
         aggregation_settings_queries = self.schematisation_settings_page.main_widget.aggregation_settings_queries
         try:
             schematisation = self.tc.create_schematisation(name, owner, tags=tags)
-            schematisation_sqlite = make_schematisation_dirs(self.working_dir, schematisation.id, name)
-            rasters_dir = os.path.join(os.path.dirname(schematisation_sqlite), "rasters")
+            schematisation_db_dir = make_schematisation_dirs(self.working_dir, schematisation.id, name)
+            rasters_dir = os.path.join(schematisation_db_dir, "rasters")
+            schematisation_sqlite = os.path.join(schematisation_db_dir, f"{name}.sqlite")
             shutil.copyfile(EMPTY_DB_PATH, schematisation_sqlite)
             for raster_filepath in raster_filepaths:
                 if raster_filepath:

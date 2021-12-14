@@ -208,6 +208,7 @@ class SchematisationDownload(uicls, basecls):
             schematisation_name = schematisation.name
             revision_pk = revision.id
             revision_number = revision.number
+            revision_sqlite = revision.sqlite
             sqlite_download = tc.download_schematisation_revision_sqlite(schematisation_pk, revision_pk)
             rasters_downloads = []
             for raster_file in revision.rasters or []:
@@ -215,21 +216,22 @@ class SchematisationDownload(uicls, basecls):
                     raster_file.id, schematisation_pk, revision_pk
                 )
                 rasters_downloads.append((raster_file.name, raster_download))
-            sqlite_filepath = make_schematisation_dirs(
+            schematisation_db_dir = make_schematisation_dirs(
                 self.working_dir, schematisation_pk, schematisation_name, revision_number
             )
-            schematisation_dir = os.path.dirname(sqlite_filepath)
-            zip_filepath = sqlite_filepath.rsplit(".", 1)[0] + ".zip"
+            zip_filepath = os.path.join(schematisation_db_dir, revision_sqlite.file.filename)
             self.pbar_download.setMaximum(len(rasters_downloads) + 1)
             current_progress = 0
             self.pbar_download.setValue(current_progress)
             get_download_file(sqlite_download, zip_filepath)
-            unzip_sqlite(zip_filepath)
+            content_list = unzip_sqlite(zip_filepath)
             os.remove(zip_filepath)
+            sqlite_file = content_list[0]
+            sqlite_filepath = os.path.join(schematisation_db_dir, sqlite_file)
             current_progress += 1
             self.pbar_download.setValue(current_progress)
             for raster_filename, raster_download in rasters_downloads:
-                raster_filepath = os.path.join(schematisation_dir, "rasters", raster_filename)
+                raster_filepath = os.path.join(schematisation_db_dir, "rasters", raster_filename)
                 get_download_file(raster_download, raster_filepath)
                 current_progress += 1
                 self.pbar_download.setValue(current_progress)

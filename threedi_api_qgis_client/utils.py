@@ -140,7 +140,9 @@ def unzip_sqlite(zip_filepath, location=None):
     if not location:
         location = os.path.dirname(zip_filepath)
     with ZipFile(zip_filepath, "r") as zf:
+        content_list = zf.namelist()
         zf.extractall(location)
+        return content_list
 
 
 def extract_error_message(e):
@@ -230,8 +232,8 @@ def make_schematisation_dirs(working_dir, schematisation_pk, schematisation_name
     for subpaths in revision_paths:
         full_subpath = os.path.join(schematisation_path, *subpaths)
         os.makedirs(full_subpath, exist_ok=True)
-    schematisation_db_filepath = os.path.join(schematisation_path, "schematisation", f"{schematisation_name}.sqlite")
-    return schematisation_db_filepath
+    schematisation_db_dir = os.path.join(schematisation_path, "schematisation")
+    return schematisation_db_dir
 
 
 def get_local_schematisation_info(schematisation_sqlite_path):
