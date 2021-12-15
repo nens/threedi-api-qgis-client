@@ -49,6 +49,8 @@ from threedi_api_client.openapi import (
     RevisionTask,
     RevisionRaster,
     Commit,
+    Template,
+    SimulationSettingsOverview,
 )
 
 
@@ -543,10 +545,10 @@ class ThreediCalls:
         return threedi_model
 
     def fetch_schematisation_revision_tasks(self, schematisation_pk: int, revision_pk: int) -> List[RevisionTask]:
+        """Get list of the schematisation revision tasks."""
         revision_tasks_list = self.paginated_fetch(
             self.threedi_api.schematisations_revisions_tasks_list, revision_pk, schematisation_pk
         )
-        """Get list of the schematisation revision tasks."""
         return revision_tasks_list
 
     def fetch_schematisation_revision_task(
@@ -555,3 +557,49 @@ class ThreediCalls:
         """Get schematisation revision task."""
         revision_task = self.threedi_api.schematisations_revisions_tasks_read(task_pk, revision_pk, schematisation_pk)
         return revision_task
+
+    def fetch_simulation_templates(self, **params) -> List[Template]:
+        """Get list of the simulation templates."""
+        simulation_templates_list = self.paginated_fetch(self.threedi_api.simulation_templates_list, **params)
+        return simulation_templates_list
+
+    def fetch_simulation_template(self, template_pk: int) -> Template:
+        """Get a simulation template with given id."""
+        simulation_template = self.threedi_api.simulation_templates_read(id=template_pk)
+        return simulation_template
+
+    def delete_simulation_template(self, template_pk: int):
+        """Delete a simulation template with given id."""
+        self.threedi_api.simulation_templates_delete(id=template_pk)
+
+    def create_template_from_simulation(self, name: str, simulation: str, **data) -> Template:
+        """Create simulation template out of the simulation."""
+        data.update({"name": name, "simulation": simulation})
+        simulation_template = self.threedi_api.simulation_templates_create(data)
+        return simulation_template
+
+    def create_simulation_from_template(
+        self, name: str, template: str, organisation: str, start_datetime: str, end_datetime: str, **data
+    ) -> Simulation:
+        """Create simulation out of the simulation template."""
+        data.update(
+            {
+                "name": name,
+                "template": template,
+                "organisation": organisation,
+                "start_datetime": start_datetime,
+                "end_datetime": end_datetime,
+            }
+        )
+        simulation = self.threedi_api.simulations_from_template(data)
+        return simulation
+
+    def fetch_simulation_settings_overview(self, simulation_pk: str) -> SimulationSettingsOverview:
+        """Get a simulation settings overview."""
+        simulation_settings_overview = self.threedi_api.simulations_settings_overview(simulation_pk=simulation_pk)
+        return simulation_settings_overview
+
+    def fetch_simulation_events(self, simulation_pk: int):
+        """Get a simulation events collection."""
+        simulation_events = self.threedi_api.simulations_events(id=simulation_pk)
+        return simulation_events
