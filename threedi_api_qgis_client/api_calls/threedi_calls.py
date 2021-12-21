@@ -676,6 +676,23 @@ class ThreediCalls:
         simulation_templates_list = self.paginated_fetch(self.threedi_api.simulation_templates_list, **params)
         return simulation_templates_list
 
+    def fetch_simulation_templates_with_count(
+        self, simulation_pk: int = None, limit: int = None, offset: int = None
+    ) -> Tuple[List[Template], int]:
+        """Get list of the simulation templated with count."""
+        params = {}
+        if simulation_pk is not None:
+            params["simulation__threedimodel__id"] = simulation_pk
+        if limit is not None:
+            params["limit"] = limit
+        if offset is not None:
+            params["offset"] = offset
+        logger.debug("Fetching simulation templates...")
+        response = self.threedi_api.simulation_templates_list(**params)
+        simulation_templates_list = response.results
+        simulation_templates_count = response.count
+        return simulation_templates_list, simulation_templates_count
+
     def fetch_simulation_template(self, template_pk: int) -> Template:
         """Get a simulation template with given id."""
         simulation_template = self.threedi_api.simulation_templates_read(id=template_pk)

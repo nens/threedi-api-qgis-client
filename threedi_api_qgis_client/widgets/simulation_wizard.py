@@ -51,6 +51,9 @@ uicls_precipitation_page, basecls_precipitation_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_precipitation.ui")
 )
 uicls_wind_page, basecls_wind_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_wind.ui"))
+uicls_settings_page, basecls_settings_page = uic.loadUiType(
+    os.path.join(base_dir, "ui", "simulation_wizard", "page_settings.ui")
+)
 uicls_summary_page, basecls_summary_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_initiation.ui")
 )
@@ -1380,6 +1383,27 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
         return wind_type, offset, duration, speed, direction, units, drag_coeff, inter_speed, inter_direction, values
 
 
+class SettingsWidget(uicls_settings_page, basecls_settings_page):
+    """Widget for the simulation settings page."""
+
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_settings.svg"))
+        self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMinimumWidth(700)
+        self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
+        set_widget_background_color(self.svg_widget)
+        set_widget_background_color(self)
+        self.connect_signals()
+
+    def connect_signals(self):
+        """Connecting widgets signals."""
+        pass
+
+
 class SummaryWidget(uicls_summary_page, basecls_summary_page):
     """Widget for the Summary page."""
 
@@ -1582,6 +1606,20 @@ class WindPage(QWizardPage):
         self.adjustSize()
 
 
+class SettingsPage(QWizardPage):
+    """Settings definition page."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = SettingsWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+
 class SummaryPage(QWizardPage):
     """New simulation summary page."""
 
@@ -1631,6 +1669,8 @@ class SimulationWizard(QWizard):
         if init_conditions.include_wind:
             self.wind_page = WindPage(self)
             self.addPage(self.wind_page)
+        self.settings_page = SettingsPage(self)
+        self.addPage(self.settings_page)
         self.summary_page = SummaryPage(self, initial_conditions=init_conditions)
         self.addPage(self.summary_page)
         self.currentIdChanged.connect(self.page_changed)
