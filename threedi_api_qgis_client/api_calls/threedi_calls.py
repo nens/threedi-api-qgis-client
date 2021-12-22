@@ -51,7 +51,11 @@ from threedi_api_client.openapi import (
     Commit,
     Template,
     SimulationSettingsOverview,
+    PhysicalSettings,
+    NumericalSettings,
+    TimeStepSettings,
     AggregationSettings,
+    Event,
 )
 
 
@@ -709,7 +713,7 @@ class ThreediCalls:
         return simulation_template
 
     def create_simulation_from_template(
-        self, name: str, template: str, organisation: str, start_datetime: str, end_datetime: str, **data
+        self, template: str, name: str, organisation: str, start_datetime: str, end_datetime: str, **data
     ) -> Simulation:
         """Create simulation out of the simulation template."""
         data.update(
@@ -729,7 +733,7 @@ class ThreediCalls:
         simulation_settings_overview = self.threedi_api.simulations_settings_overview(simulation_pk=simulation_pk)
         return simulation_settings_overview
 
-    def fetch_simulation_events(self, simulation_pk: int):
+    def fetch_simulation_events(self, simulation_pk: int) -> Event:
         """Get a simulation events collection."""
         simulation_events = self.threedi_api.simulations_events(id=simulation_pk)
         return simulation_events
@@ -740,6 +744,21 @@ class ThreediCalls:
             str(simulation_pk), data
         )
         return simulations_settings_aggregation
+
+    def create_simulation_settings_physical(self, simulation_pk: int, **data) -> PhysicalSettings:
+        """Create a simulation physical settings."""
+        simulation_settings_physical = self.threedi_api.simulations_settings_physical_create(str(simulation_pk), data)
+        return simulation_settings_physical
+
+    def create_simulation_settings_numerical(self, simulation_pk: int, **data) -> NumericalSettings:
+        """Create a simulation numerical settings."""
+        simulation_settings_numerical = self.threedi_api.simulations_settings_numerical_create(str(simulation_pk), data)
+        return simulation_settings_numerical
+
+    def create_simulation_settings_time_step(self, simulation_pk: int, **data) -> TimeStepSettings:
+        """Create a simulation time step settings."""
+        simulation_settings_time_step = self.threedi_api.simulations_settings_time_step_create(str(simulation_pk), data)
+        return simulation_settings_time_step
 
     def update_simulation_settings_physical(self, simulation_pk: int, **data) -> None:
         """Update a simulation physical settings."""

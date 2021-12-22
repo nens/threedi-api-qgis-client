@@ -41,7 +41,6 @@ class SimulationOverview(uicls, basecls):
         self.setup_view_model()
         self.plugin_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_progress)
         self.pb_new_sim.clicked.connect(self.new_wizard_init)
-        self.pb_load_template.clicked.connect(self.new_wizard_from_template)
         self.pb_stop_sim.clicked.connect(self.stop_simulation)
 
     def setup_view_model(self):
@@ -97,10 +96,30 @@ class SimulationOverview(uicls, basecls):
         """Open new simulation initiation options dialog."""
         self.model_selection_dlg.exec_()
         if self.model_selection_dlg.model_is_loaded:
-            self.simulation_init_wizard = SimulationInit(parent=self)
+            template = self.model_selection_dlg.current_simulation_template
+            simulation, settings_overview, events = self.get_simulation_data_from_template(template)
+            self.simulation_init_wizard = SimulationInit(settings_overview, events, parent=self)
             self.simulation_init_wizard.exec_()
             if self.simulation_init_wizard.open_wizard:
                 self.new_simulation()
+
+    def get_simulation_data_from_template(self, template):
+        """Fetching simulation, settings and events data from the simulation template."""
+        simulation, settings_overview, events = None, None, None
+        try:
+            tc = ThreediCalls(self.threedi_api)
+            simulation = template.simulation
+            settings_overview = tc.fetch_simulation_settings_overview(str(simulation.id))
+            events = tc.fetch_simulation_events(simulation.id)
+        except ApiException as e:
+            error_body = e.body
+            error_details = error_body["details"] if "details" in error_body else error_body
+            error_msg = f"Error: {error_details}"
+            self.plugin_dock.communication.bar_error(error_msg)
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.plugin_dock.communication.bar_error(error_msg)
+        return simulation, settings_overview, events
 
     def new_wizard_from_template(self):
         """Start new simulation wizard from template."""

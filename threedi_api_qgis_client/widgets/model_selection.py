@@ -38,8 +38,6 @@ class ThreediModelSelection(uicls, basecls):
         self.current_model_cells = None
         self.current_model_breaches = None
         self.current_simulation_template = None
-        self.current_settings_overview = None
-        self.current_events = None
         self.cells_layer = None
         self.breaches_layer = None
         self.organisation = None
@@ -224,15 +222,14 @@ class ThreediModelSelection(uicls, basecls):
             self.current_model = name_item.data(Qt.UserRole)
             self.current_model_cells = self.get_cached_data("cells")
             self.current_model_breaches = self.get_cached_data("breaches")
-            simulation_template = self.get_selected_template()
-            self.current_settings_overview, self.current_events = self.get_template_data(simulation_template)
-            self.current_simulation_template = simulation_template
+            self.current_simulation_template = self.get_selected_template()
             self.load_cached_layers()
         self.model_is_loaded = True
         self.close()
 
     def cancel_load_model(self):
         """Cancel loading model."""
+        self.current_simulation_template = None
         self.model_is_loaded = False
         self.close()
 
@@ -257,25 +254,6 @@ class ThreediModelSelection(uicls, basecls):
         else:
             selected_template = None
         return selected_template
-
-    def get_template_data(self, template):
-        """Getting settings and events data from the simulation template."""
-        settings_overview, events = None, None
-        try:
-            tc = ThreediCalls(self.threedi_api)
-            simulation = template.simulation
-            simulation_id = simulation.id
-            settings_overview = tc.fetch_simulation_settings_overview(str(simulation_id))
-            events = tc.fetch_simulation_events(simulation_id)
-        except ApiException as e:
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
-            self.communication.bar_error(error_msg)
-        except Exception as e:
-            error_msg = f"Error: {e}"
-            self.communication.bar_error(error_msg)
-        return settings_overview, events
 
     def get_cached_data(self, geojson_name):
         """Get model data that should be cached."""
