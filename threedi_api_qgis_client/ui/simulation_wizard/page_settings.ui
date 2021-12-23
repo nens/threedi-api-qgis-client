@@ -84,8 +84,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>945</width>
-           <height>781</height>
+           <width>962</width>
+           <height>723</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout_5">
@@ -98,6 +98,9 @@
             </property>
             <property name="title">
              <string>Numerical settings</string>
+            </property>
+            <property name="collapsed">
+             <bool>true</bool>
             </property>
             <layout class="QGridLayout" name="gridLayout_9">
              <item row="0" column="0">
@@ -131,6 +134,7 @@
                </property>
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -237,7 +241,9 @@
                </property>
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
+                 <stylestrategy>PreferDefault</stylestrategy>
                 </font>
                </property>
                <property name="styleSheet">
@@ -834,6 +840,7 @@
                </property>
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -888,6 +895,7 @@
                </property>
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -1192,220 +1200,68 @@
              <bool>false</bool>
             </property>
             <layout class="QGridLayout" name="gridLayout_4">
-             <item row="0" column="0">
-              <widget class="QWidget" name="widget" native="true">
-               <layout class="QGridLayout" name="gridLayout_7">
-                <item row="0" column="6">
-                 <widget class="QLabel" name="label_31">
-                  <property name="font">
-                   <font>
-                    <pointsize>10</pointsize>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>Interval:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="7">
-                 <widget class="QDoubleSpinBox" name="interval">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>25</height>
-                   </size>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>10</pointsize>
-                   </font>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">QDoubleSpinBox {background-color: white;}</string>
-                  </property>
-                  <property name="frame">
-                   <bool>false</bool>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                  <property name="buttonSymbols">
-                   <enum>QAbstractSpinBox::NoButtons</enum>
-                  </property>
-                  <property name="maximum">
-                   <double>2147483647.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_30">
-                  <property name="font">
-                   <font>
-                    <pointsize>10</pointsize>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>Flow variable:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="3">
-                 <widget class="QLineEdit" name="name">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>25</height>
-                   </size>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <family>Segoe UI</family>
-                    <pointsize>10</pointsize>
-                   </font>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">QLineEdit {background-color: white;}</string>
-                  </property>
-                  <property name="frame">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="8">
-                 <widget class="QPushButton" name="remove_aggregation_entry">
-                  <property name="font">
-                   <font>
-                    <pointsize>10</pointsize>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>Remove</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="2">
-                 <widget class="QLabel" name="label_32">
-                  <property name="font">
-                   <font>
-                    <pointsize>10</pointsize>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>Name:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="4">
-                 <widget class="QLabel" name="label_33">
-                  <property name="font">
-                   <font>
-                    <pointsize>10</pointsize>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>Method:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="5">
-                 <widget class="QComboBox" name="method">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>25</height>
-                   </size>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>10</pointsize>
-                   </font>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-                  </property>
-                  <property name="frame">
-                   <bool>false</bool>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>min</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>max</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>avg</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>cum</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>cum_positive</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>cum_negative</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>current</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>sum</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QLineEdit" name="flow_variable">
-                  <property name="font">
-                   <font>
-                    <pointsize>10</pointsize>
-                   </font>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">QLineEdit {background-color: white;}</string>
-                  </property>
-                  <property name="frame">
-                   <bool>false</bool>
-                  </property>
-                  <property name="readOnly">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
+             <item row="0" column="0" rowspan="2" colspan="3">
+              <widget class="QTreeView" name="aggregation_tv">
+               <property name="styleSheet">
+                <string notr="true">QTreeView {background-color: white;}</string>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::NoFrame</enum>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::SingleSelection</enum>
+               </property>
               </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QPushButton" name="remove_aggregation_entry">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>Remove</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QPushButton" name="add_aggregation_entry">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <family>Segoe UI</family>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
              </item>
             </layout>
            </widget>
@@ -1419,6 +1275,9 @@
             </property>
             <property name="title">
              <string>Timestep settings</string>
+            </property>
+            <property name="collapsed">
+             <bool>true</bool>
             </property>
             <layout class="QGridLayout" name="gridLayout_3">
              <item row="0" column="0">
@@ -1631,6 +1490,9 @@
             </property>
             <property name="title">
              <string>Physical settings</string>
+            </property>
+            <property name="collapsed">
+             <bool>true</bool>
             </property>
             <layout class="QGridLayout" name="gridLayout_2">
              <item row="0" column="0">

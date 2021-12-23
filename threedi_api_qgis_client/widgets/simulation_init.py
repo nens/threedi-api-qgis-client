@@ -59,7 +59,7 @@ class SimulationInit(uicls, basecls):
         self.pb_next.clicked.connect(self.start_wizard)
         self.pb_cancel.clicked.connect(self.close)
         self.setup_initial_options()
-        self.check_template_events()
+        # self.check_template_events()  # TODO: Uncomment this after implementing handling of the template events
 
     def setup_initial_options(self):
         """Setup initial options dialog."""
@@ -72,6 +72,7 @@ class SimulationInit(uicls, basecls):
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
 
     def check_template_events(self):
+        """Check events that are available for the simulation template."""
         if self.events.fileboundaryconditions:
             self.cb_boundary.setChecked(True)
         initial_events = [

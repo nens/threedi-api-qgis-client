@@ -13,8 +13,6 @@ from .simulation_wizard import SimulationWizard
 from .model_selection import ThreediModelSelection
 from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import load_saved_templates
-from ..utils_ui import set_widgets_parameters
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_overview.ui"))
@@ -96,12 +94,12 @@ class SimulationOverview(uicls, basecls):
         """Open new simulation initiation options dialog."""
         self.model_selection_dlg.exec_()
         if self.model_selection_dlg.model_is_loaded:
-            template = self.model_selection_dlg.current_simulation_template
-            simulation, settings_overview, events = self.get_simulation_data_from_template(template)
+            simulation_template = self.model_selection_dlg.current_simulation_template
+            simulation, settings_overview, events = self.get_simulation_data_from_template(simulation_template)
             self.simulation_init_wizard = SimulationInit(settings_overview, events, parent=self)
             self.simulation_init_wizard.exec_()
             if self.simulation_init_wizard.open_wizard:
-                self.new_simulation()
+                self.new_simulation(simulation, settings_overview, events)
 
     def get_simulation_data_from_template(self, template):
         """Fetching simulation, settings and events data from the simulation template."""
@@ -121,30 +119,13 @@ class SimulationOverview(uicls, basecls):
             self.plugin_dock.communication.bar_error(error_msg)
         return simulation, settings_overview, events
 
-    def new_wizard_from_template(self):
-        """Start new simulation wizard from template."""
-        template_items = load_saved_templates()
-        items_keys = list(template_items.keys())
-        if not items_keys:
-            self.plugin_dock.communication.show_warn("There are no any templates available!")
-            return
-        template = self.plugin_dock.communication.pick_item("Load template", "Pick template to load", None, *items_keys)
-        if template:
-            self.model_selection_dlg.exec_()
-            if self.model_selection_dlg.model_is_loaded:
-                simulation_template = template_items[template]
-                self.simulation_init_wizard = SimulationInit(self)
-                set_widgets_parameters(self.simulation_init_wizard, **simulation_template["options"])
-                self.simulation_init_wizard.start_wizard()
-                self.new_simulation(simulation_template)
-
-    def new_simulation(self, simulation_template=None):
+    def new_simulation(self, simulation, settings_overview, events):
         """Opening a wizard which allows defining and running new simulations."""
         self.simulation_wizard = SimulationWizard(
             self.plugin_dock, self.model_selection_dlg, self.simulation_init_wizard
         )
-        if simulation_template:
-            self.simulation_wizard.load_template_parameters(simulation_template)
+        if simulation:
+            self.simulation_wizard.load_template_parameters(simulation, settings_overview, events)
         self.close()
         self.simulation_wizard.exec_()
         new_simulations = self.simulation_wizard.new_simulations
@@ -155,7 +136,7 @@ class SimulationOverview(uicls, basecls):
                 self.add_simulation_to_model(sim, initial_status, initial_progress)
 
     def stop_simulation(self):
-        """Sending request to shutdown currently selected simulation."""
+        """Sending request to shut down currently selected simulation."""
         index = self.tv_sim_tree.currentIndex()
         if not index.isValid():
             return
