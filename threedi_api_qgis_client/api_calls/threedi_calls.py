@@ -706,9 +706,9 @@ class ThreediCalls:
         """Delete a simulation template with given id."""
         self.threedi_api.simulation_templates_delete(id=template_pk)
 
-    def create_template_from_simulation(self, name: str, simulation: str, **data) -> Template:
+    def create_template_from_simulation(self, name: str, simulation_pk: str, **data) -> Template:
         """Create simulation template out of the simulation."""
-        data.update({"name": name, "simulation": simulation})
+        data.update({"name": name, "simulation": simulation_pk})
         simulation_template = self.threedi_api.simulation_templates_create(data)
         return simulation_template
 
@@ -738,13 +738,6 @@ class ThreediCalls:
         simulation_events = self.threedi_api.simulations_events(id=simulation_pk)
         return simulation_events
 
-    def create_simulation_settings_aggregation(self, simulation_pk: int, **data) -> AggregationSettings:
-        """Create a simulation aggregation settings."""
-        simulations_settings_aggregation = self.threedi_api.simulations_settings_aggregation_create(
-            str(simulation_pk), data
-        )
-        return simulations_settings_aggregation
-
     def create_simulation_settings_physical(self, simulation_pk: int, **data) -> PhysicalSettings:
         """Create a simulation physical settings."""
         simulation_settings_physical = self.threedi_api.simulations_settings_physical_create(str(simulation_pk), data)
@@ -759,6 +752,13 @@ class ThreediCalls:
         """Create a simulation time step settings."""
         simulation_settings_time_step = self.threedi_api.simulations_settings_time_step_create(str(simulation_pk), data)
         return simulation_settings_time_step
+
+    def create_simulation_settings_aggregation(self, simulation_pk: int, **data) -> AggregationSettings:
+        """Create a simulation aggregation settings."""
+        simulations_settings_aggregation = self.threedi_api.simulations_settings_aggregation_create(
+            str(simulation_pk), data
+        )
+        return simulations_settings_aggregation
 
     def update_simulation_settings_physical(self, simulation_pk: int, **data) -> None:
         """Update a simulation physical settings."""

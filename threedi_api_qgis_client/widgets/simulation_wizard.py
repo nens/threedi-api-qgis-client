@@ -2108,6 +2108,16 @@ class SimulationWizard(QWizard):
                         speed_interpolate=wispeed,
                         direction_interpolate=widirection,
                     )
+                # Create settings instances
+                main_settings = self.settings_page.main_widget.collect_single_settings()
+                physical_settings, numerical_settings, time_step_settings = main_settings
+                aggregation_settings_list = self.settings_page.main_widget.collect_aggregation_settings()
+                tc.create_simulation_settings_physical(sim_id, **physical_settings)
+                tc.create_simulation_settings_numerical(sim_id, **numerical_settings)
+                tc.create_simulation_settings_time_step(sim_id, **time_step_settings)
+                for aggregation_settings in aggregation_settings_list:
+                    tc.create_simulation_settings_aggregation(sim_id, **aggregation_settings)
+                # Run simulation
                 try:
                     tc.create_simulation_action(sim_id, name="start")
                 except ApiException as e:
@@ -2117,7 +2127,7 @@ class SimulationWizard(QWizard):
                         raise e
                 if self.summary_page.main_widget.cb_save_template.isChecked():
                     template_name = self.summary_page.main_widget.template_name.text()
-                    tc.create_template_from_simulation(template_name, sim_name)
+                    tc.create_template_from_simulation(template_name, str(sim_id))
                 self.new_simulations.append(new_simulation)
                 self.new_simulation_statuses[new_simulation.id] = current_status
                 msg = f"Simulation {new_simulation.name} added to queue!"
