@@ -59,7 +59,7 @@ class SimulationInit(uicls, basecls):
         self.pb_next.clicked.connect(self.start_wizard)
         self.pb_cancel.clicked.connect(self.close)
         self.setup_initial_options()
-        # self.check_template_events()  # TODO: Uncomment this after implementing handling of the template events
+        self.check_template_events()
 
     def setup_initial_options(self):
         """Setup initial options dialog."""
@@ -76,13 +76,14 @@ class SimulationInit(uicls, basecls):
         if self.events.fileboundaryconditions:
             self.cb_boundary.setChecked(True)
         initial_events = [
-            "initial_groundwaterlevel",
-            "initial_groundwaterraster",
             "initial_onedwaterlevel",
             "initial_onedwaterlevelpredefined",
-            "initial_savedstate",
+            # "initial_onedwaterlevelfile", # missing in Event object instance
             "initial_twodwaterlevel",
             "initial_twodwaterraster",
+            "initial_groundwaterlevel",
+            "initial_groundwaterraster",
+            "initial_savedstate",
         ]
         if any(getattr(self.events, event_name) for event_name in initial_events):
             self.cb_conditions.setChecked(True)

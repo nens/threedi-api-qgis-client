@@ -1869,6 +1869,7 @@ class SimulationWizard(QWizard):
 
     def load_template_parameters(self, simulation, settings_overview, events):
         """Loading simulation parameters from the simulation template data."""
+        # Simulation attributes
         name_params = {"le_sim_name": simulation.name, "le_tags": ", ".join(eval(simulation.tags))}
         set_widgets_parameters(self.name_page.main_widget, **name_params)
         start_datetime = simulation.start_datetime.strftime("%Y-%m-%dT%H:%M")
@@ -1877,6 +1878,7 @@ class SimulationWizard(QWizard):
         end_date, end_time = end_datetime.split("T")
         duration_params = {"date_from": start_date, "time_from": start_time, "date_to": end_date, "time_to": end_time}
         set_widgets_parameters(self.duration_page.main_widget, **duration_params)
+        # Simulation settings
         ignore_entries = {"id", "simulation_id"}
         physical_settings = {
             k: v for k, v in settings_overview.physical_settings.to_dict().items() if k not in ignore_entries
@@ -1896,6 +1898,34 @@ class SimulationWizard(QWizard):
         )
         aggregation_settings_list = [settings.to_dict() for settings in settings_overview.aggregation_settings]
         self.settings_page.main_widget.populate_aggregation_settings(aggregation_settings_list)
+        # Simulation events
+        init_conditions = self.init_conditions_dlg.initial_conditions
+        if init_conditions.include_initial_conditions:
+            init_conditions_widget = self.init_conditions_page.main_widget
+            if any([events.initial_onedwaterlevel, events.initial_onedwaterlevelpredefined]):
+                init_conditions_widget.cb_1d.setChecked(True)
+                if events.initial_onedwaterlevel:
+                    init_conditions_widget.dd_1d.setCurrentText("Global value")
+                    init_conditions_widget.sp_1d_global_value.setValue(events.initial_onedwaterlevel.value)
+                elif events.initial_onedwaterlevelpredefined:
+                    init_conditions_widget.dd_1d.setCurrentText("From spatialite")
+            if any([events.initial_twodwaterlevel, events.initial_twodwaterraster]):
+                init_conditions_widget.cb_2d.setChecked(True)
+                if events.initial_twodwaterlevel:
+                    init_conditions_widget.sp_2d_global_value.setValue(events.initial_twodwaterlevel.value)
+            if any([events.initial_groundwaterlevel, events.initial_groundwaterraster]):
+                init_conditions_widget.cb_groundwater.setChecked(True)
+                if events.initial_groundwaterlevel:
+                    init_conditions_widget.sp_gwater_global_value.setValue(events.initial_groundwaterlevel.value)
+        # TODO: Add handling of all events
+        if init_conditions.include_laterals:
+            pass
+        if init_conditions.include_breaches:
+            pass
+        if init_conditions.include_precipitations:
+            pass
+        if init_conditions.include_wind:
+            pass
 
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
