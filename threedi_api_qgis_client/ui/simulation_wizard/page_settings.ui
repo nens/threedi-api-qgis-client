@@ -1187,6 +1187,12 @@
           </item>
           <item row="3" column="0">
            <widget class="QgsCollapsibleGroupBox" name="group_aggregation">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <family>Segoe UI</family>

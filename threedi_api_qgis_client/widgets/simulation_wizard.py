@@ -7,7 +7,7 @@ import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from copy import deepcopy
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor, QStandardItemModel, QStandardItem, QFont
@@ -35,7 +35,6 @@ from ..utils import (
     mmh_to_ms,
     mmh_to_mmtimestep,
     mmtimestep_to_mmh,
-    write_template,
     write_laterals_to_json,
     upload_file,
     LATERALS_FILE_TEMPLATE,
@@ -1870,7 +1869,7 @@ class SimulationWizard(QWizard):
     def load_template_parameters(self, simulation, settings_overview, events):
         """Loading simulation parameters from the simulation template data."""
         # Simulation attributes
-        name_params = {"le_sim_name": simulation.name, "le_tags": ", ".join(eval(simulation.tags))}
+        name_params = {"le_sim_name": simulation.name, "le_tags": ", ".join(simulation.tags)}
         set_widgets_parameters(self.name_page.main_widget, **name_params)
         start_datetime = simulation.start_datetime.strftime("%Y-%m-%dT%H:%M")
         end_datetime = simulation.end_datetime.strftime("%Y-%m-%dT%H:%M")
@@ -1913,15 +1912,43 @@ class SimulationWizard(QWizard):
                 init_conditions_widget.cb_2d.setChecked(True)
                 if events.initial_twodwaterlevel:
                     init_conditions_widget.sp_2d_global_value.setValue(events.initial_twodwaterlevel.value)
+                elif events.initial_twodwaterraster:
+                    for raster_filename, raster in init_conditions_widget.rasters.items():
+                        if raster.url == events.initial_twodwaterraster.initial_waterlevel:
+                            init_conditions_widget.dd_2d.setCurrentText(raster_filename)
+                            init_conditions_widget.cb_2d_aggregation.setCurrentText(
+                                events.initial_twodwaterraster.aggregation_method
+                            )
+                            break
             if any([events.initial_groundwaterlevel, events.initial_groundwaterraster]):
                 init_conditions_widget.cb_groundwater.setChecked(True)
                 if events.initial_groundwaterlevel:
                     init_conditions_widget.sp_gwater_global_value.setValue(events.initial_groundwaterlevel.value)
+                elif events.initial_groundwaterraster:
+                    for raster_filename, raster in init_conditions_widget.rasters.items():
+                        if raster.url == events.initial_groundwaterlevel.initial_waterlevel:
+                            init_conditions_widget.dd_groundwater.setCurrentText(raster_filename)
+                            init_conditions_widget.cb_gwater_aggregation.setCurrentText(
+                                events.initial_groundwaterlevel.aggregation_method
+                            )
+                            break
         # TODO: Add handling of all events
         if init_conditions.include_laterals:
             pass
         if init_conditions.include_breaches:
-            pass
+            breaches_widget = self.breaches_page.main_widget
+            if events.breach:
+                breach = events.breach[0]
+                tc = ThreediCalls(self.plugin_dock.threedi_api)
+                threedimodel_id_str = str(self.model_selection_dlg.current_model.id)
+                potential_breach_url = breach.potential_breach.rstrip("/")
+                potential_breach_id = int(potential_breach_url.split("/")[-1])
+                potential_breach = tc.fetch_3di_model_potential_breach(threedimodel_id_str, potential_breach_id)
+                breaches_widget.dd_breach_id.setCurrentText(str(potential_breach.connected_pnt_id))
+                breaches_widget.sb_width.setValue(breach.initial_width)
+                breaches_widget.sb_duration.setValue(breach.duration_till_max_depth)
+                breaches_widget.dd_units.setCurrentText("s")
+                breaches_widget.sp_start_after.setValue(breach.offset)
         if init_conditions.include_precipitations:
             pass
         if init_conditions.include_wind:
@@ -2078,7 +2105,7 @@ class SimulationWizard(QWizard):
                         else:
                             time.sleep(2)
                 if self.init_conditions.include_breaches:
-                    breach_obj = tc.fetch_3di_model_potential_breach(threedimodel_id, int(breach_id))
+                    breach_obj = tc.fetch_3di_model_point_potential_breach(threedimodel_id, int(breach_id))
                     breach = breach_obj.to_dict()
                     tc.create_simulation_breaches(
                         sim_id,
