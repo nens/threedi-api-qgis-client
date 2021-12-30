@@ -33,6 +33,7 @@ from ..utils import (
     apply_24h_timeseries,
     extract_error_message,
     mmh_to_ms,
+    ms_to_mmh,
     mmh_to_mmtimestep,
     mmtimestep_to_mmh,
     write_laterals_to_json,
@@ -995,10 +996,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             with open(filename, encoding="utf-8-sig") as rain_file:
                 rain_reader = csv.reader(rain_file)
                 units_multiplier = self.SECONDS_MULTIPLIERS["mins"]
-                for time, rain in rain_reader:
+                for rtime, rain in rain_reader:
                     # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
                     try:
-                        time_series.append([float(time) * units_multiplier, float(rain)])
+                        time_series.append([float(rtime) * units_multiplier, float(rain)])
                     except ValueError:
                         continue
         self.le_upload_rain.setText(filename)
@@ -1898,6 +1899,7 @@ class SimulationWizard(QWizard):
         aggregation_settings_list = [settings.to_dict() for settings in settings_overview.aggregation_settings]
         self.settings_page.main_widget.populate_aggregation_settings(aggregation_settings_list)
         # Simulation events
+        simulation_duration = self.duration_page.main_widget.calculate_simulation_duration()
         init_conditions = self.init_conditions_dlg.initial_conditions
         if init_conditions.include_initial_conditions:
             init_conditions_widget = self.init_conditions_page.main_widget
@@ -1932,8 +1934,8 @@ class SimulationWizard(QWizard):
                                 events.initial_groundwaterlevel.aggregation_method
                             )
                             break
-        # TODO: Add handling of all events
         if init_conditions.include_laterals:
+            # TODO: Clarify how to handle this
             pass
         if init_conditions.include_breaches:
             breaches_widget = self.breaches_page.main_widget
@@ -1950,7 +1952,34 @@ class SimulationWizard(QWizard):
                 breaches_widget.dd_units.setCurrentText("s")
                 breaches_widget.sp_start_after.setValue(breach.offset)
         if init_conditions.include_precipitations:
-            pass
+            precipitation_widget = self.precipitation_page.main_widget
+            if events.timeseriesrain:
+                rain = events.timeseriesrain[0]
+                if rain.constant:
+                    precipitation_widget.cbo_prec_type.setCurrentText("Constant")
+                    precipitation_widget.sp_start_after_constant.setValue(rain.offset // 3600)
+                    if rain.duration < simulation_duration:
+                        precipitation_widget.sp_stop_after_constant.setValue(rain.duration // 3600)
+                    intensity_ms = rain.values[0][-1]
+                    intensity_mmh = ms_to_mmh(intensity_ms)
+                    precipitation_widget.sp_intensity.setValue(intensity_mmh)
+                else:
+                    simulation = precipitation_widget.dd_simulation.currentText()
+                    precipitation_widget.cbo_prec_type.setCurrentText("Custom")
+                    precipitation_widget.le_upload_rain.setText("<FROM TEMPLATE>")
+                    precipitation_widget.sp_start_after_custom.setValue(rain.offset // 3600)
+                    precipitation_widget.cb_interpolate_rain.setChecked(rain.interpolate)
+                    rain_values = rain.values
+                    timestep = rain_values[1][0] - rain_values[0][0]
+                    mm_timestep = [[t, mmh_to_mmtimestep(ms_to_mmh(v), timestep)] for t, v in rain_values]
+                    precipitation_widget.custom_time_series[simulation] = mm_timestep
+                    precipitation_widget.plot_precipitation()
+            if events.lizardrasterrain:
+                rain = events.lizardrasterrain[0]
+                precipitation_widget.cbo_prec_type.setCurrentText("Radar - NL Only")
+                precipitation_widget.sp_start_after_radar.setValue(rain.offset // 3600)
+                if rain.duration < simulation_duration:
+                    precipitation_widget.sp_stop_after_radar.setValue(rain.duration // 3600)
         if init_conditions.include_wind:
             pass
 
