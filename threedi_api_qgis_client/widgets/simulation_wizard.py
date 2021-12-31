@@ -1305,10 +1305,10 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
         with open(filename, encoding="utf-8-sig") as wind_file:
             wind_reader = csv.reader(wind_file)
             units_multiplier = self.SECONDS_MULTIPLIERS["mins"]
-            for time, windspeed, direction in wind_reader:
+            for timestep, windspeed, direction in wind_reader:
                 # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
                 try:
-                    time_series.append([float(time) * units_multiplier, float(windspeed), float(direction)])
+                    time_series.append([float(timestep) * units_multiplier, float(windspeed), float(direction)])
                 except ValueError:
                     continue
         self.le_upload_wind.setText(filename)
@@ -1981,7 +1981,32 @@ class SimulationWizard(QWizard):
                 if rain.duration < simulation_duration:
                     precipitation_widget.sp_stop_after_radar.setValue(rain.duration // 3600)
         if init_conditions.include_wind:
-            pass
+            wind_widget = self.wind_page.main_widget
+            if events.wind:
+                wind = events.wind[0]
+                initial_winddragcoefficient = events.initial_winddragcoefficient
+                if wind.speed_constant and wind.direction_constant:
+                    wind_widget.cbo_wind_type.setCurrentText("Constant")
+                    wind_widget.sp_start_wind_constant.setValue(wind.offset // 3600)
+                    wind_widget.cbo_windspeed_u.setCurrentText(wind.units)
+                    timestep, speed, direction = wind.values[0]
+                    wind_widget.sp_windspeed.setValue(speed)
+                    wind_widget.sp_direction.setValue(direction)
+                    if initial_winddragcoefficient:
+                        wind_widget.sp_dc_constant.setValue(initial_winddragcoefficient.value)
+                else:
+                    wind_widget.cbo_wind_type.setCurrentText("Custom")
+                    wind_widget.le_upload_wind.setText("<FROM TEMPLATE>")
+                    wind_widget.sp_start_wind_custom.setValue(wind.offset // 3600)
+                    wind_widget.cb_interpolate_speed.setChecked(wind.speed_interpolate)
+                    wind_widget.cb_interpolate_direction.setChecked(wind.direction_interpolate)
+                    wind_timeseries = wind.values
+                    wind_timeseries_minutes = [
+                        [timestep // 60, speed, direction] for timestep, speed, direction in wind_timeseries
+                    ]
+                    wind_widget.custom_wind = wind_timeseries_minutes
+                    if initial_winddragcoefficient:
+                        wind_widget.sp_dc_custom.setValue(initial_winddragcoefficient.value)
 
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
