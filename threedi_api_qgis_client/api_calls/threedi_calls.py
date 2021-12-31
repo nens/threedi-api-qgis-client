@@ -49,6 +49,13 @@ from threedi_api_client.openapi import (
     RevisionTask,
     RevisionRaster,
     Commit,
+    Template,
+    SimulationSettingsOverview,
+    PhysicalSettings,
+    NumericalSettings,
+    TimeStepSettings,
+    AggregationSettings,
+    Event,
 )
 
 
@@ -215,8 +222,8 @@ class ThreediCalls:
         breaches = self.paginated_fetch(self.threedi_api.threedimodels_potentialbreaches_list, threedimodel_id)
         return breaches
 
-    def fetch_3di_model_potential_breach(self, threedimodel_id: str, content_pk: int = None) -> PotentialBreach:
-        """Fetch a single potential breach."""
+    def fetch_3di_model_point_potential_breach(self, threedimodel_id: str, content_pk: int = None) -> PotentialBreach:
+        """Fetch a single potential breach at given connected_pnt_id."""
         params = {"threedimodel_pk": threedimodel_id}
         if content_pk is not None:
             params["connected_pnt_id"] = content_pk
@@ -224,8 +231,13 @@ class ThreediCalls:
         breach = response.results[0]
         return breach
 
+    def fetch_3di_model_potential_breach(self, threedimodel_id: str, breach_pk: int) -> PotentialBreach:
+        """Fetch a single potential breach with given id."""
+        breach = self.threedi_api.threedimodels_potentialbreaches_read(breach_pk, threedimodel_id)
+        return breach
+
     def fetch_3di_model_initial_waterlevels(self, threedimodel_id: str) -> List[InitialWaterlevel]:
-        """Fetch initial waterlevels List"""
+        """Fetch initial waterlevels list"""
         waterlevels = self.paginated_fetch(self.threedi_api.threedimodels_initial_waterlevels_list, threedimodel_id)
         return waterlevels
 
@@ -253,6 +265,13 @@ class ThreediCalls:
         """Fetch all Organisations available for current user."""
         organisations = self.paginated_fetch(self.threedi_api.organisations_list)
         return organisations
+
+    def fetch_lateral_files(self, simulation_pk: int) -> List[FileLateral]:
+        """Get list of the lateral files of the given simulation."""
+        lateral_files_list = self.paginated_fetch(
+            self.threedi_api.simulations_events_lateral_file_list, str(simulation_pk)
+        )
+        return lateral_files_list
 
     def create_simulation_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
         """Add ConstantRain to the given simulation."""
@@ -288,13 +307,6 @@ class ThreediCalls:
         """Add lateral file to the given simulation."""
         lateral_upload_file = self.threedi_api.simulations_events_lateral_file_create(str(simulation_pk), data)
         return lateral_upload_file
-
-    def fetch_lateral_files(self, simulation_pk: int) -> List[FileLateral]:
-        """Get list of the lateral files of the given simulation."""
-        lateral_files_list = self.paginated_fetch(
-            self.threedi_api.simulations_events_lateral_file_list, str(simulation_pk)
-        )
-        return lateral_files_list
 
     def create_simulation_postprocessing_in_lizard_arrival(
         self, simulation_pk: int, **data
@@ -388,6 +400,118 @@ class ThreediCalls:
     def create_simulation_custom_wind(self, simulation_pk: int, **wind_data) -> TimeseriesWind:
         """Add TimeseriesWind to the given simulation."""
         time_series_wind = self.threedi_api.simulations_events_wind_timeseries_create((str(simulation_pk)), wind_data)
+        return time_series_wind
+
+    def update_simulation_constant_precipitation(self, event_id: int, simulation_pk: int, **rain_data) -> None:
+        """Update ConstantRain of the given simulation."""
+        self.threedi_api.simulations_events_rain_constant_partial_update(event_id, str(simulation_pk), rain_data)
+
+    def update_simulation_custom_precipitation(self, event_id: int, simulation_pk: int, **rain_data) -> None:
+        """Update TimeseriesRain of the given simulation."""
+        self.threedi_api.simulations_events_rain_timeseries_partial_update(event_id, str(simulation_pk), rain_data)
+
+    def update_simulation_custom_netcdf_precipitation(self, event_id: int, simulation_pk: int, **rain_data) -> None:
+        """Update rain time series from NetCDF file of the given simulation."""
+        self.threedi_api.simulations_events_rain_rasters_netcdf_partial_update(event_id, str(simulation_pk), rain_data)
+
+    def update_simulation_radar_precipitation(self, event_id: int, simulation_pk: int, **rain_data) -> None:
+        """Update LizardRasterRain of the given simulation."""
+        self.threedi_api.simulations_events_rain_rasters_lizard_partial_update(event_id, str(simulation_pk), rain_data)
+
+    def update_simulation_breaches(self, event_id: int, simulation_pk: int, **data) -> None:
+        """Update Breach of the given simulation."""
+        self.threedi_api.simulations_events_breaches_partial_update(event_id, str(simulation_pk), data)
+
+    def update_simulation_lateral_timeseries(self, event_id: int, simulation_pk: int, **data) -> None:
+        """Update lateral timeseries of the given simulation."""
+        self.threedi_api.simulations_events_lateral_timeseries_partial_update(event_id, str(simulation_pk), data)
+
+    def update_simulation_lateral_file(self, event_id: int, simulation_pk: int, **data) -> None:
+        """Update lateral file of the given simulation."""
+        self.threedi_api.simulations_events_lateral_file_partial_update(event_id, str(simulation_pk), data)
+
+    def update_simulation_initial_1d_water_level_constant(
+        self, initial_id: int, simulation_pk: int, **data
+    ) -> OneDWaterLevel:
+        """Update add_initial_1d_water_level_constant of the given simulation."""
+        water_level_1d_const = self.threedi_api.simulations_initial1d_water_level_constant_partial_update(
+            initial_id, str(simulation_pk), data
+        )
+        return water_level_1d_const
+
+    def update_simulation_initial_1d_water_level_predefined(
+        self, initial_id: int, simulation_pk: int, **data
+    ) -> OneDWaterLevelPredefined:
+        """Update add_initial_1d_water_level_predefined of the given simulation."""
+        water_level_1d_pred = self.threedi_api.simulations_initial1d_water_level_predefined_partial_update(
+            initial_id, str(simulation_pk), data
+        )
+        return water_level_1d_pred
+
+    def update_simulation_initial_2d_water_level_constant(
+        self, initial_id: int, simulation_pk: int, **data
+    ) -> TwoDWaterLevel:
+        """Update add_initial_2d_water_level_constant of the given simulation."""
+        water_level_2d_const = self.threedi_api.simulations_initial2d_water_level_constant_partial_update(
+            initial_id, str(simulation_pk), data
+        )
+        return water_level_2d_const
+
+    def update_simulation_initial_2d_water_level_raster(
+        self, initial_id: int, simulation_pk: int, **data
+    ) -> TwoDWaterRaster:
+        """Update add_initial_2d_water_level_raster of the given simulation."""
+        water_level_2d_raster = self.threedi_api.simulations_initial2d_water_level_raster_partial_update(
+            initial_id, str(simulation_pk), data
+        )
+        return water_level_2d_raster
+
+    def update_simulation_initial_groundwater_level_constant(
+        self, initial_id: int, simulation_pk: int, **data
+    ) -> GroundWaterLevel:
+        """Update add_initial_groundwater_level_constant of the given simulation."""
+        groundwater_const = self.threedi_api.simulations_initial_groundwater_level_constant_partial_update(
+            initial_id, str(simulation_pk), data
+        )
+        return groundwater_const
+
+    def update_simulation_initial_groundwater_level_raster(
+        self, initial_id: int, simulation_pk: int, **data
+    ) -> GroundWaterRaster:
+        """Update add_initial_groundwater_level_raster of the given simulation."""
+        groundwater_raster = self.threedi_api.simulations_initial_groundwater_level_raster_partial_update(
+            initial_id, str(simulation_pk), data
+        )
+        return groundwater_raster
+
+    def update_simulation_initial_saved_state(self, initial_id: int, simulation_pk: int, **data) -> InitialSavedState:
+        """Update initial saved state of the given simulation."""
+        initial_saved_state = self.threedi_api.simulations_initial_saved_state_partial_update(
+            initial_id, str(simulation_pk), data
+        )
+        return initial_saved_state
+
+    def update_simulation_initial_wind_drag_coefficient(
+        self, initial_id: int, simulation_pk: int, **data
+    ) -> WindDragCoefficient:
+        """Update initial wind drag coefficient of the given simulation."""
+        initial_wind_drag_coefficient = self.threedi_api.simulations_initial_wind_drag_coefficient_partial_update(
+            initial_id, str(simulation_pk), data
+        )
+        return initial_wind_drag_coefficient
+
+    def update_simulation_constant_wind(self, event_id: int, simulation_pk: int, **wind_data) -> ConstantWind:
+        """Update ConstantWind of the given simulation."""
+        constant_wind = self.threedi_api.simulations_events_wind_constant_partial_update(
+            event_id, str(simulation_pk), wind_data
+        )
+        return constant_wind
+
+    def update_simulation_custom_wind(self, event_id: int, simulation_pk: int, **wind_data) -> TimeseriesWind:
+        """Update TimeseriesWind of the given simulation."""
+        time_series_wind = self.threedi_api.simulations_events_wind_timeseries_partial_update(
+            event_id, (str(simulation_pk)), wind_data
+        )
         return time_series_wind
 
     # V3-beta API methods
@@ -543,10 +667,10 @@ class ThreediCalls:
         return threedi_model
 
     def fetch_schematisation_revision_tasks(self, schematisation_pk: int, revision_pk: int) -> List[RevisionTask]:
+        """Get list of the schematisation revision tasks."""
         revision_tasks_list = self.paginated_fetch(
             self.threedi_api.schematisations_revisions_tasks_list, revision_pk, schematisation_pk
         )
-        """Get list of the schematisation revision tasks."""
         return revision_tasks_list
 
     def fetch_schematisation_revision_task(
@@ -555,3 +679,104 @@ class ThreediCalls:
         """Get schematisation revision task."""
         revision_task = self.threedi_api.schematisations_revisions_tasks_read(task_pk, revision_pk, schematisation_pk)
         return revision_task
+
+    def fetch_simulation_templates(self, **params) -> List[Template]:
+        """Get list of the simulation templates."""
+        simulation_templates_list = self.paginated_fetch(self.threedi_api.simulation_templates_list, **params)
+        return simulation_templates_list
+
+    def fetch_simulation_templates_with_count(
+        self, simulation_pk: int = None, limit: int = None, offset: int = None
+    ) -> Tuple[List[Template], int]:
+        """Get list of the simulation templated with count."""
+        params = {}
+        if simulation_pk is not None:
+            params["simulation__threedimodel__id"] = simulation_pk
+        if limit is not None:
+            params["limit"] = limit
+        if offset is not None:
+            params["offset"] = offset
+        logger.debug("Fetching simulation templates...")
+        response = self.threedi_api.simulation_templates_list(**params)
+        simulation_templates_list = response.results
+        simulation_templates_count = response.count
+        return simulation_templates_list, simulation_templates_count
+
+    def fetch_simulation_template(self, template_pk: int) -> Template:
+        """Get a simulation template with given id."""
+        simulation_template = self.threedi_api.simulation_templates_read(id=template_pk)
+        return simulation_template
+
+    def delete_simulation_template(self, template_pk: int):
+        """Delete a simulation template with given id."""
+        self.threedi_api.simulation_templates_delete(id=template_pk)
+
+    def create_template_from_simulation(self, name: str, simulation_pk: str, **data) -> Template:
+        """Create simulation template out of the simulation."""
+        data.update({"name": name, "simulation": simulation_pk})
+        simulation_template = self.threedi_api.simulation_templates_create(data)
+        return simulation_template
+
+    def create_simulation_from_template(
+        self, template: str, name: str, organisation: str, start_datetime: str, end_datetime: str, **data
+    ) -> Simulation:
+        """Create simulation out of the simulation template."""
+        data.update(
+            {
+                "name": name,
+                "template": template,
+                "organisation": organisation,
+                "start_datetime": start_datetime,
+                "end_datetime": end_datetime,
+            }
+        )
+        simulation = self.threedi_api.simulations_from_template(data)
+        return simulation
+
+    def fetch_simulation_settings_overview(self, simulation_pk: str) -> SimulationSettingsOverview:
+        """Get a simulation settings overview."""
+        simulation_settings_overview = self.threedi_api.simulations_settings_overview(simulation_pk=simulation_pk)
+        return simulation_settings_overview
+
+    def fetch_simulation_events(self, simulation_pk: int) -> Event:
+        """Get a simulation events collection."""
+        simulation_events = self.threedi_api.simulations_events(id=simulation_pk)
+        return simulation_events
+
+    def create_simulation_settings_physical(self, simulation_pk: int, **data) -> PhysicalSettings:
+        """Create a simulation physical settings."""
+        simulation_settings_physical = self.threedi_api.simulations_settings_physical_create(str(simulation_pk), data)
+        return simulation_settings_physical
+
+    def create_simulation_settings_numerical(self, simulation_pk: int, **data) -> NumericalSettings:
+        """Create a simulation numerical settings."""
+        simulation_settings_numerical = self.threedi_api.simulations_settings_numerical_create(str(simulation_pk), data)
+        return simulation_settings_numerical
+
+    def create_simulation_settings_time_step(self, simulation_pk: int, **data) -> TimeStepSettings:
+        """Create a simulation time step settings."""
+        simulation_settings_time_step = self.threedi_api.simulations_settings_time_step_create(str(simulation_pk), data)
+        return simulation_settings_time_step
+
+    def create_simulation_settings_aggregation(self, simulation_pk: int, **data) -> AggregationSettings:
+        """Create a simulation aggregation settings."""
+        simulations_settings_aggregation = self.threedi_api.simulations_settings_aggregation_create(
+            str(simulation_pk), data
+        )
+        return simulations_settings_aggregation
+
+    def update_simulation_settings_physical(self, simulation_pk: int, **data) -> None:
+        """Update a simulation physical settings."""
+        self.threedi_api.simulations_settings_physical_partial_update(str(simulation_pk), data)
+
+    def update_simulation_settings_numerical(self, simulation_pk: int, **data) -> None:
+        """Update a simulation numerical settings."""
+        self.threedi_api.simulations_settings_numerical_partial_update(str(simulation_pk), data)
+
+    def update_simulation_settings_time_step(self, simulation_pk: int, **data) -> None:
+        """Update a simulation time step settings."""
+        self.threedi_api.simulations_settings_time_step_partial_update(str(simulation_pk), data)
+
+    def update_simulation_settings_aggregation(self, setting_id: int, simulation_pk: int, **data) -> None:
+        """Update a simulation aggregation settings."""
+        self.threedi_api.simulations_settings_aggregation_partial_update(setting_id, str(simulation_pk), data)

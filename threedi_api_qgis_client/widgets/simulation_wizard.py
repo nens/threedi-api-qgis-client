@@ -7,12 +7,21 @@ import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from copy import deepcopy
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
-from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtGui import QColor, QStandardItemModel, QStandardItem, QFont
 from qgis.PyQt.QtCore import QSettings, Qt, QSize
-from qgis.PyQt.QtWidgets import QWizardPage, QWizard, QGridLayout, QSizePolicy, QFileDialog
+from qgis.PyQt.QtWidgets import (
+    QWizardPage,
+    QWizard,
+    QGridLayout,
+    QSizePolicy,
+    QFileDialog,
+    QComboBox,
+    QDoubleSpinBox,
+    QLineEdit,
+)
 from threedi_api_client.openapi import ApiException
 from ..utils_ui import (
     icon_path,
@@ -24,9 +33,9 @@ from ..utils import (
     apply_24h_timeseries,
     extract_error_message,
     mmh_to_ms,
+    ms_to_mmh,
     mmh_to_mmtimestep,
     mmtimestep_to_mmh,
-    write_template,
     write_laterals_to_json,
     upload_file,
     LATERALS_FILE_TEMPLATE,
@@ -51,6 +60,9 @@ uicls_precipitation_page, basecls_precipitation_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_precipitation.ui")
 )
 uicls_wind_page, basecls_wind_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_wind.ui"))
+uicls_settings_page, basecls_settings_page = uic.loadUiType(
+    os.path.join(base_dir, "ui", "simulation_wizard", "page_settings.ui")
+)
 uicls_summary_page, basecls_summary_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_initiation.ui")
 )
@@ -984,10 +996,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             with open(filename, encoding="utf-8-sig") as rain_file:
                 rain_reader = csv.reader(rain_file)
                 units_multiplier = self.SECONDS_MULTIPLIERS["mins"]
-                for time, rain in rain_reader:
+                for rtime, rain in rain_reader:
                     # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
                     try:
-                        time_series.append([float(time) * units_multiplier, float(rain)])
+                        time_series.append([float(rtime) * units_multiplier, float(rain)])
                     except ValueError:
                         continue
         self.le_upload_rain.setText(filename)
@@ -1293,10 +1305,10 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
         with open(filename, encoding="utf-8-sig") as wind_file:
             wind_reader = csv.reader(wind_file)
             units_multiplier = self.SECONDS_MULTIPLIERS["mins"]
-            for time, windspeed, direction in wind_reader:
+            for timestep, windspeed, direction in wind_reader:
                 # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
                 try:
-                    time_series.append([float(time) * units_multiplier, float(windspeed), float(direction)])
+                    time_series.append([float(timestep) * units_multiplier, float(windspeed), float(direction)])
                 except ValueError:
                     continue
         self.le_upload_wind.setText(filename)
@@ -1378,6 +1390,143 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
         inter_speed, inter_direction = self.get_interpolate_flags()
         values = self.custom_wind
         return wind_type, offset, duration, speed, direction, units, drag_coeff, inter_speed, inter_direction, values
+
+
+class SettingsWidget(uicls_settings_page, basecls_settings_page):
+    """Widget for the simulation settings page."""
+
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_settings.svg"))
+        self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMinimumWidth(700)
+        self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
+        set_widget_background_color(self.svg_widget)
+        set_widget_background_color(self)
+        self.aggregation_model = QStandardItemModel()
+        self.aggregation_tv.setModel(self.aggregation_model)
+        self.aggregation_settings_header = ["Flow variable", "Method", "Interval", "Name"]
+        self.flow_variables = [
+            "water_level",
+            "flow_velocity",
+            "discharge",
+            "volume",
+            "pump_discharge",
+            "wet_cross_section",
+            "lateral_discharge",
+            "wet_surface",
+            "rain",
+            "simple_infiltration",
+            "leakage",
+            "interception",
+            "surface_source_sink_discharge",
+        ]
+        self.flow_methods = ["min", "max", "avg", "cum", "cum_positive", "cum_negative", "current", "sum"]
+        self.connect_signals()
+        self.populate_aggregation_settings()
+
+    def connect_signals(self):
+        """Connecting widgets signals."""
+        self.add_aggregation_entry.clicked.connect(self.add_aggregation_settings_row)
+        self.remove_aggregation_entry.clicked.connect(self.remove_aggregation_settings_row)
+
+    def populate_aggregation_settings(self, aggregation_settings_list=None):
+        """Populate aggregation settings inside QTreeView."""
+        if aggregation_settings_list is not None:
+            self.aggregation_model.clear()
+        self.aggregation_model.setHorizontalHeaderLabels(self.aggregation_settings_header)
+        for i, aggregation_settings in enumerate(aggregation_settings_list or [], start=0):
+            row_items = [QStandardItem("") for _ in self.aggregation_settings_header]
+            self.aggregation_model.appendRow(row_items)
+            self.add_aggregation_settings_widgets(i, aggregation_settings)
+        for i in range(len(self.aggregation_settings_header)):
+            self.aggregation_tv.resizeColumnToContents(i)
+
+    def add_aggregation_settings_widgets(self, row_number, aggregation_settings=None):
+        """Add aggregation settings widgets"""
+        segoe_ui_font = QFont("Segoe UI", 8)
+        flow_variable_combo = QComboBox()
+        flow_variable_combo.setFont(segoe_ui_font)
+        flow_variable_combo.addItems(self.flow_variables)
+
+        flow_method_combo = QComboBox()
+        flow_method_combo.setFont(segoe_ui_font)
+        flow_method_combo.addItems(self.flow_methods)
+
+        interval_spinbox = QDoubleSpinBox()
+        interval_spinbox.setFont(segoe_ui_font)
+        interval_spinbox.setStyleSheet("QDoubleSpinBox {background-color: white;}")
+        interval_spinbox.setDecimals(4)
+        interval_spinbox.setMinimum(1.0)
+        interval_spinbox.setMaximum(2147483647.0)
+
+        name_line_edit = QLineEdit()
+        name_line_edit.setFont(segoe_ui_font)
+        name_line_edit.setStyleSheet("QLineEdit {background-color: white;}")
+
+        if aggregation_settings:
+            flow_variable_combo.setCurrentText(aggregation_settings["flow_variable"])
+            flow_method_combo.setCurrentText(aggregation_settings["method"])
+            interval_spinbox.setValue(aggregation_settings["interval"])
+            name_line_edit.setText(aggregation_settings["name"] or "")
+
+        self.aggregation_tv.setIndexWidget(self.aggregation_model.index(row_number, 0), flow_variable_combo)
+        self.aggregation_tv.setIndexWidget(self.aggregation_model.index(row_number, 1), flow_method_combo)
+        self.aggregation_tv.setIndexWidget(self.aggregation_model.index(row_number, 2), interval_spinbox)
+        self.aggregation_tv.setIndexWidget(self.aggregation_model.index(row_number, 3), name_line_edit)
+
+    def add_aggregation_settings_row(self):
+        """Add aggregation settings row into QTreeView."""
+        row_count = self.aggregation_model.rowCount()
+        row_items = [QStandardItem("") for _ in self.aggregation_settings_header]
+        self.aggregation_model.appendRow(row_items)
+        self.add_aggregation_settings_widgets(row_count)
+
+    def remove_aggregation_settings_row(self):
+        """Remove selected aggregation settings row from QTreeView."""
+        index = self.aggregation_tv.currentIndex()
+        if not index.isValid():
+            return
+        self.aggregation_model.removeRow(index.row())
+
+    def collect_single_settings(self):
+        """Get data from the single settings groupboxes."""
+        physical_settings = scan_widgets_parameters(self.group_physical, get_combobox_text=False)
+        numerical_settings = scan_widgets_parameters(self.group_numerical, get_combobox_text=False)
+        time_step_settings = scan_widgets_parameters(self.group_timestep, get_combobox_text=False)
+        return physical_settings, numerical_settings, time_step_settings
+
+    def collect_aggregation_settings(self):
+        """Get data from the aggregation settings rows."""
+        aggregation_settings_list = []
+        for row_number in range(self.aggregation_model.rowCount()):
+            aggregation_settings = {}
+            flow_variable_item = self.aggregation_model.item(row_number, 0)
+            flow_variable_index = flow_variable_item.index()
+            flow_variable_widget = self.aggregation_tv.indexWidget(flow_variable_index)
+
+            flow_method_item = self.aggregation_model.item(row_number, 1)
+            flow_method_index = flow_method_item.index()
+            flow_method_widget = self.aggregation_tv.indexWidget(flow_method_index)
+
+            interval_item = self.aggregation_model.item(row_number, 2)
+            interval_index = interval_item.index()
+            interval_widget = self.aggregation_tv.indexWidget(interval_index)
+
+            name_item = self.aggregation_model.item(row_number, 3)
+            name_index = name_item.index()
+            name_widget = self.aggregation_tv.indexWidget(name_index)
+
+            aggregation_settings["flow_variable"] = flow_variable_widget.currentText()
+            aggregation_settings["method"] = flow_method_widget.currentText()
+            aggregation_settings["interval"] = interval_widget.value()
+            aggregation_settings["name"] = name_widget.text()
+            aggregation_settings_list.append(aggregation_settings)
+
+        return aggregation_settings_list
 
 
 class SummaryWidget(uicls_summary_page, basecls_summary_page):
@@ -1582,6 +1731,20 @@ class WindPage(QWizardPage):
         self.adjustSize()
 
 
+class SettingsPage(QWizardPage):
+    """Settings definition page."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = SettingsWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+
 class SummaryPage(QWizardPage):
     """New simulation summary page."""
 
@@ -1631,6 +1794,8 @@ class SimulationWizard(QWizard):
         if init_conditions.include_wind:
             self.wind_page = WindPage(self)
             self.addPage(self.wind_page)
+        self.settings_page = SettingsPage(self)
+        self.addPage(self.settings_page)
         self.summary_page = SummaryPage(self, initial_conditions=init_conditions)
         self.addPage(self.summary_page)
         self.currentIdChanged.connect(self.page_changed)
@@ -1702,66 +1867,146 @@ class SimulationWizard(QWizard):
             self.summary_page.main_widget.breach_id.setText(breach_id)
             self.summary_page.main_widget.duration_breach.setText(str(duration_of_breach))
 
-    def save_simulation_as_template(self):
-        """Saving simulation parameters to the JSON template file."""
-        simulation_template = OrderedDict()
-        template_name = self.summary_page.main_widget.template_name.text()
-        simulation_template["options"] = scan_widgets_parameters(self.init_conditions_dlg)
-        simulation_template["name_page"] = scan_widgets_parameters(self.name_page.main_widget)
-        simulation_template["duration_page"] = scan_widgets_parameters(self.duration_page.main_widget)
-        if hasattr(self, "init_conditions_page"):
-            simulation_template["init_conditions_page"] = scan_widgets_parameters(self.init_conditions_page.main_widget)
-        if hasattr(self, "laterals_page"):
-            simulation_template["laterals_page"] = scan_widgets_parameters(self.laterals_page.main_widget)
-            laterals_values = self.laterals_page.main_widget.get_laterals_data()
-            simulation_template["laterals_page"]["values"] = laterals_values
-        if hasattr(self, "dwf_page"):
-            simulation_template["dwf_page"] = scan_widgets_parameters(self.dwf_page.main_widget)
-            dwf_values = self.dwf_page.main_widget.get_dwf_data()
-            simulation_template["dwf_page"]["values"] = dwf_values
-        if hasattr(self, "breaches_page"):
-            simulation_template["breaches_page"] = scan_widgets_parameters(self.breaches_page.main_widget)
-            breaches_values = self.breaches_page.main_widget.values
-            simulation_template["breaches_page"]["values"] = breaches_values
-        if hasattr(self, "precipitation_page"):
-            simulation_template["precipitation_page"] = scan_widgets_parameters(self.precipitation_page.main_widget)
-            precipitation_values = self.precipitation_page.main_widget.values
-            simulation_template["precipitation_page"]["values"] = precipitation_values
-        if hasattr(self, "wind_page"):
-            simulation_template["wind_page"] = scan_widgets_parameters(self.wind_page.main_widget)
-            wind_values = self.wind_page.main_widget.custom_wind
-            simulation_template["wind_page"]["values"] = wind_values
-        write_template(template_name, simulation_template)
-
-    def load_template_parameters(self, simulation_template):
-        """Loading simulation parameters from the JSON template file."""
-        set_widgets_parameters(self.name_page.main_widget, **simulation_template["name_page"])
-        set_widgets_parameters(self.duration_page.main_widget, **simulation_template["duration_page"])
-        if hasattr(self, "init_conditions_page"):
-            set_widgets_parameters(self.init_conditions_page.main_widget, **simulation_template["init_conditions_page"])
-        if hasattr(self, "laterals_page"):
-            set_widgets_parameters(self.laterals_page.main_widget, **simulation_template["laterals_page"])
-            laterals_values = simulation_template["laterals_page"]["values"]
-            self.laterals_page.main_widget.laterals_timeseries.update(laterals_values)
-            for lat in self.laterals_page.main_widget.laterals_timeseries.keys():
-                self.laterals_page.main_widget.cb_laterals.addItem(lat)
-        if hasattr(self, "dwf_page"):
-            set_widgets_parameters(self.dwf_page.main_widget, **simulation_template["dwf_page"])
-            dwf_values = simulation_template["dwf_page"]["values"]
-            self.dwf_page.main_widget.dwf_timeseries.update(dwf_values)
-        if hasattr(self, "breaches_page"):
-            set_widgets_parameters(self.breaches_page.main_widget, **simulation_template["breaches_page"])
-            breaches_values = simulation_template["breaches_page"]["values"]
-            self.breaches_page.main_widget.values.update(breaches_values)
-        if hasattr(self, "precipitation_page"):
-            set_widgets_parameters(self.precipitation_page.main_widget, **simulation_template["precipitation_page"])
-            precipitation_values = simulation_template["precipitation_page"]["values"]
-            self.precipitation_page.main_widget.values.update(precipitation_values)
-            self.precipitation_page.main_widget.simulation_changed()
-        if hasattr(self, "wind_page"):
-            set_widgets_parameters(self.wind_page.main_widget, **simulation_template["wind_page"])
-            wind_values = simulation_template["wind_page"]["values"]
-            self.wind_page.main_widget.custom_wind = wind_values
+    def load_template_parameters(self, simulation, settings_overview, events):
+        """Loading simulation parameters from the simulation template data."""
+        # Simulation attributes
+        name_params = {"le_sim_name": simulation.name, "le_tags": ", ".join(simulation.tags)}
+        set_widgets_parameters(self.name_page.main_widget, **name_params)
+        start_datetime = simulation.start_datetime.strftime("%Y-%m-%dT%H:%M")
+        end_datetime = simulation.end_datetime.strftime("%Y-%m-%dT%H:%M")
+        start_date, start_time = start_datetime.split("T")
+        end_date, end_time = end_datetime.split("T")
+        duration_params = {"date_from": start_date, "time_from": start_time, "date_to": end_date, "time_to": end_time}
+        set_widgets_parameters(self.duration_page.main_widget, **duration_params)
+        # Simulation settings
+        ignore_entries = {"id", "simulation_id"}
+        physical_settings = {
+            k: v for k, v in settings_overview.physical_settings.to_dict().items() if k not in ignore_entries
+        }
+        numerical_settings = {
+            k: v for k, v in settings_overview.numerical_settings.to_dict().items() if k not in ignore_entries
+        }
+        time_step_settings = {
+            k: v for k, v in settings_overview.time_step_settings.to_dict().items() if k not in ignore_entries
+        }
+        set_widgets_parameters(
+            self.settings_page.main_widget,
+            find_combobox_text=False,
+            **physical_settings,
+            **numerical_settings,
+            **time_step_settings,
+        )
+        aggregation_settings_list = [settings.to_dict() for settings in settings_overview.aggregation_settings]
+        self.settings_page.main_widget.populate_aggregation_settings(aggregation_settings_list)
+        # Simulation events
+        simulation_duration = self.duration_page.main_widget.calculate_simulation_duration()
+        init_conditions = self.init_conditions_dlg.initial_conditions
+        if init_conditions.include_initial_conditions:
+            init_conditions_widget = self.init_conditions_page.main_widget
+            if any([events.initial_onedwaterlevel, events.initial_onedwaterlevelpredefined]):
+                init_conditions_widget.cb_1d.setChecked(True)
+                if events.initial_onedwaterlevel:
+                    init_conditions_widget.dd_1d.setCurrentText("Global value")
+                    init_conditions_widget.sp_1d_global_value.setValue(events.initial_onedwaterlevel.value)
+                elif events.initial_onedwaterlevelpredefined:
+                    init_conditions_widget.dd_1d.setCurrentText("From spatialite")
+            if any([events.initial_twodwaterlevel, events.initial_twodwaterraster]):
+                init_conditions_widget.cb_2d.setChecked(True)
+                if events.initial_twodwaterlevel:
+                    init_conditions_widget.sp_2d_global_value.setValue(events.initial_twodwaterlevel.value)
+                elif events.initial_twodwaterraster:
+                    for raster_filename, raster in init_conditions_widget.rasters.items():
+                        if raster.url == events.initial_twodwaterraster.initial_waterlevel:
+                            init_conditions_widget.dd_2d.setCurrentText(raster_filename)
+                            init_conditions_widget.cb_2d_aggregation.setCurrentText(
+                                events.initial_twodwaterraster.aggregation_method
+                            )
+                            break
+            if any([events.initial_groundwaterlevel, events.initial_groundwaterraster]):
+                init_conditions_widget.cb_groundwater.setChecked(True)
+                if events.initial_groundwaterlevel:
+                    init_conditions_widget.sp_gwater_global_value.setValue(events.initial_groundwaterlevel.value)
+                elif events.initial_groundwaterraster:
+                    for raster_filename, raster in init_conditions_widget.rasters.items():
+                        if raster.url == events.initial_groundwaterlevel.initial_waterlevel:
+                            init_conditions_widget.dd_groundwater.setCurrentText(raster_filename)
+                            init_conditions_widget.cb_gwater_aggregation.setCurrentText(
+                                events.initial_groundwaterlevel.aggregation_method
+                            )
+                            break
+        if init_conditions.include_laterals:
+            # TODO: Clarify how to handle this
+            pass
+        if init_conditions.include_breaches:
+            breaches_widget = self.breaches_page.main_widget
+            if events.breach:
+                breach = events.breach[0]
+                tc = ThreediCalls(self.plugin_dock.threedi_api)
+                threedimodel_id_str = str(self.model_selection_dlg.current_model.id)
+                potential_breach_url = breach.potential_breach.rstrip("/")
+                potential_breach_id = int(potential_breach_url.split("/")[-1])
+                potential_breach = tc.fetch_3di_model_potential_breach(threedimodel_id_str, potential_breach_id)
+                breaches_widget.dd_breach_id.setCurrentText(str(potential_breach.connected_pnt_id))
+                breaches_widget.sb_width.setValue(breach.initial_width)
+                breaches_widget.sb_duration.setValue(breach.duration_till_max_depth)
+                breaches_widget.dd_units.setCurrentText("s")
+                breaches_widget.sp_start_after.setValue(breach.offset)
+        if init_conditions.include_precipitations:
+            precipitation_widget = self.precipitation_page.main_widget
+            if events.timeseriesrain:
+                rain = events.timeseriesrain[0]
+                if rain.constant:
+                    precipitation_widget.cbo_prec_type.setCurrentText("Constant")
+                    precipitation_widget.sp_start_after_constant.setValue(rain.offset // 3600)
+                    if rain.duration < simulation_duration:
+                        precipitation_widget.sp_stop_after_constant.setValue(rain.duration // 3600)
+                    intensity_ms = rain.values[0][-1]
+                    intensity_mmh = ms_to_mmh(intensity_ms)
+                    precipitation_widget.sp_intensity.setValue(intensity_mmh)
+                else:
+                    simulation = precipitation_widget.dd_simulation.currentText()
+                    precipitation_widget.cbo_prec_type.setCurrentText("Custom")
+                    precipitation_widget.le_upload_rain.setText("<FROM TEMPLATE>")
+                    precipitation_widget.sp_start_after_custom.setValue(rain.offset // 3600)
+                    precipitation_widget.cb_interpolate_rain.setChecked(rain.interpolate)
+                    rain_values = rain.values
+                    timestep = rain_values[1][0] - rain_values[0][0]
+                    mm_timestep = [[t, mmh_to_mmtimestep(ms_to_mmh(v), timestep)] for t, v in rain_values]
+                    precipitation_widget.custom_time_series[simulation] = mm_timestep
+                    precipitation_widget.plot_precipitation()
+            if events.lizardrasterrain:
+                rain = events.lizardrasterrain[0]
+                precipitation_widget.cbo_prec_type.setCurrentText("Radar - NL Only")
+                precipitation_widget.sp_start_after_radar.setValue(rain.offset // 3600)
+                if rain.duration < simulation_duration:
+                    precipitation_widget.sp_stop_after_radar.setValue(rain.duration // 3600)
+        if init_conditions.include_wind:
+            wind_widget = self.wind_page.main_widget
+            if events.wind:
+                wind = events.wind[0]
+                initial_winddragcoefficient = events.initial_winddragcoefficient
+                if wind.speed_constant and wind.direction_constant:
+                    wind_widget.cbo_wind_type.setCurrentText("Constant")
+                    wind_widget.sp_start_wind_constant.setValue(wind.offset // 3600)
+                    wind_widget.cbo_windspeed_u.setCurrentText(wind.units)
+                    timestep, speed, direction = wind.values[0]
+                    wind_widget.sp_windspeed.setValue(speed)
+                    wind_widget.sp_direction.setValue(direction)
+                    if initial_winddragcoefficient:
+                        wind_widget.sp_dc_constant.setValue(initial_winddragcoefficient.value)
+                else:
+                    wind_widget.cbo_wind_type.setCurrentText("Custom")
+                    wind_widget.le_upload_wind.setText("<FROM TEMPLATE>")
+                    wind_widget.sp_start_wind_custom.setValue(wind.offset // 3600)
+                    wind_widget.cb_interpolate_speed.setChecked(wind.speed_interpolate)
+                    wind_widget.cb_interpolate_direction.setChecked(wind.direction_interpolate)
+                    wind_timeseries = wind.values
+                    wind_timeseries_minutes = [
+                        [timestep // 60, speed, direction] for timestep, speed, direction in wind_timeseries
+                    ]
+                    wind_widget.custom_wind = wind_timeseries_minutes
+                    if initial_winddragcoefficient:
+                        wind_widget.sp_dc_custom.setValue(initial_winddragcoefficient.value)
 
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
@@ -1790,8 +2035,6 @@ class SimulationWizard(QWizard):
             saved_state = self.init_conditions_page.main_widget.saved_states.get(
                 self.init_conditions_page.main_widget.cb_saved_states.currentText()
             )
-        if self.summary_page.main_widget.cb_save_template.isChecked():
-            self.save_simulation_as_template()
         try:
             self.new_simulations = []
             self.new_simulation_statuses = {}
@@ -1916,7 +2159,7 @@ class SimulationWizard(QWizard):
                         else:
                             time.sleep(2)
                 if self.init_conditions.include_breaches:
-                    breach_obj = tc.fetch_3di_model_potential_breach(threedimodel_id, int(breach_id))
+                    breach_obj = tc.fetch_3di_model_point_potential_breach(threedimodel_id, int(breach_id))
                     breach = breach_obj.to_dict()
                     tc.create_simulation_breaches(
                         sim_id,
@@ -1976,6 +2219,16 @@ class SimulationWizard(QWizard):
                         speed_interpolate=wispeed,
                         direction_interpolate=widirection,
                     )
+                # Create settings instances
+                main_settings = self.settings_page.main_widget.collect_single_settings()
+                physical_settings, numerical_settings, time_step_settings = main_settings
+                aggregation_settings_list = self.settings_page.main_widget.collect_aggregation_settings()
+                tc.create_simulation_settings_physical(sim_id, **physical_settings)
+                tc.create_simulation_settings_numerical(sim_id, **numerical_settings)
+                tc.create_simulation_settings_time_step(sim_id, **time_step_settings)
+                for aggregation_settings in aggregation_settings_list:
+                    tc.create_simulation_settings_aggregation(sim_id, **aggregation_settings)
+                # Run simulation
                 try:
                     tc.create_simulation_action(sim_id, name="start")
                 except ApiException as e:
@@ -1983,6 +2236,9 @@ class SimulationWizard(QWizard):
                         tc.create_simulation_action(sim_id, name="queue")
                     else:
                         raise e
+                if self.summary_page.main_widget.cb_save_template.isChecked():
+                    template_name = self.summary_page.main_widget.template_name.text()
+                    tc.create_template_from_simulation(template_name, str(sim_id))
                 self.new_simulations.append(new_simulation)
                 self.new_simulation_statuses[new_simulation.id] = current_status
                 msg = f"Simulation {new_simulation.name} added to queue!"

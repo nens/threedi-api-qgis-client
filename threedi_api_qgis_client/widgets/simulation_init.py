@@ -39,9 +39,11 @@ class SimulationInit(uicls, basecls):
         )
     )
 
-    def __init__(self, parent=None):
+    def __init__(self, settings_overview, events, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+        self.settings_overview = settings_overview
+        self.events = events
         self.open_wizard = False
         self.initial_conditions = None
         self.multiple_simulations_widget.setVisible(False)
@@ -57,6 +59,7 @@ class SimulationInit(uicls, basecls):
         self.pb_next.clicked.connect(self.start_wizard)
         self.pb_cancel.clicked.connect(self.close)
         self.setup_initial_options()
+        self.check_template_events()
 
     def setup_initial_options(self):
         """Setup initial options dialog."""
@@ -67,6 +70,41 @@ class SimulationInit(uicls, basecls):
         self.dd_repair_infrastructure.addItems(list(self.REPAIR_TIME.keys()))
         self.dd_repair_building.addItems(list(self.REPAIR_TIME.keys()))
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
+
+    def check_template_events(self):
+        """Check events that are available for the simulation template."""
+        if self.events.fileboundaryconditions:
+            self.cb_boundary.setChecked(True)
+        initial_events = [
+            "initial_onedwaterlevel",
+            "initial_onedwaterlevelpredefined",
+            # "initial_onedwaterlevelfile", # missing in Event object instance
+            "initial_twodwaterlevel",
+            "initial_twodwaterraster",
+            "initial_groundwaterlevel",
+            "initial_groundwaterraster",
+            "initial_savedstate",
+        ]
+        if any(getattr(self.events, event_name) for event_name in initial_events):
+            self.cb_conditions.setChecked(True)
+            if self.events.initial_savedstate:
+                self.cb_load_saved_state.setChecked(True)
+        if self.events.laterals:
+            self.cb_laterals.setChecked(True)
+        if self.events.breach:
+            self.cb_breaches.setChecked(True)
+        rain_events = [
+            "lizardrasterrain",
+            "lizardtimeseriesrain",
+            "localrain",
+            "timeseriesrain",
+            "filerasterrain",
+            "filetimeseriesrain",
+        ]
+        if any(getattr(self.events, rain_event_name) for rain_event_name in rain_events):
+            self.cb_precipitation.setChecked(True)
+        if self.events.initial_winddragcoefficient or self.events.wind:
+            self.cb_wind.setChecked(True)
 
     def toggle_breaches(self):
         """Handle breaches checkboxes state changes."""

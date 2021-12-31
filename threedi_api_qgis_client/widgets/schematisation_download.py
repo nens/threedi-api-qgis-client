@@ -187,10 +187,10 @@ class SchematisationDownload(uicls, basecls):
         if index.isValid():
             current_row = index.row()
             name_item = self.tv_revisions_model.item(current_row, 0)
-            selected_revisions = name_item.data(Qt.UserRole)
+            selected_revision = name_item.data(Qt.UserRole)
         else:
-            selected_revisions = None
-        return selected_revisions
+            selected_revision = None
+        return selected_revision
 
     def download_schematisation_revision(self):
         """Downloading selected schematisation revision."""

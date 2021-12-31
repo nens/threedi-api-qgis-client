@@ -33,40 +33,66 @@ class ThreediModelSelection(uicls, basecls):
         self.threedi_api = self.plugin_dock.threedi_api
         self.organisations = self.plugin_dock.organisations
         self.threedi_models = None
+        self.simulation_templates = None
         self.current_model = None
         self.current_model_cells = None
         self.current_model_breaches = None
+        self.current_simulation_template = None
         self.cells_layer = None
         self.breaches_layer = None
         self.organisation = None
         self.model_is_loaded = False
-        self.tv_model = QStandardItemModel()
-        self.models_tv.setModel(self.tv_model)
-        self.pb_prev_page.clicked.connect(self.move_backward)
-        self.pb_next_page.clicked.connect(self.move_forward)
+        self.models_model = QStandardItemModel()
+        self.models_tv.setModel(self.models_model)
+        self.templates_model = QStandardItemModel()
+        self.templates_tv.setModel(self.templates_model)
+        self.pb_prev_page.clicked.connect(self.move_models_backward)
+        self.pb_next_page.clicked.connect(self.move_models_forward)
         self.page_sbox.valueChanged.connect(self.fetch_3di_models)
+        self.pb_templates_fetch.clicked.connect(self.fetch_simulation_templates)
         self.pb_load.clicked.connect(self.load_model)
         self.pb_cancel_load.clicked.connect(self.cancel_load_model)
         self.search_le.returnPressed.connect(self.search_model)
-        self.models_tv.selectionModel().selectionChanged.connect(self.toggle_load_model)
+        self.models_tv.selectionModel().selectionChanged.connect(self.toggle_templates_fetch)
+        self.templates_tv.selectionModel().selectionChanged.connect(self.toggle_load_model)
         self.populate_organisations()
         self.fetch_3di_models()
 
+    def toggle_templates_fetch(self):
+        """Toggle fetch simulation templates button if any model is selected."""
+        selection_model = self.models_tv.selectionModel()
+        if selection_model.hasSelection():
+            self.pb_templates_fetch.setEnabled(True)
+        else:
+            self.pb_templates_fetch.setDisabled(True)
+        self.templates_model.clear()
+        self.templates_page_sbox.setMaximum(1)
+        self.templates_page_sbox.setSuffix(" / 1")
+        self.toggle_load_model()
+
     def toggle_load_model(self):
         """Toggle load button if any model is selected."""
-        selection_model = self.models_tv.selectionModel()
+        selection_model = self.templates_tv.selectionModel()
         if selection_model.hasSelection():
             self.pb_load.setEnabled(True)
         else:
             self.pb_load.setDisabled(True)
 
-    def move_backward(self):
-        """Moving to the previous results page."""
+    def move_models_backward(self):
+        """Moving to the models previous results page."""
         self.page_sbox.setValue(self.page_sbox.value() - 1)
 
-    def move_forward(self):
-        """Moving to the next results page."""
+    def move_models_forward(self):
+        """Moving to the models next results page."""
         self.page_sbox.setValue(self.page_sbox.value() + 1)
+
+    def move_templates_backward(self):
+        """Moving to the templates previous results page."""
+        self.templates_page_sbox.setValue(self.page_sbox.value() - 1)
+
+    def move_templates_forward(self):
+        """Moving to the templates next results page."""
+        self.templates_page_sbox.setValue(self.page_sbox.value() + 1)
 
     def populate_organisations(self):
         """Populating organisations list inside combo box."""
@@ -85,9 +111,9 @@ class ThreediModelSelection(uicls, basecls):
             pages_nr = ceil(models_count / self.TABLE_LIMIT) or 1
             self.page_sbox.setMaximum(pages_nr)
             self.page_sbox.setSuffix(f" / {pages_nr}")
-            self.tv_model.clear()
+            self.models_model.clear()
             header = ["Model", "Repository", "Revision", "Last updated", "Updated by"]
-            self.tv_model.setHorizontalHeaderLabels(header)
+            self.models_model.setHorizontalHeaderLabels(header)
             for sim_model in threedi_models:
                 name_item = QStandardItem(sim_model.name)
                 name_item.setData(sim_model, role=Qt.UserRole)
@@ -97,7 +123,7 @@ class ThreediModelSelection(uicls, basecls):
                 lu_datetime = QDateTime.fromString(last_updated_day, "yyyy-MM-dd")
                 lu_item = QStandardItem(lu_datetime.toString("dd-MMMM-yyyy"))
                 ub_item = QStandardItem(sim_model.user)
-                self.tv_model.appendRow([name_item, repo_item, rev_item, lu_item, ub_item])
+                self.models_model.appendRow([name_item, repo_item, rev_item, lu_item, ub_item])
             for i in range(len(header)):
                 self.models_tv.resizeColumnToContents(i)
             self.threedi_models = threedi_models
@@ -109,6 +135,41 @@ class ThreediModelSelection(uicls, basecls):
             self.communication.show_error(error_msg)
         except Exception as e:
             self.close()
+            error_msg = f"Error: {e}"
+            self.communication.show_error(error_msg)
+
+    def fetch_simulation_templates(self):
+        """Fetching simulation templates list."""
+        try:
+            tc = ThreediCalls(self.threedi_api)
+            offset = (self.templates_page_sbox.value() - 1) * self.TABLE_LIMIT
+            selected_model = self.get_selected_model()
+            model_pk = selected_model.id
+            templates, templates_count = tc.fetch_simulation_templates_with_count(
+                model_pk, limit=self.TABLE_LIMIT, offset=offset
+            )
+            pages_nr = ceil(templates_count / self.TABLE_LIMIT) or 1
+            self.templates_page_sbox.setMaximum(pages_nr)
+            self.templates_page_sbox.setSuffix(f" / {pages_nr}")
+            self.templates_model.clear()
+            header = ["Template ID", "Template name", "Creation date"]
+            self.templates_model.setHorizontalHeaderLabels(header)
+            for template in templates:
+                id_item = QStandardItem(str(template.id))
+                name_item = QStandardItem(template.name)
+                name_item.setData(template, role=Qt.UserRole)
+                creation_date = template.created.strftime("%d-%m-%Y") if template.created else ""
+                creation_date_item = QStandardItem(creation_date)
+                self.templates_model.appendRow([id_item, name_item, creation_date_item])
+            for i in range(len(header)):
+                self.templates_tv.resizeColumnToContents(i)
+            self.simulation_templates = templates
+        except ApiException as e:
+            error_body = e.body
+            error_details = error_body["details"] if "details" in error_body else error_body
+            error_msg = f"Error: {error_details}"
+            self.communication.show_error(error_msg)
+        except Exception as e:
             error_msg = f"Error: {e}"
             self.communication.show_error(error_msg)
 
@@ -157,18 +218,42 @@ class ThreediModelSelection(uicls, basecls):
             self.organisation = self.organisations_box.currentData()
             self.unload_cached_layers()
             current_row = index.row()
-            name_item = self.tv_model.item(current_row, 0)
+            name_item = self.models_model.item(current_row, 0)
             self.current_model = name_item.data(Qt.UserRole)
             self.current_model_cells = self.get_cached_data("cells")
             self.current_model_breaches = self.get_cached_data("breaches")
+            self.current_simulation_template = self.get_selected_template()
             self.load_cached_layers()
         self.model_is_loaded = True
         self.close()
 
     def cancel_load_model(self):
         """Cancel loading model."""
+        self.current_simulation_template = None
         self.model_is_loaded = False
         self.close()
+
+    def get_selected_model(self):
+        """Get currently selected model."""
+        index = self.models_tv.currentIndex()
+        if index.isValid():
+            current_row = index.row()
+            name_item = self.models_model.item(current_row, 0)
+            selected_model = name_item.data(Qt.UserRole)
+        else:
+            selected_model = None
+        return selected_model
+
+    def get_selected_template(self):
+        """Get currently selected simulation template."""
+        index = self.templates_tv.currentIndex()
+        if index.isValid():
+            current_row = index.row()
+            name_item = self.templates_model.item(current_row, 1)
+            selected_template = name_item.data(Qt.UserRole)
+        else:
+            selected_template = None
+        return selected_template
 
     def get_cached_data(self, geojson_name):
         """Get model data that should be cached."""

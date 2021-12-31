@@ -51,7 +51,7 @@ def set_widget_background_color(widget, hex_color="#F0F0F0"):
     widget.setPalette(palette)
 
 
-def scan_widgets_parameters(main_widget):
+def scan_widgets_parameters(main_widget, get_combobox_text=True):
     """Scan widget children and get their values."""
     parameters = {}
     for widget in main_widget.children():
@@ -61,7 +61,7 @@ def scan_widgets_parameters(main_widget):
         elif isinstance(widget, (QCheckBox, QRadioButton)):
             parameters[obj_name] = widget.isChecked()
         elif isinstance(widget, QComboBox):
-            parameters[obj_name] = widget.currentText()
+            parameters[obj_name] = widget.currentText() if get_combobox_text else widget.currentIndex()
         elif isinstance(widget, QDateEdit):
             parameters[obj_name] = widget.dateTime().toString("yyyy-MM-dd")
         elif isinstance(widget, QTimeEdit):
@@ -77,15 +77,15 @@ def scan_widgets_parameters(main_widget):
                 is_checked = widget.isChecked()
                 parameters[obj_name] = is_checked
                 if is_checked:
-                    parameters.update(scan_widgets_parameters(widget))
+                    parameters.update(scan_widgets_parameters(widget, get_combobox_text))
             else:
-                parameters.update(scan_widgets_parameters(widget))
+                parameters.update(scan_widgets_parameters(widget, get_combobox_text))
         elif isinstance(widget, QWidget):
-            parameters.update(scan_widgets_parameters(widget))
+            parameters.update(scan_widgets_parameters(widget, get_combobox_text))
     return parameters
 
 
-def set_widgets_parameters(main_widget, **widget_parameters):
+def set_widgets_parameters(main_widget, find_combobox_text=True, **widget_parameters):
     """Set widget children values based on derived parameters."""
     for name, value in widget_parameters.items():
         widget = getattr(main_widget, name, None)
@@ -96,7 +96,7 @@ def set_widgets_parameters(main_widget, **widget_parameters):
         elif isinstance(widget, (QCheckBox, QRadioButton)):
             widget.setChecked(value)
         elif isinstance(widget, QComboBox):
-            idx = widget.findText(value)
+            idx = widget.findText(value) if find_combobox_text else value
             widget.setCurrentIndex(idx)
         elif isinstance(widget, QDateEdit):
             widget.setDate(QDate.fromString(value, "yyyy-MM-dd"))

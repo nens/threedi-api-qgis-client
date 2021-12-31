@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def api_client_required(fn):
-    """Decorator for limiting functionality access to logged in user (with option to log in)."""
+    """Decorator for limiting functionality access to logged-in user (with option to log in)."""
 
     @wraps(fn)
     def wrapper(self):
