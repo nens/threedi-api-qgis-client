@@ -227,17 +227,17 @@ class SchematisationDownload(uicls, basecls):
                 else:
                     title = "Pick action"
                     question = f"Replace local WIP or store as a revision {revision_number}?"
-                    picked_action_name = self.communication.custom_ask(title, question, "Replace", "Store")
+                    picked_action_name = self.communication.custom_ask(self, title, question, "Replace", "Store")
                     if picked_action_name == "Replace":
                         local_schematisation.set_wip_revision(revision_number)
                         schematisation_db_dir = local_schematisation.wip_revision.schematisation_dir
                     else:
                         local_schematisation.add_revision(revision_number)
-                        local_revision = local_schematisation[revision_number]
+                        local_revision = local_schematisation.revisions[revision_number]
                         schematisation_db_dir = local_revision.schematisation_dir
             else:
                 local_schematisation.add_revision(revision_number)
-                local_revision = local_schematisation[revision_number]
+                local_revision = local_schematisation.revisions[revision_number]
                 schematisation_db_dir = local_revision.schematisation_dir
 
             tc = ThreediCalls(self.threedi_api)
