@@ -6,8 +6,6 @@ from qgis.PyQt import uic
 from .log_in import api_client_required
 from ..widgets.new_schematisation_wizard import NewSchematisationWizard
 from ..widgets.schematisation_download import SchematisationDownload
-from ..utils import get_local_schematisation_info
-from ..utils_ui import get_filepath
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "build_options.ui"))
@@ -35,25 +33,17 @@ class BuildOptionsDialog(uicls, basecls):
         self.new_schematisation_wizard.exec_()
         new_schematisation = self.new_schematisation_wizard.new_schematisation
         if new_schematisation is not None:
-            sqlite_filepath = self.new_schematisation_wizard.new_schematisation_sqlite
-            if sqlite_filepath is not None:
-                self.load_local_schematisation(sqlite_filepath=sqlite_filepath, action="created")
+            local_schematisation = self.new_schematisation_wizard.new_local_schematisation
+            self.load_local_schematisation(local_schematisation, action="created")
 
-    def load_local_schematisation(self, sqlite_filepath=None, action="loaded"):
+    def load_local_schematisation(self, local_schematisation=None, action="loaded"):
         """Load locally stored schematisation."""
-        if not sqlite_filepath:
-            sqlite_filepath = get_filepath(self, extension_filter="Spatialite Files (*.sqlite *.SQLITE)")
-        else:
-            sqlite_filepath = os.path.normpath(sqlite_filepath)
-        if sqlite_filepath:
+        if local_schematisation and local_schematisation.sqlite:
             try:
-                schematisation_id, schematisation_name, revision_number = get_local_schematisation_info(sqlite_filepath)
-                self.plugin_dock.current_schematisation_id = schematisation_id
-                self.plugin_dock.current_schematisation_name = schematisation_name
-                self.plugin_dock.current_schematisation_revision = revision_number
-                self.plugin_dock.current_schematisation_sqlite = sqlite_filepath
+                self.plugin_dock.current_local_schematisation = local_schematisation
                 self.plugin_dock.update_schematisation_view()
-                msg = f"Schematisation '{schematisation_name} (revision {revision_number})' {action}!\n"
+                sqlite_filepath = local_schematisation.sqlite
+                msg = f"Schematisation '{local_schematisation.name}' {action}!\n"
                 msg += f"Please use the 3Di Toolbox to load it to your project from the Spatialite:\n{sqlite_filepath}"
                 self.plugin_dock.communication.show_info(msg)
                 self.close()
@@ -68,6 +58,6 @@ class BuildOptionsDialog(uicls, basecls):
         schematisation_download = SchematisationDownload(self.plugin_dock)
         self.close()
         schematisation_download.exec_()
-        sqlite_filepath = schematisation_download.downloaded_schematisation_filepath
-        if sqlite_filepath is not None:
-            self.load_local_schematisation(sqlite_filepath=sqlite_filepath, action="downloaded")
+        downloaded_local_schematisation = schematisation_download.downloaded_local_schematisation
+        if downloaded_local_schematisation is not None:
+            self.load_local_schematisation(local_schematisation=downloaded_local_schematisation, action="downloaded")

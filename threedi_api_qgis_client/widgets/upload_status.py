@@ -89,8 +89,8 @@ class UploadStatus(uicls_log, basecls_log):
 
     def upload_new_model(self):
         """Initializing new upload wizard."""
-        self.schematisation_sqlite = self.plugin_dock.current_schematisation_sqlite
-        self.schematisation_id = self.plugin_dock.current_schematisation_id
+        self.schematisation_sqlite = self.plugin_dock.current_local_schematisation.sqlite
+        self.schematisation_id = self.plugin_dock.current_local_schematisation.id
         self.schematisation = self.tc.fetch_schematisation(self.schematisation_id)
         if not self.schematisation_sqlite:
             return

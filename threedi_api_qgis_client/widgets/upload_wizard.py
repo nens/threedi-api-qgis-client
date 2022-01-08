@@ -88,6 +88,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             from sqlalchemy.exc import OperationalError
             from threedi_modelchecker.threedi_database import ThreediDatabase
             from threedi_modelchecker.model_checks import ThreediModelChecker
+            from threedi_modelchecker.schema import ModelSchema
             from threedi_modelchecker import errors
         except ImportError:
             raise

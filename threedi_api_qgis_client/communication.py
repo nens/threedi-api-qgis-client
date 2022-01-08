@@ -94,6 +94,21 @@ class UICommunication(object):
         else:
             return True
 
+    @staticmethod
+    def custom_ask(widget, title, question, box_icon=QMessageBox.Question, *buttons_labels):
+        """Ask for custom operation confirmation."""
+        msg_box = QMessageBox(widget)
+        msg_box.setIcon(box_icon)
+        msg_box.setWindowTitle(title)
+        msg_box.setTextFormat(Qt.RichText)
+        msg_box.setText(question)
+        for button_txt in buttons_labels:
+            msg_box.addButton(button_txt, QMessageBox.YesRole)
+        msg_box.exec_()
+        clicked_button = msg_box.clickedButton()
+        clicked_button_text = clicked_button.text()
+        return clicked_button_text
+
     def pick_item(self, title, message, parent=None, *items):
         """Getting item from list of items."""
         parent = parent if parent is not None else self.iface.mainWindow()
