@@ -5,6 +5,7 @@ import os
 from qgis.PyQt import uic
 from .log_in import api_client_required
 from ..widgets.new_schematisation_wizard import NewSchematisationWizard
+from ..widgets.schematisation_load_local import SchematisationLoad
 from ..widgets.schematisation_download import SchematisationDownload
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -38,6 +39,10 @@ class BuildOptionsDialog(uicls, basecls):
 
     def load_local_schematisation(self, local_schematisation=None, action="loaded"):
         """Load locally stored schematisation."""
+        if not local_schematisation:
+            schematisation_load = SchematisationLoad(self.plugin_dock)
+            schematisation_load.exec_()
+            local_schematisation = schematisation_load.selected_local_schematisation
         if local_schematisation and local_schematisation.sqlite:
             try:
                 self.plugin_dock.current_local_schematisation = local_schematisation

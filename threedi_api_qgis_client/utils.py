@@ -234,11 +234,18 @@ class LocalRevision:
         return is_valid
 
     @property
+    def sub_dir(self):
+        """Get schematisation revision subdirectory name."""
+        if self.number:
+            subdirectory = f"revision {self.number}"
+            return subdirectory
+
+    @property
     def main_dir(self):
         """Get schematisation revision main directory path."""
         if self.number:
             schematisation_dir_path = self.local_schematisation.main_dir
-            schematisation_revision_dir_path = os.path.join(schematisation_dir_path, f"revision {self.number}")
+            schematisation_revision_dir_path = os.path.join(schematisation_dir_path, self.sub_dir)
             return schematisation_revision_dir_path
 
     @property
@@ -310,10 +317,16 @@ class WIPRevision(LocalRevision):
     """Local Work In Progress directory structure representation."""
 
     @property
+    def sub_dir(self):
+        """Get schematisation revision subdirectory name."""
+        subdirectory = "work in progress"
+        return subdirectory
+
+    @property
     def main_dir(self):
         """Get schematisation revision main directory path."""
         schematisation_dir_path = self.local_schematisation.main_dir
-        schematisation_revision_dir_path = os.path.join(schematisation_dir_path, "work in progress")
+        schematisation_revision_dir_path = os.path.join(schematisation_dir_path, self.sub_dir)
         return schematisation_revision_dir_path
 
     @property
@@ -358,18 +371,19 @@ class LocalSchematisation:
         local_schematisation = None
         if os.path.isdir(schematisation_dir):
             expected_config_path = os.path.join(schematisation_dir, "admin", "schematisation.json")
-            schema_metadata = cls.read_schematisation_metadata(expected_config_path)
-            working_dir = os.path.dirname(schematisation_dir)
-            schematisation_pk = schema_metadata["id"]
-            schematisation_name = schema_metadata["name"]
-            local_schematisation = cls(working_dir, schematisation_pk, schematisation_name)
-            revision_numbers = schema_metadata["revisions"] or []
-            for revision_number in revision_numbers:
-                local_revision = LocalRevision(local_schematisation, revision_number)
-                local_schematisation.revisions[revision_number] = local_revision
-            wip_parent_revision_number = schema_metadata["wip_parent_revision"]
-            if wip_parent_revision_number is not None:
-                local_schematisation.wip_revision = WIPRevision(local_schematisation, wip_parent_revision_number)
+            if os.path.exists(expected_config_path):
+                schema_metadata = cls.read_schematisation_metadata(expected_config_path)
+                working_dir = os.path.dirname(schematisation_dir)
+                schematisation_pk = schema_metadata["id"]
+                schematisation_name = schema_metadata["name"]
+                local_schematisation = cls(working_dir, schematisation_pk, schematisation_name)
+                revision_numbers = schema_metadata["revisions"] or []
+                for revision_number in revision_numbers:
+                    local_revision = LocalRevision(local_schematisation, revision_number)
+                    local_schematisation.revisions[revision_number] = local_revision
+                wip_parent_revision_number = schema_metadata["wip_parent_revision"]
+                if wip_parent_revision_number is not None:
+                    local_schematisation.wip_revision = WIPRevision(local_schematisation, wip_parent_revision_number)
         return local_schematisation
 
     @staticmethod
@@ -443,7 +457,7 @@ class LocalSchematisation:
 
 def list_local_schematisations(working_dir):
     """Get local schematisations present in the given directory."""
-    local_schematisations = {}
+    local_schematisations = OrderedDict()
     for basename in os.listdir(working_dir):
         full_path = os.path.join(working_dir, basename)
         local_schematisation = LocalSchematisation.initialize_from_location(full_path)

@@ -103,8 +103,15 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def update_schematisation_view(self):
         """Method for updating loaded schematisation labels."""
-        self.label_schematisation.setText(str(self.current_local_schematisation.name) or "")
-        self.label_revision.setText(str(self.current_local_schematisation.wip_revision.number) or "")
+        if self.current_local_schematisation:
+            self.label_schematisation.setText(str(self.current_local_schematisation.name) or "")
+            if self.current_local_schematisation.wip_revision:
+                self.label_revision.setText(str(self.current_local_schematisation.wip_revision.number) or "")
+            else:
+                self.label_revision.setText("")
+        else:
+            self.label_schematisation.setText("")
+            self.label_revision.setText("")
 
     def initialize_authorized_view(self):
         """Method for initializing processes after logging in 3Di API."""
