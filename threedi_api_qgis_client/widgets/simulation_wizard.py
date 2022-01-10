@@ -37,7 +37,9 @@ from ..utils import (
     mmh_to_mmtimestep,
     mmtimestep_to_mmh,
     write_laterals_to_json,
+    get_download_file,
     upload_file,
+    TEMPDIR,
     LATERALS_FILE_TEMPLATE,
     DWF_FILE_TEMPLATE,
 )
@@ -2036,6 +2038,7 @@ class SimulationWizard(QWizard):
                 self.init_conditions_page.main_widget.cb_saved_states.currentText()
             )
         try:
+            simulation_template = self.init_conditions_dlg.simulation_template
             self.new_simulations = []
             self.new_simulation_statuses = {}
             valid_states = ["processed", "valid"]
@@ -2087,6 +2090,16 @@ class SimulationWizard(QWizard):
                 )
                 current_status = tc.fetch_simulation_status(new_simulation.id)
                 sim_id = new_simulation.id
+                if self.init_conditions.include_boundary_conditions:
+                    sim_temp_id = simulation_template.simulation.id
+                    bc_file = self.init_conditions_dlg.events.fileboundaryconditions
+                    bc_file_download = tc.fetch_boundarycondition_file_download(sim_temp_id, bc_file.id)
+                    bc_file_name = bc_file_download.get_url.split("/")[-1].split("?")[0]
+                    bc_temp_filepath = os.path.join(TEMPDIR, bc_file_name)
+                    get_download_file(bc_file_download, bc_temp_filepath)
+                    bc_upload = tc.create_simulation_boundarycondition_file(sim_id, filename=bc_file_name)
+                    upload_file(bc_upload, bc_temp_filepath)
+                    os.remove(bc_temp_filepath)
                 if self.init_conditions.basic_processed_results:
                     tc.create_simulation_post_processing_lizard_basic(
                         sim_id, scenario_name=sim_name, process_basic_results=True

@@ -39,9 +39,10 @@ class SimulationInit(uicls, basecls):
         )
     )
 
-    def __init__(self, settings_overview, events, parent=None):
+    def __init__(self, simulation_template, settings_overview, events, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+        self.simulation_template = simulation_template
         self.settings_overview = settings_overview
         self.events = events
         self.open_wizard = False

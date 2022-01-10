@@ -4,11 +4,13 @@ import os
 import json
 import hashlib
 import requests
+import tempfile
 from zipfile import ZipFile, ZIP_DEFLATED
 from enum import Enum
 from collections import OrderedDict
 from datetime import datetime
 
+TEMPDIR = tempfile.gettempdir()
 PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))
 CACHE_PATH = os.path.join(PLUGIN_PATH, "_cached_data")
 TEMPLATE_PATH = os.path.join(CACHE_PATH, "templates.json")

@@ -41,6 +41,7 @@ from threedi_api_client.openapi import (
     ConstantWind,
     TimeseriesWind,
     WindDragCoefficient,
+    FileBoundaryCondition,
     FileLateral,
     Schematisation,
     SchematisationRevision,
@@ -272,6 +273,28 @@ class ThreediCalls:
             self.threedi_api.simulations_events_lateral_file_list, str(simulation_pk)
         )
         return lateral_files_list
+
+    def fetch_boundarycondition_files(self, simulation_pk: int) -> List[FileBoundaryCondition]:
+        """Get list of the boundary condition files of the given simulation."""
+        bc_files_list = self.paginated_fetch(
+            self.threedi_api.simulations_events_boundaryconditions_file_list, str(simulation_pk)
+        )
+        return bc_files_list
+
+    def fetch_boundarycondition_file(self, simulation_pk: int, bc_pk: int) -> FileBoundaryCondition:
+        """Get a boundary condition file with given id."""
+        bc_file = self.threedi_api.simulations_events_boundaryconditions_file_read(bc_pk, str(simulation_pk))
+        return bc_file
+
+    def fetch_boundarycondition_file_download(self, simulation_pk: int, bc_pk: int) -> Download:
+        """Get a boundary condition file Download object."""
+        bc_download = self.threedi_api.simulations_events_boundaryconditions_file_download(bc_pk, str(simulation_pk))
+        return bc_download
+
+    def create_simulation_boundarycondition_file(self, simulation_pk: int, **data) -> Upload:
+        """Add boundary conditions file to the given simulation."""
+        bc_upload_file = self.threedi_api.simulations_events_boundaryconditions_file_create(str(simulation_pk), data)
+        return bc_upload_file
 
     def create_simulation_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
         """Add ConstantRain to the given simulation."""
