@@ -204,7 +204,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Show upload status dialog."""
         if self.upload_dlg is None:
             self.initialize_upload_status()
-        if self.current_local_schematisation.sqlite:
+        if self.current_local_schematisation and self.current_local_schematisation.sqlite:
             self.upload_dlg.pb_new_upload.setEnabled(True)
         else:
             self.upload_dlg.pb_new_upload.setDisabled(True)

@@ -15,7 +15,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.core import QgsFeature
 from threedi_api_client.openapi import ApiException
-from ..utils import list_local_schematisations, LocalSchematisation, extract_error_message, EMPTY_DB_PATH
+from ..utils import LocalSchematisation, extract_error_message, EMPTY_DB_PATH
 from ..utils_ui import scan_widgets_parameters
 from ..utils_qgis import sqlite_layer, execute_sqlite_queries
 from ..api_calls.threedi_calls import ThreediCalls
@@ -353,8 +353,9 @@ class NewSchematisationWizard(QWizard):
             )
             wip_revision = local_schematisation.wip_revision
             sqlite_filename = f"{name}.sqlite"
+            sqlite_filepath = os.path.join(wip_revision.schematisation_dir, sqlite_filename)
+            shutil.copyfile(EMPTY_DB_PATH, sqlite_filepath)
             wip_revision.sqlite_filename = sqlite_filename
-            shutil.copyfile(EMPTY_DB_PATH, wip_revision.sqlite)
             for raster_filepath in raster_filepaths:
                 if raster_filepath:
                     new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_filepath))

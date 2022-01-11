@@ -220,25 +220,41 @@ class SchematisationDownload(uicls, basecls):
                 )
                 self.local_schematisations[schematisation_pk] = local_schematisation
 
+            def decision_tree():
+                title = "Pick action"
+                question = f"Replace local WIP or store as a revision {revision_number}?"
+                picked_action_name = self.communication.custom_ask(self, title, question, "Replace", "Store")
+                if picked_action_name == "Replace":
+                    # Replace
+                    local_schematisation.set_wip_revision(revision_number)
+                    schema_db_dir = local_schematisation.wip_revision.schematisation_dir
+                else:
+                    # Store as a separate revision
+                    if revision_number in local_schematisation.revisions:
+                        question = f"Replace local revision {revision_number} or Cancel?"
+                        picked_action_name = self.communication.custom_ask(self, title, question, "Replace", "Cancel")
+                        if picked_action_name == "Replace":
+                            local_revision = local_schematisation.add_revision(revision_number)
+                            schema_db_dir = local_revision.schematisation_dir
+                        else:
+                            schema_db_dir = None
+                    else:
+                        local_revision = local_schematisation.add_revision(revision_number)
+                        schema_db_dir = local_revision.schematisation_dir
+                return schema_db_dir
+
             if is_latest_revision:
-                if not local_schematisation.wip_revision:
+                if local_schematisation.wip_revision is None:
+                    # WIP not exist
                     local_schematisation.set_wip_revision(revision_number)
                     schematisation_db_dir = local_schematisation.wip_revision.schematisation_dir
                 else:
-                    title = "Pick action"
-                    question = f"Replace local WIP or store as a revision {revision_number}?"
-                    picked_action_name = self.communication.custom_ask(self, title, question, "Replace", "Store")
-                    if picked_action_name == "Replace":
-                        local_schematisation.set_wip_revision(revision_number)
-                        schematisation_db_dir = local_schematisation.wip_revision.schematisation_dir
-                    else:
-                        local_schematisation.add_revision(revision_number)
-                        local_revision = local_schematisation.revisions[revision_number]
-                        schematisation_db_dir = local_revision.schematisation_dir
+                    # WIP exist
+                    schematisation_db_dir = decision_tree()
             else:
-                local_schematisation.add_revision(revision_number)
-                local_revision = local_schematisation.revisions[revision_number]
-                schematisation_db_dir = local_revision.schematisation_dir
+                schematisation_db_dir = decision_tree()
+            if not schematisation_db_dir:
+                return
 
             tc = ThreediCalls(self.threedi_api)
             sqlite_download = tc.download_schematisation_revision_sqlite(schematisation_pk, revision_pk)

@@ -230,7 +230,7 @@ class LocalRevision:
 
     def structure_is_valid(self):
         """Check if all revision subpaths are present."""
-        is_valid = all(os.path.exists(p) for p in self.subpaths)
+        is_valid = all(os.path.exists(p) if p else False for p in self.subpaths)
         return is_valid
 
     @property
@@ -330,10 +330,43 @@ class WIPRevision(LocalRevision):
         return schematisation_revision_dir_path
 
     @property
+    def admin_dir(self):
+        """Get schematisation revision admin directory path."""
+        admin_dir_path = os.path.join(self.main_dir, "admin")
+        return admin_dir_path
+
+    @property
+    def grid_dir(self):
+        """Get schematisation revision grid directory path."""
+        grid_dir_path = os.path.join(self.main_dir, "grid")
+        return grid_dir_path
+
+    @property
+    def schematisation_dir(self):
+        """Get schematisation revision schematisation directory path."""
+        grid_dir_path = os.path.join(self.main_dir, "schematisation")
+        return grid_dir_path
+
+    @property
+    def raster_dir(self):
+        """Get schematisation revision raster directory path."""
+        rasters_dir_path = os.path.join(self.main_dir, "schematisation", "rasters")
+        return rasters_dir_path
+
+    @property
     def sqlite(self):
         """Get schematisation revision sqlite filepath."""
+        if not self.sqlite_filename:
+            self.discover_sqlite()
         sqlite_filepath = os.path.join(self.schematisation_dir, self.sqlite_filename) if self.sqlite_filename else None
         return sqlite_filepath
+
+    def discover_sqlite(self):
+        """Find schematisation revision sqlite filepath."""
+        for sqlite_candidate in os.listdir(self.schematisation_dir):
+            if sqlite_candidate.endswith(".sqlite"):
+                self.sqlite_filename = sqlite_candidate
+                break
 
 
 class LocalSchematisation:
@@ -344,7 +377,7 @@ class LocalSchematisation:
         self.id = schematisation_pk
         self.name = schematisation_name
         self.revisions = OrderedDict()
-        self.wip_revision = WIPRevision(self, parent_revision_number) if parent_revision_number else None
+        self.wip_revision = WIPRevision(self, parent_revision_number) if parent_revision_number is not None else None
         if create:
             self.build_schematisation_structure()
 
@@ -356,6 +389,7 @@ class LocalSchematisation:
         local_revision.make_revision_structure()
         self.revisions[revision_number] = local_revision
         self.write_schematisation_metadata()
+        return local_revision
 
     def set_wip_revision(self, revision_number):
         """Set new work in progress revision."""
@@ -363,7 +397,9 @@ class LocalSchematisation:
             shutil.rmtree(self.wip_revision.main_dir)
         self.wip_revision = WIPRevision(self, revision_number)
         self.wip_revision.make_revision_structure()
+        self.wip_revision.discover_sqlite()
         self.write_schematisation_metadata()
+        return self.wip_revision
 
     @classmethod
     def initialize_from_location(cls, schematisation_dir):
@@ -412,7 +448,7 @@ class LocalSchematisation:
         subpaths_collections = [self.subpaths]
         subpaths_collections += [local_revision.subpaths for local_revision in self.revisions.values()]
         subpaths_collections.append(self.wip_revision.subpaths)
-        is_valid = all(os.path.exists(p) for p in chain.from_iterable(subpaths_collections))
+        is_valid = all(os.path.exists(p) if p else False for p in chain.from_iterable(subpaths_collections))
         return is_valid
 
     @property
@@ -464,3 +500,9 @@ def list_local_schematisations(working_dir):
         if local_schematisation is not None:
             local_schematisations[local_schematisation.id] = local_schematisation
     return local_schematisations
+
+
+def replace_revision_data(source_revision, target_revision):
+    """Replace target revision content with the source revision data."""
+    shutil.rmtree(target_revision.main_dir)
+    shutil.copytree(source_revision.main_dir, target_revision.main_dir)

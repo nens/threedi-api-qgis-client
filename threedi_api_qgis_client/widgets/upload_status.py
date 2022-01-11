@@ -94,6 +94,18 @@ class UploadStatus(uicls_log, basecls_log):
         self.schematisation = self.tc.fetch_schematisation(self.schematisation_id)
         if not self.schematisation_sqlite:
             return
+        current_wip_revision = self.plugin_dock.current_local_schematisation.wip_revision
+        latest_revision = (
+            self.tc.fetch_schematisation_latest_revision(self.schematisation_id)
+            if current_wip_revision.number > 0
+            else None
+        )
+        latest_revision_number = latest_revision.number if latest_revision else 0
+        if latest_revision_number != current_wip_revision.number:
+            question = f"WIP revision number different than latest online revision ({latest_revision_number})"
+            answer = self.communication.ask_custom("Pick action", question, "Upload anyway?", "Cancel")
+            if answer == "Cancel":
+                return
         upload_wizard_dialog = UploadWizard(self.plugin_dock, self)
         upload_wizard_dialog.exec_()
         new_upload = upload_wizard_dialog.new_upload

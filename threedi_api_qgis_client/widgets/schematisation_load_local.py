@@ -5,7 +5,7 @@ import os
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from ..utils import list_local_schematisations
+from ..utils import list_local_schematisations, replace_revision_data, WIPRevision
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "schematisation_load.ui"))
@@ -104,6 +104,15 @@ class SchematisationLoad(uicls, basecls):
         """Loading selected local schematisation."""
         local_schematisation = self.get_selected_local_schematisation()
         local_revision = self.get_selected_local_revision()
+        if not isinstance(local_revision, WIPRevision):
+            title = "Pick action"
+            question = f"Replace WIP with data from the revision {local_revision.number}?"
+            picked_action_name = self.communication.custom_ask(self, title, question, "Replace", "Cancel")
+            if picked_action_name == "Replace":
+                wip_revision = local_schematisation.set_wip_revision(local_revision.number)
+                replace_revision_data(local_revision, wip_revision)
+            else:
+                local_schematisation = None
         self.selected_local_schematisation = local_schematisation
         self.close()
 
