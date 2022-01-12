@@ -213,12 +213,13 @@ class SchematisationDownload(uicls, basecls):
             is_latest_revision = revision_number == latest_online_revision
             try:
                 local_schematisation = self.local_schematisations[schematisation_pk]
-
+                local_schematisation_present = True
             except KeyError:
                 local_schematisation = LocalSchematisation(
                     self.working_dir, schematisation_pk, schematisation_name, create=True
                 )
                 self.local_schematisations[schematisation_pk] = local_schematisation
+                local_schematisation_present = False
 
             def decision_tree():
                 title = "Pick action"
@@ -243,16 +244,21 @@ class SchematisationDownload(uicls, basecls):
                         schema_db_dir = local_revision.schematisation_dir
                 return schema_db_dir
 
-            if is_latest_revision:
-                if local_schematisation.wip_revision is None:
-                    # WIP not exist
-                    local_schematisation.set_wip_revision(revision_number)
-                    schematisation_db_dir = local_schematisation.wip_revision.schematisation_dir
+            if local_schematisation_present:
+                if is_latest_revision:
+                    if local_schematisation.wip_revision is None:
+                        # WIP not exist
+                        local_schematisation.set_wip_revision(revision_number)
+                        schematisation_db_dir = local_schematisation.wip_revision.schematisation_dir
+                    else:
+                        # WIP exist
+                        schematisation_db_dir = decision_tree()
                 else:
-                    # WIP exist
                     schematisation_db_dir = decision_tree()
             else:
-                schematisation_db_dir = decision_tree()
+                local_schematisation.set_wip_revision(revision_number)
+                schematisation_db_dir = local_schematisation.wip_revision.schematisation_dir
+
             if not schematisation_db_dir:
                 return
 
