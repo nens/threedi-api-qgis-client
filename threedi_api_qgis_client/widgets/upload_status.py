@@ -89,12 +89,13 @@ class UploadStatus(uicls_log, basecls_log):
 
     def upload_new_model(self):
         """Initializing new upload wizard."""
-        self.schematisation_sqlite = self.plugin_dock.current_local_schematisation.sqlite
-        self.schematisation_id = self.plugin_dock.current_local_schematisation.id
+        current_local_schematisation = self.plugin_dock.current_local_schematisation
+        self.schematisation_sqlite = current_local_schematisation.sqlite
+        self.schematisation_id = current_local_schematisation.id
         self.schematisation = self.tc.fetch_schematisation(self.schematisation_id)
         if not self.schematisation_sqlite:
             return
-        current_wip_revision = self.plugin_dock.current_local_schematisation.wip_revision
+        current_wip_revision = current_local_schematisation.wip_revision
         latest_revision = (
             self.tc.fetch_schematisation_latest_revision(self.schematisation_id)
             if current_wip_revision.number > 0
@@ -103,7 +104,7 @@ class UploadStatus(uicls_log, basecls_log):
         latest_revision_number = latest_revision.number if latest_revision else 0
         if latest_revision_number != current_wip_revision.number:
             question = f"WIP revision number different than latest online revision ({latest_revision_number})"
-            answer = self.communication.ask_custom("Pick action", question, "Upload anyway?", "Cancel")
+            answer = self.communication.custom_ask(self, "Pick action", question, "Upload anyway?", "Cancel")
             if answer == "Cancel":
                 return
         upload_wizard_dialog = UploadWizard(self.plugin_dock, self)
@@ -112,6 +113,8 @@ class UploadStatus(uicls_log, basecls_log):
         if not new_upload:
             return
         self.add_upload_to_model(new_upload)
+        current_local_schematisation.update_wip_revision(latest_revision_number + 1)  # TODO: Move it to worker
+        self.plugin_dock.update_schematisation_view()
 
     def on_update_upload_progress(self, upload_row_number, task_name, task_progress, total_progress):
         """Handling actions on upload progress update."""

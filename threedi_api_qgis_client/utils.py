@@ -392,7 +392,7 @@ class LocalSchematisation:
         return local_revision
 
     def set_wip_revision(self, revision_number):
-        """Set new work in progress revision."""
+        """Set a new work in progress revision."""
         if self.wip_revision is not None and os.path.exists(self.wip_revision.main_dir):
             shutil.rmtree(self.wip_revision.main_dir)
         self.wip_revision = WIPRevision(self, revision_number)
@@ -400,6 +400,15 @@ class LocalSchematisation:
         self.wip_revision.discover_sqlite()
         self.write_schematisation_metadata()
         return self.wip_revision
+
+    def update_wip_revision(self, revision_number):
+        """Update a work in progress revision number."""
+        if self.wip_revision is not None and os.path.exists(self.wip_revision.main_dir):
+            self.wip_revision.number = revision_number
+            self.write_schematisation_metadata()
+            return True
+        else:
+            return False
 
     @classmethod
     def initialize_from_location(cls, schematisation_dir):
