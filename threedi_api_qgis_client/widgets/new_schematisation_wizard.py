@@ -15,7 +15,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.core import QgsFeature
 from threedi_api_client.openapi import ApiException
-from ..utils import make_schematisation_dirs, extract_error_message, EMPTY_DB_PATH
+from ..utils import LocalSchematisation, extract_error_message, EMPTY_DB_PATH
 from ..utils_ui import scan_widgets_parameters
 from ..utils_qgis import sqlite_layer, execute_sqlite_queries
 from ..api_calls.threedi_calls import ThreediCalls
@@ -323,7 +323,7 @@ class NewSchematisationWizard(QWizard):
         self.working_dir = self.plugin_dock.plugin_settings.working_dir
         self.tc = ThreediCalls(self.plugin_dock.threedi_api)
         self.new_schematisation = None
-        self.new_schematisation_sqlite = None
+        self.new_local_schematisation = None
         self.schematisation_name_page = SchematisationNamePage(self.plugin_dock.organisations, self)
         self.schematisation_settings_page = SchematisationSettingsPage(self)
         self.addPage(self.schematisation_name_page)
@@ -348,16 +348,20 @@ class NewSchematisationWizard(QWizard):
         aggregation_settings_queries = self.schematisation_settings_page.main_widget.aggregation_settings_queries
         try:
             schematisation = self.tc.create_schematisation(name, owner, tags=tags)
-            schematisation_db_dir = make_schematisation_dirs(self.working_dir, schematisation.id, name)
-            rasters_dir = os.path.join(schematisation_db_dir, "rasters")
-            schematisation_sqlite = os.path.join(schematisation_db_dir, f"{name}.sqlite")
-            shutil.copyfile(EMPTY_DB_PATH, schematisation_sqlite)
+            local_schematisation = LocalSchematisation(
+                self.working_dir, schematisation.id, name, parent_revision_number=0, create=True
+            )
+            wip_revision = local_schematisation.wip_revision
+            sqlite_filename = f"{name}.sqlite"
+            sqlite_filepath = os.path.join(wip_revision.schematisation_dir, sqlite_filename)
+            shutil.copyfile(EMPTY_DB_PATH, sqlite_filepath)
+            wip_revision.sqlite_filename = sqlite_filename
             for raster_filepath in raster_filepaths:
                 if raster_filepath:
-                    new_raster_filepath = os.path.join(rasters_dir, os.path.basename(raster_filepath))
+                    new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_filepath))
                     shutil.copyfile(raster_filepath, new_raster_filepath)
             for table_name, table_settings in schematisation_settings.items():
-                table_layer = sqlite_layer(schematisation_sqlite, table_name, geom_column=None)
+                table_layer = sqlite_layer(wip_revision.sqlite, table_name, geom_column=None)
                 table_layer.startEditing()
                 table_fields = table_layer.fields()
                 table_fields_names = {f.name() for f in table_fields}
@@ -374,19 +378,19 @@ class NewSchematisationWizard(QWizard):
                         error = CommitErrors(f"{table_name} commit errors:\n{errors_str}")
                         raise error
             time.sleep(0.5)
-            execute_sqlite_queries(schematisation_sqlite, aggregation_settings_queries)
+            execute_sqlite_queries(wip_revision.sqlite, aggregation_settings_queries)
             self.new_schematisation = schematisation
-            self.new_schematisation_sqlite = schematisation_sqlite
+            self.new_local_schematisation = local_schematisation
             msg = f"Schematisation '{name} ({schematisation.id})' created!"
             self.plugin_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
         except ApiException as e:
             self.new_schematisation = None
-            self.new_schematisation_sqlite = None
+            self.new_local_schematisation = None
             error_msg = extract_error_message(e)
             self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         except Exception as e:
             self.new_schematisation = None
-            self.new_schematisation_sqlite = None
+            self.new_local_schematisation = None
             error_msg = f"Error: {e}"
             self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
 

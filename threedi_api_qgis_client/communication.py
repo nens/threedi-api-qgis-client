@@ -1,7 +1,7 @@
 # 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QMessageBox, QInputDialog
+from qgis.PyQt.QtWidgets import QMessageBox, QInputDialog, QPushButton
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
 from qgis.core import Qgis
 
@@ -93,6 +93,21 @@ class UICommunication(object):
             return False
         else:
             return True
+
+    @staticmethod
+    def custom_ask(widget, title, question, *buttons_labels):
+        """Ask for custom operation confirmation."""
+        msg_box = QMessageBox(widget)
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setWindowTitle(title)
+        msg_box.setTextFormat(Qt.RichText)
+        msg_box.setText(question)
+        for button_txt in buttons_labels:
+            msg_box.addButton(QPushButton(button_txt), QMessageBox.YesRole)
+        msg_box.exec_()
+        clicked_button = msg_box.clickedButton()
+        clicked_button_text = clicked_button.text()
+        return clicked_button_text
 
     def pick_item(self, title, message, parent=None, *items):
         """Getting item from list of items."""

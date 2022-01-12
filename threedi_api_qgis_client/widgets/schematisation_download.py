@@ -9,7 +9,7 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from threedi_api_client.openapi import ApiException
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import make_schematisation_dirs, get_download_file, unzip_sqlite
+from ..utils import list_local_schematisations, get_download_file, unzip_sqlite, LocalSchematisation
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "schematisation_download.ui"))
@@ -32,7 +32,8 @@ class SchematisationDownload(uicls, basecls):
         self.threedi_api = self.plugin_dock.threedi_api
         self.schematisations = None
         self.revisions = None
-        self.downloaded_schematisation_filepath = None
+        self.local_schematisations = list_local_schematisations(self.working_dir)
+        self.downloaded_local_schematisation = None
         self.tv_schematisations_model = QStandardItemModel()
         self.schematisations_tv.setModel(self.tv_schematisations_model)
         self.tv_revisions_model = QStandardItemModel()
@@ -197,18 +198,71 @@ class SchematisationDownload(uicls, basecls):
         selected_schematisation = self.get_selected_schematisation()
         selected_revision = self.get_selected_revision()
         self.download_required_files(selected_schematisation, selected_revision)
-        if self.downloaded_schematisation_filepath:
+        if self.downloaded_local_schematisation:
             self.close()
 
     def download_required_files(self, schematisation, revision):
         """Download required schematisation revision files."""
         try:
-            tc = ThreediCalls(self.threedi_api)
+            latest_online_revision = max([rev.number for rev in self.revisions])
             schematisation_pk = schematisation.id
             schematisation_name = schematisation.name
             revision_pk = revision.id
             revision_number = revision.number
             revision_sqlite = revision.sqlite
+            is_latest_revision = revision_number == latest_online_revision
+            try:
+                local_schematisation = self.local_schematisations[schematisation_pk]
+                local_schematisation_present = True
+            except KeyError:
+                local_schematisation = LocalSchematisation(
+                    self.working_dir, schematisation_pk, schematisation_name, create=True
+                )
+                self.local_schematisations[schematisation_pk] = local_schematisation
+                local_schematisation_present = False
+
+            def decision_tree():
+                title = "Pick action"
+                question = f"Replace local WIP or store as a revision {revision_number}?"
+                picked_action_name = self.communication.custom_ask(self, title, question, "Replace", "Store")
+                if picked_action_name == "Replace":
+                    # Replace
+                    local_schematisation.set_wip_revision(revision_number)
+                    schema_db_dir = local_schematisation.wip_revision.schematisation_dir
+                else:
+                    # Store as a separate revision
+                    if revision_number in local_schematisation.revisions:
+                        question = f"Replace local revision {revision_number} or Cancel?"
+                        picked_action_name = self.communication.custom_ask(self, title, question, "Replace", "Cancel")
+                        if picked_action_name == "Replace":
+                            local_revision = local_schematisation.add_revision(revision_number)
+                            schema_db_dir = local_revision.schematisation_dir
+                        else:
+                            schema_db_dir = None
+                    else:
+                        local_revision = local_schematisation.add_revision(revision_number)
+                        schema_db_dir = local_revision.schematisation_dir
+                return schema_db_dir
+
+            if local_schematisation_present:
+                if is_latest_revision:
+                    if local_schematisation.wip_revision is None:
+                        # WIP not exist
+                        local_schematisation.set_wip_revision(revision_number)
+                        schematisation_db_dir = local_schematisation.wip_revision.schematisation_dir
+                    else:
+                        # WIP exist
+                        schematisation_db_dir = decision_tree()
+                else:
+                    schematisation_db_dir = decision_tree()
+            else:
+                local_schematisation.set_wip_revision(revision_number)
+                schematisation_db_dir = local_schematisation.wip_revision.schematisation_dir
+
+            if not schematisation_db_dir:
+                return
+
+            tc = ThreediCalls(self.threedi_api)
             sqlite_download = tc.download_schematisation_revision_sqlite(schematisation_pk, revision_pk)
             rasters_downloads = []
             for raster_file in revision.rasters or []:
@@ -216,9 +270,10 @@ class SchematisationDownload(uicls, basecls):
                     raster_file.id, schematisation_pk, revision_pk
                 )
                 rasters_downloads.append((raster_file.name, raster_download))
-            schematisation_db_dir = make_schematisation_dirs(
-                self.working_dir, schematisation_pk, schematisation_name, revision_number
-            )
+
+            if revision_pk in local_schematisation.revisions:
+                local_schematisation.add_revision(revision_pk)
+
             zip_filepath = os.path.join(schematisation_db_dir, revision_sqlite.file.filename)
             self.pbar_download.setMaximum(len(rasters_downloads) + 1)
             current_progress = 0
@@ -227,7 +282,6 @@ class SchematisationDownload(uicls, basecls):
             content_list = unzip_sqlite(zip_filepath)
             os.remove(zip_filepath)
             sqlite_file = content_list[0]
-            sqlite_filepath = os.path.join(schematisation_db_dir, sqlite_file)
             current_progress += 1
             self.pbar_download.setValue(current_progress)
             for raster_filename, raster_download in rasters_downloads:
@@ -235,7 +289,8 @@ class SchematisationDownload(uicls, basecls):
                 get_download_file(raster_download, raster_filepath)
                 current_progress += 1
                 self.pbar_download.setValue(current_progress)
-            self.downloaded_schematisation_filepath = sqlite_filepath
+            local_schematisation.wip_revision.sqlite_filename = sqlite_file
+            self.downloaded_local_schematisation = local_schematisation
             sleep(1)
             msg = f"Schematisation '{schematisation_name} (revision {revision_number})' downloaded!"
             self.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))

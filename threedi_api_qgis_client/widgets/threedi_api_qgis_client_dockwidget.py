@@ -32,10 +32,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.threedi_api = None
         self.current_user = None
         self.organisations = {}
-        self.current_schematisation_id = None
-        self.current_schematisation_name = None
-        self.current_schematisation_revision = None
-        self.current_schematisation_sqlite = None
+        self.current_local_schematisation = None
         self.build_options_dlg = None
         self.simulation_overview_dlg = None
         self.simulation_results_dlg = None
@@ -60,10 +57,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.threedi_api is not None:
             self.on_log_out()
             self.build_options_dlg = None
-        self.current_schematisation_id = None
-        self.current_schematisation_name = None
-        self.current_schematisation_revision = None
-        self.current_schematisation_sqlite = None
+        self.current_local_schematisation = None
         self.update_schematisation_view()
         self.closingPlugin.emit()
         event.accept()
@@ -109,8 +103,15 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def update_schematisation_view(self):
         """Method for updating loaded schematisation labels."""
-        self.label_schematisation.setText(str(self.current_schematisation_name) or "")
-        self.label_revision.setText(str(self.current_schematisation_revision) or "")
+        if self.current_local_schematisation:
+            self.label_schematisation.setText(str(self.current_local_schematisation.name) or "")
+            if self.current_local_schematisation.wip_revision:
+                self.label_revision.setText(str(self.current_local_schematisation.wip_revision.number) or "")
+            else:
+                self.label_revision.setText("")
+        else:
+            self.label_schematisation.setText("")
+            self.label_revision.setText("")
 
     def initialize_authorized_view(self):
         """Method for initializing processes after logging in 3Di API."""
@@ -203,7 +204,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Show upload status dialog."""
         if self.upload_dlg is None:
             self.initialize_upload_status()
-        if self.current_schematisation_sqlite:
+        if self.current_local_schematisation and self.current_local_schematisation.sqlite:
             self.upload_dlg.pb_new_upload.setEnabled(True)
         else:
             self.upload_dlg.pb_new_upload.setDisabled(True)

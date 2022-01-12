@@ -644,10 +644,10 @@ class ThreediCalls:
         return revision_rasters_list
 
     def create_schematisation_revision_raster(
-        self, schematisation_pk: int, revision_pk: int, name: str, raster_type: str = "dem_raw_file", **data
+        self, schematisation_pk: int, revision_pk: int, name: str, raster_type: str = "dem_file", **data
     ) -> RasterCreate:
         """Create a new schematisation revision raster."""
-        raster_type = "dem_raw_file" if raster_type == "dem_file" else raster_type
+        raster_type = "dem_file" if raster_type == "dem_raw_file" else raster_type
         data.update({"name": name, "type": raster_type})
         raster_create = self.threedi_api.schematisations_revisions_rasters_create(revision_pk, schematisation_pk, data)
         return raster_create
