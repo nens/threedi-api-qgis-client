@@ -13,7 +13,7 @@ class SettingsDialog(QDialog):
     """Dialog with plugin settings."""
 
     DEFAULT_API_URL = "https://api.3di.live"
-    DEFAULT_LATERALS_TIMEOUT = 45
+    DEFAULT_UPLOAD_TIMEOUT = 45
 
     settings_saved = pyqtSignal()
 
@@ -26,7 +26,7 @@ class SettingsDialog(QDialog):
         self.settings_communication = UICommunication(self.iface, "3Di MI Settings")
         self.api_url = None
         self.wss_url = None
-        self.laterals_timeout = None
+        self.upload_timeout = None
         self.working_dir = None
         self.browse_pb.clicked.connect(self.set_working_directory)
         self.ui.defaults_pb.clicked.connect(self.restore_defaults)
@@ -58,16 +58,16 @@ class SettingsDialog(QDialog):
         self.api_url_le.setText(self.api_url)
         self.working_dir = QSettings().value("threedi/working_dir", "", type=str)
         self.working_dir_le.setText(self.working_dir)
-        self.laterals_timeout = QSettings().value("threedi/laterals_timeout", self.DEFAULT_LATERALS_TIMEOUT, type=int)
+        self.upload_timeout = QSettings().value("threedi/upload_timeout", self.DEFAULT_UPLOAD_TIMEOUT, type=int)
 
     def save_settings(self):
         """Saving plugin settings in QSettings."""
         self.api_url = self.api_url_le.text()
         self.working_dir = self.working_dir_le.text()
-        self.laterals_timeout = self.laterals_timeout_sb.value()
+        self.upload_timeout = self.upload_timeout_sb.value()
         QSettings().setValue("threedi/api_url", self.api_url)
         QSettings().setValue("threedi/working_dir", self.working_dir)
-        QSettings().setValue("threedi/laterals_timeout", self.laterals_timeout)
+        QSettings().setValue("threedi/upload_timeout", self.upload_timeout)
         self.settings_saved.emit()
 
     def settings_are_valid(self):
@@ -84,7 +84,7 @@ class SettingsDialog(QDialog):
         """Restoring default settings values."""
         self.api_url_le.setText(self.DEFAULT_API_URL)
         self.working_dir_le.setText(gettempdir() or "")
-        self.laterals_timeout_sb.setValue(self.DEFAULT_LATERALS_TIMEOUT)
+        self.upload_timeout_sb.setValue(self.DEFAULT_UPLOAD_TIMEOUT)
         self.save_settings()
         self.load_settings()
 

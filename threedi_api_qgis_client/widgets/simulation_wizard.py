@@ -2013,7 +2013,7 @@ class SimulationWizard(QWizard):
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
         self.settings.setValue("threedi/wizard_size", self.size())
-        laterals_timeout = self.settings.value("threedi/laterals_timeout", 45, type=int)
+        upload_timeout = self.settings.value("threedi/upload_timeout", 45, type=int)
         name = self.name_page.main_widget.le_sim_name.text()
         tags = self.name_page.main_widget.le_tags.text()
         threedimodel_id = self.model_selection_dlg.current_model.id
@@ -2099,6 +2099,12 @@ class SimulationWizard(QWizard):
                     get_download_file(bc_file_download, bc_temp_filepath)
                     bc_upload = tc.create_simulation_boundarycondition_file(sim_id, filename=bc_file_name)
                     upload_file(bc_upload, bc_temp_filepath)
+                    for ti in range(int(upload_timeout // 2)):
+                        uploaded_bc = tc.fetch_boundarycondition_files(sim_id)[0]
+                        if uploaded_bc.state in valid_states:
+                            break
+                        else:
+                            time.sleep(2)
                     os.remove(bc_temp_filepath)
                 if self.init_conditions.basic_processed_results:
                     tc.create_simulation_post_processing_lizard_basic(
@@ -2152,7 +2158,7 @@ class SimulationWizard(QWizard):
                         sim_id, filename=f"{sim_name}_laterals.json", offset=0
                     )
                     upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
-                    for ti in range(int(laterals_timeout // 2)):
+                    for ti in range(int(upload_timeout // 2)):
                         uploaded_lateral = tc.fetch_lateral_files(sim_id)[0]
                         if uploaded_lateral.state in valid_states:
                             break
@@ -2165,7 +2171,7 @@ class SimulationWizard(QWizard):
                         sim_id, filename=f"{sim_name}_dwf.json", offset=0
                     )
                     upload_file(upload_event_file, DWF_FILE_TEMPLATE)
-                    for ti in range(int(laterals_timeout // 2)):
+                    for ti in range(int(upload_timeout // 2)):
                         uploaded_dwf = tc.fetch_lateral_files(sim_id)[0]
                         if uploaded_dwf.state in valid_states:
                             break
