@@ -39,11 +39,7 @@ class SettingsDialog(QDialog):
         work_dir = QFileDialog.getExistingDirectory(self, "Select Working Directory", self.working_dir)
         if work_dir:
             try:
-                test_filename = f"{uuid4()}.txt"
-                test_file_path = os.path.join(work_dir, test_filename)
-                with open(test_file_path, "w") as test_file:
-                    test_file.write("")
-                os.remove(test_file_path)
+                self.try_to_write(work_dir)
             except (PermissionError, OSError):
                 self.settings_communication.bar_warn(
                     "Can't write to the selected location. Please select a folder to which you have write permission."
@@ -73,20 +69,42 @@ class SettingsDialog(QDialog):
     def settings_are_valid(self):
         """Check validity of the settings."""
         if not self.working_dir or not os.path.exists(self.working_dir):
-            self.settings_communication.bar_warn(
-                "Missing or invalid working directory. Please set it up before running the plugin."
-            )
-            return False
+            working_dir_txt = self.working_dir_le.text()
+            if not working_dir_txt or not os.path.exists(working_dir_txt):
+                self.settings_communication.bar_warn(
+                    "Missing or invalid working directory. Please set it up before running the plugin."
+                )
+                return False
+            else:
+                return True
         else:
             return True
+
+    @staticmethod
+    def try_to_write(working_dir):
+        """Try to write and remove an empty text file into given location."""
+        test_filename = f"{uuid4()}.txt"
+        test_file_path = os.path.join(working_dir, test_filename)
+        with open(test_file_path, "w") as test_file:
+            test_file.write("")
+        os.remove(test_file_path)
+
+    def default_working_dir(self):
+        """Return default working directory location."""
+        user_dir = os.path.expanduser("~")
+        try:
+            threedi_working_dir = os.path.join(user_dir, "Documents", "3Di")
+            os.makedirs(threedi_working_dir, exist_ok=True)
+            self.try_to_write(threedi_working_dir)
+        except (PermissionError, OSError):
+            threedi_working_dir = gettempdir()
+        return threedi_working_dir
 
     def restore_defaults(self):
         """Restoring default settings values."""
         self.api_url_le.setText(self.DEFAULT_API_URL)
-        self.working_dir_le.setText(gettempdir() or "")
+        self.working_dir_le.setText(self.default_working_dir() or "")
         self.upload_timeout_sb.setValue(self.DEFAULT_UPLOAD_TIMEOUT)
-        self.save_settings()
-        self.load_settings()
 
     def accept(self):
         """Accepting changes and closing dialog."""

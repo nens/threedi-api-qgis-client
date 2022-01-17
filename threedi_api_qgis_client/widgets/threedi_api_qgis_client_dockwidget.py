@@ -37,15 +37,12 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulation_overview_dlg = None
         self.simulation_results_dlg = None
         self.upload_dlg = None
-        self.btn_log_in.clicked.connect(self.on_log_in)
-        self.btn_log_out.clicked.connect(self.on_log_out)
         self.btn_build.clicked.connect(self.show_build_options)
         self.btn_simulate.clicked.connect(self.show_simulation_overview)
         self.btn_results.clicked.connect(self.show_simulation_results)
         self.btn_clear_log.clicked.connect(self.clear_log)
         self.btn_upload.clicked.connect(self.show_upload_dialog)
         self.plugin_settings.settings_saved.connect(self.update_working_dir)
-        self.btn_log_out.hide()
         set_icon(self.btn_build, "build.svg")
         set_icon(self.btn_check, "check.svg")
         set_icon(self.btn_upload, "upload.svg")
@@ -119,8 +116,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.initialize_simulations_progresses_thread()
         self.initialize_simulation_overview()
         self.initialize_simulation_results()
-        self.btn_log_in.hide()
-        self.btn_log_out.show()
 
     def initialize_simulations_progresses_thread(self):
         """Initializing of the background thread."""
