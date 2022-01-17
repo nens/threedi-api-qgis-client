@@ -15,7 +15,7 @@ class SettingsDialog(QDialog):
     DEFAULT_API_URL = "https://api.3di.live"
     DEFAULT_UPLOAD_TIMEOUT = 45
 
-    settings_saved = pyqtSignal()
+    settings_changed = pyqtSignal()
 
     def __init__(self, iface, parent=None):
         QDialog.__init__(self, parent)
@@ -64,7 +64,6 @@ class SettingsDialog(QDialog):
         QSettings().setValue("threedi/api_url", self.api_url)
         QSettings().setValue("threedi/working_dir", self.working_dir)
         QSettings().setValue("threedi/upload_timeout", self.upload_timeout)
-        self.settings_saved.emit()
 
     def settings_are_valid(self):
         """Check validity of the settings."""
@@ -111,6 +110,7 @@ class SettingsDialog(QDialog):
         if self.settings_are_valid():
             self.save_settings()
             self.load_settings()
+            self.settings_changed.emit()
             super().accept()
 
     def reject(self):

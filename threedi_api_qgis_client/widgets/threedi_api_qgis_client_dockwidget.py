@@ -42,7 +42,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btn_results.clicked.connect(self.show_simulation_results)
         self.btn_clear_log.clicked.connect(self.clear_log)
         self.btn_upload.clicked.connect(self.show_upload_dialog)
-        self.plugin_settings.settings_saved.connect(self.update_working_dir)
+        self.plugin_settings.settings_changed.connect(self.on_log_out)
+        self.plugin_settings.settings_changed.connect(self.update_working_dir)
         set_icon(self.btn_build, "build.svg")
         set_icon(self.btn_check, "check.svg")
         set_icon(self.btn_upload, "upload.svg")
@@ -77,7 +78,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.organisations = log_in_dialog.organisations
             self.initialize_authorized_view()
 
-    @api_client_required
     def on_log_out(self):
         """Handle logging-out."""
         if self.simulations_progresses_thread is not None:
@@ -95,8 +95,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.organisations.clear()
         self.label_user.setText("")
         self.label_schematisation.setText("")
-        self.btn_log_out.hide()
-        self.btn_log_in.show()
 
     def update_schematisation_view(self):
         """Method for updating loaded schematisation labels."""
