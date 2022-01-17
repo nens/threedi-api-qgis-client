@@ -280,8 +280,7 @@ class LocalRevision:
     def sqlite(self):
         """Get schematisation revision sqlite filepath."""
         if not self.number:
-            if not self.sqlite_filename:
-                self.discover_sqlite()
+            self.discover_sqlite()
             sqlite_filepath = (
                 os.path.join(self.schematisation_dir, self.sqlite_filename) if self.sqlite_filename else None
             )
@@ -356,8 +355,7 @@ class WIPRevision(LocalRevision):
     @property
     def sqlite(self):
         """Get schematisation revision sqlite filepath."""
-        if not self.sqlite_filename:
-            self.discover_sqlite()
+        self.discover_sqlite()
         sqlite_filepath = os.path.join(self.schematisation_dir, self.sqlite_filename) if self.sqlite_filename else None
         return sqlite_filepath
 
