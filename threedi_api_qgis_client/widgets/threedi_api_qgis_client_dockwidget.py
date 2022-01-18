@@ -164,6 +164,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.build_options_dlg is None:
             self.initialize_build_options()
         self.build_options_dlg.show()
+        self.build_options_dlg.raise_()
+        self.build_options_dlg.activateWindow()
 
     def initialize_simulation_overview(self):
         """Initialization of the Simulation Overview window."""
@@ -176,6 +178,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulation_overview_dlg is None:
             self.initialize_simulation_overview()
         self.simulation_overview_dlg.show()
+        self.simulation_overview_dlg.raise_()
+        self.simulation_overview_dlg.activateWindow()
 
     def initialize_simulation_results(self):
         """Initialization of the Simulations Results window."""
@@ -187,6 +191,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulation_results_dlg is None:
             self.initialize_simulation_results()
         self.simulation_results_dlg.show()
+        self.simulation_results_dlg.raise_()
+        self.simulation_results_dlg.activateWindow()
 
     def initialize_upload_status(self):
         """Initialization of the Upload Status dialog."""
@@ -202,3 +208,5 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             self.upload_dlg.pb_new_upload.setDisabled(True)
         self.upload_dlg.show()
+        self.upload_dlg.raise_()
+        self.upload_dlg.activateWindow()
