@@ -1674,6 +1674,7 @@ class LateralsPage(QWizardPage):
         layout.addWidget(self.main_widget)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.registerField("laterals_upload*", self.main_widget.il_upload)
         self.adjustSize()
 
 
@@ -1688,6 +1689,7 @@ class DWFPage(QWizardPage):
         layout.addWidget(self.main_widget)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.registerField("dwf_upload*", self.main_widget.dwf_upload)
         self.adjustSize()
 
 
