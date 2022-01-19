@@ -6,6 +6,7 @@ from operator import attrgetter
 from collections import OrderedDict, defaultdict
 from functools import partial
 from qgis.PyQt import uic
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.PyQt.QtCore import QSettings, QSize
 from qgis.PyQt.QtWidgets import (
     QWizardPage,
@@ -41,13 +42,34 @@ class StartWidget(uicls_start_page, basecls_start_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.tv_revisions_model = QStandardItemModel()
+        self.revisions_tv.setModel(self.tv_revisions_model)
+        self.current_local_schematisation = self.parent_page.parent_wizard.current_local_schematisation
+        self.schematisation = self.parent_page.parent_wizard.schematisation
         self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
+        self.available_revisions = self.parent_page.parent_wizard.available_revisions
         self.latest_revision = self.parent_page.parent_wizard.latest_revision
-        self.lbl_online_commit_date.setText(str(self.latest_revision.commit_date or "") or "")
-        self.lbl_online_commit_by.setText(self.latest_revision.commit_user or "")
-        self.lbl_online_commit_msg.setText(self.latest_revision.commit_message or "")
-        self.lbl_model_dir.setText(os.path.dirname(self.schematisation_sqlite))
+        organisation = self.parent_page.parent_wizard.plugin_dock.organisations[self.schematisation.owner]
+        wip_revision = self.current_local_schematisation.wip_revision
+        self.lbl_schematisation.setText(f"{self.schematisation.name} ({organisation.name})")
+        self.lbl_model_dir.setText(wip_revision.schematisation_dir)
+        self.lbl_revision_number.setText(str(wip_revision.number))
+        self.populate_available_revisions()
         # set_widget_background_color(self)
+
+    def populate_available_revisions(self):
+        self.tv_revisions_model.clear()
+        header = ["Revision number", "Commit message", "Committed by", "Commit date"]
+        self.tv_revisions_model.setHorizontalHeaderLabels(header)
+        for revision in sorted(self.available_revisions, key=attrgetter("number"), reverse=True):
+            number_item = QStandardItem(str(revision.number))
+            commit_message_item = QStandardItem(revision.commit_message or "")
+            commit_user_item = QStandardItem(revision.commit_user or "")
+            commit_date = revision.commit_date.strftime("%d-%m-%Y") if revision.commit_date else ""
+            commit_date_item = QStandardItem(commit_date)
+            self.tv_revisions_model.appendRow([number_item, commit_message_item, commit_user_item, commit_date_item])
+        for i in range(len(header)):
+            self.revisions_tv.resizeColumnToContents(i)
 
 
 class CheckModelWidget(uicls_check_page, basecls_check_page):
@@ -596,17 +618,19 @@ class UploadWizard(QWizard):
         self.setWizardStyle(QWizard.ClassicStyle)
         self.plugin_dock = plugin_dock
         self.upload_dialog = upload_dialog
+        self.current_local_schematisation = self.upload_dialog.current_local_schematisation
         self.schematisation = self.upload_dialog.schematisation
         self.schematisation_sqlite = self.upload_dialog.schematisation_sqlite
         self.tc = self.upload_dialog.tc
-        available_revisions = self.tc.fetch_schematisation_revisions(self.schematisation.id)
-        if available_revisions:
-            self.latest_revision = max(available_revisions, key=attrgetter("id"))
+        self.available_revisions = self.tc.fetch_schematisation_revisions(self.schematisation.id)
+        if self.available_revisions:
+            self.latest_revision = max(self.available_revisions, key=attrgetter("id"))
         else:
             self.latest_revision = SchematisationRevision(number=0)
+        self.start_page = StartPage(self)
         self.check_model_page = CheckModelPage(self)
         self.select_files_page = SelectFilesPage(self)
-        # self.addPage(self.start_page)
+        self.addPage(self.start_page)
         self.addPage(self.check_model_page)
         self.addPage(self.select_files_page)
 
@@ -628,7 +652,7 @@ class UploadWizard(QWizard):
         self.new_upload["latest_revision"] = self.latest_revision
         self.new_upload["selected_files"] = self.select_files_page.main_widget.detected_files
         self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
-        self.new_upload["create_revision"] = True  # self.start_page.main_widget.pb_create_revision.isChecked()
+        self.new_upload["create_revision"] = True
         self.new_upload["upload_only"] = self.select_files_page.main_widget.pb_upload_only.isChecked()
 
     def cancel_wizard(self):

@@ -28,6 +28,7 @@ class UploadStatus(uicls_log, basecls_log):
         self.ended_tasks = OrderedDict()
         self.upload_progresses = defaultdict(lambda: ("NO TASK", 0.0, 0.0))
         self.current_upload_row = 0
+        self.current_local_schematisation = self.plugin_dock.current_local_schematisation
         self.schematisation = None
         self.schematisation_sqlite = None
         self.schematisation_id = None
@@ -89,13 +90,12 @@ class UploadStatus(uicls_log, basecls_log):
 
     def upload_new_model(self):
         """Initializing new upload wizard."""
-        current_local_schematisation = self.plugin_dock.current_local_schematisation
-        self.schematisation_sqlite = current_local_schematisation.sqlite
-        self.schematisation_id = current_local_schematisation.id
+        self.schematisation_sqlite = self.current_local_schematisation.sqlite
+        self.schematisation_id = self.current_local_schematisation.id
         self.schematisation = self.tc.fetch_schematisation(self.schematisation_id)
         if not self.schematisation_sqlite:
             return
-        current_wip_revision = current_local_schematisation.wip_revision
+        current_wip_revision = self.current_local_schematisation.wip_revision
         latest_revision = (
             self.tc.fetch_schematisation_latest_revision(self.schematisation_id)
             if current_wip_revision.number > 0
@@ -113,7 +113,7 @@ class UploadStatus(uicls_log, basecls_log):
         if not new_upload:
             return
         self.add_upload_to_model(new_upload)
-        current_local_schematisation.update_wip_revision(latest_revision_number + 1)  # TODO: Move it to worker
+        self.current_local_schematisation.update_wip_revision(latest_revision_number + 1)
         self.plugin_dock.update_schematisation_view()
 
     def on_update_upload_progress(self, upload_row_number, task_name, task_progress, total_progress):
