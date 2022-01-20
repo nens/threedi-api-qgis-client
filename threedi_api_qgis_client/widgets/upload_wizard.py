@@ -59,15 +59,15 @@ class StartWidget(uicls_start_page, basecls_start_page):
 
     def populate_available_revisions(self):
         self.tv_revisions_model.clear()
-        header = ["Revision number", "Commit message", "Committed by", "Commit date"]
+        header = ["Revision number", "Committed by", "Commit date", "Commit message"]
         self.tv_revisions_model.setHorizontalHeaderLabels(header)
         for revision in sorted(self.available_revisions, key=attrgetter("number"), reverse=True):
             number_item = QStandardItem(str(revision.number))
-            commit_message_item = QStandardItem(revision.commit_message or "")
             commit_user_item = QStandardItem(revision.commit_user or "")
             commit_date = revision.commit_date.strftime("%d-%m-%Y") if revision.commit_date else ""
             commit_date_item = QStandardItem(commit_date)
-            self.tv_revisions_model.appendRow([number_item, commit_message_item, commit_user_item, commit_date_item])
+            commit_message_item = QStandardItem(revision.commit_message or "")
+            self.tv_revisions_model.appendRow([number_item, commit_user_item, commit_date_item, commit_message_item])
         for i in range(len(header)):
             self.revisions_tv.resizeColumnToContents(i)
 
