@@ -28,7 +28,6 @@ class UploadStatus(uicls_log, basecls_log):
         self.ended_tasks = OrderedDict()
         self.upload_progresses = defaultdict(lambda: ("NO TASK", 0.0, 0.0))
         self.current_upload_row = 0
-        self.current_local_schematisation = self.plugin_dock.current_local_schematisation
         self.schematisation = None
         self.schematisation_sqlite = None
         self.schematisation_id = None
@@ -37,6 +36,11 @@ class UploadStatus(uicls_log, basecls_log):
         self.tv_model = None
         self.setup_view_model()
         self.adjustSize()
+
+    @property
+    def current_local_schematisation(self):
+        """Return currently loaded local schematisation."""
+        return self.plugin_dock.current_local_schematisation
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
