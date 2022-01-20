@@ -93,6 +93,7 @@
            <widget class="QgsCollapsibleGroupBox" name="group_numerical">
             <property name="font">
              <font>
+              <family>Segoe UI</family>
               <pointsize>11</pointsize>
              </font>
             </property>
@@ -113,6 +114,7 @@
                </property>
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -181,11 +183,12 @@
               <widget class="QLabel" name="label_19">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Limiter waterlevel gradient 1d:</string>
+                <string>Limiter waterlevel gradient 1D:</string>
                </property>
               </widget>
              </item>
@@ -223,11 +226,12 @@
               <widget class="QLabel" name="label_5">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Cfl strictness factor 1d:</string>
+                <string>CFL strictness factor 1D:</string>
                </property>
               </widget>
              </item>
@@ -259,7 +263,7 @@
                 <enum>QAbstractSpinBox::NoButtons</enum>
                </property>
                <property name="decimals">
-                <number>14</number>
+                <number>2</number>
                </property>
                <property name="maximum">
                 <double>1.000000000000000</double>
@@ -270,11 +274,12 @@
               <widget class="QLabel" name="label_20">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Limiter waterlevel gradient 2d:</string>
+                <string>Limiter waterlevel gradient 2D:</string>
                </property>
               </widget>
              </item>
@@ -312,11 +317,12 @@
               <widget class="QLabel" name="label_8">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Cfl strictness factor 2d:</string>
+                <string>CFL strictness factor 2D:</string>
                </property>
               </widget>
              </item>
@@ -346,7 +352,7 @@
                 <enum>QAbstractSpinBox::NoButtons</enum>
                </property>
                <property name="decimals">
-                <number>14</number>
+                <number>2</number>
                </property>
                <property name="maximum">
                 <double>1.000000000000000</double>
@@ -357,11 +363,12 @@
               <widget class="QLabel" name="label_22">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Max non linear newton iterations:</string>
+                <string>Max non linear Newton iterations:</string>
                </property>
               </widget>
              </item>
@@ -402,11 +409,12 @@
               <widget class="QLabel" name="label_12">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Convergence eps:</string>
+                <string>Convergence EPS:</string>
                </property>
               </widget>
              </item>
@@ -456,11 +464,12 @@
               <widget class="QLabel" name="label_23">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Max degree gauss seidel:</string>
+                <string>Max degree Gauss Seidel:</string>
                </property>
               </widget>
              </item>
@@ -501,11 +510,12 @@
               <widget class="QLabel" name="label_14">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Convergence cg:</string>
+                <string>Convergence CG:</string>
                </property>
               </widget>
              </item>
@@ -552,6 +562,7 @@
               <widget class="QLabel" name="label_24">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -597,6 +608,7 @@
               <widget class="QLabel" name="label_15">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -645,6 +657,7 @@
               <widget class="QLabel" name="label_25">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -690,6 +703,7 @@
               <widget class="QLabel" name="label_17">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -735,6 +749,7 @@
               <widget class="QLabel" name="label_27">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -777,11 +792,12 @@
               <widget class="QLabel" name="label_29">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Use of cg:</string>
+                <string>Use of CG:</string>
                </property>
               </widget>
              </item>
@@ -822,6 +838,7 @@
               <widget class="QLabel" name="label_28">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -865,6 +882,7 @@
               <widget class="QCheckBox" name="use_nested_newton">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -877,6 +895,7 @@
               <widget class="QLabel" name="label_9">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -912,7 +931,7 @@
                 <enum>QAbstractSpinBox::NoButtons</enum>
                </property>
                <property name="decimals">
-                <number>6</number>
+                <number>13</number>
                </property>
                <property name="maximum">
                 <double>0.050000000000000</double>
@@ -929,6 +948,7 @@
               <widget class="QLabel" name="label_16">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -986,6 +1006,7 @@
               <widget class="QLabel" name="label_18">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -1031,11 +1052,12 @@
                </property>
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Limiter slope crossectional area 2d:</string>
+                <string>Limiter slope crossectional area 2D:</string>
                </property>
               </widget>
              </item>
@@ -1085,11 +1107,12 @@
               <widget class="QLabel" name="label_21">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Limiter slope friction 2d:</string>
+                <string>Limiter slope friction 2D:</string>
                </property>
               </widget>
              </item>
@@ -1129,11 +1152,12 @@
               <widget class="QLabel" name="label_26">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
                <property name="text">
-                <string>Use preconditioner cg:</string>
+                <string>Use preconditioner CG:</string>
                </property>
               </widget>
              </item>
@@ -1203,7 +1227,7 @@
              <string>Aggregation settings</string>
             </property>
             <property name="collapsed">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <layout class="QGridLayout" name="gridLayout_4">
              <item row="0" column="0" rowspan="2" colspan="3">
@@ -1276,6 +1300,7 @@
            <widget class="QgsCollapsibleGroupBox" name="group_timestep">
             <property name="font">
              <font>
+              <family>Segoe UI</family>
               <pointsize>11</pointsize>
              </font>
             </property>
@@ -1296,6 +1321,7 @@
                </property>
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -1341,6 +1367,7 @@
               <widget class="QLabel" name="label">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -1386,6 +1413,7 @@
               <widget class="QLabel" name="label_4">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -1431,6 +1459,7 @@
               <widget class="QLabel" name="label_2">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -1476,6 +1505,7 @@
               <widget class="QCheckBox" name="use_time_step_stretch">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -1491,6 +1521,7 @@
            <widget class="QgsCollapsibleGroupBox" name="group_physical">
             <property name="font">
              <font>
+              <family>Segoe UI</family>
               <pointsize>11</pointsize>
              </font>
             </property>
@@ -1505,6 +1536,7 @@
               <widget class="QLabel" name="label_10">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
@@ -1548,6 +1580,7 @@
               <widget class="QLabel" name="label_11">
                <property name="font">
                 <font>
+                 <family>Segoe UI</family>
                  <pointsize>10</pointsize>
                 </font>
                </property>
