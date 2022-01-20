@@ -531,9 +531,10 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
             spatialite_filepath_line_edit,
         ) = self.widgets_per_file["spatialite"]
         spatialite_files_refs = self.detected_files["spatialite"]
-        spatialite_files_refs["status"] = UploadFileStatus.CHANGES_DETECTED
-        spatialite_status_label.setText(UploadFileStatus.CHANGES_DETECTED.value)
-        spatialite_valid_ref_widget.show()
+        if spatialite_files_refs["status"] != UploadFileStatus.NEW:
+            spatialite_files_refs["status"] = UploadFileStatus.CHANGES_DETECTED
+            spatialite_status_label.setText(UploadFileStatus.CHANGES_DETECTED.value)
+            spatialite_valid_ref_widget.show()
         files_refs = self.detected_files[raster_type]
         remote_raster = files_refs["remote_raster"]
         files_refs["filepath"] = target_filepath
