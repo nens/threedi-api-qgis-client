@@ -1932,10 +1932,10 @@ class SimulationWizard(QWizard):
                     init_conditions_widget.sp_gwater_global_value.setValue(events.initial_groundwaterlevel.value)
                 elif events.initial_groundwaterraster:
                     for raster_filename, raster in init_conditions_widget.rasters.items():
-                        if raster.url == events.initial_groundwaterlevel.initial_waterlevel:
+                        if raster.url == events.initial_groundwaterraster.initial_waterlevel:
                             init_conditions_widget.dd_groundwater.setCurrentText(raster_filename)
                             init_conditions_widget.cb_gwater_aggregation.setCurrentText(
-                                events.initial_groundwaterlevel.aggregation_method
+                                events.initial_groundwaterraster.aggregation_method
                             )
                             break
         if init_conditions.include_laterals:

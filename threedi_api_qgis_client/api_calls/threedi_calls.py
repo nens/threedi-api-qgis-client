@@ -274,6 +274,16 @@ class ThreediCalls:
         )
         return lateral_files_list
 
+    def fetch_lateral_file(self, simulation_pk: int, lateral_pk: int) -> FileLateral:
+        """Get a laterals file with given id."""
+        lateral_file = self.threedi_api.simulations_events_lateral_file_read(lateral_pk, str(simulation_pk))
+        return lateral_file
+
+    def fetch_lateral_file_download(self, simulation_pk: int, lateral_pk: int) -> Download:
+        """Get the lateral file Download object."""
+        lateral_download = self.threedi_api.simulations_events_lateral_file_download(lateral_pk, str(simulation_pk))
+        return lateral_download
+
     def fetch_boundarycondition_files(self, simulation_pk: int) -> List[FileBoundaryCondition]:
         """Get list of the boundary condition files of the given simulation."""
         bc_files_list = self.paginated_fetch(
