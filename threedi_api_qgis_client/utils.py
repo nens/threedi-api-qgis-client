@@ -79,6 +79,13 @@ def load_saved_templates():
     return items
 
 
+def read_json_data(json_filepath):
+    """Parse and return data from JSON file."""
+    with open(json_filepath, "r+") as json_file:
+        data = json.load(json_file)
+        return data
+
+
 def write_template(template_name, simulation_template):
     """Writing parameters as a template."""
     with open(TEMPLATE_PATH, "a"):

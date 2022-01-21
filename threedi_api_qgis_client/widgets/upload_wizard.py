@@ -127,7 +127,8 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                 " the connection settings: %s" % exc.args[0]
             )
             return
-        except errors.MigrationMissingError:
+        except errors.MigrationMissingError as e:
+            self.checker_logger.log_error(f"{e}")
             self.checker_logger.log_error("The selected 3Di model does not have the latest migration")
             self.checker_logger.log_error(
                 "The selected 3Di model does not have the latest migration, please "
@@ -136,14 +137,16 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                 # noqa
             )
             return
-        except errors.MigrationTooHighError:
+        except errors.MigrationTooHighError as e:
+            self.checker_logger.log_error(f"{e}")
             self.checker_logger.log_error("The selected 3Di model has a higher migration than expected.")
             self.checker_logger.log_error(
                 "The 3Di model has a higher migration than expected, do you have "
                 "the latest version of ThreediToolbox?"
             )
             return
-        except errors.MigrationNameError:
+        except errors.MigrationNameError as e:
+            self.checker_logger.log_error(f"{e}")
             self.checker_logger.log_error(
                 "Unexpected migration name, but migration id is matching. "
                 "We are gonna continue for now and hope for the best."

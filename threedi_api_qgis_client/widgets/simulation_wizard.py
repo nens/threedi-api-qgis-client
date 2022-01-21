@@ -39,6 +39,7 @@ from ..utils import (
     write_laterals_to_json,
     get_download_file,
     upload_file,
+    read_json_data,
     TEMPDIR,
     LATERALS_FILE_TEMPLATE,
     DWF_FILE_TEMPLATE,
@@ -1874,8 +1875,10 @@ class SimulationWizard(QWizard):
     def load_template_parameters(self, simulation, settings_overview, events):
         """Loading simulation parameters from the simulation template data."""
         # Simulation attributes
+        from_template_placeholder = "<FROM TEMPLATE>"
         name_params = {"le_sim_name": simulation.name, "le_tags": ", ".join(simulation.tags)}
         set_widgets_parameters(self.name_page.main_widget, **name_params)
+        temp_simulation_id = simulation.id
         start_datetime = simulation.start_datetime.strftime("%Y-%m-%dT%H:%M")
         end_datetime = simulation.end_datetime.strftime("%Y-%m-%dT%H:%M")
         start_date, start_time = start_datetime.split("T")
@@ -1939,8 +1942,52 @@ class SimulationWizard(QWizard):
                             )
                             break
         if init_conditions.include_laterals:
-            # TODO: Clarify how to handle this
-            pass
+            laterals_events = [filelateral for filelateral in events.filelaterals if filelateral.periodic != "daily"]
+            if laterals_events:
+                laterals_widget = self.laterals_page.main_widget
+                tc = ThreediCalls(self.plugin_dock.threedi_api)
+                lateral_file = laterals_events[0]
+                lateral_file_name = lateral_file.file.filename
+                lateral_file_download = tc.fetch_lateral_file_download(temp_simulation_id, lateral_file.id)
+                lateral_temp_filepath = os.path.join(TEMPDIR, lateral_file_name)
+                get_download_file(lateral_file_download, lateral_temp_filepath)
+                laterals_timeseries = read_json_data(lateral_temp_filepath)
+                last_lateral = laterals_timeseries[-1]
+                if "point" in last_lateral:
+                    laterals_widget.cb_type.setCurrentText("2D")
+                else:
+                    laterals_widget.cb_type.setCurrentText("1D")
+                laterals_widget.il_upload.setText(from_template_placeholder)
+                laterals_widget.cbo_lateral_units.setCurrentText("s")
+                laterals_widget.cb_interpolate_laterals.setChecked(last_lateral["interpolate"])
+                try:
+                    laterals_widget.laterals_timeseries = {str(lat["id"]): lat for lat in laterals_timeseries}
+                except KeyError:
+                    laterals_widget.laterals_timeseries = {str(i): lat for i, lat in enumerate(laterals_timeseries, 1)}
+                laterals_widget.last_uploaded_laterals = laterals_timeseries[-1]
+                for lat_id in laterals_widget.laterals_timeseries.keys():
+                    laterals_widget.cb_laterals.addItem(lat_id)
+                os.remove(lateral_temp_filepath)
+        if init_conditions.include_dwf:
+            dwf_events = [filelateral for filelateral in events.filelaterals if filelateral.periodic == "daily"]
+            if dwf_events:
+                dwf_widget = self.dwf_page.main_widget
+                tc = ThreediCalls(self.plugin_dock.threedi_api)
+                dwf_file = dwf_events[0]
+                dwf_file_name = dwf_file.file.filename
+                dwf_file_download = tc.fetch_lateral_file_download(temp_simulation_id, dwf_file.id)
+                dwf_temp_filepath = os.path.join(TEMPDIR, dwf_file_name)
+                get_download_file(dwf_file_download, dwf_temp_filepath)
+                dwf_timeseries = read_json_data(dwf_temp_filepath)
+                last_dwf = dwf_timeseries[-1]
+                dwf_widget.dwf_upload.setText(from_template_placeholder)
+                dwf_widget.cb_interpolate_dwf.setChecked(last_dwf["interpolate"])
+                try:
+                    dwf_widget.dwf_timeseries = {str(dwf["id"]): dwf for dwf in dwf_timeseries}
+                except KeyError:
+                    dwf_widget.dwf_timeseries = {str(i): dwf for i, dwf in enumerate(dwf_timeseries)}
+                dwf_widget.last_uploaded_dwf = dwf_timeseries[-1]
+                os.remove(dwf_temp_filepath)
         if init_conditions.include_breaches:
             breaches_widget = self.breaches_page.main_widget
             if events.breach:
@@ -1970,7 +2017,7 @@ class SimulationWizard(QWizard):
                 else:
                     simulation = precipitation_widget.dd_simulation.currentText()
                     precipitation_widget.cbo_prec_type.setCurrentText("Custom")
-                    precipitation_widget.le_upload_rain.setText("<FROM TEMPLATE>")
+                    precipitation_widget.le_upload_rain.setText(from_template_placeholder)
                     precipitation_widget.sp_start_after_custom.setValue(rain.offset // 3600)
                     precipitation_widget.cb_interpolate_rain.setChecked(rain.interpolate)
                     rain_values = rain.values
@@ -2000,7 +2047,7 @@ class SimulationWizard(QWizard):
                         wind_widget.sp_dc_constant.setValue(initial_winddragcoefficient.value)
                 else:
                     wind_widget.cbo_wind_type.setCurrentText("Custom")
-                    wind_widget.le_upload_wind.setText("<FROM TEMPLATE>")
+                    wind_widget.le_upload_wind.setText(from_template_placeholder)
                     wind_widget.sp_start_wind_custom.setValue(wind.offset // 3600)
                     wind_widget.cb_interpolate_speed.setChecked(wind.speed_interpolate)
                     wind_widget.cb_interpolate_direction.setChecked(wind.direction_interpolate)
@@ -2170,7 +2217,10 @@ class SimulationWizard(QWizard):
                     dwf_values = list(dwf.values())
                     write_laterals_to_json(dwf_values, DWF_FILE_TEMPLATE)
                     upload_event_file = tc.create_simulation_lateral_file(
-                        sim_id, filename=f"{sim_name}_dwf.json", offset=0
+                        sim_id,
+                        filename=f"{sim_name}_dwf.json",
+                        offset=0,
+                        periodic="daily",
                     )
                     upload_file(upload_event_file, DWF_FILE_TEMPLATE)
                     for ti in range(int(upload_timeout // 2)):

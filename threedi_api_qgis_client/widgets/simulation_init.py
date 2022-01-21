@@ -90,8 +90,14 @@ class SimulationInit(uicls, basecls):
             self.cb_conditions.setChecked(True)
             if self.events.initial_savedstate:
                 self.cb_load_saved_state.setChecked(True)
-        if self.events.laterals:
-            self.cb_laterals.setChecked(True)
+        if self.events.filelaterals:
+            filelaterals = self.events.filelaterals
+            laterals_events = [filelateral for filelateral in filelaterals if filelateral.periodic != "daily"]
+            dwf_events = [filelateral for filelateral in filelaterals if filelateral.periodic == "daily"]
+            if laterals_events:
+                self.cb_laterals.setChecked(True)
+            if dwf_events:
+                self.cb_dwf.setChecked(True)
         if self.events.breach:
             self.cb_breaches.setChecked(True)
         rain_events = [
