@@ -310,7 +310,7 @@
           </font>
          </property>
          <property name="text">
-          <string>3Di MI</string>
+          <string>3Di Models &amp; Simulations</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

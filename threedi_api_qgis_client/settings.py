@@ -23,7 +23,7 @@ class SettingsDialog(QDialog):
         ui_filepath = os.path.join(plugin_dir, "ui", "settings.ui")
         self.ui = uic.loadUi(ui_filepath, self)
         self.iface = iface
-        self.settings_communication = UICommunication(self.iface, "3Di MI Settings")
+        self.settings_communication = UICommunication(self.iface, "3Di Models & Simulations Settings")
         self.api_url = None
         self.wss_url = None
         self.upload_timeout = None

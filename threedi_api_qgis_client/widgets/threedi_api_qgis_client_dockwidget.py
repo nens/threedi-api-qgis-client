@@ -26,7 +26,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.setupUi(self)
         self.iface = iface
         self.plugin_settings = plugin_settings
-        self.communication = UICommunication(self.iface, "3Di MI", self.lv_log)
+        self.communication = UICommunication(self.iface, "3Di Models & Simulations", self.lv_log)
         self.simulations_progresses_thread = None
         self.simulations_progresses_sentinel = None
         self.threedi_api = None

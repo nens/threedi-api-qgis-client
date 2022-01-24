@@ -118,6 +118,11 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         db_settings = {"db_path": self.schematisation_sqlite}
         threedi_db = ThreediDatabase(db_settings, db_type=db_type)
         try:
+            schema = ModelSchema(threedi_db)
+            schema.upgrade("head")
+        except Exception as e:
+            self.checker_logger.log_error(f"{e}")
+        try:
             model_checker = ThreediModelChecker(threedi_db)
             model_checker.db.check_connection()
         except OperationalError as exc:

@@ -213,9 +213,23 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         user_settings["frict_coef_file"] = f"rasters/{frict_coef_file}" if frict_coef_file else None
         if not (self.use_1d_flow_group.isChecked() and not self.use_2d_flow_group.isChecked()):
             user_settings["manhole_storage_area"] = None
+        sim_time_step = user_settings["sim_time_step"]
         output_time_step_text = user_settings["output_time_step_text"]
         output_time_step_map = {"0-3 hours": 300, "3-12 hours": 900, "12-24 hours": 1800, "> 24 hours": 3600}
-        user_settings["output_time_step"] = output_time_step_map[output_time_step_text]
+        suggested_ots = output_time_step_map[output_time_step_text]
+        out_timestep_mod = suggested_ots % sim_time_step
+        output_time_step = suggested_ots + (sim_time_step - out_timestep_mod) if out_timestep_mod else suggested_ots
+        user_settings["output_time_step"] = output_time_step
+        number_of_time_step_map = {
+            "0-3 hours": 3 * 3600,
+            "3-12 hours": 12 * 3600,
+            "12-24 hours": 24 * 3600,
+            "> 24 hours": 48 * 3600,
+        }
+        suggested_nts = number_of_time_step_map[output_time_step_text]
+        num_timesteps_mod = suggested_nts % sim_time_step
+        timesteps_duration = suggested_nts + (sim_time_step - num_timesteps_mod) if num_timesteps_mod else suggested_nts
+        user_settings["nr_timesteps"] = timesteps_duration // sim_time_step
         if self.use_0d_inflow_group.isChecked():
             use_0d_inflow_surfaces = user_settings["use_0d_inflow_surfaces"]
             user_settings["use_0d_inflow"] = 2 if use_0d_inflow_surfaces else 1
