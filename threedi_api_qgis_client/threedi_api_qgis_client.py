@@ -1,4 +1,4 @@
-# 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
+# 3Di Models & Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction
@@ -37,7 +37,7 @@ class ThreediQgisClient:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr("&3Di API Client")
+        self.menu = self.tr("&3Di Models & Simulations")
         self.toolbar = self.iface.addToolBar("ThreediQgisClient")
         self.toolbar.setObjectName("ThreediQgisClient")
         self.pluginIsActive = False
@@ -133,7 +133,7 @@ class ThreediQgisClient:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         icon_path = os.path.join(os.path.dirname(__file__), "icon.png")
-        self.add_action(icon_path, text=self.tr("3Di API Client"), callback=self.run, parent=self.iface.mainWindow())
+        self.add_action(icon_path, text=self.tr("3Di Models & Simulations"), callback=self.run, parent=self.iface.mainWindow())
         self.add_action(
             icon_path,
             text=self.tr("Settings"),
@@ -151,7 +151,7 @@ class ThreediQgisClient:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginMenu(self.tr("&3Di API Client"), action)
+            self.iface.removePluginMenu(self.tr("&3Di Models & Simulations"), action)
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
