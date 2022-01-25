@@ -79,7 +79,7 @@ class SimulationInit(uicls, basecls):
         initial_events = [
             "initial_onedwaterlevel",
             "initial_onedwaterlevelpredefined",
-            # "initial_onedwaterlevelfile", # missing in Event object instance
+            "initial_onedwaterlevelfile",
             "initial_twodwaterlevel",
             "initial_twodwaterraster",
             "initial_groundwaterlevel",

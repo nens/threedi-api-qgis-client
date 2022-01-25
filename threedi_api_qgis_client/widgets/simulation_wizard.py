@@ -332,6 +332,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         set_widget_background_color(self)
         self.laterals_timeseries = {}
         self.last_uploaded_laterals = None
+        self.last_upload_filepath = ""
         self.setup_laterals()
         self.connect_signals()
 
@@ -384,6 +385,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if not filename:
             return
         self.il_upload.setText(filename)
+        self.last_upload_filepath = filename
         self.laterals_timeseries = values
         for lat in self.laterals_timeseries.keys():
             self.cb_laterals.addItem(lat)
@@ -521,6 +523,7 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         set_widget_background_color(self)
         self.dwf_timeseries = {}
         self.last_uploaded_dwf = None
+        self.last_upload_filepath = ""
         self.connect_signals()
 
     def connect_signals(self):
@@ -555,6 +558,7 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         if not filename:
             return
         self.dwf_upload.setText(filename)
+        self.last_upload_filepath = filename
         self.dwf_timeseries = values
 
     def handle_dwf_laterals_header(self, dwf_laterals_list, log_error=True):
@@ -1818,11 +1822,12 @@ class SimulationWizard(QWizard):
         self.first_simulation = init_conditions.simulations_list[0]
         self.init_conditions = init_conditions
 
-    def page_changed(self, page_id):
+    def page_changed(self):
         """Extra pre-processing triggered by changes of the wizard pages."""
-        if page_id == 2 and self.init_conditions.include_precipitations:
+        current_page = self.currentPage()
+        if isinstance(current_page, PrecipitationPage):
             self.precipitation_page.main_widget.plot_precipitation()
-        elif isinstance(self.currentPage(), SummaryPage):
+        elif isinstance(current_page, SummaryPage):
             self.set_overview_name()
             self.set_overview_database()
             self.set_overview_duration()
@@ -1831,6 +1836,12 @@ class SimulationWizard(QWizard):
                 self.set_overview_precipitation()
             if self.init_conditions.include_breaches:
                 self.set_overview_breaches()
+        elif isinstance(current_page, LateralsPage):
+            laterals_widget = self.laterals_page.main_widget
+            laterals_widget.il_upload.setText(laterals_widget.last_upload_filepath)
+        elif isinstance(current_page, DWFPage):
+            dwf_widget = self.dwf_page.main_widget
+            dwf_widget.dwf_upload.setText(dwf_widget.last_upload_filepath)
 
     def set_overview_name(self):
         """Setting up simulation name label in the summary page."""
@@ -1910,12 +1921,18 @@ class SimulationWizard(QWizard):
         init_conditions = self.init_conditions_dlg.initial_conditions
         if init_conditions.include_initial_conditions:
             init_conditions_widget = self.init_conditions_page.main_widget
-            if any([events.initial_onedwaterlevel, events.initial_onedwaterlevelpredefined]):
+            if any(
+                [
+                    events.initial_onedwaterlevel,
+                    events.initial_onedwaterlevelpredefined,
+                    events.initial_onedwaterlevelfile,
+                ]
+            ):
                 init_conditions_widget.cb_1d.setChecked(True)
                 if events.initial_onedwaterlevel:
                     init_conditions_widget.dd_1d.setCurrentText("Global value")
                     init_conditions_widget.sp_1d_global_value.setValue(events.initial_onedwaterlevel.value)
-                elif events.initial_onedwaterlevelpredefined:
+                else:
                     init_conditions_widget.dd_1d.setCurrentText("From spatialite")
             if any([events.initial_twodwaterlevel, events.initial_twodwaterraster]):
                 init_conditions_widget.cb_2d.setChecked(True)
@@ -1958,6 +1975,7 @@ class SimulationWizard(QWizard):
                 else:
                     laterals_widget.cb_type.setCurrentText("1D")
                 laterals_widget.il_upload.setText(from_template_placeholder)
+                laterals_widget.last_upload_filepath = from_template_placeholder
                 laterals_widget.cbo_lateral_units.setCurrentText("s")
                 laterals_widget.cb_interpolate_laterals.setChecked(last_lateral["interpolate"])
                 try:
@@ -1981,6 +1999,7 @@ class SimulationWizard(QWizard):
                 dwf_timeseries = read_json_data(dwf_temp_filepath)
                 last_dwf = dwf_timeseries[-1]
                 dwf_widget.dwf_upload.setText(from_template_placeholder)
+                dwf_widget.last_upload_filepath = from_template_placeholder
                 dwf_widget.cb_interpolate_dwf.setChecked(last_dwf["interpolate"])
                 try:
                     dwf_widget.dwf_timeseries = {str(dwf["id"]): dwf for dwf in dwf_timeseries}

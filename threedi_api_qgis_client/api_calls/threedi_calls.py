@@ -199,6 +199,12 @@ class ThreediCalls:
             downloads.append((result_file, download))
         return downloads
 
+    def fetch_3di_model(self, threedimodel_id: int) -> ThreediModel:
+        """Fetch 3Di model with a given id."""
+        logger.debug("Fetching model %s", threedimodel_id)
+        threedi_model = self.threedi_api.threedimodels_read(threedimodel_id)
+        return threedi_model
+
     def fetch_3di_model_geojson_cells_download(self, threedimodel_id: int) -> Download:
         """Fetch model geojson cells Download object."""
         logger.debug("Fetching cells json for model %s", threedimodel_id)
