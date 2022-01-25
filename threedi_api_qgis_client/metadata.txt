@@ -3,18 +3,19 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=3Di API Client
+name=3Di Models & Simulations
 qgisMinimumVersion=3.4
 qgisMaximumVersion=3.99
-description=3Di API Client for QGIS
+description=3Di Models & Simulations
 version=2.99.7
 author=Lutra Consulting for 3Di Water Management
-email=info@lutraconsulting.co.uk
+email=servicedesk@nelen-schuurmans.nl
 
-about=3Di client to start simulations in the cloud
+about=Work with 3Di models and simulations in the cloud from the Modeller Interface
 
-    This includes a wizard to start calculations, and download results. A 3Di subscription is required. Use the QGIS 64-bit version on Windows. Although we aim to be as
-    backwards compatible as possible, it is possible that at some point old results
+    Check, upload and download schematizations, start calculations, and download results. A 3Di subscription is required. 
+	
+	Although we aim to be as backwards compatible as possible, it is possible that at some point old schematizations
     will not work with the newest version of the plugin. We expressly disclaim any
     guarantee or warranty of compatibility between the two.
     For questions on 3Di or the use of this plugin please contact us via
@@ -43,7 +44,7 @@ changelog=<p>
 # Tags are comma separated with spaces allowed
 tags=3Di, simulation, flood modelling, flood, river, water
 
-homepage=https://github.com/nens/threedi-api-qgis-client
+homepage=https://3diwatermanagement.com/
 category=Plugins
 icon=icon.png
 # experimental flag
