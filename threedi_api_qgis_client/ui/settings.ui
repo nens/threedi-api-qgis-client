@@ -23,7 +23,7 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>3Di API Client settings</string>
+   <string>3Di Models and Simulations settings</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="2" column="1" colspan="3">

@@ -37,7 +37,7 @@ class ThreediQgisClient:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr("&3Di Models & Simulations")
+        self.menu = self.tr("&3Di Models and Simulations")
         self.toolbar = self.iface.addToolBar("ThreediQgisClient")
         self.toolbar.setObjectName("ThreediQgisClient")
         self.pluginIsActive = False
@@ -134,7 +134,7 @@ class ThreediQgisClient:
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         icon_path = os.path.join(os.path.dirname(__file__), "icon.png")
         self.add_action(
-            icon_path, text=self.tr("3Di Models & Simulations"), callback=self.run, parent=self.iface.mainWindow()
+            icon_path, text=self.tr("3Di Models and Simulations"), callback=self.run, parent=self.iface.mainWindow()
         )
         self.add_action(
             icon_path,
@@ -153,7 +153,7 @@ class ThreediQgisClient:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginMenu(self.tr("&3Di Models & Simulations"), action)
+            self.iface.removePluginMenu(self.tr("&3Di Models and Simulations"), action)
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
