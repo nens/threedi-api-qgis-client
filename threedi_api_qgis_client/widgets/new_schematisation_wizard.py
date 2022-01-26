@@ -117,7 +117,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "frict_coef": None,
             "frict_coef_file": None,
             "frict_type": None,
-            "grid_space": None,
+            "grid_space": 0.0,
             "groundwater_settings_id": None,
             "initial_groundwater_level": None,
             "initial_groundwater_level_file": None,
@@ -142,7 +142,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "simple_infiltration_settings_id": None,
             "start_date": QDate.fromString("2000-01-01", "yyyy-MM-dd"),
             "start_time": QTime.fromString("00:00:00", "HH:MM:SS"),
-            "table_step_size": None,
+            "table_step_size": 0.01,
             "table_step_size_1d": 0.01,
             "table_step_size_volume_2d": None,
             "timestep_plus": 0,
@@ -205,8 +205,16 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         use_2d_checked = self.use_2d_flow_group.isChecked()
         user_settings["advection_1d"] = 1 if use_1d_checked else 0
         user_settings["advection_2d"] = 1 if use_2d_checked else 0
-        dem_file = os.path.basename(user_settings["dem_file"])
-        user_settings["dem_file"] = f"rasters/{dem_file}" if dem_file else None
+        if use_2d_checked:
+            dem_file = os.path.basename(user_settings["dem_file"])
+            user_settings["dem_file"] = f"rasters/{dem_file}" if dem_file else None
+            sloping_checked = user_settings["frict_shallow_water_correction_sloping"]
+            user_settings["frict_shallow_water_correction"] = 3 if sloping_checked else 0
+            user_settings["limiter_grad_2d"] = 0 if sloping_checked else 1
+            user_settings["limiter_slope_crossectional_area_2d"] = 3 if sloping_checked else 0
+            user_settings["limiter_slope_friction_2d"] = 1 if sloping_checked else 0
+            user_settings["limiter_slope_friction_2d"] = 1 if sloping_checked else 0
+            user_settings["thin_water_layer_definition"] = 0.1 if sloping_checked else None
         frict_type_text = user_settings["frict_type_text"]
         user_settings["frict_type"] = int(frict_type_text.split(":")[0])
         frict_coef_file = os.path.basename(user_settings["frict_coef_file"])
@@ -238,13 +246,6 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         user_settings["use_1d_flow"] = 1 if use_1d_checked else 0
         user_settings["use_2d_flow"] = 1 if use_2d_checked else 0
         user_settings["use_2d_rain"] = 1 if use_2d_checked else 0
-        sloping_checked = user_settings["frict_shallow_water_correction_sloping"]
-        user_settings["frict_shallow_water_correction"] = 3 if sloping_checked else 0
-        user_settings["limiter_grad_2d"] = 0 if sloping_checked else 1
-        user_settings["limiter_slope_crossectional_area_2d"] = 3 if sloping_checked else 0
-        user_settings["limiter_slope_friction_2d"] = 1 if sloping_checked else 0
-        user_settings["limiter_slope_friction_2d"] = 1 if sloping_checked else 0
-        user_settings["thin_water_layer_definition"] = 0.1 if sloping_checked else None
         user_settings["use_of_nested_newton"] = 1 if use_1d_checked else 0
         if use_1d_checked and not use_2d_checked:
             max_degree = 700
@@ -308,10 +309,11 @@ class SchematisationSettingsPage(QWizardPage):
     def validatePage(self):
         """Overriding page validation logic."""
         non_zero_widgets = [
-            ("Computational Cell Size", self.main_widget.grid_space),
             ("Global 2D friction coefficient", self.main_widget.frict_coef),
             ("Simulation timestep", self.main_widget.sim_time_step),
         ]
+        if self.main_widget.use_2d_flow_group.isChecked():
+            non_zero_widgets.append(("Computational Cell Size", self.main_widget.grid_space))
         non_zero_settings = []
         for setting_name, setting_widget in non_zero_widgets:
             if not setting_widget.value() > 0:
