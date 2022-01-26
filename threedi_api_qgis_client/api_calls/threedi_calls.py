@@ -116,7 +116,7 @@ class ThreediCalls:
         self, limit: int = None, offset: int = None, name_contains: str = None
     ) -> Tuple[List[ThreediModel], int]:
         """Fetch 3Di models available for current user."""
-        params = {}
+        params = {"revision__schematisation__isnull": False}
         if limit is not None:
             params["limit"] = limit
         if offset is not None:

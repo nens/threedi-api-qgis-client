@@ -3,7 +3,7 @@
 import logging
 import os
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QItemSelectionModel
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from ..utils import list_local_schematisations, replace_revision_data, WIPRevision
 
@@ -69,6 +69,12 @@ class SchematisationLoad(uicls, basecls):
             self.tv_revisions_model.appendRow([number_item, subdir_item])
         for i in range(len(header)):
             self.schematisations_tv.resizeColumnToContents(i)
+        if self.tv_revisions_model.rowCount() > 0:
+            row_idx = self.tv_revisions_model.index(0, 0)
+            self.revisions_tv.selectionModel().select(
+                row_idx, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows
+            )
+        self.toggle_load_local_schematisation()
 
     def toggle_load_local_schematisation(self):
         """Toggle load button if any schematisation revision is selected."""

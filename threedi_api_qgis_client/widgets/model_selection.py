@@ -3,8 +3,9 @@
 import logging
 import os
 from math import ceil
+from operator import attrgetter
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QDateTime
+from qgis.PyQt.QtCore import Qt, QDateTime, QItemSelectionModel
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.core import QgsVectorLayer, QgsProject, QgsMapLayer
 from threedi_api_client.openapi import ApiException
@@ -49,25 +50,27 @@ class ThreediModelSelection(uicls, basecls):
         self.pb_prev_page.clicked.connect(self.move_models_backward)
         self.pb_next_page.clicked.connect(self.move_models_forward)
         self.page_sbox.valueChanged.connect(self.fetch_3di_models)
-        self.pb_templates_fetch.clicked.connect(self.fetch_simulation_templates)
         self.pb_load.clicked.connect(self.load_model)
         self.pb_cancel_load.clicked.connect(self.cancel_load_model)
         self.search_le.returnPressed.connect(self.search_model)
-        self.models_tv.selectionModel().selectionChanged.connect(self.toggle_templates_fetch)
+        self.models_tv.selectionModel().selectionChanged.connect(self.refresh_templates_list)
         self.templates_tv.selectionModel().selectionChanged.connect(self.toggle_load_model)
         self.populate_organisations()
         self.fetch_3di_models()
 
-    def toggle_templates_fetch(self):
-        """Toggle fetch simulation templates button if any model is selected."""
+    def refresh_templates_list(self):
+        """Refresh simulation templates list if any model is selected."""
         selection_model = self.models_tv.selectionModel()
-        if selection_model.hasSelection():
-            self.pb_templates_fetch.setEnabled(True)
-        else:
-            self.pb_templates_fetch.setDisabled(True)
         self.templates_model.clear()
         self.templates_page_sbox.setMaximum(1)
         self.templates_page_sbox.setSuffix(" / 1")
+        if selection_model.hasSelection():
+            self.fetch_simulation_templates()
+            if self.templates_model.rowCount() > 0:
+                row_idx = self.templates_model.index(0, 0)
+                self.templates_tv.selectionModel().select(
+                    row_idx, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows
+                )
         self.toggle_load_model()
 
     def toggle_load_model(self):
@@ -112,20 +115,19 @@ class ThreediModelSelection(uicls, basecls):
             self.page_sbox.setMaximum(pages_nr)
             self.page_sbox.setSuffix(f" / {pages_nr}")
             self.models_model.clear()
-            header = ["Model", "Repository", "Revision", "Last updated", "Updated by"]
+            header = ["ID", "Model", "Schematisation", "Revision", "Last updated", "Updated by"]
             self.models_model.setHorizontalHeaderLabels(header)
-            for sim_model in threedi_models:
+            for sim_model in sorted(threedi_models, key=attrgetter("revision_commit_date"), reverse=True):
+                id_item = QStandardItem(str(sim_model.id))
                 name_item = QStandardItem(sim_model.name)
                 name_item.setData(sim_model, role=Qt.UserRole)
-                repo_item = QStandardItem(sim_model.repository_slug)
+                schema_item = QStandardItem(sim_model.schematisation_name)
                 rev_item = QStandardItem(sim_model.revision_number)
                 last_updated_day = sim_model.revision_commit_date.split("T")[0]
                 lu_datetime = QDateTime.fromString(last_updated_day, "yyyy-MM-dd")
                 lu_item = QStandardItem(lu_datetime.toString("dd-MMMM-yyyy"))
                 ub_item = QStandardItem(sim_model.user)
-                self.models_model.appendRow([name_item, repo_item, rev_item, lu_item, ub_item])
-            for i in range(len(header)):
-                self.models_tv.resizeColumnToContents(i)
+                self.models_model.appendRow([id_item, name_item, schema_item, rev_item, lu_item, ub_item])
             self.threedi_models = threedi_models
         except ApiException as e:
             self.close()
@@ -154,7 +156,7 @@ class ThreediModelSelection(uicls, basecls):
             self.templates_model.clear()
             header = ["Template ID", "Template name", "Creation date"]
             self.templates_model.setHorizontalHeaderLabels(header)
-            for template in templates:
+            for template in sorted(templates, key=attrgetter("id"), reverse=True):
                 id_item = QStandardItem(str(template.id))
                 name_item = QStandardItem(template.name)
                 name_item.setData(template, role=Qt.UserRole)
@@ -238,7 +240,7 @@ class ThreediModelSelection(uicls, basecls):
         index = self.models_tv.currentIndex()
         if index.isValid():
             current_row = index.row()
-            name_item = self.models_model.item(current_row, 0)
+            name_item = self.models_model.item(current_row, 1)
             selected_model = name_item.data(Qt.UserRole)
         else:
             selected_model = None
