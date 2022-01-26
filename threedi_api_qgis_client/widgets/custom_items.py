@@ -1,5 +1,5 @@
 # 3Di Models & Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
-# Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
+# Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 from qgis.PyQt.QtCore import Qt, QSortFilterProxyModel
 from qgis.PyQt.QtGui import QPalette, QColor, QFont
 from qgis.PyQt.QtWidgets import (
