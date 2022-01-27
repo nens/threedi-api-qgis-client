@@ -3,7 +3,7 @@
 import os
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QThread, pyqtSignal
-from threedi_api_qgis_client.widgets.upload_status import UploadStatus
+from threedi_api_qgis_client.widgets.upload_overview import UploadOverview
 from .log_in import LogInDialog, api_client_required
 from .build_options import BuildOptionsDialog
 from .simulation_overview import SimulationOverview
@@ -197,7 +197,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def initialize_upload_status(self):
         """Initialization of the Upload Status dialog."""
-        self.upload_dlg = UploadStatus(self)
+        self.upload_dlg = UploadOverview(self)
 
     @api_client_required
     def show_upload_dialog(self):

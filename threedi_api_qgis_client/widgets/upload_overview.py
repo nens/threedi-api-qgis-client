@@ -10,11 +10,11 @@ from ..communication import ListViewLogger
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_status.ui"))
+uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_overview.ui"))
 
 
-class UploadStatus(uicls_log, basecls_log):
-    """Upload status dialog."""
+class UploadOverview(uicls_log, basecls_log):
+    """Upload status overview dialog."""
 
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
@@ -33,6 +33,7 @@ class UploadStatus(uicls_log, basecls_log):
         self.schematisation_id = None
         self.schematisation = None
         self.pb_new_upload.clicked.connect(self.upload_new_model)
+        self.pb_hide.clicked.connect(self.close)
         self.tv_model = None
         self.setup_view_model()
         self.adjustSize()
