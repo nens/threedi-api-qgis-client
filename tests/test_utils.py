@@ -65,7 +65,7 @@ def test_extract_error_message_related_err():
     rel_error = SimpleApiException(RELATED_OBJECTS_EXCEPTION_BODY)
     assert (
         extract_error_message(rel_error)
-        == "Error: File processing error: Invalid file, see related event for further details (<related_object>)"
+        == "Error: \nFile processing error: Invalid file, see related event for further details (<related_object>)"
     )
 
 
