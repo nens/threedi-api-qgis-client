@@ -95,6 +95,7 @@ class SimulationOverview(uicls, basecls):
         if self.plugin_dock.current_local_schematisation is not None:
             self.model_selection_dlg.search_le.setText(self.plugin_dock.current_local_schematisation.name)
             self.model_selection_dlg.fetch_3di_models()
+            self.model_selection_dlg.refresh_templates_list()
         self.model_selection_dlg.exec_()
         if self.model_selection_dlg.model_is_loaded:
             simulation_template = self.model_selection_dlg.current_simulation_template

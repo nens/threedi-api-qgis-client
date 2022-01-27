@@ -24,6 +24,7 @@ class ThreediModelSelection(uicls, basecls):
     """Dialog for model selection."""
 
     TABLE_LIMIT = 10
+    NAME_COLUMN_IDX = 1
 
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
@@ -68,9 +69,7 @@ class ThreediModelSelection(uicls, basecls):
             self.fetch_simulation_templates()
             if self.templates_model.rowCount() > 0:
                 row_idx = self.templates_model.index(0, 0)
-                self.templates_tv.selectionModel().select(
-                    row_idx, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows
-                )
+                self.templates_tv.selectionModel().setCurrentIndex(row_idx, QItemSelectionModel.ClearAndSelect)
         self.toggle_load_model()
 
     def toggle_load_model(self):
@@ -220,13 +219,13 @@ class ThreediModelSelection(uicls, basecls):
             self.organisation = self.organisations_box.currentData()
             self.unload_cached_layers()
             current_row = index.row()
-            name_item = self.models_model.item(current_row, 0)
+            name_item = self.models_model.item(current_row, self.NAME_COLUMN_IDX)
             self.current_model = name_item.data(Qt.UserRole)
             self.current_model_cells = self.get_cached_data("cells")
             self.current_model_breaches = self.get_cached_data("breaches")
             self.current_simulation_template = self.get_selected_template()
             self.load_cached_layers()
-        self.model_is_loaded = True
+            self.model_is_loaded = True
         self.close()
 
     def cancel_load_model(self):
@@ -240,7 +239,7 @@ class ThreediModelSelection(uicls, basecls):
         index = self.models_tv.currentIndex()
         if index.isValid():
             current_row = index.row()
-            name_item = self.models_model.item(current_row, 1)
+            name_item = self.models_model.item(current_row, self.NAME_COLUMN_IDX)
             selected_model = name_item.data(Qt.UserRole)
         else:
             selected_model = None
@@ -251,7 +250,7 @@ class ThreediModelSelection(uicls, basecls):
         index = self.templates_tv.currentIndex()
         if index.isValid():
             current_row = index.row()
-            name_item = self.templates_model.item(current_row, 1)
+            name_item = self.templates_model.item(current_row, self.NAME_COLUMN_IDX)
             selected_template = name_item.data(Qt.UserRole)
         else:
             selected_template = None
