@@ -7,14 +7,14 @@ name=3Di Models & Simulations
 qgisMinimumVersion=3.4
 qgisMaximumVersion=3.99
 description=3Di Models & Simulations
-version=2.99.8
+version=2.99.9
 author=Lutra Consulting for 3Di Water Management
 email=servicedesk@nelen-schuurmans.nl
 
 about=Work with 3Di models and simulations in the cloud from the Modeller Interface
 
-    Check, upload and download schematizations, start calculations, and download results. A 3Di subscription is required. 
-	
+    Check, upload and download schematizations, start calculations, and download results. A 3Di subscription is required.
+
 	Although we aim to be as backwards compatible as possible, it is possible that at some point old schematizations
     will not work with the newest version of the plugin. We expressly disclaim any
     guarantee or warranty of compatibility between the two.
