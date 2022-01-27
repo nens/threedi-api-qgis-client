@@ -81,10 +81,13 @@
       </property>
      </widget>
     </item>
-    <item row="8" column="0" colspan="3">
-     <widget class="QListView" name="lv_log">
+    <item row="4" column="0" colspan="3">
+     <widget class="QToolButton" name="btn_upload">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -92,22 +95,29 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>0</height>
+        <height>50</height>
        </size>
       </property>
       <property name="font">
        <font>
-        <pointsize>8</pointsize>
+        <pointsize>12</pointsize>
        </font>
       </property>
-      <property name="styleSheet">
-       <string notr="true">QListView {background-color: white;}</string>
+      <property name="text">
+       <string>UPLOAD</string>
       </property>
-      <property name="editTriggers">
-       <set>QAbstractItemView::NoEditTriggers</set>
+      <property name="icon">
+       <iconset>
+        <normaloff>icons/upload.svg</normaloff>icons/upload.svg</iconset>
       </property>
-      <property name="wordWrap">
-       <bool>true</bool>
+      <property name="iconSize">
+       <size>
+        <width>80</width>
+        <height>40</height>
+       </size>
+      </property>
+      <property name="toolButtonStyle">
+       <enum>Qt::ToolButtonTextBesideIcon</enum>
       </property>
      </widget>
     </item>
@@ -150,6 +160,59 @@
        <enum>Qt::ToolButtonTextBesideIcon</enum>
       </property>
      </widget>
+    </item>
+    <item row="5" column="0" colspan="3">
+     <widget class="QToolButton" name="btn_simulate">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>SIMULATE</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>icons/api.svg</normaloff>icons/api.svg</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>80</width>
+        <height>40</height>
+       </size>
+      </property>
+      <property name="toolButtonStyle">
+       <enum>Qt::ToolButtonTextBesideIcon</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="1">
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>40</height>
+       </size>
+      </property>
+     </spacer>
     </item>
     <item row="2" column="0" colspan="3">
      <widget class="QToolButton" name="btn_build">
@@ -194,13 +257,10 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="0" colspan="3">
-     <widget class="QToolButton" name="btn_upload">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
+    <item row="8" column="0" colspan="3">
+     <widget class="QListView" name="lv_log">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -208,87 +268,33 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>50</height>
+        <height>0</height>
        </size>
       </property>
       <property name="font">
        <font>
-        <pointsize>12</pointsize>
+        <pointsize>8</pointsize>
        </font>
       </property>
-      <property name="text">
-       <string>UPLOAD</string>
+      <property name="styleSheet">
+       <string notr="true">QListView {background-color: white;}</string>
       </property>
-      <property name="icon">
-       <iconset>
-        <normaloff>icons/upload.svg</normaloff>icons/upload.svg</iconset>
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
       </property>
-      <property name="iconSize">
-       <size>
-        <width>80</width>
-        <height>40</height>
-       </size>
-      </property>
-      <property name="toolButtonStyle">
-       <enum>Qt::ToolButtonTextBesideIcon</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="10" column="1">
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="5" column="0" colspan="3">
-     <widget class="QToolButton" name="btn_simulate">
-      <property name="enabled">
+      <property name="wordWrap">
        <bool>true</bool>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>50</height>
-       </size>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>SIMULATE</string>
-      </property>
-      <property name="icon">
-       <iconset>
-        <normaloff>icons/api.svg</normaloff>icons/api.svg</iconset>
-      </property>
-      <property name="iconSize">
-       <size>
-        <width>80</width>
-        <height>40</height>
-       </size>
-      </property>
-      <property name="toolButtonStyle">
-       <enum>Qt::ToolButtonTextBesideIcon</enum>
       </property>
      </widget>
     </item>
     <item row="0" column="0" rowspan="2" colspan="3">
      <widget class="QFrame" name="frame">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="minimumSize">
        <size>
         <width>0</width>
@@ -319,29 +325,36 @@
        </item>
        <item row="3" column="1">
         <widget class="QWidget" name="widget_authorized" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>150</height>
+           <height>100</height>
           </size>
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
-          <item row="0" column="1">
-           <widget class="QLabel" name="label_user">
-            <property name="font">
-             <font>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::LeftToRight</enum>
-            </property>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_2">
             <property name="text">
-             <string/>
+             <string>Schematisation:</string>
             </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            <property name="margin">
+             <number>5</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>Revision:</string>
+            </property>
+            <property name="margin">
+             <number>5</number>
             </property>
            </widget>
           </item>
@@ -352,6 +365,25 @@
               <weight>75</weight>
               <bold>true</bold>
              </font>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="label_user">
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
             </property>
             <property name="text">
              <string/>
@@ -377,38 +409,13 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_4">
-            <property name="text">
-             <string>Revision:</string>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="0">
            <widget class="QLabel" name="label">
             <property name="text">
              <string>User:</string>
             </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>Schematisation:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Directory:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLineEdit" name="le_directory">
-            <property name="readOnly">
-             <bool>true</bool>
+            <property name="margin">
+             <number>5</number>
             </property>
            </widget>
           </item>

@@ -28,7 +28,7 @@ class SimulationOverview(uicls, basecls):
         self.setupUi(self)
         self.plugin_dock = plugin_dock
         self.threedi_api = self.plugin_dock.threedi_api
-        self.user = self.plugin_dock.label_user.text()
+        self.user = self.plugin_dock.current_user
         self.model_selection_dlg = ThreediModelSelection(self.plugin_dock, parent=self)
         self.simulation_init_wizard = None
         self.simulation_wizard = None

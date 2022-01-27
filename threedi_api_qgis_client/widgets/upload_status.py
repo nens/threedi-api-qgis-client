@@ -83,9 +83,7 @@ class UploadStatus(uicls_log, basecls_log):
         self.tv_model.appendRow([schema_name_item, revision_item, commit_msg_item, status_item])
         upload_row_number = self.tv_model.rowCount()
         upload_row_idx = self.tv_model.index(upload_row_number - 1, 0)
-        self.tv_uploads.selectionModel().select(
-            upload_row_idx, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows
-        )
+        self.tv_uploads.selectionModel().setCurrentIndex(upload_row_idx, QItemSelectionModel.ClearAndSelect)
         worker = UploadProgressWorker(self.threedi_api, upload_specification, upload_row_number)
         worker.signals.upload_progress.connect(self.on_update_upload_progress)
         worker.signals.thread_finished.connect(self.on_upload_finished_success)

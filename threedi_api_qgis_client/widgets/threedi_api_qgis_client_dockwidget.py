@@ -31,6 +31,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulations_progresses_sentinel = None
         self.threedi_api = None
         self.current_user = None
+        self.current_user_full_name = None
         self.organisations = {}
         self.current_local_schematisation = None
         self.build_options_dlg = None
@@ -43,13 +44,11 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btn_clear_log.clicked.connect(self.clear_log)
         self.btn_upload.clicked.connect(self.show_upload_dialog)
         self.plugin_settings.settings_changed.connect(self.on_log_out)
-        self.plugin_settings.settings_changed.connect(self.update_working_dir)
         set_icon(self.btn_build, "build.svg")
         set_icon(self.btn_check, "check.svg")
         set_icon(self.btn_upload, "upload.svg")
         set_icon(self.btn_simulate, "api.svg")
         set_icon(self.btn_results, "results.svg")
-        self.update_working_dir()
 
     def closeEvent(self, event):
         if self.threedi_api is not None:
@@ -64,10 +63,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Clearing message log box."""
         self.lv_log.model().clear()
 
-    def update_working_dir(self):
-        """Updating working directory line edit widget."""
-        self.le_directory.setText(self.plugin_settings.working_dir)
-
     def on_log_in(self):
         """Handle logging-in."""
         log_in_dialog = LogInDialog(self)
@@ -75,6 +70,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if accepted:
             self.threedi_api = log_in_dialog.threedi_api
             self.current_user = log_in_dialog.user
+            self.current_user_full_name = log_in_dialog.user_full_name
             self.organisations = log_in_dialog.organisations
             self.initialize_authorized_view()
 
@@ -92,25 +88,30 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.upload_dlg = None
         self.threedi_api = None
         self.current_user = None
+        self.current_user_full_name = None
         self.organisations.clear()
         self.label_user.setText("")
-        self.label_schematisation.setText("")
 
     def update_schematisation_view(self):
         """Method for updating loaded schematisation labels."""
         if self.current_local_schematisation:
-            self.label_schematisation.setText(str(self.current_local_schematisation.name) or "")
+            schema_dir = self.current_local_schematisation.main_dir
+            schema_label_text = f'<a href="file:///{schema_dir}">{ self.current_local_schematisation.name}</a>'
+            self.label_schematisation.setText(schema_label_text)
+            self.label_schematisation.setOpenExternalLinks(True)
+            self.label_schematisation.setToolTip(schema_dir)
             if self.current_local_schematisation.wip_revision:
                 self.label_revision.setText(str(self.current_local_schematisation.wip_revision.number) or "")
             else:
                 self.label_revision.setText("")
         else:
             self.label_schematisation.setText("")
+            self.label_schematisation.setToolTip("")
             self.label_revision.setText("")
 
     def initialize_authorized_view(self):
         """Method for initializing processes after logging in 3Di API."""
-        self.label_user.setText(self.current_user)
+        self.label_user.setText(self.current_user_full_name)
         self.initialize_simulations_progresses_thread()
         self.initialize_simulation_overview()
         self.initialize_simulation_results()
@@ -170,7 +171,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def initialize_simulation_overview(self):
         """Initialization of the Simulation Overview window."""
         self.simulation_overview_dlg = SimulationOverview(self)
-        self.simulation_overview_dlg.label_user.setText(self.current_user)
+        self.simulation_overview_dlg.label_user.setText(self.current_user_full_name)
 
     @api_client_required
     def show_simulation_overview(self):

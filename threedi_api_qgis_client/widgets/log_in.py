@@ -31,6 +31,7 @@ def api_client_required(fn):
             if accepted:
                 plugin_dock.threedi_api = log_in_dialog.threedi_api
                 plugin_dock.current_user = log_in_dialog.user
+                plugin_dock.current_user_full_name = log_in_dialog.user_full_name
                 plugin_dock.organisations = log_in_dialog.organisations
                 plugin_dock.initialize_authorized_view()
             else:
@@ -51,6 +52,7 @@ class LogInDialog(uicls, basecls):
         self.plugin_dock = plugin_dock
         self.communication = self.plugin_dock.communication
         self.user = None
+        self.user_full_name = None
         self.threedi_api = None
         self.organisations = {}
         self.log_in_widget.hide()
@@ -83,7 +85,9 @@ class LogInDialog(uicls, basecls):
             self.log_pbar.setValue(25)
             self.threedi_api = get_api_client(username, password, self.plugin_dock.plugin_settings.api_url)
             tc = ThreediCalls(self.threedi_api)
+            user_profile = tc.fetch_current_user()
             self.user = username
+            self.user_full_name = f"{user_profile.first_name} {user_profile.last_name}"
             self.wait_widget.update()
             self.log_pbar.setValue(75)
             self.fetch_msg.show()

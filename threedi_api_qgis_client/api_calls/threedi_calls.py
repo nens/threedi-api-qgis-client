@@ -57,6 +57,7 @@ from threedi_api_client.openapi import (
     TimeStepSettings,
     AggregationSettings,
     Event,
+    User,
 )
 
 
@@ -94,6 +95,11 @@ class ThreediCalls:
                 response = api_method(*args, offset=offset, limit=limit, **kwargs)
                 results_list += response.results
         return results_list
+
+    def fetch_current_user(self) -> User:
+        """Fetch current user instance."""
+        user = self.threedi_api.auth_profile_list()
+        return user
 
     def fetch_repositories(self) -> List[Repository]:
         """Fetch all repositories available for current user."""

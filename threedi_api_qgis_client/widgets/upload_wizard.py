@@ -621,6 +621,8 @@ class SelectFilesPage(QWizardPage):
         layout.addWidget(self.main_widget, 0, 0)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        commit_msg_te = self.main_widget.te_upload_description
+        self.registerField("commit_msg*", commit_msg_te, property="plainText", changedSignal=commit_msg_te.textChanged)
         self.adjustSize()
 
 
