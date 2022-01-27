@@ -6,6 +6,7 @@ import hashlib
 import requests
 import shutil
 import tempfile
+from uuid import uuid4
 from zipfile import ZipFile, ZIP_DEFLATED
 from enum import Enum
 from collections import OrderedDict, defaultdict
@@ -317,6 +318,17 @@ class LocalRevision:
                 if sqlite_candidate.endswith(".sqlite"):
                     self.sqlite_filename = sqlite_candidate
                     break
+
+    def backup_sqlite(self):
+        """Make a backup of the sqlite database."""
+        backup_sqlite_path = None
+        if self.sqlite_filename:
+            backup_folder = os.path.join(self.schematisation_dir, "_backup")
+            os.makedirs(backup_folder, exist_ok=True)
+            prefix = str(uuid4())[:8]
+            backup_sqlite_path = os.path.join(backup_folder, f"{prefix}_{self.sqlite_filename}")
+            shutil.copyfile(self.sqlite, backup_sqlite_path)
+        return backup_sqlite_path
 
 
 class WIPRevision(LocalRevision):

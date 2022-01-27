@@ -79,6 +79,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.current_local_schematisation = self.parent_page.parent_wizard.current_local_schematisation
         self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
         self.checker_logger = ListViewLogger(self.lv_check_result)
         self.pb_check_model.clicked.connect(self.run_model_checks)
@@ -117,9 +118,14 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         db_type = "spatialite"
         db_settings = {"db_path": self.schematisation_sqlite}
         threedi_db = ThreediDatabase(db_settings, db_type=db_type)
+        schema = ModelSchema(threedi_db)
         try:
-            schema = ModelSchema(threedi_db)
-            schema.upgrade("head")
+            schema.validate_schema()
+        except errors.MigrationMissingError:
+            wip_revision = self.current_local_schematisation.wip_revision
+            backup_filepath = wip_revision.backup_sqlite()
+            schema.upgrade(backup=False)
+            shutil.rmtree(os.path.dirname(backup_filepath))
         except Exception as e:
             self.checker_logger.log_error(f"{e}")
         try:
@@ -137,8 +143,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             self.checker_logger.log_error("The selected 3Di model does not have the latest migration")
             self.checker_logger.log_error(
                 "The selected 3Di model does not have the latest migration, please "
-                "migrate your model to the latest version. Download the latest "
-                "version of the model here: <a href='https://3di.lizard.net/models/'>https://3di.lizard.net/models/</a>"
+                "migrate your model to the latest version."
                 # noqa
             )
             return
@@ -182,6 +187,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                 )
             self.pbar_check_spatialite.setValue(i)
         self.checker_logger.log_info("Successfully finished running threedi-modelchecker")
+        self.pbar_check_spatialite.setValue(total_checks)
 
     def check_rasters(self):
         """Run rasters checker."""
