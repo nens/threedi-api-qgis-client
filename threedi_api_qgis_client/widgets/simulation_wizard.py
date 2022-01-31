@@ -2107,6 +2107,7 @@ class SimulationWizard(QWizard):
             )
         try:
             simulation_template = self.init_conditions_dlg.simulation_template
+            sim_temp_id = simulation_template.simulation.id
             self.new_simulations = []
             self.new_simulation_statuses = {}
             valid_states = ["processed", "valid"]
@@ -2158,11 +2159,25 @@ class SimulationWizard(QWizard):
                 )
                 current_status = tc.fetch_simulation_status(new_simulation.id)
                 sim_id = new_simulation.id
+                if self.init_conditions.include_filestructure_controls:
+                    sc_file = self.init_conditions_dlg.events.filestructurecontrols
+                    sc_file_download = tc.fetch_structure_control_file_download(sim_temp_id, sc_file.id)
+                    sc_file_name = sc_file.file.filename
+                    sc_temp_filepath = os.path.join(TEMPDIR, sc_file_name)
+                    get_download_file(sc_file_download, sc_temp_filepath)
+                    sc_upload = tc.create_simulation_structure_control_file(sim_id, filename=sc_file_name)
+                    upload_file(sc_upload, sc_temp_filepath)
+                    for ti in range(int(upload_timeout // 2)):
+                        uploaded_sc = tc.fetch_structure_control_files(sim_id)[0]
+                        if uploaded_sc.state in valid_states:
+                            break
+                        else:
+                            time.sleep(2)
+                    os.remove(sc_temp_filepath)
                 if self.init_conditions.include_boundary_conditions:
-                    sim_temp_id = simulation_template.simulation.id
                     bc_file = self.init_conditions_dlg.events.fileboundaryconditions
                     bc_file_download = tc.fetch_boundarycondition_file_download(sim_temp_id, bc_file.id)
-                    bc_file_name = bc_file_download.get_url.split("/")[-1].split("?")[0]
+                    bc_file_name = bc_file.file.filename
                     bc_temp_filepath = os.path.join(TEMPDIR, bc_file_name)
                     get_download_file(bc_file_download, bc_temp_filepath)
                     bc_upload = tc.create_simulation_boundarycondition_file(sim_id, filename=bc_file_name)

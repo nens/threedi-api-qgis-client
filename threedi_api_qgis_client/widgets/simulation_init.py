@@ -74,6 +74,8 @@ class SimulationInit(uicls, basecls):
 
     def check_template_events(self):
         """Check events that are available for the simulation template."""
+        if self.events.filestructurecontrols:
+            self.cb_filestructure_controls.setChecked(True)
         if self.events.fileboundaryconditions:
             self.cb_boundary.setChecked(True)
         initial_events = [
@@ -170,6 +172,7 @@ class SimulationInit(uicls, basecls):
     def start_wizard(self):
         """Start new simulation wizard based on selected options."""
         self.initial_conditions = SimulationInitObject()
+        self.initial_conditions.include_filestructure_controls = self.cb_filestructure_controls.isChecked()
         self.initial_conditions.include_boundary_conditions = self.cb_boundary.isChecked()
         self.initial_conditions.include_initial_conditions = self.cb_conditions.isChecked()
         self.initial_conditions.load_from_saved_state = self.cb_load_saved_state.isChecked()
@@ -204,6 +207,7 @@ class SimulationInitObject:
     """Object for storing init options."""
 
     def __init__(self):
+        self.include_filestructure_controls = False
         self.include_boundary_conditions = False
         self.include_initial_conditions = False
         self.load_from_saved_state = False

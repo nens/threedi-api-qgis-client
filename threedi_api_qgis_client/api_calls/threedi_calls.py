@@ -41,6 +41,7 @@ from threedi_api_client.openapi import (
     ConstantWind,
     TimeseriesWind,
     WindDragCoefficient,
+    FileStructureControl,
     FileBoundaryCondition,
     FileLateral,
     Schematisation,
@@ -295,6 +296,28 @@ class ThreediCalls:
         """Get the lateral file Download object."""
         lateral_download = self.threedi_api.simulations_events_lateral_file_download(lateral_pk, str(simulation_pk))
         return lateral_download
+
+    def fetch_structure_control_files(self, simulation_pk: int) -> List[FileStructureControl]:
+        """Get list of the structure control files of the given simulation."""
+        sc_files_list = self.paginated_fetch(
+            self.threedi_api.simulations_events_structure_control_file_list, str(simulation_pk)
+        )
+        return sc_files_list
+
+    def fetch_structure_control_file(self, simulation_pk: int, sc_pk: int) -> FileStructureControl:
+        """Get a structure control file with given id."""
+        sc_file = self.threedi_api.simulations_events_structure_control_file_read(sc_pk, str(simulation_pk))
+        return sc_file
+
+    def fetch_structure_control_file_download(self, simulation_pk: int, sc_pk: int) -> Download:
+        """Get a structure control file Download object."""
+        sc_download = self.threedi_api.simulations_events_structure_control_file_download(sc_pk, str(simulation_pk))
+        return sc_download
+
+    def create_simulation_structure_control_file(self, simulation_pk: int, **data) -> Upload:
+        """Add structure control file to the given simulation."""
+        sc_upload_file = self.threedi_api.simulations_events_structure_control_file_create(str(simulation_pk), data)
+        return sc_upload_file
 
     def fetch_boundarycondition_files(self, simulation_pk: int) -> List[FileBoundaryCondition]:
         """Get list of the boundary condition files of the given simulation."""
