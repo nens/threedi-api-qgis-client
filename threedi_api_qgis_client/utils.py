@@ -138,17 +138,17 @@ def is_file_checksum_equal(file_path, etag):
         return etag == md5_returned
 
 
-def zip_sqlite(sqlite_filepath, compression=ZIP_DEFLATED):
-    """Zip sqlite file."""
-    sqlite_file = os.path.basename(sqlite_filepath)
-    zip_filepath = sqlite_filepath.rsplit(".", 1)[0] + ".zip"
+def zip_into_archive(file_path, compression=ZIP_DEFLATED):
+    """Zip file."""
+    sqlite_file = os.path.basename(file_path)
+    zip_filepath = file_path.rsplit(".", 1)[0] + ".zip"
     with ZipFile(zip_filepath, "w", compression=compression) as zf:
-        zf.write(sqlite_filepath, arcname=sqlite_file)
+        zf.write(file_path, arcname=sqlite_file)
     return zip_filepath
 
 
-def unzip_sqlite(zip_filepath, location=None):
-    """Unzip sqlite file."""
+def unzip_archive(zip_filepath, location=None):
+    """Unzip archive content."""
     if not location:
         location = os.path.dirname(zip_filepath)
     with ZipFile(zip_filepath, "r") as zf:
@@ -271,6 +271,13 @@ class LocalRevision:
             return grid_dir_path
 
     @property
+    def results_dir(self):
+        """Get schematisation revision results directory path."""
+        if self.number:
+            grid_dir_path = os.path.join(self.main_dir, "results")
+            return grid_dir_path
+
+    @property
     def schematisation_dir(self):
         """Get schematisation revision schematisation directory path."""
         if self.number:
@@ -300,6 +307,7 @@ class LocalRevision:
         paths = [
             self.admin_dir,
             self.grid_dir,
+            self.results_dir,
             self.schematisation_dir,
             self.raster_dir,
         ]
@@ -357,6 +365,12 @@ class WIPRevision(LocalRevision):
     def grid_dir(self):
         """Get schematisation revision grid directory path."""
         grid_dir_path = os.path.join(self.main_dir, "grid")
+        return grid_dir_path
+
+    @property
+    def results_dir(self):
+        """Get schematisation revision results directory path."""
+        grid_dir_path = os.path.join(self.main_dir, "results")
         return grid_dir_path
 
     @property

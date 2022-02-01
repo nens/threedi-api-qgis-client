@@ -12,7 +12,7 @@ from PyQt5 import QtWebSockets
 from threedi_api_client.openapi import ApiException, Progress
 from threedi_api_client.files import upload_file
 from .api_calls.threedi_calls import ThreediCalls
-from .utils import zip_sqlite, UploadFileStatus, CHUNK_SIZE
+from .utils import zip_into_archive, unzip_archive, UploadFileStatus, CHUNK_SIZE
 
 
 logger = logging.getLogger(__name__)
@@ -170,6 +170,8 @@ class DownloadProgressWorker(QObject):
                             f.write(chunk)
                             size += len(chunk)
                             self.download_progress.emit(size / total_size * 100)
+                if filename.lower().endswith(".zip"):
+                    unzip_archive(filename_path)
                 continue
             except Exception as e:
                 error_msg = f"Error: {e}"
@@ -289,7 +291,7 @@ class UploadProgressWorker(QRunnable):
         self.current_task_progress = 0.0
         self.report_upload_progress()
         schematisation_sqlite = self.upload_specification["selected_files"]["spatialite"]["filepath"]
-        zipped_sqlite_filepath = zip_sqlite(schematisation_sqlite)
+        zipped_sqlite_filepath = zip_into_archive(schematisation_sqlite)
         zipped_sqlite_file = os.path.basename(zipped_sqlite_filepath)
         upload = self.tc.upload_schematisation_revision_sqlite(
             self.schematisation.id, self.revision.id, zipped_sqlite_file

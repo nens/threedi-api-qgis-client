@@ -19,7 +19,7 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit,
 )
 from threedi_api_client.openapi import ApiException, SchematisationRevision
-from ..utils import is_file_checksum_equal, UploadFileType, UploadFileStatus, zip_sqlite
+from ..utils import is_file_checksum_equal, UploadFileType, UploadFileStatus, zip_into_archive
 from ..utils_ui import get_filepath
 from ..utils_qgis import sqlite_layer
 from ..communication import ListViewLogger
@@ -323,7 +323,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         sqlite_localisation = os.path.dirname(self.schematisation_sqlite)
         if self.latest_revision.sqlite:
             try:
-                zipped_sqlite = zip_sqlite(self.schematisation_sqlite)
+                zipped_sqlite = zip_into_archive(self.schematisation_sqlite)
                 sqlite_download = self.tc.download_schematisation_revision_sqlite(
                     self.schematisation.id, self.latest_revision.id
                 )

@@ -9,7 +9,7 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from threedi_api_client.openapi import ApiException
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import list_local_schematisations, get_download_file, unzip_sqlite, LocalSchematisation
+from ..utils import list_local_schematisations, get_download_file, unzip_archive, LocalSchematisation
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "schematisation_download.ui"))
@@ -279,7 +279,7 @@ class SchematisationDownload(uicls, basecls):
             current_progress = 0
             self.pbar_download.setValue(current_progress)
             get_download_file(sqlite_download, zip_filepath)
-            content_list = unzip_sqlite(zip_filepath)
+            content_list = unzip_archive(zip_filepath)
             os.remove(zip_filepath)
             sqlite_file = content_list[0]
             current_progress += 1

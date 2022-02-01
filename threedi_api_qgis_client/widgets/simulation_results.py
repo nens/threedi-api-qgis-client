@@ -5,7 +5,6 @@ from dateutil.relativedelta import relativedelta
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QThread
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from qgis.PyQt.QtWidgets import QFileDialog
 from threedi_api_client.openapi import ApiException
 from .custom_items import DownloadProgressDelegate
 from ..api_calls.threedi_calls import ThreediCalls
@@ -120,16 +119,19 @@ class SimulationResults(uicls, basecls):
         current_index = self.tv_finished_sim_tree.currentIndex()
         if not current_index.isValid():
             return
-        directory = QFileDialog.getExistingDirectory(
-            self, "Select Results Directory", self.plugin_dock.plugin_settings.working_dir
-        )
+        local_schematisation = self.plugin_dock.current_local_schematisation
+        if local_schematisation is None or local_schematisation.wip_revision is None:
+            warn_msg = "Please load local schematisation, before downloading simulation results."
+            self.plugin_dock.communication.show_warn(warn_msg)
+            return
         try:
+            wip_revision = local_schematisation.wip_revision
             current_row = current_index.row()
             name_item = self.tv_model.item(current_row, 0)
             sim_id = name_item.data(Qt.UserRole)
             simulation = self.finished_simulations[sim_id]
             simulation_name = simulation.name.replace(" ", "_")
-            simulation_subdirectory = os.path.join(directory, f"sim_{sim_id}_{simulation_name}")
+            simulation_subdirectory = os.path.join(wip_revision.results_dir, f"sim_{sim_id}_{simulation_name}")
             simulation_model_id = int(simulation.threedimodel_id)
             tc = ThreediCalls(self.plugin_dock.threedi_api)
             downloads = tc.fetch_simulation_downloads(sim_id)
