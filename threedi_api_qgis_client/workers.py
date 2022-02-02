@@ -352,10 +352,17 @@ class UploadProgressWorker(QRunnable):
         self.report_upload_progress()
         commit_message = self.upload_specification["commit_message"]
         self.tc.commit_schematisation_revision(self.schematisation.id, self.revision.id, commit_message=commit_message)
+        self.current_task_progress = 100.0
+        self.report_upload_progress()
+
+    def create_3di_model_task(self):
+        """Run creation of the new model out of revision data."""
+        self.current_task = "MAKE 3DI MODEL"
+        self.current_task_progress = 0.0
+        self.report_upload_progress()
+        # Wait for the 'modelchecker' validations
         model_checker_task = None
         revision_tasks = self.tc.fetch_schematisation_revision_tasks(self.schematisation.id, self.revision.id)
-        self.current_task_progress = 50.0
-        self.report_upload_progress()
         for i in range(self.TASK_CHECK_RETRIES):
             for rtask in revision_tasks:
                 if rtask.name == "modelchecker":
@@ -384,17 +391,7 @@ class UploadProgressWorker(QRunnable):
                 error_msg = "\n".join(error["description"] for error in checker_errors)
                 err = RevisionUploadError(error_msg)
                 raise err
-            self.current_task_progress = 100.0
-            self.report_upload_progress()
-        else:
-            err = RevisionUploadError("'modelchecker' task was not started properly")
-            raise err
-
-    def create_3di_model_task(self):
-        """Run creation of the new model out of revision data."""
-        self.current_task = "MAKE 3DI MODEL"
-        self.current_task_progress = 0.0
-        self.report_upload_progress()
+        # Create 3Di model
         model = self.tc.create_schematisation_revision_3di_model(
             self.schematisation.id, self.revision.id, **self.revision.to_dict()
         )
