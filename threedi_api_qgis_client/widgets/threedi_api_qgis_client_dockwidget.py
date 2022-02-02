@@ -95,11 +95,13 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def update_schematisation_view(self):
         """Method for updating loaded schematisation labels."""
         if self.current_local_schematisation:
+            schema_name = self.current_local_schematisation.name
             schema_dir = self.current_local_schematisation.main_dir
-            schema_label_text = f'<a href="file:///{schema_dir}">{ self.current_local_schematisation.name}</a>'
+            schema_label_text = f'<a href="file:///{schema_dir}">{schema_name}</a>'
+            schema_tooltip = f"{schema_name}\n{schema_dir}"
             self.label_schematisation.setText(schema_label_text)
             self.label_schematisation.setOpenExternalLinks(True)
-            self.label_schematisation.setToolTip(schema_dir)
+            self.label_schematisation.setToolTip(schema_tooltip)
             if self.current_local_schematisation.wip_revision:
                 self.label_revision.setText(str(self.current_local_schematisation.wip_revision.number) or "")
             else:
