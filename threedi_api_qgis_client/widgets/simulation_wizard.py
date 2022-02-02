@@ -2160,12 +2160,15 @@ class SimulationWizard(QWizard):
                 current_status = tc.fetch_simulation_status(new_simulation.id)
                 sim_id = new_simulation.id
                 if self.init_conditions.include_filestructure_controls:
-                    sc_file = self.init_conditions_dlg.events.filestructurecontrols
+                    sc_file = self.init_conditions_dlg.events.filestructurecontrols[0]
                     sc_file_download = tc.fetch_structure_control_file_download(sim_temp_id, sc_file.id)
                     sc_file_name = sc_file.file.filename
+                    sc_file_offset = sc_file.offset
                     sc_temp_filepath = os.path.join(TEMPDIR, sc_file_name)
                     get_download_file(sc_file_download, sc_temp_filepath)
-                    sc_upload = tc.create_simulation_structure_control_file(sim_id, filename=sc_file_name)
+                    sc_upload = tc.create_simulation_structure_control_file(
+                        sim_id, filename=sc_file_name, offset=sc_file_offset
+                    )
                     upload_file(sc_upload, sc_temp_filepath)
                     for ti in range(int(upload_timeout // 2)):
                         uploaded_sc = tc.fetch_structure_control_files(sim_id)[0]
