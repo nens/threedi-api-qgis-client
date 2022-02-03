@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 from collections import defaultdict, OrderedDict
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QThreadPool, QItemSelectionModel
@@ -11,6 +12,14 @@ from ..communication import ListViewLogger
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_overview.ui"))
+
+
+class UploadStatus(Enum):
+    """Enumerator with possible upload statuses."""
+
+    IN_PROGRESS = "In progress"
+    SUCCESS = "Success"
+    FAILURE = "Failure"
 
 
 class UploadOverview(uicls_log, basecls_log):
@@ -49,11 +58,14 @@ class UploadOverview(uicls_log, basecls_log):
         self.tv_model = QStandardItemModel(0, nr_of_columns - 1)
         self.tv_model.setHorizontalHeaderLabels(["Schematisation name", "Revision", "Commit message", "Status"])
         self.tv_uploads.setModel(self.tv_model)
-        self.tv_uploads.selectionModel().selectionChanged.connect(self.change_upload_context)
+        self.tv_uploads.selectionModel().selectionChanged.connect(self.on_upload_context_change)
         for i in range(nr_of_columns):
             self.tv_uploads.resizeColumnToContents(i)
+        self.progress_widget.hide()
+        self.label_success.hide()
+        self.label_failure.hide()
 
-    def change_upload_context(self):
+    def on_upload_context_change(self):
         """Updating progress bars based on upload selection change."""
         selected_indexes = self.tv_uploads.selectedIndexes()
         if selected_indexes:
@@ -70,6 +82,20 @@ class UploadOverview(uicls_log, basecls_log):
                         self.feedback_logger.log_error(msg)
             except KeyError:
                 pass
+            status_item = self.tv_model.item(current_row, 3)
+            status = status_item.text()
+            if status == UploadStatus.SUCCESS.value:
+                self.progress_widget.hide()
+                self.label_success.show()
+                self.label_failure.hide()
+            elif status == UploadStatus.FAILURE.value:
+                self.progress_widget.hide()
+                self.label_success.hide()
+                self.label_failure.show()
+            else:
+                self.progress_widget.show()
+                self.label_success.hide()
+                self.label_failure.hide()
 
     def add_upload_to_model(self, upload_specification):
         """Initializing a new upload."""
@@ -80,7 +106,7 @@ class UploadOverview(uicls_log, basecls_log):
         revision_number = revision.number + 1 if create_revision is True else revision.number
         revision_item = QStandardItem(f"{revision_number}")
         commit_msg_item = QStandardItem(f"{upload_specification['commit_message']}")
-        status_item = QStandardItem("In progress")
+        status_item = QStandardItem(UploadStatus.IN_PROGRESS.value)
         self.tv_model.appendRow([schema_name_item, revision_item, commit_msg_item, status_item])
         upload_row_number = self.tv_model.rowCount()
         upload_row_idx = self.tv_model.index(upload_row_number - 1, 0)
@@ -143,13 +169,14 @@ class UploadOverview(uicls_log, basecls_log):
     def on_upload_finished_success(self, upload_row_number, msg):
         """Handling action on upload success."""
         item = self.tv_model.item(upload_row_number - 1, 3)
-        item.setText("Success")
+        item.setText(UploadStatus.SUCCESS.value)
         self.plugin_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
+        self.on_upload_context_change()
 
     def on_upload_failed(self, upload_row_number, error_message):
         """Handling action on upload failure."""
         item = self.tv_model.item(upload_row_number - 1, 3)
-        item.setText("Failure")
+        item.setText(UploadStatus.FAILURE.value)
         self.plugin_dock.communication.bar_error(error_message, log_text_color=Qt.red)
         success = False
         failed_task_name = self.upload_progresses[self.current_upload_row][0]
@@ -160,3 +187,4 @@ class UploadOverview(uicls_log, basecls_log):
         else:
             self.ended_tasks[upload_row_number].append(failed_task_row)
         self.feedback_logger.log_error(enriched_error_message)
+        self.on_upload_context_change()
