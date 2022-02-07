@@ -352,7 +352,7 @@ class NewSchematisationWizard(QWizard):
         self.cancel_btn.clicked.connect(self.cancel_wizard)
         self.setWindowTitle("New schematisation")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.resize(self.settings.value("threedi/new_schematisation_wizard_size", QSize(1000, 700)))
+        self.resize(self.settings.value("threedi/new_schematisation_wizard_size", QSize(790, 700)))
 
     def create_schematisation(self):
         """Get settings from the wizard and create new schematisation (locally and remotely)."""
