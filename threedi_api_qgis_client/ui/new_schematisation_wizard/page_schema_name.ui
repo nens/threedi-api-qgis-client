@@ -260,6 +260,11 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>le_schematisation_name</tabstop>
+  <tabstop>le_tags</tabstop>
+  <tabstop>cbo_organisations</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
