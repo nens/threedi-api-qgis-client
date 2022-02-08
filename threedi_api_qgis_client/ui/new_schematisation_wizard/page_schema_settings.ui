@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>785</width>
-    <height>793</height>
+    <height>790</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -317,7 +317,7 @@
             <double>0.000000000000000</double>
            </property>
            <property name="maximum">
-            <double>1000000000.000000000000000</double>
+            <double>9999.000000000000000</double>
            </property>
            <property name="value">
             <double>0.000000000000000</double>
@@ -530,7 +530,7 @@
           </widget>
          </item>
          <item row="0" column="0">
-          <widget class="QLabel" name="label_7">
+          <widget class="QLabel" name="manhole_storage_area_label">
            <property name="minimumSize">
             <size>
              <width>350</width>
@@ -704,7 +704,7 @@
         </property>
         <layout class="QGridLayout" name="gridLayout_5">
          <item row="2" column="0">
-          <widget class="QLabel" name="label_10">
+          <widget class="QLabel" name="frict_coef_label">
            <property name="font">
             <font>
              <pointsize>10</pointsize>

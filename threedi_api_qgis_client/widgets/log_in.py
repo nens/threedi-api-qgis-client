@@ -100,7 +100,7 @@ class LogInDialog(uicls, basecls):
         except ApiException as e:
             self.close()
             if e.status == 404:
-                error_msg = "Can't connect to the 3Di API. Please check if your \"Base API URL\" is valid."
+                error_msg = 'Can\'t connect to the 3Di API. Please check if your "Base API URL" is valid.'
             else:
                 error_body = e.body
                 error_details = error_body["details"] if "details" in error_body else error_body

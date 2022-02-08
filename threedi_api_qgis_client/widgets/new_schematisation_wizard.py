@@ -13,7 +13,7 @@ from qgis.PyQt.QtWidgets import (
     QGridLayout,
     QSizePolicy,
 )
-from qgis.core import QgsFeature
+from qgis.core import QgsFeature, QgsRasterLayer
 from threedi_api_client.openapi import ApiException
 from ..utils import LocalSchematisation, extract_error_message, EMPTY_DB_PATH
 from ..utils_ui import scan_widgets_parameters
@@ -24,6 +24,9 @@ from ..api_calls.threedi_calls import ThreediCalls
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_schema_name_page, basecls_schema_name_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "new_schematisation_wizard", "page_schema_name.ui")
+)
+uicls_schema_explain_page, basecls_schema_explain_page = uic.loadUiType(
+    os.path.join(base_dir, "ui", "new_schematisation_wizard", "page_schema_explain.ui")
 )
 uicls_schema_settings_page, basecls_schema_settings_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "new_schematisation_wizard", "page_schema_settings.ui")
@@ -58,6 +61,15 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
         return name, tags, owner
 
 
+class SchematisationExplainWidget(uicls_schema_explain_page, basecls_schema_explain_page):
+    """Widget for the Schematisation explanation text page."""
+
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+
+
 class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_settings_page):
     """Widget for the Schematisation Settings page."""
 
@@ -65,6 +77,44 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.use_1d_flow_group.toggled.connect(self.on_1d_flow_toggled)
+        self.use_2d_flow_group.toggled.connect(self.on_2d_flow_toggled)
+        self.dem_file.fileChanged.connect(self.on_dem_file_change)
+
+    def on_1d_flow_toggled(self, on):
+        """Logic for checking/unchecking 1D Flow settings group."""
+        if on:
+            if self.use_2d_flow_group.isChecked():
+                self.manhole_storage_area_label.setDisabled(True)
+                self.manhole_storage_area.setDisabled(True)
+            else:
+                self.manhole_storage_area_label.setEnabled(True)
+                self.manhole_storage_area.setEnabled(True)
+
+    def on_2d_flow_toggled(self, on):
+        """Logic for checking/unchecking 2D Flow settings group."""
+        if on:
+            self.frict_coef_label.setEnabled(True)
+            self.frict_coef_file.setEnabled(True)
+            self.grid_space.setValue(0.0)
+            if self.use_1d_flow_group.isChecked():
+                self.manhole_storage_area_label.setDisabled(True)
+                self.manhole_storage_area.setDisabled(True)
+        else:
+            self.frict_coef_label.setDisabled(True)
+            self.frict_coef_file.setDisabled(True)
+            self.grid_space.setValue(9999.0)
+            if self.use_1d_flow_group.isChecked():
+                self.manhole_storage_area_label.setEnabled(True)
+                self.manhole_storage_area.setEnabled(True)
+
+    def on_dem_file_change(self):
+        """Extra logic for changing DEM file path."""
+        dem_filepath = self.dem_file.filePath()
+        raster_layer = QgsRasterLayer(dem_filepath)
+        if raster_layer.isValid():
+            raster_crs = raster_layer.crs()
+            self.crs.setCrs(raster_crs)
 
     @property
     def aggregation_settings_queries(self):
@@ -219,7 +269,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         user_settings["frict_type"] = int(frict_type_text.split(":")[0])
         frict_coef_file = os.path.basename(user_settings["frict_coef_file"])
         user_settings["frict_coef_file"] = f"rasters/{frict_coef_file}" if frict_coef_file else None
-        if not (self.use_1d_flow_group.isChecked() and not self.use_2d_flow_group.isChecked()):
+        if not use_1d_checked or use_2d_checked:
             user_settings["manhole_storage_area"] = None
         sim_time_step = user_settings["sim_time_step"]
         output_time_step_text = user_settings["output_time_step_text"]
@@ -291,6 +341,20 @@ class SchematisationNamePage(QWizardPage):
         self.adjustSize()
 
 
+class SchematisationExplainPage(QWizardPage):
+    """New schematisation explanation page."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = SchematisationExplainWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+
 class SchematisationSettingsPage(QWizardPage):
     """New schematisation settings definition page."""
 
@@ -309,11 +373,12 @@ class SchematisationSettingsPage(QWizardPage):
     def validatePage(self):
         """Overriding page validation logic."""
         non_zero_widgets = [
-            ("Global 2D friction coefficient", self.main_widget.frict_coef),
             ("Simulation timestep", self.main_widget.sim_time_step),
         ]
         if self.main_widget.use_2d_flow_group.isChecked():
             non_zero_widgets.append(("Computational Cell Size", self.main_widget.grid_space))
+            if not self.main_widget.frict_coef_file.filePath():
+                non_zero_widgets.append(("Global 2D friction coefficient", self.main_widget.frict_coef))
         non_zero_settings = []
         for setting_name, setting_widget in non_zero_widgets:
             if not setting_widget.value() > 0:
@@ -341,10 +406,11 @@ class NewSchematisationWizard(QWizard):
         self.new_schematisation = None
         self.new_local_schematisation = None
         self.schematisation_name_page = SchematisationNamePage(self.plugin_dock.organisations, self)
+        self.schematisation_explain_page = SchematisationExplainPage(self)
         self.schematisation_settings_page = SchematisationSettingsPage(self)
         self.addPage(self.schematisation_name_page)
+        self.addPage(self.schematisation_explain_page)
         self.addPage(self.schematisation_settings_page)
-
         self.setButtonText(QWizard.FinishButton, "Create schematisation")
         self.finish_btn = self.button(QWizard.FinishButton)
         self.finish_btn.clicked.connect(self.create_schematisation)
