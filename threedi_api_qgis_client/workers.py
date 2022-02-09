@@ -164,7 +164,8 @@ class DownloadProgressWorker(QObject):
         for result_file, download in self.downloads:
             filename = result_file.filename
             filename_path = str(os.path.join(self.directory, filename))
-            if len(filename_path) > 256:
+            # Any file path with >= 260 characters have to be treated in special way due to Windows MAX_PATH limit.
+            if len(filename_path) >= 260:
                 filename_path = f"\\\\?\\{filename_path}"
             try:
                 os.makedirs(self.directory, exist_ok=True)
