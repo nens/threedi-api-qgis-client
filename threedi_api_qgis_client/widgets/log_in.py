@@ -77,6 +77,11 @@ class LogInDialog(uicls, basecls):
         username = self.le_user.text()
         password = self.le_pass.text()
         api_url = self.plugin_dock.plugin_settings.api_url
+        api_url_error_message = (
+            f"Error: Invalid Base API URL '{api_url}'. "
+            f"The 3Di API expects that the version is not included. "
+            f"Please change the Base API URL in the 3Di Models & Simulations plugin settings."
+        )
         try:
             self.show_wait_widget()
             self.fetch_msg.hide()
@@ -101,17 +106,16 @@ class LogInDialog(uicls, basecls):
         except ApiException as e:
             self.close()
             if e.status == 404:
-                error_msg = (
-                    f"Error: Invalid Base API URL '{api_url}'. "
-                    f"The 3Di API expects that the version is not included. "
-                    f"Please change the Base API URL in the 3Di Models & Simulations plugin settings."
-                )
+                error_msg = api_url_error_message
             else:
                 error_body = e.body
                 error_details = error_body["details"] if "details" in error_body else error_body
                 error_msg = f"Error: {error_details}"
             self.communication.show_error(error_msg)
         except Exception as e:
+            if "THREEDI_API_HOST" in str(e):
+                error_msg = api_url_error_message
+            else:
+                error_msg = f"Error: {e}"
             self.close()
-            error_msg = f"Error: {e}"
             self.communication.show_error(error_msg)
