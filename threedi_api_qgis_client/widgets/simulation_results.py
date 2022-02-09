@@ -9,7 +9,7 @@ from threedi_api_client.openapi import ApiException
 from .custom_items import DownloadProgressDelegate
 from ..api_calls.threedi_calls import ThreediCalls
 from ..workers import DownloadProgressWorker
-from ..utils import LocalRevision
+from ..utils import list_local_schematisations, LocalSchematisation, LocalRevision
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_results.ui"))
@@ -120,11 +120,8 @@ class SimulationResults(uicls, basecls):
         current_index = self.tv_finished_sim_tree.currentIndex()
         if not current_index.isValid():
             return
-        local_schematisation = self.plugin_dock.current_local_schematisation
-        if local_schematisation is None or local_schematisation.wip_revision is None:
-            warn_msg = "Please load local schematisation, before downloading simulation results."
-            self.plugin_dock.communication.show_warn(warn_msg)
-            return
+        working_dir = self.plugin_dock.plugin_settings.working_dir
+        local_schematisations = list_local_schematisations(working_dir)
         try:
             current_row = current_index.row()
             name_item = self.tv_model.item(current_row, 0)
@@ -134,7 +131,15 @@ class SimulationResults(uicls, basecls):
             simulation_model_id = int(simulation.threedimodel_id)
             tc = ThreediCalls(self.plugin_dock.threedi_api)
             model_3di = tc.fetch_3di_model(simulation_model_id)
+            model_schematisation_id = model_3di.schematisation_id
+            model_schematisation_name = model_3di.schematisation_name
             model_revision_number = model_3di.revision_number
+            try:
+                local_schematisation = local_schematisations[model_schematisation_id]
+            except KeyError:
+                local_schematisation = LocalSchematisation(
+                    working_dir, model_schematisation_id, model_schematisation_name, create=True
+                )
             try:
                 local_revision = local_schematisation.revisions[model_revision_number]
             except KeyError:
