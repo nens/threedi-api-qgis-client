@@ -145,7 +145,7 @@ class DownloadProgressWorker(QObject):
         super().__init__()
         self.simulation = simulation
         self.downloads = downloads
-        self.directory = directory
+        self.directory = os.path.normpath(directory)
         self.success = True
 
     @pyqtSlot()
