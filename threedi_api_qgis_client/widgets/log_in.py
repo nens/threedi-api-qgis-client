@@ -74,16 +74,17 @@ class LogInDialog(uicls, basecls):
 
     def log_in_threedi(self):
         """Method which runs all logging widgets methods and setting up needed variables."""
+        username = self.le_user.text()
+        password = self.le_pass.text()
+        api_url = self.plugin_dock.plugin_settings.api_url
         try:
             self.show_wait_widget()
             self.fetch_msg.hide()
             self.done_msg.hide()
-            username = self.le_user.text()
-            password = self.le_pass.text()
             self.le_user.setText("")
             self.le_pass.setText("")
             self.log_pbar.setValue(25)
-            self.threedi_api = get_api_client(username, password, self.plugin_dock.plugin_settings.api_url)
+            self.threedi_api = get_api_client(username, password, api_url)
             tc = ThreediCalls(self.threedi_api)
             user_profile = tc.fetch_current_user()
             self.user = username
@@ -100,7 +101,11 @@ class LogInDialog(uicls, basecls):
         except ApiException as e:
             self.close()
             if e.status == 404:
-                error_msg = 'Can\'t connect to the 3Di API. Please check if your "Base API URL" is valid.'
+                error_msg = (
+                    f"Error: Invalid Base API URL '{api_url}'. "
+                    f"The 3Di API expects that the version is not included. "
+                    f"Please change the Base API URL in the 3Di Models & Simulations plugin settings."
+                )
             else:
                 error_body = e.body
                 error_details = error_body["details"] if "details" in error_body else error_body

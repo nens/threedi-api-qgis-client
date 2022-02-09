@@ -9,6 +9,7 @@ from threedi_api_client.openapi import ApiException
 from .custom_items import DownloadProgressDelegate
 from ..api_calls.threedi_calls import ThreediCalls
 from ..workers import DownloadProgressWorker
+from ..utils import LocalRevision
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_results.ui"))
@@ -125,15 +126,21 @@ class SimulationResults(uicls, basecls):
             self.plugin_dock.communication.show_warn(warn_msg)
             return
         try:
-            wip_revision = local_schematisation.wip_revision
             current_row = current_index.row()
             name_item = self.tv_model.item(current_row, 0)
             sim_id = name_item.data(Qt.UserRole)
             simulation = self.finished_simulations[sim_id]
             simulation_name = simulation.name.replace(" ", "_")
-            simulation_subdirectory = os.path.join(wip_revision.results_dir, f"sim_{sim_id}_{simulation_name}")
             simulation_model_id = int(simulation.threedimodel_id)
             tc = ThreediCalls(self.plugin_dock.threedi_api)
+            model_3di = tc.fetch_3di_model(simulation_model_id)
+            model_revision_number = model_3di.revision_number
+            try:
+                local_revision = local_schematisation.revisions[model_revision_number]
+            except KeyError:
+                local_revision = LocalRevision(local_schematisation, model_revision_number)
+                local_revision.make_revision_structure()
+            simulation_subdirectory = os.path.join(local_revision.results_dir, f"sim_{sim_id}_{simulation_name}")
             downloads = tc.fetch_simulation_downloads(sim_id)
             gridadmin_downloads = tc.fetch_3di_model_gridadmin_download(simulation_model_id)
             downloads.append(gridadmin_downloads)

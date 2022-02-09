@@ -152,7 +152,10 @@ class DownloadProgressWorker(QObject):
     def run(self):
         """Downloading simulation results files."""
         if self.downloads:
-            finished_message = f"Downloading results of {self.simulation.name} ({self.simulation.id}) finished!"
+            finished_message = (
+                f"Downloading results of {self.simulation.name} ({self.simulation.id}) finished! "
+                f"The files have been saved in the following location: '{self.directory}'"
+            )
         else:
             finished_message = "Nothing to download!"
         total_size = sum(download.size for result_file, download in self.downloads)
