@@ -163,7 +163,7 @@ class DownloadProgressWorker(QObject):
         self.download_progress.emit(size)
         for result_file, download in self.downloads:
             filename = result_file.filename
-            filename_path = bypass_max_path_limit(os.path.join(self.directory, filename))
+            filename_path = bypass_max_path_limit(os.path.join(self.directory, filename), is_file=True)
             try:
                 os.makedirs(self.directory, exist_ok=True)
                 file_data = requests.get(download.get_url, stream=True, timeout=15)
