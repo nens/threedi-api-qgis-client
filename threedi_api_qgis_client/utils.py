@@ -22,6 +22,9 @@ DWF_FILE_TEMPLATE = os.path.join(CACHE_PATH, "dwf.json")
 DATA_PATH = os.path.join(PLUGIN_PATH, "_data")
 EMPTY_DB_PATH = os.path.join(DATA_PATH, "empty.sqlite")
 CHUNK_SIZE = 1024 ** 2
+DIR_MAX_PATH = 248
+FILE_MAX_PATH = 260
+UNC_PREFIX = "\\\\?\\"
 
 
 def mmh_to_ms(mmh_value):
@@ -155,6 +158,25 @@ def unzip_archive(zip_filepath, location=None):
         content_list = zf.namelist()
         zf.extractall(location)
         return content_list
+
+
+def bypass_max_path_limit(path, is_file=False):
+    """Check and modify path to bypass Windows MAX_PATH limitation."""
+    path_str = str(path)
+    if path_str.startswith(UNC_PREFIX):
+        valid_path = path_str
+    else:
+        if is_file:
+            if len(path_str) >= FILE_MAX_PATH:
+                valid_path = f"{UNC_PREFIX}{path_str}"
+            else:
+                valid_path = path_str
+        else:
+            if len(path_str) > DIR_MAX_PATH:
+                valid_path = f"{UNC_PREFIX}{path_str}"
+            else:
+                valid_path = path_str
+    return valid_path
 
 
 def extract_error_message(e):
@@ -317,7 +339,7 @@ class LocalRevision:
         """Function for schematisation dir structure creation."""
         for subpath in self.subpaths:
             if subpath:
-                os.makedirs(subpath, exist_ok=exist_ok)
+                os.makedirs(bypass_max_path_limit(subpath), exist_ok=exist_ok)
 
     def discover_sqlite(self):
         """Find schematisation revision sqlite filepath."""
@@ -332,10 +354,10 @@ class LocalRevision:
         backup_sqlite_path = None
         if self.sqlite_filename:
             backup_folder = os.path.join(self.schematisation_dir, "_backup")
-            os.makedirs(backup_folder, exist_ok=True)
+            os.makedirs(bypass_max_path_limit(backup_folder), exist_ok=True)
             prefix = str(uuid4())[:8]
             backup_sqlite_path = os.path.join(backup_folder, f"{prefix}_{self.sqlite_filename}")
-            shutil.copyfile(self.sqlite, backup_sqlite_path)
+            shutil.copyfile(self.sqlite, bypass_max_path_limit(backup_sqlite_path, is_file=True))
         return backup_sqlite_path
 
 
@@ -479,7 +501,7 @@ class LocalSchematisation:
             "revisions": [local_revision.number for local_revision in self.revisions.values()],
             "wip_parent_revision": self.wip_revision.number if self.wip_revision is not None else None,
         }
-        with open(self.schematisation_config_path, "w") as config_file:
+        with open(bypass_max_path_limit(self.schematisation_config_path, is_file=True), "w") as config_file:
             config_file_dump = json.dumps(schematisation_metadata)
             config_file.write(config_file_dump)
 
@@ -523,7 +545,7 @@ class LocalSchematisation:
     def build_schematisation_structure(self):
         """Function for schematisation dir structure creation."""
         for schema_subpath in self.subpaths:
-            os.makedirs(schema_subpath, exist_ok=True)
+            os.makedirs(bypass_max_path_limit(schema_subpath), exist_ok=True)
         for local_revision in self.revisions:
             local_revision.make_revision_structure()
         if self.wip_revision is not None:

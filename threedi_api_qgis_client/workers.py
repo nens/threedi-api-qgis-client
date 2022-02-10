@@ -12,7 +12,7 @@ from PyQt5 import QtWebSockets
 from threedi_api_client.openapi import ApiException, Progress
 from threedi_api_client.files import upload_file
 from .api_calls.threedi_calls import ThreediCalls
-from .utils import zip_into_archive, unzip_archive, UploadFileStatus, CHUNK_SIZE
+from .utils import zip_into_archive, unzip_archive, bypass_max_path_limit, UploadFileStatus, CHUNK_SIZE
 
 
 logger = logging.getLogger(__name__)
@@ -145,7 +145,7 @@ class DownloadProgressWorker(QObject):
         super().__init__()
         self.simulation = simulation
         self.downloads = downloads
-        self.directory = os.path.normpath(directory)
+        self.directory = bypass_max_path_limit(directory)
         self.success = True
 
     @pyqtSlot()
@@ -163,10 +163,7 @@ class DownloadProgressWorker(QObject):
         self.download_progress.emit(size)
         for result_file, download in self.downloads:
             filename = result_file.filename
-            filename_path = str(os.path.join(self.directory, filename))
-            # Any file path with >= 260 characters have to be treated in special way due to Windows MAX_PATH limit.
-            if len(filename_path) >= 260:
-                filename_path = f"\\\\?\\{filename_path}"
+            filename_path = bypass_max_path_limit(os.path.join(self.directory, filename))
             try:
                 os.makedirs(self.directory, exist_ok=True)
                 file_data = requests.get(download.get_url, stream=True, timeout=15)
