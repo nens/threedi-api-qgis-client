@@ -3,6 +3,7 @@
 import logging
 import os
 from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QSettings
 from .log_in import api_client_required
 from ..widgets.new_schematisation_wizard import NewSchematisationWizard
 from ..widgets.schematisation_load_local import SchematisationLoad
@@ -66,3 +67,7 @@ class BuildOptionsDialog(uicls, basecls):
         downloaded_local_schematisation = schematisation_download.downloaded_local_schematisation
         if downloaded_local_schematisation is not None:
             self.load_local_schematisation(local_schematisation=downloaded_local_schematisation, action="downloaded")
+            wip_revision = downloaded_local_schematisation.wip_revision
+            if wip_revision is not None:
+                settings = QSettings("3di", "qgisplugin")
+                settings.setValue("last_used_spatialite_path", wip_revision.schematisation_dir)

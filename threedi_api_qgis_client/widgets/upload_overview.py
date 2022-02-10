@@ -2,13 +2,14 @@ import os
 from enum import Enum
 from collections import defaultdict, OrderedDict
 from qgis.PyQt import uic
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.PyQt.QtCore import Qt, QThreadPool, QItemSelectionModel
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from .upload_wizard import UploadWizard
 from ..workers import UploadProgressWorker
 from ..api_calls.threedi_calls import ThreediCalls
 from ..communication import ListViewLogger
-
+from ..utils_qgis import is_toolbox_spatialite_loaded
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_overview.ui"))
@@ -120,10 +121,20 @@ class UploadOverview(uicls_log, basecls_log):
     def upload_new_model(self):
         """Initializing new upload wizard."""
         self.schematisation_sqlite = self.current_local_schematisation.sqlite
-        self.schematisation_id = self.current_local_schematisation.id
-        self.schematisation = self.tc.fetch_schematisation(self.schematisation_id)
         if not self.schematisation_sqlite:
             return
+        schema_sqlite_loaded = is_toolbox_spatialite_loaded(self.schematisation_sqlite)
+        if schema_sqlite_loaded is False:
+            title = "Warning"
+            question = (
+                "Warning: the Spatialite that you loaded with the 3Di Toolbox is not in the revision you are "
+                "about to upload. Do you want to continue?"
+            )
+            on_continue_answer = self.communication.ask(self, title, question, QMessageBox.Warning)
+            if on_continue_answer is not True:
+                return
+        self.schematisation_id = self.current_local_schematisation.id
+        self.schematisation = self.tc.fetch_schematisation(self.schematisation_id)
         current_wip_revision = self.current_local_schematisation.wip_revision
         latest_revision = (
             self.tc.fetch_schematisation_latest_revision(self.schematisation_id)
