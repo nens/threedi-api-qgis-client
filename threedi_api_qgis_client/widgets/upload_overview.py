@@ -120,9 +120,11 @@ class UploadOverview(uicls_log, basecls_log):
 
     def upload_new_model(self):
         """Initializing new upload wizard."""
-        self.schematisation_sqlite = self.current_local_schematisation.sqlite
-        if not self.schematisation_sqlite:
+        if not self.current_local_schematisation or not self.current_local_schematisation.sqlite:
+            warn_msg = "Please load the schematisation first before starting the upload."
+            self.communication.show_warn(warn_msg)
             return
+        self.schematisation_sqlite = self.current_local_schematisation.sqlite
         schema_sqlite_loaded = is_toolbox_spatialite_loaded(self.schematisation_sqlite)
         if schema_sqlite_loaded is False:
             title = "Warning"
