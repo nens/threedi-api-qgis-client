@@ -237,6 +237,8 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                 self.parent_page.parent_wizard.model_selection_dlg.current_model.id
             )
             for raster in rasters or []:
+                if raster.dimension != "two_d":
+                    continue
                 raster_filename = raster.file.filename
                 self.rasters[raster_filename] = raster
                 self.dd_2d.addItem(raster_filename)
