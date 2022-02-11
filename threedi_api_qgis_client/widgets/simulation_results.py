@@ -3,8 +3,9 @@
 import os
 from dateutil.relativedelta import relativedelta
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QThread
+from qgis.PyQt.QtCore import Qt, QThread, QSettings
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from qgis.PyQt.QtWidgets import QFileDialog
 from threedi_api_client.openapi import ApiException
 from .custom_items import DownloadProgressDelegate
 from ..api_calls.threedi_calls import ThreediCalls
@@ -113,6 +114,16 @@ class SimulationResults(uicls, basecls):
             self.download_results_thread = None
             self.download_worker = None
 
+    def pick_results_destination_dir(self):
+        """Pick folder where results will be written to."""
+        working_dir = self.plugin_dock.plugin_settings.working_dir
+        last_folder = QSettings().value("threedi/last_results_folder", working_dir, type=str)
+        directory = QFileDialog.getExistingDirectory(self, "Select Results Directory", last_folder)
+        if len(directory) == 0:
+            return None
+        QSettings().setValue("threedi/last_results_folder", directory)
+        return directory
+
     def download_results(self):
         """Download simulation results files."""
         current_index = self.tv_finished_sim_tree.currentIndex()
@@ -128,25 +139,58 @@ class SimulationResults(uicls, basecls):
             simulation_name = simulation.name.replace(" ", "_")
             simulation_model_id = int(simulation.threedimodel_id)
             tc = ThreediCalls(self.plugin_dock.threedi_api)
-            model_3di = tc.fetch_3di_model(simulation_model_id)
-            model_schematisation_id = model_3di.schematisation_id
-            model_schematisation_name = model_3di.schematisation_name
-            model_revision_number = model_3di.revision_number
             try:
-                local_schematisation = local_schematisations[model_schematisation_id]
-            except KeyError:
-                local_schematisation = LocalSchematisation(
-                    working_dir, model_schematisation_id, model_schematisation_name, create=True
-                )
-            try:
-                local_revision = local_schematisation.revisions[model_revision_number]
-            except KeyError:
-                local_revision = LocalRevision(local_schematisation, model_revision_number)
-                local_revision.make_revision_structure()
-            simulation_subdirectory = os.path.join(local_revision.results_dir, f"sim_{sim_id}_{simulation_name}")
+                model_3di = tc.fetch_3di_model(simulation_model_id)
+                gridadmin_downloads = tc.fetch_3di_model_gridadmin_download(simulation_model_id)
+                if model_3di.schematisation_id:
+                    model_schematisation_id = model_3di.schematisation_id
+                    model_schematisation_name = model_3di.schematisation_name
+                    model_revision_number = model_3di.revision_number
+                    try:
+                        local_schematisation = local_schematisations[model_schematisation_id]
+                    except KeyError:
+                        local_schematisation = LocalSchematisation(
+                            working_dir, model_schematisation_id, model_schematisation_name, create=True
+                        )
+                    try:
+                        local_revision = local_schematisation.revisions[model_revision_number]
+                    except KeyError:
+                        local_revision = LocalRevision(local_schematisation, model_revision_number)
+                        local_revision.make_revision_structure()
+                    results_dir = local_revision.results_dir
+                else:
+                    warn_msg = (
+                        "The 3Di model to which these results belong was uploaded with Tortoise and does not "
+                        "belong to any schematisation. Therefore, it cannot be determined to which "
+                        "schematisation the results should be downloaded.\n\nPlease select a directory to save "
+                        "the result files to."
+                    )
+                    self.plugin_dock.communication.show_warn(warn_msg)
+                    results_dir = self.pick_results_destination_dir()
+                    if not results_dir:
+                        self.plugin_dock.communication.show_warn(warn_msg)
+                        return
+            except ApiException as e:
+                if e.status == 404:
+                    warn_msg = (
+                        "The 3Di model to which these results belong is owned by an organisation for which "
+                        "you do not have sufficient rights. Therefore, you cannot download the computational "
+                        "grid (gridadmin.h5) and it cannot be determined to which schematisation the results "
+                        "should be downloaded.\n\nContact the servicedesk to obtain access rights to the "
+                        "organisation that owns the 3Di model.\n\nPlease select a directory to save the result"
+                        " files to."
+                    )
+                    self.plugin_dock.communication.show_warn(warn_msg)
+                    results_dir = self.pick_results_destination_dir()
+                    if not results_dir:
+                        return
+                    gridadmin_downloads = None
+                else:
+                    raise e
+            simulation_subdirectory = os.path.join(results_dir, f"sim_{sim_id}_{simulation_name}")
             downloads = tc.fetch_simulation_downloads(sim_id)
-            gridadmin_downloads = tc.fetch_3di_model_gridadmin_download(simulation_model_id)
-            downloads.append(gridadmin_downloads)
+            if gridadmin_downloads is not None:
+                downloads.append(gridadmin_downloads)
             downloads.sort(key=lambda x: x[-1].size)
             self.last_progress_item = self.tv_model.item(current_row, self.PROGRESS_COLUMN_IDX)
         except ApiException as e:
