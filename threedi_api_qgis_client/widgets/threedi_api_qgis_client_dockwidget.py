@@ -1,11 +1,12 @@
 # 3Di Models & Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import os
+import webbrowser
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QThread, pyqtSignal
 from threedi_api_qgis_client.widgets.upload_overview import UploadOverview
 from .log_in import LogInDialog, api_client_required
-from .build_options import BuildOptionsDialog
+from .build_options import BuildOptions
 from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
 from ..utils_ui import set_icon
@@ -34,34 +35,41 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.current_user_full_name = None
         self.organisations = {}
         self.current_local_schematisation = None
-        self.build_options_dlg = None
+        self.build_options = BuildOptions(self)
         self.simulation_overview_dlg = None
         self.simulation_results_dlg = None
         self.upload_dlg = None
-        self.btn_build.clicked.connect(self.show_build_options)
+        self.btn_log_in_out.clicked.connect(self.on_log_in_log_out)
+        self.btn_load_schematisation.clicked.connect(self.build_options.load_local_schematisation)
+        self.btn_load_revision.clicked.connect(self.build_options.load_local_schematisation)
+        self.btn_new.clicked.connect(self.build_options.new_schematisation)
+        self.btn_download.clicked.connect(self.build_options.download_schematisation)
+        self.btn_upload.clicked.connect(self.show_upload_dialog)
         self.btn_simulate.clicked.connect(self.show_simulation_overview)
         self.btn_results.clicked.connect(self.show_simulation_results)
-        self.btn_clear_log.clicked.connect(self.clear_log)
-        self.btn_upload.clicked.connect(self.show_upload_dialog)
+        self.btn_manage.clicked.connect(self.on_manage)
         self.plugin_settings.settings_changed.connect(self.on_log_out)
-        set_icon(self.btn_build, "build.svg")
-        set_icon(self.btn_check, "check.svg")
+        set_icon(self.btn_new, "new.svg")
+        set_icon(self.btn_download, "download.svg")
         set_icon(self.btn_upload, "upload.svg")
         set_icon(self.btn_simulate, "api.svg")
         set_icon(self.btn_results, "results.svg")
+        set_icon(self.btn_manage, "manage.svg")
 
     def closeEvent(self, event):
         if self.threedi_api is not None:
             self.on_log_out()
-            self.build_options_dlg = None
         self.current_local_schematisation = None
         self.update_schematisation_view()
         self.closingPlugin.emit()
         event.accept()
 
-    def clear_log(self):
-        """Clearing message log box."""
-        self.lv_log.model().clear()
+    def on_log_in_log_out(self):
+        """Trigger log-in or log-out action."""
+        if self.threedi_api is None:
+            self.on_log_in()
+        else:
+            self.on_log_out()
 
     def on_log_in(self):
         """Handle logging-in."""
@@ -90,7 +98,9 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.current_user = None
         self.current_user_full_name = None
         self.organisations.clear()
-        self.label_user.setText("")
+        self.label_user.setText("-")
+        self.btn_log_in_out.setText("->")
+        self.btn_log_in_out.setToolTip("Log in")
 
     def update_schematisation_view(self):
         """Method for updating loaded schematisation labels."""
@@ -113,6 +123,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def initialize_authorized_view(self):
         """Method for initializing processes after logging in 3Di API."""
+        self.btn_log_in_out.setText("✕")
+        self.btn_log_in_out.setToolTip("Log out")
         self.label_user.setText(self.current_user_full_name)
         self.initialize_simulations_progresses_thread()
         self.initialize_simulation_overview()
@@ -158,18 +170,6 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.simulations_progresses_thread = None
             self.simulations_progresses_sentinel = None
 
-    def initialize_build_options(self):
-        """Initialization of the Build Options window."""
-        self.build_options_dlg = BuildOptionsDialog(self)
-
-    def show_build_options(self):
-        """Showing Build Options dialog."""
-        if self.build_options_dlg is None:
-            self.initialize_build_options()
-        self.build_options_dlg.show()
-        self.build_options_dlg.raise_()
-        self.build_options_dlg.activateWindow()
-
     def initialize_simulation_overview(self):
         """Initialization of the Simulation Overview window."""
         self.simulation_overview_dlg = SimulationOverview(self)
@@ -209,3 +209,8 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.upload_dlg.show()
         self.upload_dlg.raise_()
         self.upload_dlg.activateWindow()
+
+    @staticmethod
+    def on_manage():
+        """Open 3Di management webpage."""
+        webbrowser.open("https://management.3di.live/")
