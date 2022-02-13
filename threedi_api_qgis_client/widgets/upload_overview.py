@@ -123,6 +123,7 @@ class UploadOverview(uicls_log, basecls_log):
         if not self.current_local_schematisation or not self.current_local_schematisation.sqlite:
             warn_msg = "Please load the schematisation first before starting the upload."
             self.communication.show_warn(warn_msg, parent=self)
+            self.plugin_dock.build_options.load_local_schematisation()
             return
         self.schematisation_sqlite = self.current_local_schematisation.sqlite
         schema_sqlite_loaded = is_toolbox_spatialite_loaded(self.schematisation_sqlite)
