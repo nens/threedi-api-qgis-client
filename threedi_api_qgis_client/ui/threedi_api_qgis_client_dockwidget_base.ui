@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>350</width>
-    <height>800</height>
+    <height>852</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>0</width>
-    <height>0</height>
+    <width>282</width>
+    <height>593</height>
    </size>
   </property>
   <property name="font">
@@ -26,7 +26,7 @@
    <enum>Qt::LeftToRight</enum>
   </property>
   <property name="windowTitle">
-   <string>3Di</string>
+   <string>3Di Models &amp;&amp; Simulations</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
@@ -174,7 +174,17 @@
 background-color: #C4C4C4;</string>
               </property>
               <property name="text">
-               <string>-&gt;</string>
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../icons/arrow.svg</normaloff>../icons/arrow.svg</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>10</width>
+                <height>10</height>
+               </size>
               </property>
               <property name="arrowType">
                <enum>Qt::NoArrow</enum>
@@ -248,6 +258,16 @@ background-color: #C4C4C4;</string>
               <property name="text">
                <string>-&gt;</string>
               </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../icons/arrow.svg</normaloff>../icons/arrow.svg</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>10</width>
+                <height>10</height>
+               </size>
+              </property>
              </widget>
             </item>
            </layout>
@@ -305,6 +325,16 @@ background-color: #C4C4C4;</string>
               <property name="text">
                <string>-&gt;</string>
               </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../icons/arrow.svg</normaloff>../icons/arrow.svg</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>10</width>
+                <height>10</height>
+               </size>
+              </property>
              </widget>
             </item>
            </layout>
@@ -325,6 +355,12 @@ background-color: #C4C4C4;</string>
       </property>
       <property name="title">
        <string>System feedback</string>
+      </property>
+      <property name="collapsed">
+       <bool>true</bool>
+      </property>
+      <property name="saveCollapsedState">
+       <bool>false</bool>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
        <property name="leftMargin">
@@ -387,40 +423,6 @@ background-color: #C4C4C4;</string>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <widget class="QToolButton" name="btn_new">
-         <property name="minimumSize">
-          <size>
-           <width>60</width>
-           <height>60</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>7</pointsize>
-          </font>
-         </property>
-         <property name="toolTip">
-          <string>Create new schematisation. It will be created both on the server and locally</string>
-         </property>
-         <property name="text">
-          <string>New</string>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../icons/new.svg</normaloff>../icons/new.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="toolButtonStyle">
-          <enum>Qt::ToolButtonTextUnderIcon</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QToolButton" name="btn_download">
          <property name="minimumSize">
           <size>
@@ -449,10 +451,29 @@ background-color: #C4C4C4;</string>
            <height>30</height>
           </size>
          </property>
+         <property name="popupMode">
+          <enum>QToolButton::DelayedPopup</enum>
+         </property>
          <property name="toolButtonStyle">
           <enum>Qt::ToolButtonTextUnderIcon</enum>
          </property>
+         <property name="autoRaise">
+          <bool>true</bool>
+         </property>
         </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
        </item>
        <item>
         <widget class="QToolButton" name="btn_upload">
@@ -485,6 +506,59 @@ background-color: #C4C4C4;</string>
          </property>
          <property name="toolButtonStyle">
           <enum>Qt::ToolButtonTextUnderIcon</enum>
+         </property>
+         <property name="autoRaise">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QToolButton" name="btn_new">
+         <property name="minimumSize">
+          <size>
+           <width>60</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>7</pointsize>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string>Create new schematisation. It will be created both on the server and locally</string>
+         </property>
+         <property name="text">
+          <string>New</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../icons/new.svg</normaloff>../icons/new.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>30</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="toolButtonStyle">
+          <enum>Qt::ToolButtonTextUnderIcon</enum>
+         </property>
+         <property name="autoRaise">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
