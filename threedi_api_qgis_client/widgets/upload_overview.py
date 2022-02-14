@@ -6,6 +6,7 @@ from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.PyQt.QtCore import Qt, QThreadPool, QItemSelectionModel
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from .upload_wizard import UploadWizard
+from .model_deletion import ModelDeletionDialog
 from ..workers import UploadProgressWorker
 from ..api_calls.threedi_calls import ThreediCalls
 from ..communication import ListViewLogger
@@ -25,6 +26,8 @@ class UploadStatus(Enum):
 
 class UploadOverview(uicls_log, basecls_log):
     """Upload status overview dialog."""
+
+    MAX_SCHEMATISATION_MODELS = 3
 
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
@@ -155,6 +158,13 @@ class UploadOverview(uicls_log, basecls_log):
         new_upload = upload_wizard_dialog.new_upload
         if not new_upload:
             return
+        if not new_upload["upload_only"]:
+            deletion_dlg = ModelDeletionDialog(self.plugin_dock, self)
+            if len(deletion_dlg.threedi_models) >= self.MAX_SCHEMATISATION_MODELS:
+                deletion_dlg.exec_()
+                if len(deletion_dlg.threedi_models) >= self.MAX_SCHEMATISATION_MODELS:
+                    self.communication.bar_warn("Uploading canceled...")
+                    return
         self.add_upload_to_model(new_upload)
         self.current_local_schematisation.update_wip_revision(latest_revision_number + 1)
         self.plugin_dock.update_schematisation_view()
