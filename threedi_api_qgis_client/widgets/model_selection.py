@@ -20,7 +20,7 @@ uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "model_selection.ui
 logger = logging.getLogger(__name__)
 
 
-class ThreediModelSelection(uicls, basecls):
+class ModelSelectionDialog(uicls, basecls):
     """Dialog for model selection."""
 
     TABLE_LIMIT = 10

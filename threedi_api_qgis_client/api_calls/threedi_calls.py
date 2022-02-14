@@ -120,7 +120,7 @@ class ThreediCalls:
         return simulation
 
     def fetch_3di_models_with_count(
-        self, limit: int = None, offset: int = None, name_contains: str = None
+        self, limit: int = None, offset: int = None, name_contains: str = None, schematisation_name: str = None
     ) -> Tuple[List[ThreediModel], int]:
         """Fetch 3Di models available for current user."""
         params = {"revision__schematisation__isnull": False}
@@ -130,6 +130,8 @@ class ThreediCalls:
             params["offset"] = offset
         if name_contains is not None:
             params["name__icontains"] = name_contains.lower()
+        if schematisation_name is not None:
+            params["revision__schematisation__name"] = schematisation_name
         logger.debug("Fetching 3di models for current user...")
         response = self.threedi_api.threedimodels_list(**params)
         models_list = response.results
@@ -211,6 +213,11 @@ class ThreediCalls:
         logger.debug("Fetching model %s", threedimodel_id)
         threedi_model = self.threedi_api.threedimodels_read(threedimodel_id)
         return threedi_model
+
+    def delete_3di_model(self, threedimodel_id: int) -> None:
+        """Delete 3Di model with a given id."""
+        logger.debug("Deleting model %s", threedimodel_id)
+        self.threedi_api.threedimodels_delete(threedimodel_id)
 
     def fetch_3di_model_geojson_cells_download(self, threedimodel_id: int) -> Download:
         """Fetch model geojson cells Download object."""
