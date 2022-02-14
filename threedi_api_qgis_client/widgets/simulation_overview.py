@@ -10,7 +10,7 @@ from threedi_api_client.openapi import ApiException, Progress
 
 from threedi_api_qgis_client.widgets.simulation_init import SimulationInit
 from .simulation_wizard import SimulationWizard
-from .model_selection import ThreediModelSelection
+from .model_selection import ModelSelectionDialog
 from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
 from ..api_calls.threedi_calls import ThreediCalls
 
@@ -29,7 +29,7 @@ class SimulationOverview(uicls, basecls):
         self.plugin_dock = plugin_dock
         self.threedi_api = self.plugin_dock.threedi_api
         self.user = self.plugin_dock.current_user
-        self.model_selection_dlg = ThreediModelSelection(self.plugin_dock, parent=self)
+        self.model_selection_dlg = ModelSelectionDialog(self.plugin_dock, parent=self)
         self.simulation_init_wizard = None
         self.simulation_wizard = None
         self.simulations_keys = {}
