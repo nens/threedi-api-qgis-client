@@ -55,9 +55,9 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         set_icon(self.btn_simulate, "api.svg")
         set_icon(self.btn_results, "results.svg")
         set_icon(self.btn_manage, "manage.svg")
-        set_icon(self.btn_log_in_out, 'arrow.svg')
-        set_icon(self.btn_load_schematisation, 'arrow.svg')
-        set_icon(self.btn_load_revision, 'arrow.svg')
+        set_icon(self.btn_log_in_out, "arrow.svg")
+        set_icon(self.btn_load_schematisation, "arrow.svg")
+        set_icon(self.btn_load_revision, "arrow.svg")
 
     def closeEvent(self, event):
         if self.threedi_api is not None:
@@ -102,7 +102,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.current_user_full_name = None
         self.organisations.clear()
         self.label_user.setText("-")
-        set_icon(self.btn_log_in_out, 'arrow.svg')
+        set_icon(self.btn_log_in_out, "arrow.svg")
         self.btn_log_in_out.setToolTip("Log in")
 
     def update_schematisation_view(self):
