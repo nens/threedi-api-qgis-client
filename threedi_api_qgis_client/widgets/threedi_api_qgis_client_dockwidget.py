@@ -55,6 +55,9 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         set_icon(self.btn_simulate, "api.svg")
         set_icon(self.btn_results, "results.svg")
         set_icon(self.btn_manage, "manage.svg")
+        set_icon(self.btn_log_in_out, 'arrow.svg')
+        set_icon(self.btn_load_schematisation, 'arrow.svg')
+        set_icon(self.btn_load_revision, 'arrow.svg')
 
     def closeEvent(self, event):
         if self.threedi_api is not None:
@@ -99,7 +102,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.current_user_full_name = None
         self.organisations.clear()
         self.label_user.setText("-")
-        self.btn_log_in_out.setText("->")
+        set_icon(self.btn_log_in_out, 'arrow.svg')
         self.btn_log_in_out.setToolTip("Log in")
 
     def update_schematisation_view(self):
@@ -123,7 +126,7 @@ class ThreediQgisClientDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def initialize_authorized_view(self):
         """Method for initializing processes after logging in 3Di API."""
-        self.btn_log_in_out.setText("✕")
+        set_icon(self.btn_log_in_out, "x.svg")
         self.btn_log_in_out.setToolTip("Log out")
         self.label_user.setText(self.current_user_full_name)
         self.initialize_simulations_progresses_thread()
