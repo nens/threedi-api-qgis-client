@@ -23,7 +23,7 @@ import os
 
 
 #: Name of the logfile.
-LOGFILE_NAME = "threedi-api-qgis-client-log.txt"
+LOGFILE_NAME = "threedi-models-and-simulations-log.txt"
 PYTHON_FORMAT = "%(name)s %(levelname)s %(message)s"
 QGIS_FORMAT = "%(name)s\n%(message)s"  # Note: split over two lines.
 
