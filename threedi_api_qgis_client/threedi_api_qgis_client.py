@@ -1,5 +1,5 @@
-# 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
-# Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
+# 3Di Models & Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
+# Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import QAction
 from qgis.PyQt.QtGui import QIcon
@@ -24,7 +24,8 @@ class ThreediQgisClient:
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
-        self.plugin_settings = SettingsDialog()
+        # initialize plugin settings
+        self.plugin_settings = SettingsDialog(self.iface)
         # initialize locale
         locale = QSettings().value("locale/userLocale")[0:2]
         locale_path = os.path.join(self.plugin_dir, "i18n", f"ThreediQgisClient_{locale}.qm")
@@ -36,10 +37,9 @@ class ThreediQgisClient:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr("&3Di API Client")
+        self.menu = self.tr("&3Di Models and Simulations")
         self.toolbar = self.iface.addToolBar("ThreediQgisClient")
         self.toolbar.setObjectName("ThreediQgisClient")
-
         self.pluginIsActive = False
         self.dockwidget = None
 
@@ -133,7 +133,9 @@ class ThreediQgisClient:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         icon_path = os.path.join(os.path.dirname(__file__), "icon.png")
-        self.add_action(icon_path, text=self.tr("3Di API Client"), callback=self.run, parent=self.iface.mainWindow())
+        self.add_action(
+            icon_path, text=self.tr("3Di Models and Simulations"), callback=self.run, parent=self.iface.mainWindow()
+        )
         self.add_action(
             icon_path,
             text=self.tr("Settings"),
@@ -151,7 +153,7 @@ class ThreediQgisClient:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginMenu(self.tr("&3Di API Client"), action)
+            self.iface.removePluginMenu(self.tr("&3Di Models and Simulations"), action)
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
@@ -165,12 +167,14 @@ class ThreediQgisClient:
         patch_wheel_imports()
         from threedi_api_qgis_client.widgets.threedi_api_qgis_client_dockwidget import ThreediQgisClientDockWidget
 
+        if not self.plugin_settings.settings_are_valid():
+            self.settings()
+
         if not self.pluginIsActive:
             self.pluginIsActive = True
             if self.dockwidget is None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = ThreediQgisClientDockWidget(self.iface, self.plugin_settings)
-
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)

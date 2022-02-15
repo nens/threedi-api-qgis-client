@@ -1,5 +1,5 @@
-# 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
-# Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
+# 3Di Models & Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
+# Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import os
 import shutil
 import re
@@ -20,9 +20,10 @@ if __name__ == "__main__":
     print("ZIPPING PLUGIN STARTED")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     plugin_dirname = "threedi_api_qgis_client"
+    plugin_name = "3Di Models and Simulations"
     plugin_path = os.path.join(this_dir, plugin_dirname)
     plugin_version = get_version(plugin_path)
-    zip_filename = f"{plugin_dirname}.{plugin_version}"
+    zip_filename = f"{plugin_name}.{plugin_version}"
     plugin_zip_path = os.path.join(this_dir, zip_filename)
     shutil.make_archive(plugin_zip_path, "zip", this_dir, plugin_dirname)
     print("ZIPPING PLUGIN FINISHED")

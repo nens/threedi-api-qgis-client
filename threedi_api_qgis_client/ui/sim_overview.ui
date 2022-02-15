@@ -84,19 +84,6 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="2">
-    <widget class="QLabel" name="label_organisation">
-     <property name="layoutDirection">
-      <enum>Qt::LeftToRight</enum>
-     </property>
-     <property name="text">
-      <string>TextLabel</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="0">
     <widget class="QLabel" name="label_user">
      <property name="text">
@@ -145,22 +132,6 @@
         </property>
         <property name="text">
          <string>New Simulation</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QPushButton" name="pb_load_template">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>30</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Load template</string>
         </property>
        </widget>
       </item>

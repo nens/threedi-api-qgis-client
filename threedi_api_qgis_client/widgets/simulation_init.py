@@ -3,7 +3,7 @@ from collections import OrderedDict
 from qgis.PyQt import uic
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "init_dialog.ui"))
+uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "init_dialog.ui"))
 
 
 class SimulationInit(uicls, basecls):
@@ -39,10 +39,12 @@ class SimulationInit(uicls, basecls):
         )
     )
 
-    def __init__(self, parent_dock, parent=None):
+    def __init__(self, simulation_template, settings_overview, events, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.parent_dock = parent_dock
+        self.simulation_template = simulation_template
+        self.settings_overview = settings_overview
+        self.events = events
         self.open_wizard = False
         self.initial_conditions = None
         self.multiple_simulations_widget.setVisible(False)
@@ -58,6 +60,7 @@ class SimulationInit(uicls, basecls):
         self.pb_next.clicked.connect(self.start_wizard)
         self.pb_cancel.clicked.connect(self.close)
         self.setup_initial_options()
+        self.check_template_events()
 
     def setup_initial_options(self):
         """Setup initial options dialog."""
@@ -68,6 +71,49 @@ class SimulationInit(uicls, basecls):
         self.dd_repair_infrastructure.addItems(list(self.REPAIR_TIME.keys()))
         self.dd_repair_building.addItems(list(self.REPAIR_TIME.keys()))
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
+
+    def check_template_events(self):
+        """Check events that are available for the simulation template."""
+        if self.events.filestructurecontrols:
+            self.cb_filestructure_controls.setChecked(True)
+        if self.events.fileboundaryconditions:
+            self.cb_boundary.setChecked(True)
+        initial_events = [
+            "initial_onedwaterlevel",
+            "initial_onedwaterlevelpredefined",
+            "initial_onedwaterlevelfile",
+            "initial_twodwaterlevel",
+            "initial_twodwaterraster",
+            "initial_groundwaterlevel",
+            "initial_groundwaterraster",
+            "initial_savedstate",
+        ]
+        if any(getattr(self.events, event_name) for event_name in initial_events):
+            self.cb_conditions.setChecked(True)
+            if self.events.initial_savedstate:
+                self.cb_load_saved_state.setChecked(True)
+        if self.events.filelaterals:
+            filelaterals = self.events.filelaterals
+            laterals_events = [filelateral for filelateral in filelaterals if filelateral.periodic != "daily"]
+            dwf_events = [filelateral for filelateral in filelaterals if filelateral.periodic == "daily"]
+            if laterals_events:
+                self.cb_laterals.setChecked(True)
+            if dwf_events:
+                self.cb_dwf.setChecked(True)
+        if self.events.breach:
+            self.cb_breaches.setChecked(True)
+        rain_events = [
+            "lizardrasterrain",
+            "lizardtimeseriesrain",
+            "localrain",
+            "timeseriesrain",
+            "filerasterrain",
+            "filetimeseriesrain",
+        ]
+        if any(getattr(self.events, rain_event_name) for rain_event_name in rain_events):
+            self.cb_precipitation.setChecked(True)
+        if self.events.initial_winddragcoefficient or self.events.wind:
+            self.cb_wind.setChecked(True)
 
     def toggle_breaches(self):
         """Handle breaches checkboxes state changes."""
@@ -126,6 +172,7 @@ class SimulationInit(uicls, basecls):
     def start_wizard(self):
         """Start new simulation wizard based on selected options."""
         self.initial_conditions = SimulationInitObject()
+        self.initial_conditions.include_filestructure_controls = self.cb_filestructure_controls.isChecked()
         self.initial_conditions.include_boundary_conditions = self.cb_boundary.isChecked()
         self.initial_conditions.include_initial_conditions = self.cb_conditions.isChecked()
         self.initial_conditions.load_from_saved_state = self.cb_load_saved_state.isChecked()
@@ -160,6 +207,7 @@ class SimulationInitObject:
     """Object for storing init options."""
 
     def __init__(self):
+        self.include_filestructure_controls = False
         self.include_boundary_conditions = False
         self.include_initial_conditions = False
         self.load_from_saved_state = False

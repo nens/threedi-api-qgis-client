@@ -1,0 +1,871 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>785</width>
+    <height>790</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>720</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="palette">
+   <palette>
+    <active>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </active>
+    <inactive>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </inactive>
+    <disabled>
+     <colorrole role="Button">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </disabled>
+   </palette>
+  </property>
+  <property name="font">
+   <font>
+    <family>Segoe UI</family>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="4">
+    <layout class="QVBoxLayout" name="svg_lout">
+     <property name="spacing">
+      <number>7</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+    </layout>
+   </item>
+   <item row="5" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="4" column="0">
+    <widget class="QWidget" name="simulation_settings" native="true">
+     <layout class="QGridLayout" name="gridLayout_9">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Timestep settings</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QWidget" name="widget" native="true">
+        <layout class="QGridLayout" name="gridLayout_6">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_13">
+           <property name="minimumSize">
+            <size>
+             <width>350</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Simulation timestep [s]</string>
+           </property>
+           <property name="text">
+            <string>Simulation timestep [s]:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_14">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Used to set the output timestep</string>
+           </property>
+           <property name="text">
+            <string>Typical simulation duration:</string>
+           </property>
+           <property name="textFormat">
+            <enum>Qt::PlainText</enum>
+           </property>
+           <property name="wordWrap">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1" colspan="2">
+          <widget class="QComboBox" name="output_time_step_text">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Used to set the output timestep</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>0-3 hours</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>3-12 hours</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>12-24 hours</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>&gt; 24 hours</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="2">
+          <widget class="QSpinBox" name="sim_time_step">
+           <property name="minimumSize">
+            <size>
+             <width>150</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="minimum">
+            <number>0</number>
+           </property>
+           <property name="maximum">
+            <number>1000000000</number>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QWidget" name="schematisation_settings" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_8">
+      <item row="2" column="0">
+       <widget class="QGroupBox" name="use_2d_flow_group">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>Check this box if you want to include surface flow (2D) in your schematisation</string>
+        </property>
+        <property name="title">
+         <string>2D Flow</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="1" column="1">
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_3">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>This value is used to fill in the 'grid_space' attribute in the global settings</string>
+           </property>
+           <property name="text">
+            <string>Computational cell size [m]:</string>
+           </property>
+           <property name="textFormat">
+            <enum>Qt::PlainText</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2" colspan="2">
+          <widget class="QDoubleSpinBox" name="grid_space">
+           <property name="minimumSize">
+            <size>
+             <width>150</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>This value is used to fill in the 'grid_space' attribute in the global settings</string>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="minimum">
+            <double>0.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>9999.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1" colspan="3">
+          <widget class="QgsFileWidget" name="dem_file">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Raster file (.tif) that contains the elevation (m MSL) for each pixel</string>
+           </property>
+           <property name="dialogTitle">
+            <string>Select DEM file</string>
+           </property>
+           <property name="filter">
+            <string>GeoTIFF (*.tif *.TIF *.tiff *.TIFF)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1" colspan="3">
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QRadioButton" name="frict_shallow_water_correction_flat">
+             <property name="font">
+              <font>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <property name="toolTip">
+              <string>For sloping areas, the appropriate numerical limiters will be set</string>
+             </property>
+             <property name="text">
+              <string>Flat</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="frict_shallow_water_correction_sloping">
+             <property name="font">
+              <font>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <property name="toolTip">
+              <string>For sloping areas, the appropriate numerical limiters will be set</string>
+             </property>
+             <property name="text">
+              <string>Sloping</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="2" column="2" colspan="2">
+          <widget class="QDoubleSpinBox" name="table_step_size">
+           <property name="minimumSize">
+            <size>
+             <width>150</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Vertical increment used by 3Di to analyse the DEM</string>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="minimum">
+            <double>0.050000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>1.990000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Vertical increment used by 3Di to analyse the DEM</string>
+           </property>
+           <property name="text">
+            <string>Table step size [m]:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label">
+           <property name="minimumSize">
+            <size>
+             <width>350</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Raster file (.tif) that contains the elevation (m MSL) for each pixel</string>
+           </property>
+           <property name="text">
+            <string>Digital elevation model:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_5">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>For sloping areas, the appropriate numerical limiters will be set.</string>
+           </property>
+           <property name="text">
+            <string>The model area is predominantly:</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QGroupBox" name="use_1d_flow_group">
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>Check this box if you want to schematise open water or hydraulic structures as 1D elements and/or include sewerage in your schematisation.</string>
+        </property>
+        <property name="title">
+         <string>1D Flow</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="0" column="1">
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="2" colspan="2">
+          <widget class="QSpinBox" name="manhole_storage_area">
+           <property name="minimumSize">
+            <size>
+             <width>150</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>This option is only relevant for sewerage models without 2D flow</string>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="maximum">
+            <number>999999999</number>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="manhole_storage_area_label">
+           <property name="minimumSize">
+            <size>
+             <width>350</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>This option is only relevant for sewerage models without 2D flow</string>
+           </property>
+           <property name="text">
+            <string>Above-surface manhole storage area [m2]:</string>
+           </property>
+           <property name="wordWrap">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QWidget" name="widget_2" native="true">
+        <layout class="QGridLayout" name="gridLayout_7">
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="minimumSize">
+            <size>
+             <width>350</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Your schematization's CRS. Must be a projected CRS (i.e. not a lat/lon CRS like WGS84).</string>
+           </property>
+           <property name="text">
+            <string>Coordinate reference system:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QgsProjectionSelectionWidget" name="crs">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Coordinate reference system that should be used to interpret your data. Must be a projected CRS (i.e. not geographic lat/lon CRS like WGS84).</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QGroupBox" name="use_0d_inflow_group">
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>Check this box if you want to include rainfall-runoff from surfaces or impervious surfaces in your schematisation.</string>
+        </property>
+        <property name="title">
+         <string>0D Inflow</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="1">
+          <widget class="QRadioButton" name="use_0d_inflow_surfaces">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Use 'surfaces' with custom parameters to define the 0D inflow model for each surface.</string>
+           </property>
+           <property name="text">
+            <string>Custom</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QRadioButton" name="use_0d_inflow_impervious_surfaces">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Use 'impervious surfaces' with the default Dutch 'NWRW' parameters to define the 0D inflow model for each surface.</string>
+           </property>
+           <property name="text">
+            <string>Dutch NWRW</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="minimumSize">
+            <size>
+             <width>350</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Use 'surfaces' or 'impervious surfaces' to parameterize the 0D inflow models for each surface</string>
+           </property>
+           <property name="text">
+            <string>Inflow parameters type:</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Schematisation settings</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QGroupBox" name="friction_coefficients_group">
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="title">
+         <string>Friction coefficients</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_5">
+         <item row="2" column="0">
+          <widget class="QLabel" name="frict_coef_label">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Raster (.tif) that contains a friction coefficient for each pixel</string>
+           </property>
+           <property name="text">
+            <string>Friction file:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_9">
+           <property name="minimumSize">
+            <size>
+             <width>350</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Friction type</string>
+           </property>
+           <property name="text">
+            <string>Friction type:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_11">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>If you do not want to specify the friction value per pixel, use this option to set a global friction coefficient instead</string>
+           </property>
+           <property name="text">
+            <string>Global 2D friction coefficient:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="1" colspan="2">
+          <widget class="QComboBox" name="frict_type_text">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Friction type</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>1: Chezy</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>2: Manning</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="2" column="1" colspan="2">
+          <widget class="QgsFileWidget" name="frict_coef_file">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Raster (.tif) that contains a friction coefficient for each pixel</string>
+           </property>
+           <property name="dialogTitle">
+            <string>Select 2D Friction coefficient file</string>
+           </property>
+           <property name="filter">
+            <string>GeoTIFF (*.tif *.TIF *.tiff *.TIFF)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QDoubleSpinBox" name="frict_coef">
+           <property name="minimumSize">
+            <size>
+             <width>150</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>If you do not want to specify the friction value per pixel, use this option to set a global friction coefficient instead</string>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="decimals">
+            <number>4</number>
+           </property>
+           <property name="maximum">
+            <double>1000.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsFileWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsfilewidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsProjectionSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsprojectionselectionwidget.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

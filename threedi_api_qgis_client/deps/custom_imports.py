@@ -1,5 +1,5 @@
-# 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
-# Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
+# 3Di Models & Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
+# Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import os
 import sys
 
@@ -13,7 +13,7 @@ def patch_wheel_imports():
     try:
         import pyqtgraph
     except ImportError:
-        deps_path = os.path.join(main_dir, "pyqtgraph-0.10.0-py3-none-any.whl")
+        deps_path = os.path.join(main_dir, "pyqtgraph-0.11.1-py2.py3-none-any.whl")
         sys.path.append(deps_path)
 
     try:
@@ -50,7 +50,7 @@ def patch_wheel_imports():
         import threedi_api_client
         import openapi_client
     except ImportError:
-        deps_path = os.path.join(main_dir, "threedi_api_client-3.0.23-py2.py3-none-any.whl")
+        deps_path = os.path.join(main_dir, "threedi_api_client-4.0.0-py2.py3-none-any.whl")
         sys.path.append(deps_path)
 
     try:

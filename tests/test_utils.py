@@ -1,5 +1,5 @@
-# 3Di API Client for QGIS, licensed under GPLv2 or (at your option) any later version
-# Copyright (C) 2021 by Lutra Consulting for 3Di Water Management
+# 3Di Models & Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
+# Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import pytest
 from datetime import datetime
 from threedi_api_qgis_client.utils import (
@@ -65,7 +65,7 @@ def test_extract_error_message_related_err():
     rel_error = SimpleApiException(RELATED_OBJECTS_EXCEPTION_BODY)
     assert (
         extract_error_message(rel_error)
-        == "Error: File processing error: Invalid file, see related event for further details (<related_object>)"
+        == "Error: \nFile processing error: Invalid file, see related event for further details (<related_object>)"
     )
 
 
