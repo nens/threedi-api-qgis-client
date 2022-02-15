@@ -5,11 +5,6 @@ threedi-api-qgis-client
 .. image:: https://travis-ci.com/nens/threedi-api-qgis-client.svg?branch=master
         :target: https://travis-ci.com/nens/threedi-api-qgis-client
 
-.. image:: https://readthedocs.org/projects/threedi-api-qgis-client/badge/?version=latest
-        :target: https://threedi-api-qgis-client.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
-
-
 Deployment
 ----------
 
