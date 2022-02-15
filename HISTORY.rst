@@ -4,7 +4,8 @@ History
 3.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Release fix, the plugin directory is now also named
+  `threedi_models_and_simulations`.
 
 
 3.0.0 (2022-02-15)
