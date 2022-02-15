@@ -10,4 +10,4 @@
 
 set -e
 
-rm -f threedi_api_qgis_client.zip && cd threedi_api_qgis_client && git archive --prefix=threedi_api_qgis_client/ -o ../threedi_api_qgis_client.zip HEAD
+rm -f threedi_models_and_simulations.zip && cd threedi_models_and_simulations && git archive --prefix=threedi_models_and_simulations/ -o ../threedi_models_and_simulations.zip HEAD

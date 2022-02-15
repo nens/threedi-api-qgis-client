@@ -11,7 +11,7 @@ History
 ------------------
 
 - Renamed to "3di models and simulations", but only as plugin name. The
-  plugin directory is still `threedi_api_qgis_client`.
+  plugin directory is still `threedi_models_and_simulations`.
 
 
 2.5.0 (2021-09-01)

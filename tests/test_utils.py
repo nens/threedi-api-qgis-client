@@ -1,8 +1,8 @@
-# 3Di Models & Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
+# 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import pytest
 from datetime import datetime
-from threedi_api_qgis_client.utils import (
+from threedi_models_and_simulations.utils import (
     mmh_to_ms,
     ms_to_mmh,
     mmtimestep_to_mmh,

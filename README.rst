@@ -17,7 +17,7 @@ commands and follow their steps::
     $ fullrelease
 
 This creates a new release and tag on github. Additionally, a zip file
-``threedi_api_qgis_client.<version>.zip`` is created. Upload this zip-file to
+``threedi_models_and_simulations.<version>.zip`` is created. Upload this zip-file to
 https://artifacts.lizard.net/ via the ``upload-artifact.sh`` script. You'll need
 to set $ARTIFACTS_KEY environment variable. Get the key from
 https://artifacts.lizard.net/admin/ Afterwards run it like this::
