@@ -120,7 +120,12 @@ class ThreediCalls:
         return simulation
 
     def fetch_3di_models_with_count(
-        self, limit: int = None, offset: int = None, name_contains: str = None, schematisation_name: str = None
+        self,
+        limit: int = None,
+        offset: int = None,
+        name_contains: str = None,
+        schematisation_name: str = None,
+        show_invalid: bool = False,
     ) -> Tuple[List[ThreediModel], int]:
         """Fetch 3Di models available for current user."""
         params = {"revision__schematisation__isnull": False}
@@ -132,6 +137,8 @@ class ThreediCalls:
             params["name__icontains"] = name_contains.lower()
         if schematisation_name is not None:
             params["revision__schematisation__name"] = schematisation_name
+        if show_invalid:
+            params["is_valid"] = ""
         logger.debug("Fetching 3di models for current user...")
         response = self.threedi_api.threedimodels_list(**params)
         models_list = response.results

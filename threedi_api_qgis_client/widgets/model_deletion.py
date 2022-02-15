@@ -48,7 +48,7 @@ class ModelDeletionDialog(uicls, basecls):
         try:
             tc = ThreediCalls(self.threedi_api)
             threedi_models, models_count = tc.fetch_3di_models_with_count(
-                limit=tc.FETCH_LIMIT, schematisation_name=self.local_schematisation.name
+                limit=tc.FETCH_LIMIT, schematisation_name=self.local_schematisation.name, show_invalid=True
             )
             self.models_model.clear()
             if models_count < self.parent_widget.MAX_SCHEMATISATION_MODELS:
