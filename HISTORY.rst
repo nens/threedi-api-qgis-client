@@ -1,7 +1,7 @@
 History
 =======
 
-3.0.1 (unreleased)
+3.0.1 (2022-02-15)
 ------------------
 
 - Release fix, the plugin directory is now also named
