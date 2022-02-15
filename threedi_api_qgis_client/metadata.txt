@@ -3,11 +3,11 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=3Di Models & Simulations
+name=3Di Models and Simulations
 qgisMinimumVersion=3.4
 qgisMaximumVersion=3.99
-description=3Di Models & Simulations
-version=3.0.0
+description=3Di Models and Simulations
+version=3.0.1
 author=Lutra Consulting for 3Di Water Management
 email=servicedesk@nelen-schuurmans.nl
 

@@ -1,10 +1,17 @@
 History
 =======
 
-2.5.1 (unreleased)
+3.0.1 (unreleased)
 ------------------
 
 - Nothing changed yet.
+
+
+3.0.0 (2022-02-15)
+------------------
+
+- Renamed to "3di models and simulations", but only as plugin name. The
+  plugin directory is still `threedi_api_qgis_client`.
 
 
 2.5.0 (2021-09-01)
@@ -32,10 +39,10 @@ History
 2.4.0 (2021-03-04)
 ------------------
 
-- Nothing changed yet.
+- Unknown.
 
 
 0.1.0 (2020-02-20)
 ------------------
 
-* First release on PyPI.
+- First release.
