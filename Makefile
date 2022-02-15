@@ -51,7 +51,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	flake8 threedi_api_qgis_client tests
+	flake8 threedi_models_and_simulations tests
 
 test: ## run tests quickly with the default Python
 	pytest
@@ -60,7 +60,7 @@ test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source threedi_api_qgis_client -m pytest
+	coverage run --source threedi_models_and_simulations -m pytest
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html

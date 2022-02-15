@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERSION=$(grep "^version" ./threedi_api_qgis_client/metadata.txt | cut -d= -f2)
+VERSION=$(grep "^version" ./threedi_models_and_simulations/metadata.txt | cut -d= -f2)
 
 # ARTIFACTS_KEY should be set as env variable in the travis UI.
 # TRAVIS_BRANCH is set automatically by travis

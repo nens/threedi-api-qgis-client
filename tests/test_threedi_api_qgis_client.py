@@ -1,4 +1,4 @@
-# 3Di Models & Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
+# 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import pytest
 from unittest.mock import Mock, patch
@@ -15,7 +15,7 @@ from threedi_api_client.openapi import (
     CurrentStatus,
 )
 from threedi_api_client.openapi.api.v3_api import V3Api
-from threedi_api_qgis_client.api_calls.threedi_calls import (
+from threedi_models_and_simulations.api_calls.threedi_calls import (
     get_api_client,
     ThreediCalls,
 )
