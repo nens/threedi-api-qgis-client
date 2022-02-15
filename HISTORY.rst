@@ -1,7 +1,7 @@
 History
 =======
 
-3.0.0 (unreleased)
+3.0.0 (2022-02-15)
 ------------------
 
 - Renamed to "3di models and simulations", but only as plugin name. The
