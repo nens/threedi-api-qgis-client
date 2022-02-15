@@ -4,7 +4,7 @@ History
 3.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added some missing files.
 
 
 3.0.1 (2022-02-15)
