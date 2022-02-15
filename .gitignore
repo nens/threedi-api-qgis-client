@@ -2,7 +2,6 @@ threedi_models_and_simulations.zip
 
 .DS_Store
 *~
-_cached_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
