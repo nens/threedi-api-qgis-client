@@ -1,7 +1,7 @@
 History
 =======
 
-3.0.2 (unreleased)
+3.0.2 (2022-02-15)
 ------------------
 
 - Added some missing files.
