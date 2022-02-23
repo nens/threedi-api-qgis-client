@@ -87,6 +87,8 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.schematisation_checker_logger = TreeViewLogger(self.tv_schema_check_result, self.SCHEMA_CHECKS_HEADER)
         self.raster_checker_logger = TreeViewLogger(self.tv_raster_check_result, self.RASTER_CHECKS_HEADER)
         self.pb_check_model.clicked.connect(self.run_model_checks)
+        self.lbl_check_spatialite.hide()
+        self.lbl_check_rasters.hide()
         self.test_external_imports()
 
     def test_external_imports(self):
@@ -103,6 +105,10 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
 
     def run_model_checks(self):
         """Run all model checks."""
+        self.lbl_check_spatialite.hide()
+        self.lbl_check_rasters.hide()
+        self.pbar_check_spatialite.show()
+        self.pbar_check_rasters.show()
         self.schematisation_checker_logger.initialize_view()
         self.raster_checker_logger.initialize_view()
         self.pbar_check_spatialite.setValue(0)
@@ -193,6 +199,8 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                 self.schematisation_checker_logger.log_result_row(result_row, level)
         self.communication.bar_info("Finished schematisation checks.")
         self.pbar_check_spatialite.setValue(total_checks)
+        self.pbar_check_spatialite.hide()
+        self.lbl_check_spatialite.show()
 
     def check_rasters(self):
         """Run rasters checker."""
@@ -281,6 +289,8 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.pbar_check_rasters.setMaximum(100)
         self.pbar_check_rasters.setValue(100)
         self.communication.bar_info("Finished raster checks.")
+        self.pbar_check_rasters.hide()
+        self.lbl_check_rasters.show()
 
 
 class SelectFilesWidget(uicls_files_page, basecls_files_page):
