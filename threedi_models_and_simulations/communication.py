@@ -1,5 +1,6 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
+from enum import Enum
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QMessageBox, QInputDialog, QPushButton
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
@@ -156,3 +157,50 @@ class ListViewLogger(object):
             self.model.appendRow([item])
         else:
             print(msg)
+
+
+class TreeViewLogger(object):
+    """Class with methods for handling messages using list view."""
+
+    def __init__(self, tree_view=None, header=None):
+        self.tree_view = tree_view
+        self.header = header
+        self.model = QStandardItemModel()
+        self.tree_view.setModel(self.model)
+        self.levels_colors = {
+            LogLevels.INFO.value: QColor(Qt.black),
+            LogLevels.WARNING.value: QColor(229, 144, 80),
+            LogLevels.ERROR.value: QColor(Qt.red),
+        }
+        self.initialize_view()
+
+    def clear(self):
+        """Clear list view model."""
+        self.tree_view.model().clear()
+
+    def initialize_view(self):
+        """Clear list view model and set header columns if available."""
+        self.tree_view.model().clear()
+        if self.header:
+            self.tree_view.model().setHorizontalHeaderLabels(self.header)
+
+    def log_result_row(self, row, log_level):
+        """Show row data with proper log level styling."""
+        text_color = self.levels_colors[log_level]
+        if self.tree_view is not None:
+            items = []
+            for value in row:
+                item = QStandardItem(str(value))
+                item.setForeground(QBrush(text_color))
+                items.append(item)
+            self.model.appendRow(items)
+        else:
+            print(row)
+
+
+class LogLevels(Enum):
+    """Model Checker log levels."""
+
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
