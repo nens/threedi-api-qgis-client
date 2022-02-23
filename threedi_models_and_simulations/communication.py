@@ -194,6 +194,8 @@ class TreeViewLogger(object):
                 item.setForeground(QBrush(text_color))
                 items.append(item)
             self.model.appendRow(items)
+            for i in range(len(self.header)):
+                self.tree_view.resizeColumnToContents(i)
         else:
             print(row)
 
