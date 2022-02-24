@@ -22,7 +22,7 @@ from threedi_api_client.openapi import ApiException, SchematisationRevision
 from ..utils import is_file_checksum_equal, UploadFileType, UploadFileStatus, zip_into_archive
 from ..utils_ui import get_filepath
 from ..utils_qgis import sqlite_layer
-from ..communication import ListViewLogger
+from ..communication import TreeViewLogger, LogLevels
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -55,7 +55,6 @@ class StartWidget(uicls_start_page, basecls_start_page):
         self.lbl_model_dir.setText(wip_revision.schematisation_dir)
         self.lbl_revision_number.setText(str(wip_revision.number))
         self.populate_available_revisions()
-        # set_widget_background_color(self)
 
     def populate_available_revisions(self):
         self.tv_revisions_model.clear()
@@ -75,16 +74,22 @@ class StartWidget(uicls_start_page, basecls_start_page):
 class CheckModelWidget(uicls_check_page, basecls_check_page):
     """Widget for the Check Model page."""
 
+    SCHEMA_CHECKS_HEADER = ("Level", "Error code", "ID", "Table", "Column", "Value", "Description")
+    RASTER_CHECKS_HEADER = ("Level", "Global settings ID", "Error code", "Description")
+
     def __init__(self, parent_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         self.current_local_schematisation = self.parent_page.parent_wizard.current_local_schematisation
         self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
-        self.checker_logger = ListViewLogger(self.lv_check_result)
+        self.communication = self.parent_page.parent_wizard.plugin_dock.communication
+        self.schematisation_checker_logger = TreeViewLogger(self.tv_schema_check_result, self.SCHEMA_CHECKS_HEADER)
+        self.raster_checker_logger = TreeViewLogger(self.tv_raster_check_result, self.RASTER_CHECKS_HEADER)
         self.pb_check_model.clicked.connect(self.run_model_checks)
+        self.lbl_check_spatialite.hide()
+        self.lbl_check_rasters.hide()
         self.test_external_imports()
-        # set_widget_background_color(self)
 
     def test_external_imports(self):
         """Check availability of an external checkers."""
@@ -100,6 +105,12 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
 
     def run_model_checks(self):
         """Run all model checks."""
+        self.lbl_check_spatialite.hide()
+        self.lbl_check_rasters.hide()
+        self.pbar_check_spatialite.show()
+        self.pbar_check_rasters.show()
+        self.schematisation_checker_logger.initialize_view()
+        self.raster_checker_logger.initialize_view()
         self.pbar_check_spatialite.setValue(0)
         self.pbar_check_rasters.setValue(0)
         self.check_schematisation()
@@ -127,67 +138,69 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             schema.upgrade(backup=False)
             shutil.rmtree(os.path.dirname(backup_filepath))
         except Exception as e:
-            self.checker_logger.log_error(f"{e}")
+            error_msg = f"{e}"
+            self.communication.show_error(error_msg, self)
+        model_checker = None
         try:
             model_checker = ThreediModelChecker(threedi_db)
             model_checker.db.check_connection()
         except OperationalError as exc:
-            self.checker_logger.log_error("Failed to start a connection with the database.")
-            self.checker_logger.log_error(
-                "Something went wrong trying to connect to the database, please check"
-                " the connection settings: %s" % exc.args[0]
+            error_msg = (
+                f"Failed to start a connection with the database.\n"
+                f"Something went wrong trying to connect to the database, "
+                f"please check the connection settings: {exc.args[0]}"
             )
+            self.communication.show_error(error_msg, self)
             return
-        except errors.MigrationMissingError as e:
-            self.checker_logger.log_error(f"{e}")
-            self.checker_logger.log_error("The selected 3Di model does not have the latest migration")
-            self.checker_logger.log_error(
-                "The selected 3Di model does not have the latest migration, please "
-                "migrate your model to the latest version."
-                # noqa
+        except errors.MigrationMissingError:
+            error_msg = (
+                "The selected 3Di model does not have the latest migration.\n"
+                "The selected 3Di model does not have the latest migration,"
+                "please migrate your model to the latest version."
             )
+            self.communication.show_error(error_msg, self)
             return
-        except errors.MigrationTooHighError as e:
-            self.checker_logger.log_error(f"{e}")
-            self.checker_logger.log_error("The selected 3Di model has a higher migration than expected.")
-            self.checker_logger.log_error(
-                "The 3Di model has a higher migration than expected, do you have "
-                "the latest version of ThreediToolbox?"
+        except errors.MigrationTooHighError:
+            error_msg = (
+                "The selected 3Di model has a higher migration than expected.\n"
+                "The 3Di model has a higher migration than expected, "
+                "do you have the latest version of ThreediToolbox?"
             )
+            self.communication.show_error(error_msg, self)
             return
-        except errors.MigrationNameError as e:
-            self.checker_logger.log_error(f"{e}")
-            self.checker_logger.log_error(
-                "Unexpected migration name, but migration id is matching. "
+        except errors.MigrationNameError:
+            warn_msg = (
+                "Unexpected migration name, but migration id is matching.\n"
                 "We are gonna continue for now and hope for the best."
             )
-            return
+            self.communication.bar_warn(warn_msg)
         session = model_checker.db.get_session()
         total_checks = len(model_checker.config.checks)
         self.pbar_check_spatialite.setMaximum(total_checks)
         self.pbar_check_spatialite.setValue(0)
-        check_header = ["id", "table", "column", "value", "description", "type of check"]
-        for i, check in enumerate(model_checker.checks(), start=1):
-            model_errors = check.get_invalid(session)
-            if model_errors:
-                self.checker_logger.log_error("Schematisation checker errors:")
-                self.checker_logger.log_error(repr(check_header))
-            for error_row in model_errors:
-                self.checker_logger.log_error(
-                    repr(
-                        [
-                            error_row.id,
-                            check.table.name,
-                            check.column.name,
-                            getattr(error_row, check.column.name),
-                            check.description(),
-                            check,
-                        ]
-                    )
+        results_rows = []
+        for i, check in enumerate(model_checker.checks(level=LogLevels.INFO.value), start=1):
+            for result_row in check.get_invalid(session):
+                results_rows.append(
+                    [
+                        check.level.name,
+                        check.error_code,
+                        result_row.id,
+                        check.table.name,
+                        check.column.name,
+                        getattr(result_row, check.column.name),
+                        check.description(),
+                    ]
                 )
             self.pbar_check_spatialite.setValue(i)
-        self.checker_logger.log_info("Successfully finished running threedi-modelchecker")
+        if results_rows:
+            for result_row in results_rows:
+                level = result_row[0].upper()
+                self.schematisation_checker_logger.log_result_row(result_row, level)
+        self.communication.bar_info("Finished schematisation checks.")
         self.pbar_check_spatialite.setValue(total_checks)
+        self.pbar_check_spatialite.hide()
+        self.lbl_check_spatialite.show()
 
     def check_rasters(self):
         """Run rasters checker."""
@@ -196,19 +209,88 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             from ThreeDiToolbox.utils.threedi_database import ThreediDatabase
         except ImportError:
             raise
-        self.pbar_check_rasters.setMaximum(0)
+
+        class PatchedRasterChecker(RasterChecker):
+            def run_all_checks(self, progress_bar):
+                """
+                Overriding an existing method to use QProgressBar instance instead of feedback
+                """
+                progress_per_phase = 100 / self.nr_phases
+                nr_items = len(self.entries.items())
+                progress_per_item = progress_per_phase / nr_items
+
+                phase = 1
+                progress_bar.setValue(0)
+                current_progress = 0
+                for setting_id, rasters in self.entries.items():
+                    self.run_phase_checks(setting_id, rasters, phase)
+                    self.results.update_result_per_phase(setting_id, rasters, phase)
+                    current_progress += progress_per_item
+                    progress_bar.setValue(current_progress)
+
+                phase = 2
+                for setting_id, rasters in self.entries.items():
+                    # we only check rasters that passed blocking checks previous phase
+                    rasters_ready = self.results.get_rasters_ready(setting_id, phase)
+                    if rasters_ready:
+                        self.run_phase_checks(setting_id, rasters_ready, phase)
+                    self.results.update_result_per_phase(setting_id, rasters, phase)
+                    current_progress += progress_per_item
+                    progress_bar.setValue(current_progress)
+
+                phase = 3
+                for setting_id, rasters in self.entries.items():
+                    rasters_ready = self.results.get_rasters_ready(setting_id, phase)
+                    self.run_phase_checks(setting_id, rasters_ready, phase)
+                    self.results.update_result_per_phase(setting_id, rasters, phase)
+                    current_progress += progress_per_item
+                    progress_bar.setValue(current_progress)
+
+                phase = 4
+                for setting_id, rasters in self.entries.items():
+                    rasters_ready = self.results.get_rasters_ready(setting_id, 3)
+                    if len(rasters_ready) >= 2 and rasters[0] in rasters_ready:
+                        rasters_sorted = self.dem_to_first_index(rasters, rasters_ready)
+                        self.run_phase_checks(setting_id, rasters_sorted, phase)
+                    self.results.update_result_per_phase(setting_id, rasters, phase)
+                    current_progress += progress_per_item
+                    progress_bar.setValue(current_progress)
+
+                phase = 5
+                self.input_data_shp = []
+                for setting_id, rasters in self.entries.items():
+                    rasters_ready = self.results.get_rasters_ready(setting_id, phase)
+                    if len(rasters_ready) >= 1:
+                        rasters_ready.insert(0, rasters[0])
+                        self.run_phase_checks(setting_id, rasters_ready, phase)
+                    self.results.update_result_per_phase(setting_id, rasters, phase)
+                    current_progress += progress_per_item
+                    progress_bar.setValue(current_progress)
+
+        # Run raster checks
         db_type = "spatialite"
         db_settings = {"db_path": self.schematisation_sqlite}
         try:
             db = ThreediDatabase(db_settings, db_type)
-            checker = RasterChecker(db)
-            msg = checker.run(["check all rasters"])
-            self.checker_logger.log_info(msg)
+            checker = PatchedRasterChecker(db)
+            checker.run_all_checks(self.pbar_check_rasters)
+            checker.close_session()
         except Exception as e:
-            self.checker_logger.log_error("\nRaster checker errors:")
-            self.checker_logger.log_info(f"{e}")
+            error_msg = f"Raster checker errors:\n{e}"
+            self.communication.show_error(error_msg, self)
+            return
+        for result_row_dict in checker.results.result_per_check:
+            result_row_str = checker.results.result_per_check_to_msg(result_row_dict)
+            result_row = result_row_str.split(",")
+            level = result_row[0].upper()
+            if level == LogLevels.INFO.value:
+                continue
+            self.raster_checker_logger.log_result_row(result_row, level)
         self.pbar_check_rasters.setMaximum(100)
         self.pbar_check_rasters.setValue(100)
+        self.communication.bar_info("Finished raster checks.")
+        self.pbar_check_rasters.hide()
+        self.lbl_check_rasters.show()
 
 
 class SelectFilesWidget(uicls_files_page, basecls_files_page):
