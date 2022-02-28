@@ -193,6 +193,7 @@ class UploadWorkerSignals(QObject):
     thread_finished = pyqtSignal(int, str)
     upload_failed = pyqtSignal(int, str)
     upload_progress = pyqtSignal(int, str, float, float)  # upload row number, task name, task progress, total progress
+    revision_committed = pyqtSignal()
 
 
 class RevisionUploadError(Exception):
@@ -207,9 +208,10 @@ class UploadProgressWorker(QRunnable):
     TASK_CHECK_INTERVAL = 2.5
     TASK_CHECK_RETRIES = 4
 
-    def __init__(self, threedi_api, upload_specification, upload_row_number):
+    def __init__(self, threedi_api, local_schematisation, upload_specification, upload_row_number):
         super().__init__()
         self.threedi_api = threedi_api
+        self.local_schematisation = local_schematisation
         self.upload_specification = upload_specification
         self.upload_row_number = upload_row_number
         self.current_task = "NO TASK"
@@ -357,6 +359,8 @@ class UploadProgressWorker(QRunnable):
         self.tc.commit_schematisation_revision(self.schematisation.id, self.revision.id, commit_message=commit_message)
         self.current_task_progress = 100.0
         self.report_upload_progress()
+        self.local_schematisation.update_wip_revision(self.revision.number)
+        self.signals.revision_committed.emit()
 
     def create_3di_model_task(self):
         """Run creation of the new model out of revision data."""

@@ -20,7 +20,7 @@ from .conftest import (
 
 
 def test_mmh_to_ms():
-    mmh_value = 200
+    mmh_value = 200.0
     ms_value = mmh_to_ms(mmh_value)
     ms_value_str = f"{ms_value:.10f}"
     assert ms_value_str == "0.0000555556"

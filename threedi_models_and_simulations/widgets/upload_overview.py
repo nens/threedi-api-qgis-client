@@ -44,7 +44,6 @@ class UploadOverview(uicls_log, basecls_log):
         self.schematisation = None
         self.schematisation_sqlite = None
         self.schematisation_id = None
-        self.schematisation = None
         self.pb_new_upload.clicked.connect(self.upload_new_model)
         self.pb_hide.clicked.connect(self.close)
         self.tv_model = None
@@ -115,10 +114,13 @@ class UploadOverview(uicls_log, basecls_log):
         upload_row_number = self.tv_model.rowCount()
         upload_row_idx = self.tv_model.index(upload_row_number - 1, 0)
         self.tv_uploads.selectionModel().setCurrentIndex(upload_row_idx, QItemSelectionModel.ClearAndSelect)
-        worker = UploadProgressWorker(self.threedi_api, upload_specification, upload_row_number)
+        worker = UploadProgressWorker(
+            self.threedi_api, self.current_local_schematisation, upload_specification, upload_row_number
+        )
         worker.signals.upload_progress.connect(self.on_update_upload_progress)
         worker.signals.thread_finished.connect(self.on_upload_finished_success)
         worker.signals.upload_failed.connect(self.on_upload_failed)
+        worker.signals.revision_committed.connect(self.on_revision_committed)
         self.upload_thread_pool.start(worker)
 
     def upload_new_model(self):
@@ -166,7 +168,9 @@ class UploadOverview(uicls_log, basecls_log):
                     self.communication.bar_warn("Uploading canceled...")
                     return
         self.add_upload_to_model(new_upload)
-        self.current_local_schematisation.update_wip_revision(latest_revision_number + 1)
+
+    def on_revision_committed(self):
+        """Handling actions on successful revision commit."""
         self.plugin_dock.update_schematisation_view()
 
     def on_update_upload_progress(self, upload_row_number, task_name, task_progress, total_progress):
