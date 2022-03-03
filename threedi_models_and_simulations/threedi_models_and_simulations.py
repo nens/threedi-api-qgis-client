@@ -1,10 +1,11 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QApplication, QAction
 from qgis.PyQt.QtGui import QIcon
 from .settings import SettingsDialog
-from .deps.custom_imports import patch_wheel_imports
+from .communication import UICommunication
+from .deps.custom_imports import patch_wheel_imports, api_client_version_matches, reinstall_required_api_client
 import os.path
 
 
@@ -162,9 +163,38 @@ class ThreediModelsAndSimulations:
         """Show plugin settings dialog."""
         self.plugin_settings.exec_()
 
+    def ensure_required_api_client_version(self, available_api_client_version):
+        """Ensure availability of the required 'threedi_api_client' version."""
+        uc = UICommunication(self.iface, "3Di Models and Simulations")
+        title = f"Wrong 'threedi-api-client' version ({available_api_client_version})"
+        msg = (
+            "Unsupported version of the python package 'threedi-api-client' has been installed in your python "
+            "environment. It needs to be upgraded to be able to run the 3Di Models & Simulations plugin. "
+            "This will now be attempted."
+        )
+        cancel, ok = "Cancel", "OK"
+        clicked_button = uc.custom_ask(None, title, msg, cancel, ok)
+        if clicked_button == ok:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            package_reinstalled, feedback_message = reinstall_required_api_client()
+            QApplication.restoreOverrideCursor()
+            if package_reinstalled:
+                info = (
+                    "Python package 'threedi-api-client' has been upgraded successfully. "
+                    "Please restart QGIS to be able to use the 3Di Models & Simulations plugin."
+                )
+                uc.show_info(info)
+            else:
+                error = f"Upgrading of the 'threedi-api-client' failed due to following error:\n{feedback_message}"
+                uc.show_error(error)
+
     def run(self):
         """Run method that loads and starts the plugin"""
         patch_wheel_imports()
+        versions_matches, available_api_client_version = api_client_version_matches()
+        if not versions_matches:
+            self.ensure_required_api_client_version(available_api_client_version)
+            return
         from threedi_models_and_simulations.widgets.threedi_dockwidget import ThreediDockWidget
 
         if not self.plugin_settings.settings_are_valid():
