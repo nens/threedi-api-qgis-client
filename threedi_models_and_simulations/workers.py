@@ -357,6 +357,10 @@ class UploadProgressWorker(QRunnable):
         self.report_upload_progress()
         commit_message = self.upload_specification["commit_message"]
         self.tc.commit_schematisation_revision(self.schematisation.id, self.revision.id, commit_message=commit_message)
+        self.revision = self.tc.fetch_schematisation_revision(self.schematisation.id, self.revision.id)
+        while self.revision.is_valid is None:
+            time.sleep(2)
+            self.revision = self.tc.fetch_schematisation_revision(self.schematisation.id, self.revision.id)
         self.current_task_progress = 100.0
         self.report_upload_progress()
         self.local_schematisation.update_wip_revision(self.revision.number)
