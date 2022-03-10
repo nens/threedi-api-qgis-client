@@ -4,7 +4,9 @@ History
 3.0.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added threedi-api-client compatibility check.
+
+- Server workers fix.
 
 
 3.0.2 (2022-02-15)
