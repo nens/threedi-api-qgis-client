@@ -1,7 +1,7 @@
 History
 =======
 
-3.0.3 (unreleased)
+3.0.3 (2022-03-10)
 ------------------
 
 - Added threedi-api-client compatibility check.
