@@ -11,7 +11,7 @@ from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
 from ..utils_ui import set_icon
 from ..communication import UICommunication
-from ..workers import WSProgressesSentinel
+from ..workers import AuthorizationHandler, WSProgressesSentinel
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, "ui", "threedi_dockwidget.ui"))
@@ -39,6 +39,8 @@ class ThreediDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulation_overview_dlg = None
         self.simulation_results_dlg = None
         self.upload_dlg = None
+        self.authorization_handler = AuthorizationHandler()
+        self.pb_lmi.clicked.connect(self.authorization_handler.authorize)
         self.btn_log_in_out.clicked.connect(self.on_log_in_log_out)
         self.btn_load_schematisation.clicked.connect(self.build_options.load_local_schematisation)
         self.btn_load_revision.clicked.connect(self.build_options.load_local_schematisation)
