@@ -5,7 +5,7 @@ import sys
 from subprocess import check_call, CalledProcessError
 
 
-REQUIRED_API_CLIENT_VERSION = "4.0.0"
+REQUIRED_API_CLIENT_VERSION = "4.0.1.dev0"
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -54,6 +54,12 @@ def patch_wheel_imports():
         import requests
     except ImportError:
         deps_path = os.path.join(MAIN_DIR, "requests-2.23.0-py2.py3-none-any.whl")
+        sys.path.append(deps_path)
+
+    try:
+        import mechanize
+    except ImportError:
+        deps_path = os.path.join(MAIN_DIR, "mechanize-0.4.7-py2.py3-none-any.whl")
         sys.path.append(deps_path)
 
     try:
