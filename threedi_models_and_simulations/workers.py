@@ -2,18 +2,13 @@
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import logging
 import os
-import re
 import json
 import time
-import base64
-import hashlib
 import requests
-from urllib import parse
 from functools import partial
-from qgis.PyQt.QtGui import QDesktopServices
-from qgis.PyQt.QtCore import QObject, QRunnable, QUrl, QByteArray, pyqtSignal, pyqtSlot
 from PyQt5 import QtWebSockets
-from PyQt5.QtNetwork import QNetworkRequest, QHostAddress, QTcpServer
+from PyQt5.QtNetwork import QNetworkRequest
+from qgis.PyQt.QtCore import QObject, QRunnable, QUrl, QByteArray, pyqtSignal, pyqtSlot
 from threedi_api_client.openapi import ApiException, Progress
 from threedi_api_client.files import upload_file
 from .api_calls.threedi_calls import ThreediCalls
@@ -27,114 +22,6 @@ from .utils import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class AuthorizationCodeInterceptor(QObject):
-
-    code_intercepted = pyqtSignal(str)
-
-    def __init__(self):
-        super().__init__()
-        self.tcp_server = None
-
-    def start_listening(self):
-        self.tcp_server = QTcpServer(self)
-        if not self.tcp_server.listen(QHostAddress.LocalHost, 1234):
-            print("cant listen!")
-            self.tcp_server.close()
-            return
-        self.tcp_server.newConnection.connect(self.intercept_code)
-
-    def intercept_code(self):
-        tcp_socket = self.tcp_server.nextPendingConnection()
-        tcp_socket.waitForReadyRead()
-        incoming_data = tcp_socket.readAll().data()
-        self.tcp_server.newConnection.disconnect(self.intercept_code)
-        code_found = re.search(r"code=(?P<code>[^&]+)", str(incoming_data, "utf-8"))
-        if code_found:
-            authorization_code = code_found.groupdict()["code"]
-            self.code_intercepted.emit(authorization_code)
-        tcp_socket.disconnected.connect(tcp_socket.deleteLater)
-        tcp_socket.disconnectFromHost()
-        self.tcp_server.close()
-
-
-class AuthorizationHandler(QObject):
-
-    AUTHORIZATION_ENDPOINT = "https://auth.lizard.net/oauth2/authorize"
-    TOKEN_ENDPOINT = "https://auth.lizard.net/oauth2/token"
-    REDIRECT_URI = "http://localhost:1234/"
-    CLIENT_ID = "73d21iv9pu333mjqpbguipa7pi"
-    SCOPE = "staging.3di.live/*:readwrite"
-    STATE = "fooobarbaz"
-    RESPONSE_TYPE = "code"
-    CODE_CHALLENGE_METHOD = "S256"
-    GRANT_TYPE = "authorization_code"
-
-    def __init__(self):
-        super().__init__()
-        code_verifier = base64.urlsafe_b64encode(os.urandom(40)).decode("utf-8")
-        code_verifier = re.sub("[^a-zA-Z0-9]+", "", code_verifier)
-        self.code_verifier = code_verifier
-        code_challenge = hashlib.sha256(code_verifier.encode("utf-8")).digest()
-        code_challenge = base64.urlsafe_b64encode(code_challenge).decode("utf-8")
-        code_challenge = code_challenge.replace("=", "")
-        self.code_challenge = code_challenge
-        self.authorization_code_interceptor = AuthorizationCodeInterceptor()
-        self.authorization_code_interceptor.code_intercepted.connect(self.get_access_token)
-
-    def authorize(self):
-        resp = requests.get(
-            url=self.AUTHORIZATION_ENDPOINT,
-            params={
-                "response_type": self.RESPONSE_TYPE,
-                "client_id": self.CLIENT_ID,
-                "scope": self.SCOPE,
-                "redirect_uri": self.REDIRECT_URI,
-                "state": self.STATE,
-                "code_challenge": self.code_challenge,
-                "code_challenge_method": self.CODE_CHALLENGE_METHOD,
-            },
-            allow_redirects=False,
-        )
-        resp.raise_for_status()
-        print(resp.headers)
-        redirect = resp.headers["Location"]
-        query = parse.urlparse(redirect).query
-        auth_params = parse.parse_qs(query)
-        assert "error" not in auth_params
-
-        print(f"Login url:\n{redirect}")
-        self.authorization_code_interceptor.start_listening()
-        QDesktopServices.openUrl(QUrl(redirect))
-
-    def get_access_token(self, authorization_code):
-        print(authorization_code)
-        resp = requests.post(
-            url=self.TOKEN_ENDPOINT,
-            data={
-                "grant_type": self.GRANT_TYPE,
-                "client_id": self.CLIENT_ID,
-                "redirect_uri": self.REDIRECT_URI,
-                "code": authorization_code,
-                "code_verifier": self.code_verifier,
-            },
-            allow_redirects=False,
-        )
-        resp.raise_for_status()
-        result = resp.json()
-
-        print("Access token:")
-        print(json.dumps(self.inspect_token(result["access_token"]), indent=4))
-        print(result["access_token"])
-        print("Refresh token:")
-        print(result.get("refresh_token"))
-
-    @staticmethod
-    def inspect_token(token):
-        _, payload, _ = token.split(".")
-        payload += "=" * (4 - len(payload) % 4)
-        return json.loads(base64.b64decode(payload).decode("utf-8"))
 
 
 class WSProgressesSentinel(QObject):

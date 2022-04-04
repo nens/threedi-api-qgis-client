@@ -66,10 +66,22 @@ logger = logging.getLogger(__name__)
 
 
 def get_api_client(api_username: str, api_password: str, api_host: str, version: str = "v3-beta") -> ThreediApi:
-    """Setup open_api client using username and password."""
+    """Setup 3Di API Client using username and password."""
     os.environ["THREEDI_API_HOST"] = api_host
     os.environ["THREEDI_API_USERNAME"] = api_username
     os.environ["THREEDI_API_PASSWORD"] = api_password
+    api_client = ThreediApi(version=version)
+    return api_client
+
+
+def get_api_client_with_tokens(
+    api_username: str, api_access_token: str, api_refresh_token: str, api_host: str, version: str = "v3-beta"
+) -> ThreediApi:
+    """Setup 3Di API Client using access and refresh tokens."""
+    os.environ["THREEDI_API_HOST"] = api_host
+    os.environ["THREEDI_API_USERNAME"] = api_username
+    os.environ["THREEDI_API_ACCESS_TOKEN"] = api_access_token
+    os.environ["THREEDI_API_REFRESH_TOKEN"] = api_refresh_token
     api_client = ThreediApi(version=version)
     return api_client
 

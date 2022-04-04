@@ -2,11 +2,16 @@
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import logging
 import os
+import re
+import base64
+import hashlib
+import requests
+from mechanize import Browser
 from functools import wraps
 from time import sleep
 from qgis.PyQt import uic
 from threedi_api_client.openapi import ApiException
-from ..api_calls.threedi_calls import get_api_client, ThreediCalls
+from ..api_calls.threedi_calls import get_api_client, get_api_client_with_tokens, ThreediCalls
 from ..utils import extract_error_message
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -42,6 +47,92 @@ def api_client_required(fn):
         return fn(self)
 
     return wrapper
+
+
+class AuthorizationHandler:
+    """Class for handling OAuth2 + PKCE authorization."""
+
+    AUTHORIZATION_ENDPOINT = "https://auth.lizard.net/oauth2/authorize"
+    TOKEN_ENDPOINT = "https://auth.lizard.net/oauth2/token"
+    REDIRECT_URI = "https://api.staging.3di.live/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html"
+    CLIENT_ID = "73d21iv9pu333mjqpbguipa7pi"
+    SCOPE = "staging.3di.live/*:readwrite"
+    STATE = "fooobarbaz"
+    RESPONSE_TYPE = "code"
+    CODE_CHALLENGE_METHOD = "S256"
+    GRANT_TYPE = "authorization_code"
+
+    def __init__(self):
+        super().__init__()
+
+    def authorize(self, username, password):
+        """Authorize user with OAuth2 + PKCE method to obtain access and refresh tokens."""
+        code_verifier, code_challenge = self._generate_pkce()
+        authorization_code = self._get_authorization_code(username, password, code_challenge)
+        access_token, refresh_token = self._get_tokens(authorization_code, code_verifier)
+        return access_token, refresh_token
+
+    @staticmethod
+    def _generate_pkce():
+        """Generate Proof Key for Code Exchange."""
+        code_verifier = base64.urlsafe_b64encode(os.urandom(40)).decode("utf-8")
+        code_verifier = re.sub("[^a-zA-Z0-9]+", "", code_verifier)
+        code_challenge = hashlib.sha256(code_verifier.encode("utf-8")).digest()
+        code_challenge = base64.urlsafe_b64encode(code_challenge).decode("utf-8")
+        code_challenge = code_challenge.replace("=", "")
+        code_verifier = code_verifier
+        code_challenge = code_challenge
+        return code_verifier, code_challenge
+
+    def _get_authorization_code(self, username, password, code_challenge):
+        """Get authorization code required to fetch tokens."""
+        authorization_response = requests.get(
+            url=self.AUTHORIZATION_ENDPOINT,
+            params={
+                "response_type": self.RESPONSE_TYPE,
+                "client_id": self.CLIENT_ID,
+                "scope": self.SCOPE,
+                "redirect_uri": self.REDIRECT_URI,
+                "state": self.STATE,
+                "code_challenge": code_challenge,
+                "code_challenge_method": self.CODE_CHALLENGE_METHOD,
+            },
+            allow_redirects=False,
+        )
+        authorization_response.raise_for_status()
+        log_in_url = authorization_response.headers["Location"]
+        browser = Browser()
+        browser.set_handle_robots(False)
+        browser.open(log_in_url)
+        browser.select_form(nr=1)
+        browser.form["username"] = username
+        browser.form["password"] = password
+        log_in_response = browser.submit()
+        redirect_url = log_in_response.geturl()
+        params_search_results = re.search(r"code=(?P<code>[^&]+)&state=(?P<state>[^&]+)", redirect_url)
+        params = params_search_results.groupdict()
+        authorization_code = params["code"]
+        state = params["state"]
+        assert state == self.STATE
+        return authorization_code
+
+    def _get_tokens(self, authorization_code, code_verifier):
+        """Get access and refresh tokens from dedicated endpoint."""
+        tokens_response = requests.post(
+            url=self.TOKEN_ENDPOINT,
+            data={
+                "grant_type": self.GRANT_TYPE,
+                "client_id": self.CLIENT_ID,
+                "redirect_uri": self.REDIRECT_URI,
+                "code": authorization_code,
+                "code_verifier": code_verifier,
+            },
+            allow_redirects=False,
+        )
+        tokens_response.raise_for_status()
+        result = tokens_response.json()
+        access_token, refresh_token = result["access_token"], result["refresh_token"]
+        return access_token, refresh_token
 
 
 class LogInDialog(uicls, basecls):
@@ -90,7 +181,9 @@ class LogInDialog(uicls, basecls):
             self.le_user.setText("")
             self.le_pass.setText("")
             self.log_pbar.setValue(25)
-            self.threedi_api = get_api_client(username, password, api_url)
+            authorization_handler = AuthorizationHandler()
+            access_token, refresh_token = authorization_handler.authorize(username, password)
+            self.threedi_api = get_api_client_with_tokens(username, access_token, refresh_token, api_url)
             tc = ThreediCalls(self.threedi_api)
             user_profile = tc.fetch_current_user()
             self.user = username
