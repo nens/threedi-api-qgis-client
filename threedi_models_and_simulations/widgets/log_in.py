@@ -62,11 +62,8 @@ class AuthorizationHandler:
     CODE_CHALLENGE_METHOD = "S256"
     GRANT_TYPE = "authorization_code"
 
-    def __init__(self):
-        super().__init__()
-
     def authorize(self, username, password):
-        """Authorize user with OAuth2 + PKCE method to obtain access and refresh tokens."""
+        """Authorize user with OAuth2 + PKCE method to obtain an access and refresh tokens."""
         code_verifier, code_challenge = self._generate_pkce()
         authorization_code = self._get_authorization_code(username, password, code_challenge)
         access_token, refresh_token = self._get_tokens(authorization_code, code_verifier)
@@ -74,7 +71,7 @@ class AuthorizationHandler:
 
     @staticmethod
     def _generate_pkce():
-        """Generate Proof Key for Code Exchange."""
+        """Generate Proof Key for Code Exchange (PKCE)."""
         code_verifier = base64.urlsafe_b64encode(os.urandom(40)).decode("utf-8")
         code_verifier = re.sub("[^a-zA-Z0-9]+", "", code_verifier)
         code_challenge = hashlib.sha256(code_verifier.encode("utf-8")).digest()
@@ -85,7 +82,7 @@ class AuthorizationHandler:
         return code_verifier, code_challenge
 
     def _get_authorization_code(self, username, password, code_challenge):
-        """Get authorization code required to fetch tokens."""
+        """Get an authorization code required to fetch the tokens."""
         authorization_response = requests.get(
             url=self.AUTHORIZATION_ENDPOINT,
             params={
@@ -117,7 +114,7 @@ class AuthorizationHandler:
         return authorization_code
 
     def _get_tokens(self, authorization_code, code_verifier):
-        """Get access and refresh tokens from dedicated endpoint."""
+        """Get an access and refresh tokens from the dedicated endpoint."""
         tokens_response = requests.post(
             url=self.TOKEN_ENDPOINT,
             data={
