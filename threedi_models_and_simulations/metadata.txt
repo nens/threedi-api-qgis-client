@@ -7,7 +7,7 @@ name=3Di Models and Simulations
 qgisMinimumVersion=3.4
 qgisMaximumVersion=3.99
 description=3Di Models and Simulations
-version=3.0.3
+version=3.0.4
 author=Lutra Consulting for 3Di Water Management
 email=servicedesk@nelen-schuurmans.nl
 
@@ -30,6 +30,7 @@ repository=https://github.com/nens/threedi-api-qgis-client
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=<p>
+ <p>3.0.4 Added handling of the QAuth2 + PKCE authorization method
  <p>3.0.3 Enhancements and fixes: #229, #286, #334, #344, #346, #347, #348
  <p>3.0.0 Klondike release
  <p>2.5.0 Enhancements and fixes: #98, #104, #110, #117, #118, #120, #122, #124, #126, #128, #141, #143, #147, #152, #157, #158, #161, #163, #164, #165, #166, #175, #177
