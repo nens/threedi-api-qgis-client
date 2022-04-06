@@ -114,8 +114,9 @@ class AuthorizationHandler(QObject):
     CODE_CHALLENGE_METHOD = "S256"
     GRANT_TYPE = "authorization_code"
 
-    def __init__(self):
+    def __init__(self, log_in_dialog):
         super().__init__()
+        self.log_in_dialog = log_in_dialog
         self.code_verifier = None
         self.code_challenge = None
         self.authorization_code_interceptor = AuthorizationCodeInterceptor(self)
@@ -129,7 +130,9 @@ class AuthorizationHandler(QObject):
 
     def _interception_failure(self, error):
         """Re-raise an exception from the AuthorizationCodeInterceptor instance."""
-        raise error
+        error_msg = f"Authorization code interception error: {error}"
+        self.log_in_dialog.communication.show_error(error_msg)
+        self.log_in_dialog.close()
 
     def _generate_pkce(self):
         """Generate Proof Key for Code Exchange (PKCE)."""
@@ -164,21 +167,26 @@ class AuthorizationHandler(QObject):
 
     def _acquire_tokens(self, authorization_code):
         """Get an access and refresh tokens from the dedicated endpoint."""
-        tokens_response = requests.post(
-            url=self.TOKEN_ENDPOINT,
-            data={
-                "grant_type": self.GRANT_TYPE,
-                "client_id": self.CLIENT_ID,
-                "redirect_uri": self.REDIRECT_URI,
-                "code": authorization_code,
-                "code_verifier": self.code_verifier,
-            },
-            allow_redirects=False,
-        )
-        tokens_response.raise_for_status()
-        result = tokens_response.json()
-        access_token, refresh_token = result["access_token"], result["refresh_token"]
-        self.tokens_acquired.emit(access_token, refresh_token)
+        try:
+            tokens_response = requests.post(
+                url=self.TOKEN_ENDPOINT,
+                data={
+                    "grant_type": self.GRANT_TYPE,
+                    "client_id": self.CLIENT_ID,
+                    "redirect_uri": self.REDIRECT_URI,
+                    "code": authorization_code,
+                    "code_verifier": self.code_verifier,
+                },
+                allow_redirects=False,
+            )
+            tokens_response.raise_for_status()
+            result = tokens_response.json()
+            access_token, refresh_token = result["access_token"], result["refresh_token"]
+            self.tokens_acquired.emit(access_token, refresh_token)
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.log_in_dialog.communication.show_error(error_msg)
+            self.log_in_dialog.close()
 
 
 class LogInDialog(uicls, basecls):
@@ -195,7 +203,7 @@ class LogInDialog(uicls, basecls):
         self.organisations = {}
         self.log_in_widget.hide()
         self.wait_widget.hide()
-        self.authorization_handler = AuthorizationHandler()
+        self.authorization_handler = AuthorizationHandler(self)
         self.pb_log_in.clicked.connect(self.start_authorization)
         self.pb_cancel.clicked.connect(self.reject)
         self.authorization_handler.tokens_acquired.connect(self.log_in_threedi)
