@@ -16,4 +16,3 @@ requests==2.23.0
 zest.releaser==6.20.1
 qgispluginreleaser==1.0
 typing-extensions==4.0.0
-mechanize==0.4.7
