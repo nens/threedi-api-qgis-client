@@ -6,13 +6,16 @@ import re
 import base64
 import hashlib
 import requests
-from mechanize import Browser
 from functools import wraps
 from time import sleep
 from qgis.PyQt import uic
+from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtCore import QObject, QUrl, pyqtSignal
+from PyQt5.QtNetwork import QHostAddress, QTcpServer
 from threedi_api_client.openapi import ApiException
-from ..api_calls.threedi_calls import get_api_client, get_api_client_with_tokens, ThreediCalls
+from ..api_calls.threedi_calls import get_api_client_with_tokens, ThreediCalls
 from ..utils import extract_error_message
+
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "log_in.ui"))
@@ -49,12 +52,61 @@ def api_client_required(fn):
     return wrapper
 
 
-class AuthorizationHandler:
+class AuthorizationCodeInterceptor(QObject):
+    """Authorization code interceptor class."""
+
+    code_intercepted = pyqtSignal(str)
+    code_interception_failed = pyqtSignal(Exception)
+
+    def __init__(self, authorization_handler, state=None):
+        super().__init__()
+        self.authorization_handler = authorization_handler
+        self.state = state
+        self.tcp_server = None
+
+    def start_listening(self, host=QHostAddress.LocalHost, port=1234):
+        """Start listening for an incoming connections."""
+        self.tcp_server = QTcpServer(self)
+        if not self.tcp_server.listen(host, port):
+            raise RuntimeError(f"Can't listen port: '{port}'!")
+        self.tcp_server.newConnection.connect(self.intercept_code)
+
+    def stop_listening(self):
+        """Stop listening for an incoming connections."""
+        if self.tcp_server is not None and self.tcp_server.isListening():
+            self.tcp_server.close()
+
+    def intercept_code(self):
+        """Intercept an authorization code from the incoming connection."""
+        try:
+            self.tcp_server.newConnection.disconnect(self.intercept_code)
+            tcp_socket = self.tcp_server.nextPendingConnection()
+            tcp_socket.waitForReadyRead()
+            incoming_data = tcp_socket.readAll().data()
+            incoming_data_str = str(incoming_data, "utf-8")
+            params_search_results = re.search(r"code=(?P<code>[^&]+)&state=(?P<state>\S+)", incoming_data_str)
+            params = params_search_results.groupdict()
+            authorization_code = params["code"]
+            state = params["state"]
+            if self.state:
+                assert state == self.state
+            tcp_socket.disconnected.connect(tcp_socket.deleteLater)
+            tcp_socket.disconnectFromHost()
+            self.code_intercepted.emit(authorization_code)
+        except Exception as error:
+            self.code_interception_failed.emit(error)
+        finally:
+            self.stop_listening()
+
+
+class AuthorizationHandler(QObject):
     """Class for handling OAuth2 + PKCE authorization."""
+
+    tokens_acquired = pyqtSignal(str, str)
 
     AUTHORIZATION_ENDPOINT = "https://auth.lizard.net/oauth2/authorize"
     TOKEN_ENDPOINT = "https://auth.lizard.net/oauth2/token"
-    REDIRECT_URI = "https://api.staging.3di.live/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html"
+    REDIRECT_URI = "http://localhost:1234/"
     CLIENT_ID = "73d21iv9pu333mjqpbguipa7pi"
     SCOPE = "staging.3di.live/*:readwrite"
     STATE = "fooobarbaz"
@@ -62,15 +114,24 @@ class AuthorizationHandler:
     CODE_CHALLENGE_METHOD = "S256"
     GRANT_TYPE = "authorization_code"
 
-    def authorize(self, username, password):
-        """Authorize user with OAuth2 + PKCE method to obtain an access and refresh tokens."""
-        code_verifier, code_challenge = self._generate_pkce()
-        authorization_code = self._get_authorization_code(username, password, code_challenge)
-        access_token, refresh_token = self._get_tokens(authorization_code, code_verifier)
-        return access_token, refresh_token
+    def __init__(self):
+        super().__init__()
+        self.code_verifier = None
+        self.code_challenge = None
+        self.authorization_code_interceptor = AuthorizationCodeInterceptor(self)
+        self.authorization_code_interceptor.code_intercepted.connect(self._acquire_tokens)
+        self.authorization_code_interceptor.code_interception_failed.connect(self._interception_failure)
 
-    @staticmethod
-    def _generate_pkce():
+    def authorize(self):
+        """Start authorization with OAuth2 + PKCE method to obtain an access and refresh tokens."""
+        self._generate_pkce()
+        self._initialize_authorization()
+
+    def _interception_failure(self, error):
+        """Re-raise an exception from the AuthorizationCodeInterceptor instance."""
+        raise error
+
+    def _generate_pkce(self):
         """Generate Proof Key for Code Exchange (PKCE)."""
         code_verifier = base64.urlsafe_b64encode(os.urandom(40)).decode("utf-8")
         code_verifier = re.sub("[^a-zA-Z0-9]+", "", code_verifier)
@@ -79,10 +140,10 @@ class AuthorizationHandler:
         code_challenge = code_challenge.replace("=", "")
         code_verifier = code_verifier
         code_challenge = code_challenge
-        return code_verifier, code_challenge
+        self.code_verifier, self.code_challenge = code_verifier, code_challenge
 
-    def _get_authorization_code(self, username, password, code_challenge):
-        """Get an authorization code required to fetch the tokens."""
+    def _initialize_authorization(self):
+        """Initialize an authorization process."""
         authorization_response = requests.get(
             url=self.AUTHORIZATION_ENDPOINT,
             params={
@@ -91,29 +152,17 @@ class AuthorizationHandler:
                 "scope": self.SCOPE,
                 "redirect_uri": self.REDIRECT_URI,
                 "state": self.STATE,
-                "code_challenge": code_challenge,
+                "code_challenge": self.code_challenge,
                 "code_challenge_method": self.CODE_CHALLENGE_METHOD,
             },
             allow_redirects=False,
         )
         authorization_response.raise_for_status()
         log_in_url = authorization_response.headers["Location"]
-        browser = Browser()
-        browser.set_handle_robots(False)
-        browser.open(log_in_url)
-        browser.select_form(nr=1)
-        browser.form["username"] = username
-        browser.form["password"] = password
-        log_in_response = browser.submit()
-        redirect_url = log_in_response.geturl()
-        params_search_results = re.search(r"code=(?P<code>[^&]+)&state=(?P<state>[^&]+)", redirect_url)
-        params = params_search_results.groupdict()
-        authorization_code = params["code"]
-        state = params["state"]
-        assert state == self.STATE
-        return authorization_code
+        self.authorization_code_interceptor.start_listening()
+        QDesktopServices.openUrl(QUrl(log_in_url))
 
-    def _get_tokens(self, authorization_code, code_verifier):
+    def _acquire_tokens(self, authorization_code):
         """Get an access and refresh tokens from the dedicated endpoint."""
         tokens_response = requests.post(
             url=self.TOKEN_ENDPOINT,
@@ -122,14 +171,14 @@ class AuthorizationHandler:
                 "client_id": self.CLIENT_ID,
                 "redirect_uri": self.REDIRECT_URI,
                 "code": authorization_code,
-                "code_verifier": code_verifier,
+                "code_verifier": self.code_verifier,
             },
             allow_redirects=False,
         )
         tokens_response.raise_for_status()
         result = tokens_response.json()
         access_token, refresh_token = result["access_token"], result["refresh_token"]
-        return access_token, refresh_token
+        self.tokens_acquired.emit(access_token, refresh_token)
 
 
 class LogInDialog(uicls, basecls):
@@ -146,10 +195,22 @@ class LogInDialog(uicls, basecls):
         self.organisations = {}
         self.log_in_widget.hide()
         self.wait_widget.hide()
-        self.pb_log_in.clicked.connect(self.log_in_threedi)
+        self.authorization_handler = AuthorizationHandler()
+        self.pb_log_in.clicked.connect(self.start_authorization)
         self.pb_cancel.clicked.connect(self.reject)
+        self.authorization_handler.tokens_acquired.connect(self.log_in_threedi)
         self.resize(500, 250)
         self.show_log_widget()
+
+    def start_authorization(self):
+        """Disable log-in button and initialize authorization process."""
+        self.pb_log_in.setDisabled(True)
+        try:
+            self.authorization_handler.authorize()
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.close()
+            self.communication.show_error(error_msg)
 
     def show_log_widget(self):
         """Showing logging form widget."""
@@ -161,10 +222,9 @@ class LogInDialog(uicls, basecls):
         self.log_in_widget.hide()
         self.wait_widget.show()
 
-    def log_in_threedi(self):
+    def log_in_threedi(self, access_token, refresh_token):
         """Method which runs all logging widgets methods and setting up needed variables."""
-        username = self.le_user.text()
-        password = self.le_pass.text()
+        self.authorization_handler.tokens_acquired.disconnect(self.log_in_threedi)
         api_url = self.plugin_dock.plugin_settings.api_url
         api_url_error_message = (
             f"Error: Invalid Base API URL '{api_url}'. "
@@ -175,15 +235,11 @@ class LogInDialog(uicls, basecls):
             self.show_wait_widget()
             self.fetch_msg.hide()
             self.done_msg.hide()
-            self.le_user.setText("")
-            self.le_pass.setText("")
             self.log_pbar.setValue(25)
-            authorization_handler = AuthorizationHandler()
-            access_token, refresh_token = authorization_handler.authorize(username, password)
-            self.threedi_api = get_api_client_with_tokens(username, access_token, refresh_token, api_url)
+            self.threedi_api = get_api_client_with_tokens(api_url, access_token, refresh_token)
             tc = ThreediCalls(self.threedi_api)
             user_profile = tc.fetch_current_user()
-            self.user = username
+            self.user = user_profile.username
             self.user_full_name = f"{user_profile.first_name} {user_profile.last_name}"
             self.wait_widget.update()
             self.log_pbar.setValue(75)
@@ -208,3 +264,8 @@ class LogInDialog(uicls, basecls):
                 error_msg = f"Error: {e}"
             self.close()
             self.communication.show_error(error_msg)
+
+    def reject(self):
+        self.authorization_handler.tokens_acquired.disconnect(self.log_in_threedi)
+        self.authorization_handler.authorization_code_interceptor.stop_listening()
+        super().reject()

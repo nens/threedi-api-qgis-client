@@ -57,18 +57,6 @@ def patch_wheel_imports():
         sys.path.append(deps_path)
 
     try:
-        import html5lib
-    except ImportError:
-        deps_path = os.path.join(MAIN_DIR, "html5lib-1.1-py2.py3-none-any.whl")
-        sys.path.append(deps_path)
-
-    try:
-        import mechanize
-    except ImportError:
-        deps_path = os.path.join(MAIN_DIR, "mechanize-0.4.7-py2.py3-none-any.whl")
-        sys.path.append(deps_path)
-
-    try:
         import threedi_api_client
         import openapi_client
     except ImportError:
