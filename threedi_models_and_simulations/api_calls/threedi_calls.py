@@ -79,7 +79,6 @@ def get_api_client_with_tokens(
 ) -> ThreediApi:
     """Setup 3Di API Client using access and refresh tokens."""
     os.environ["THREEDI_API_HOST"] = api_host
-    # os.environ["THREEDI_API_USERNAME"] = api_username
     os.environ["THREEDI_API_ACCESS_TOKEN"] = api_access_token
     os.environ["THREEDI_API_REFRESH_TOKEN"] = api_refresh_token
     api_client = ThreediApi(version=version)
