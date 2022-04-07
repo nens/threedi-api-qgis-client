@@ -1,6 +1,7 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import os
+from collections import defaultdict
 from uuid import uuid4
 from tempfile import gettempdir
 from qgis.PyQt.QtWidgets import QDialog, QFileDialog
@@ -12,7 +13,8 @@ from .communication import UICommunication
 class SettingsDialog(QDialog):
     """Dialog with plugin settings."""
 
-    DEFAULT_API_URL = "https://api.3di.live"
+    PRODUCTION_API_URL = "https://api.3di.live"
+    STAGING_API_URL = "https://api.staging.3di.live"
     DEFAULT_UPLOAD_TIMEOUT = 45
 
     settings_changed = pyqtSignal()
@@ -28,6 +30,15 @@ class SettingsDialog(QDialog):
         self.wss_url = None
         self.upload_timeout = None
         self.working_dir = None
+        self.authorization_variables_map = defaultdict(dict)
+        self.authorization_variables_map[self.PRODUCTION_API_URL] = {
+            "client_id": "4d5br8uggl6189cnppqh89ilte",
+            "scope": "3di.live/*.readwrite",
+        }
+        self.authorization_variables_map[self.STAGING_API_URL] = {
+            "client_id": "6ku92ccak6htl6fr9jqg3255mi",
+            "scope": "staging.3di.live/*:readwrite",
+        }
         self.browse_pb.clicked.connect(self.set_working_directory)
         self.ui.defaults_pb.clicked.connect(self.restore_defaults)
         self.ui.cancel_pb.clicked.connect(self.reject)
@@ -49,7 +60,7 @@ class SettingsDialog(QDialog):
 
     def load_settings(self):
         """Loading plugin settings from QSettings."""
-        self.api_url = QSettings().value("threedi/api_url", self.DEFAULT_API_URL, type=str)
+        self.api_url = QSettings().value("threedi/api_url", self.PRODUCTION_API_URL, type=str)
         self.wss_url = self.api_url.replace("https:", "wss:").replace("http:", "ws:")
         self.api_url_le.setText(self.api_url)
         self.working_dir = QSettings().value("threedi/working_dir", "", type=str)
@@ -101,7 +112,7 @@ class SettingsDialog(QDialog):
 
     def restore_defaults(self):
         """Restoring default settings values."""
-        self.api_url_le.setText(self.DEFAULT_API_URL)
+        self.api_url_le.setText(self.PRODUCTION_API_URL)
         self.working_dir_le.setText(self.default_working_dir() or "")
         self.upload_timeout_sb.setValue(self.DEFAULT_UPLOAD_TIMEOUT)
 

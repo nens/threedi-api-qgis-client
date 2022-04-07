@@ -5,6 +5,7 @@ import os
 import re
 import base64
 import hashlib
+import secrets
 import requests
 from functools import wraps
 from time import sleep
@@ -52,23 +53,38 @@ def api_client_required(fn):
     return wrapper
 
 
+class AuthorizationException(Exception):
+    pass
+
+
 class AuthorizationCodeInterceptor(QObject):
     """Authorization code interceptor class."""
 
     code_intercepted = pyqtSignal(str)
     code_interception_failed = pyqtSignal(Exception)
 
-    def __init__(self, authorization_handler, state=None):
+    def __init__(self, authorization_handler, host, port, state):
         super().__init__()
         self.authorization_handler = authorization_handler
+        self.host = QHostAddress(host)
+        self.port = port
         self.state = state
         self.tcp_server = None
 
-    def start_listening(self, host=QHostAddress.LocalHost, port=1234):
+    @staticmethod
+    def is_listening_possible(host: str, port: int) -> bool:
+        """Check if it is possible to listen to the given host and port."""
+        tcp_server = QTcpServer()
+        is_listening = tcp_server.listen(QHostAddress(host), port)
+        if is_listening:
+            tcp_server.close()
+        return is_listening
+
+    def start_listening(self):
         """Start listening for an incoming connections."""
         self.tcp_server = QTcpServer(self)
-        if not self.tcp_server.listen(host, port):
-            raise RuntimeError(f"Can't listen port: '{port}'!")
+        if not self.tcp_server.listen(self.host, self.port):
+            raise AuthorizationException(f"Can't listen port: '{self.port}'!")
         self.tcp_server.newConnection.connect(self.intercept_code)
 
     def stop_listening(self):
@@ -104,27 +120,44 @@ class AuthorizationHandler(QObject):
 
     tokens_acquired = pyqtSignal(str, str)
 
-    AUTHORIZATION_ENDPOINT = "https://auth.lizard.net/oauth2/authorize"
-    TOKEN_ENDPOINT = "https://auth.lizard.net/oauth2/token"
-    REDIRECT_URI = "http://localhost:1234/"
-    CLIENT_ID = "73d21iv9pu333mjqpbguipa7pi"
-    SCOPE = "staging.3di.live/*:readwrite"
-    STATE = "fooobarbaz"
+    ISSUER = "https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_vPwXOnNbi"
     RESPONSE_TYPE = "code"
     CODE_CHALLENGE_METHOD = "S256"
     GRANT_TYPE = "authorization_code"
 
-    def __init__(self, log_in_dialog):
+    def __init__(
+        self,
+        log_in_dialog,
+        client_id,
+        scope,
+        redirect_host="http://localhost",
+        redirect_port=62445,
+        spare_redirect_port=62271,
+    ):
         super().__init__()
         self.log_in_dialog = log_in_dialog
+        self.client_id = client_id
+        self.scope = scope
+        self.redirect_host = redirect_host
+        if AuthorizationCodeInterceptor.is_listening_possible(redirect_host, redirect_port):
+            self.redirect_port = redirect_port
+        else:
+            self.redirect_port = spare_redirect_port
+        self.redirect_uri = f"{self.redirect_host}:{self.redirect_port}/"
+        self.state = secrets.token_urlsafe(22)
+        self.authorization_endpoint = None
+        self.token_endpoint = None
         self.code_verifier = None
         self.code_challenge = None
-        self.authorization_code_interceptor = AuthorizationCodeInterceptor(self)
+        self.authorization_code_interceptor = AuthorizationCodeInterceptor(
+            self, self.redirect_host, self.redirect_port, self.state
+        )
         self.authorization_code_interceptor.code_intercepted.connect(self._acquire_tokens)
         self.authorization_code_interceptor.code_interception_failed.connect(self._interception_failure)
 
     def authorize(self):
         """Start authorization with OAuth2 + PKCE method to obtain an access and refresh tokens."""
+        self._oauth2_autodiscovery()
         self._generate_pkce()
         self._initialize_authorization()
 
@@ -133,6 +166,15 @@ class AuthorizationHandler(QObject):
         error_msg = f"Authorization code interception error: {error}"
         self.log_in_dialog.communication.show_error(error_msg)
         self.log_in_dialog.close()
+
+    def _oauth2_autodiscovery(self):
+        """Use autodiscovery to fetch server details."""
+        response = requests.get(f"{self.ISSUER}/.well-known/openid-configuration")
+        response.raise_for_status()
+        server_config = response.json()
+        self.authorization_endpoint = server_config["authorization_endpoint"]
+        self.token_endpoint = server_config["token_endpoint"]
+        return response.json()
 
     def _generate_pkce(self):
         """Generate Proof Key for Code Exchange (PKCE)."""
@@ -148,13 +190,13 @@ class AuthorizationHandler(QObject):
     def _initialize_authorization(self):
         """Initialize an authorization process."""
         authorization_response = requests.get(
-            url=self.AUTHORIZATION_ENDPOINT,
+            url=self.authorization_endpoint,
             params={
                 "response_type": self.RESPONSE_TYPE,
-                "client_id": self.CLIENT_ID,
-                "scope": self.SCOPE,
-                "redirect_uri": self.REDIRECT_URI,
-                "state": self.STATE,
+                "client_id": self.client_id,
+                "scope": self.scope,
+                "redirect_uri": self.redirect_uri,
+                "state": self.state,
                 "code_challenge": self.code_challenge,
                 "code_challenge_method": self.CODE_CHALLENGE_METHOD,
             },
@@ -169,11 +211,11 @@ class AuthorizationHandler(QObject):
         """Get an access and refresh tokens from the dedicated endpoint."""
         try:
             tokens_response = requests.post(
-                url=self.TOKEN_ENDPOINT,
+                url=self.token_endpoint,
                 data={
                     "grant_type": self.GRANT_TYPE,
-                    "client_id": self.CLIENT_ID,
-                    "redirect_uri": self.REDIRECT_URI,
+                    "client_id": self.client_id,
+                    "redirect_uri": self.redirect_uri,
                     "code": authorization_code,
                     "code_verifier": self.code_verifier,
                 },
@@ -200,10 +242,17 @@ class LogInDialog(uicls, basecls):
         self.user = None
         self.user_full_name = None
         self.threedi_api = None
+        self.api_url = self.plugin_dock.plugin_settings.api_url
+        self.client_id = None
+        self.scope = None
         self.organisations = {}
         self.log_in_widget.hide()
         self.wait_widget.hide()
-        self.authorization_handler = AuthorizationHandler(self)
+        authorization_variables = self.plugin_dock.plugin_settings.authorization_variables_map[self.api_url]
+        if authorization_variables:
+            self.client_id = authorization_variables["client_id"]
+            self.scope = authorization_variables["scope"]
+        self.authorization_handler = AuthorizationHandler(self, self.client_id, self.scope)
         self.pb_log_in.clicked.connect(self.start_authorization)
         self.pb_cancel.clicked.connect(self.reject)
         self.authorization_handler.tokens_acquired.connect(self.log_in_threedi)
@@ -233,9 +282,8 @@ class LogInDialog(uicls, basecls):
     def log_in_threedi(self, access_token, refresh_token):
         """Method which runs all logging widgets methods and setting up needed variables."""
         self.authorization_handler.tokens_acquired.disconnect(self.log_in_threedi)
-        api_url = self.plugin_dock.plugin_settings.api_url
         api_url_error_message = (
-            f"Error: Invalid Base API URL '{api_url}'. "
+            f"Error: Invalid Base API URL '{self.api_url}'. "
             f"The 3Di API expects that the version is not included. "
             f"Please change the Base API URL in the 3Di Models and Simulations plugin settings."
         )
@@ -244,7 +292,7 @@ class LogInDialog(uicls, basecls):
             self.fetch_msg.hide()
             self.done_msg.hide()
             self.log_pbar.setValue(25)
-            self.threedi_api = get_api_client_with_tokens(api_url, access_token, refresh_token)
+            self.threedi_api = get_api_client_with_tokens(self.api_url, access_token, refresh_token)
             tc = ThreediCalls(self.threedi_api)
             user_profile = tc.fetch_current_user()
             self.user = user_profile.username
