@@ -31,14 +31,18 @@ class SettingsDialog(QDialog):
         self.upload_timeout = None
         self.working_dir = None
         self.authorization_variables_map = defaultdict(dict)
-        self.authorization_variables_map[self.PRODUCTION_API_URL] = {
-            "client_id": "4d5br8uggl6189cnppqh89ilte",
-            "scope": "3di.live/*.readwrite",
-        }
-        self.authorization_variables_map[self.STAGING_API_URL] = {
-            "client_id": "6ku92ccak6htl6fr9jqg3255mi",
-            "scope": "staging.3di.live/*:readwrite",
-        }
+        self.authorization_variables_map.update(
+            {
+                self.PRODUCTION_API_URL: {
+                    "client_id": "4d5br8uggl6189cnppqh89ilte",
+                    "scope": "3di.live/*.readwrite",
+                },
+                self.STAGING_API_URL: {
+                    "client_id": "6ku92ccak6htl6fr9jqg3255mi",
+                    "scope": "staging.3di.live/*:readwrite",
+                },
+            }
+        )
         self.browse_pb.clicked.connect(self.set_working_directory)
         self.ui.defaults_pb.clicked.connect(self.restore_defaults)
         self.ui.cancel_pb.clicked.connect(self.reject)
