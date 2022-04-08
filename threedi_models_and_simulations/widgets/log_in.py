@@ -82,7 +82,7 @@ class AuthorizationCodeInterceptor(QObject):
 
     def start_listening(self):
         """Start listening for an incoming connections."""
-        self.tcp_server = QTcpServer(self)
+        self.tcp_server = QTcpServer()
         if not self.tcp_server.listen(self.host, self.port):
             raise AuthorizationException(f"Can't listen port: '{self.port}'!")
         self.tcp_server.newConnection.connect(self.intercept_code)
