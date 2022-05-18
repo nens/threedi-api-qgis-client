@@ -231,6 +231,11 @@ def apply_24h_timeseries(start_datetime, end_datetime, timeseries):
     return new_timeseries
 
 
+def split_to_even_chunks(collection, chunk_length):
+    """Split collection to even chunks list."""
+    return [collection[i:i + chunk_length] for i in range(0, len(collection), chunk_length)]
+
+
 class UploadFileStatus(Enum):
     """Possible actions on files upload."""
 

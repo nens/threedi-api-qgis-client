@@ -40,6 +40,7 @@ from ..utils import (
     get_download_file,
     upload_file,
     read_json_data,
+    split_to_even_chunks,
     TEMPDIR,
     LATERALS_FILE_TEMPLATE,
     DWF_FILE_TEMPLATE,
@@ -2284,14 +2285,17 @@ class SimulationWizard(QWizard):
                     )
                 elif ptype == CUSTOM:
                     if pcsv:
-                        tc.create_simulation_custom_precipitation(
-                            sim_id,
-                            values=pvalues,
-                            units=punits,
-                            duration=pduration,
-                            offset=poffset,
-                            interpolate=pinterpolate,
-                        )
+                        for values_chunk in split_to_even_chunks(pvalues, 300):
+                            chunk_offset = values_chunk[0][0]
+                            values_chunk = [[t-chunk_offset, v] for t, v in values_chunk]
+                            tc.create_simulation_custom_precipitation(
+                                sim_id,
+                                values=values_chunk,
+                                units=punits,
+                                duration=pduration,
+                                offset=poffset + chunk_offset,
+                                interpolate=pinterpolate,
+                            )
                     else:
                         filename = os.path.basename(pfpath)
                         upload = tc.create_simulation_custom_netcdf_precipitation(sim_id, filename=filename)
