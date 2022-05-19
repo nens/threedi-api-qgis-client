@@ -233,7 +233,17 @@ def apply_24h_timeseries(start_datetime, end_datetime, timeseries):
 
 def split_to_even_chunks(collection, chunk_length):
     """Split collection to even chunks list."""
-    return [collection[i:i + chunk_length] for i in range(0, len(collection), chunk_length)]
+    return [collection[i : i + chunk_length] for i in range(0, len(collection), chunk_length)]
+
+
+def intervals_are_even(time_series):
+    """Check if intervals in the time series are all even."""
+    expected_interval = time_series[1][0] - time_series[0][0]
+    time_steps = [time_step for time_step, value in time_series]
+    for start_time_step, end_time_step in zip(time_steps, time_steps[1:]):
+        if end_time_step - start_time_step != expected_interval:
+            return False
+    return True
 
 
 class UploadFileStatus(Enum):

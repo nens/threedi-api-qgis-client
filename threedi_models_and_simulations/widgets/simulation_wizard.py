@@ -41,6 +41,7 @@ from ..utils import (
     upload_file,
     read_json_data,
     split_to_even_chunks,
+    intervals_are_even,
     TEMPDIR,
     LATERALS_FILE_TEMPLATE,
     DWF_FILE_TEMPLATE,
@@ -1012,6 +1013,13 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                         time_series.append([float(rtime) * units_multiplier, float(rain)])
                     except ValueError:
                         continue
+        if not intervals_are_even(time_series):
+            warn_message = (
+                "Time steps in the selected CSV file are not even. "
+                "Please adjust your data to fulfill even time steps requirement."
+            )
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(warn_message)
+            return
         self.le_upload_rain.setText(filename)
         self.custom_time_series[simulation] = time_series
         self.plot_precipitation()
@@ -2287,7 +2295,7 @@ class SimulationWizard(QWizard):
                     if pcsv:
                         for values_chunk in split_to_even_chunks(pvalues, 300):
                             chunk_offset = values_chunk[0][0]
-                            values_chunk = [[t-chunk_offset, v] for t, v in values_chunk]
+                            values_chunk = [[t - chunk_offset, v] for t, v in values_chunk]
                             tc.create_simulation_custom_precipitation(
                                 sim_id,
                                 values=values_chunk,
