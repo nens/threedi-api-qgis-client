@@ -35,7 +35,7 @@ class SettingsDialog(QDialog):
             {
                 self.PRODUCTION_API_URL: {
                     "client_id": "4d5br8uggl6189cnppqh89ilte",
-                    "scope": "3di.live/*.readwrite",
+                    "scope": "3di.live/*:readwrite",
                 },
                 self.STAGING_API_URL: {
                     "client_id": "6ku92ccak6htl6fr9jqg3255mi",
