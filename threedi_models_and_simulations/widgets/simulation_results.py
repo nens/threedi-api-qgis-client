@@ -10,7 +10,7 @@ from threedi_api_client.openapi import ApiException
 from .custom_items import DownloadProgressDelegate
 from ..api_calls.threedi_calls import ThreediCalls
 from ..workers import DownloadProgressWorker
-from ..utils import list_local_schematisations, LocalSchematisation, LocalRevision
+from ..utils import extract_error_message, list_local_schematisations, LocalSchematisation, LocalRevision
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_results.ui"))
@@ -194,9 +194,7 @@ class SimulationResults(uicls, basecls):
             downloads.sort(key=lambda x: x[-1].size)
             self.last_progress_item = self.tv_model.item(current_row, self.PROGRESS_COLUMN_IDX)
         except ApiException as e:
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             self.plugin_dock.communication.show_error(error_msg)
             return
         except Exception as e:

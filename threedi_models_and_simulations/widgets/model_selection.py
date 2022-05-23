@@ -9,7 +9,7 @@ from qgis.PyQt.QtCore import Qt, QDateTime, QItemSelectionModel
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.core import QgsVectorLayer, QgsProject, QgsMapLayer
 from threedi_api_client.openapi import ApiException
-from ..utils import get_download_file, file_cached, CACHE_PATH
+from ..utils import extract_error_message, get_download_file, file_cached, CACHE_PATH
 from ..utils_ui import set_named_style
 from ..api_calls.threedi_calls import ThreediCalls
 
@@ -130,9 +130,7 @@ class ModelSelectionDialog(uicls, basecls):
             self.threedi_models = threedi_models
         except ApiException as e:
             self.close()
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             self.communication.show_error(error_msg)
         except Exception as e:
             self.close()
@@ -166,9 +164,7 @@ class ModelSelectionDialog(uicls, basecls):
                 self.templates_tv.resizeColumnToContents(i)
             self.simulation_templates = templates
         except ApiException as e:
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             self.communication.show_error(error_msg)
         except Exception as e:
             error_msg = f"Error: {e}"
@@ -275,9 +271,7 @@ class ModelSelectionDialog(uicls, basecls):
             cached_file_path = file_path
             self.communication.bar_info(f"Model {geojson_name} cached.")
         except ApiException as e:
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             if "geojson file not found" in error_msg:
                 pass
             else:

@@ -7,6 +7,7 @@ from time import sleep
 from qgis.PyQt import uic
 from threedi_api_client.openapi import ApiException
 from ..api_calls.threedi_calls import get_api_client, ThreediCalls
+from ..utils import extract_error_message
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "log_in.ui"))
@@ -108,9 +109,7 @@ class LogInDialog(uicls, basecls):
             if e.status == 404:
                 error_msg = api_url_error_message
             else:
-                error_body = e.body
-                error_details = error_body["details"] if "details" in error_body else error_body
-                error_msg = f"Error: {error_details}"
+                error_msg = extract_error_message(e)
             self.communication.show_error(error_msg)
         except Exception as e:
             if "THREEDI_API_HOST" in str(e):

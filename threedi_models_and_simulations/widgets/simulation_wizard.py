@@ -256,9 +256,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         except ApiException as e:
             self.new_simulations = None
             self.new_simulation_statuses = None
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             self.parent_page.parent_wizard.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         except Exception as e:
             error_msg = f"Error: {e}"

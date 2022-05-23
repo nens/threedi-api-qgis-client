@@ -8,6 +8,7 @@ from qgis.PyQt.QtCore import Qt, QDateTime
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from threedi_api_client.openapi import ApiException
 from ..api_calls.threedi_calls import ThreediCalls
+from ..utils import extract_error_message
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "model_deletion.ui"))
@@ -70,9 +71,7 @@ class ModelDeletionDialog(uicls, basecls):
                 self.models_model.appendRow([id_item, name_item, schema_item, rev_item, lu_item, ub_item])
             self.threedi_models = threedi_models
         except ApiException as e:
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             self.communication.show_error(error_msg)
         except Exception as e:
             error_msg = f"Error: {e}"
@@ -91,9 +90,7 @@ class ModelDeletionDialog(uicls, basecls):
                 model_id = int(model_id_item.text())
                 tc.delete_3di_model(model_id)
         except ApiException as e:
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             self.communication.show_error(error_msg)
         except Exception as e:
             error_msg = f"Error: {e}"

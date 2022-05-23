@@ -13,6 +13,7 @@ from .simulation_wizard import SimulationWizard
 from .model_selection import ModelSelectionDialog
 from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
 from ..api_calls.threedi_calls import ThreediCalls
+from ..utils import extract_error_message
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_overview.ui"))
@@ -114,9 +115,7 @@ class SimulationOverview(uicls, basecls):
             settings_overview = tc.fetch_simulation_settings_overview(str(simulation.id))
             events = tc.fetch_simulation_events(simulation.id)
         except ApiException as e:
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             self.plugin_dock.communication.bar_error(error_msg)
         except Exception as e:
             error_msg = f"Error: {e}"
@@ -156,9 +155,7 @@ class SimulationOverview(uicls, basecls):
                 msg = f"Simulation {name_item.text()} stopped!"
                 self.plugin_dock.communication.bar_info(msg)
             except ApiException as e:
-                error_body = e.body
-                error_details = error_body["details"] if "details" in error_body else error_body
-                error_msg = f"Error: {error_details}"
+                error_msg = extract_error_message(e)
                 self.plugin_dock.communication.show_error(error_msg)
             except Exception as e:
                 error_msg = f"Error: {e}"

@@ -9,7 +9,13 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from threedi_api_client.openapi import ApiException
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import list_local_schematisations, get_download_file, unzip_archive, LocalSchematisation
+from ..utils import (
+    extract_error_message,
+    list_local_schematisations,
+    get_download_file,
+    unzip_archive,
+    LocalSchematisation,
+)
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "schematisation_download.ui"))
@@ -124,9 +130,7 @@ class SchematisationDownload(uicls, basecls):
             self.schematisations = schematisations
         except ApiException as e:
             self.close()
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             self.communication.show_error(error_msg)
         except Exception as e:
             self.close()
@@ -163,9 +167,7 @@ class SchematisationDownload(uicls, basecls):
                 self.revisions_tv.resizeColumnToContents(i)
             self.revisions = revisions
         except ApiException as e:
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             self.communication.show_error(error_msg)
         except Exception as e:
             error_msg = f"Error: {e}"
@@ -295,9 +297,7 @@ class SchematisationDownload(uicls, basecls):
             msg = f"Schematisation '{schematisation_name} (revision {revision_number})' downloaded!"
             self.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
         except ApiException as e:
-            error_body = e.body
-            error_details = error_body["details"] if "details" in error_body else error_body
-            error_msg = f"Error: {error_details}"
+            error_msg = extract_error_message(e)
             self.communication.show_error(error_msg)
         except Exception as e:
             error_msg = f"Error: {e}"

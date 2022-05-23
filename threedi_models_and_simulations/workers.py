@@ -12,7 +12,14 @@ from PyQt5 import QtWebSockets
 from threedi_api_client.openapi import ApiException, Progress
 from threedi_api_client.files import upload_file
 from .api_calls.threedi_calls import ThreediCalls
-from .utils import zip_into_archive, unzip_archive, bypass_max_path_limit, UploadFileStatus, CHUNK_SIZE
+from .utils import (
+    extract_error_message,
+    zip_into_archive,
+    unzip_archive,
+    bypass_max_path_limit,
+    UploadFileStatus,
+    CHUNK_SIZE,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -55,7 +62,7 @@ class WSProgressesSentinel(QObject):
             result = self.tc.fetch_simulations_progresses(self.simulations_list)
             self.progresses_fetched.emit(result)
         except ApiException as e:
-            error_msg = f"Error: {e}"
+            error_msg = extract_error_message(e)
             self.thread_failed.emit(error_msg)
             return
         self.ws_client = QtWebSockets.QWebSocket("", QtWebSockets.QWebSocketProtocol.Version13, None)
