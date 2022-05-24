@@ -123,19 +123,22 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             from threedi_modelchecker.threedi_database import ThreediDatabase
             from threedi_modelchecker.model_checks import ThreediModelChecker
             from threedi_modelchecker.schema import ModelSchema
+            from threedi_modelchecker.spatialite_versions import get_spatialite_version
             from threedi_modelchecker import errors
         except ImportError:
             raise
         db_type = "spatialite"
         db_settings = {"db_path": self.schematisation_sqlite}
         threedi_db = ThreediDatabase(db_settings, db_type=db_type)
+        lib_version, file_version = get_spatialite_version(threedi_db)
+        upgrade_spatialite_version = True if file_version == 3 and lib_version in (4, 5) else False
         schema = ModelSchema(threedi_db)
         try:
             schema.validate_schema()
         except errors.MigrationMissingError:
             wip_revision = self.current_local_schematisation.wip_revision
             backup_filepath = wip_revision.backup_sqlite()
-            schema.upgrade(backup=False)
+            schema.upgrade(backup=False, upgrade_spatialite_version=upgrade_spatialite_version)
             shutil.rmtree(os.path.dirname(backup_filepath))
         except Exception as e:
             error_msg = f"{e}"

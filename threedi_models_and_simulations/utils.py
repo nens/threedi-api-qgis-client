@@ -583,3 +583,9 @@ def replace_revision_data(source_revision, target_revision):
     """Replace target revision content with the source revision data."""
     shutil.rmtree(target_revision.main_dir)
     shutil.copytree(source_revision.main_dir, target_revision.main_dir)
+
+
+def parse_version_number(version_str):
+    """Parse version number in a string format and convert it into list of an integers."""
+    version = [int(i) for i in version_str.split(".") if i.isnumeric()]
+    return version
