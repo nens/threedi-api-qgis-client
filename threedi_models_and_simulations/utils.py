@@ -185,7 +185,9 @@ def extract_error_message(e):
     try:
         if isinstance(error_body, str):
             error_body = json.loads(error_body)
-        if "details" in error_body:
+        if "detail" in error_body:
+            error_details = error_body["detail"]
+        elif "details" in error_body:
             error_details = error_body["details"]
         elif "errors" in error_body:
             errors = error_body["errors"]
