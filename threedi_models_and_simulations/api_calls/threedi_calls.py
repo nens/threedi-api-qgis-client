@@ -177,9 +177,6 @@ class ThreediCalls:
         if not simulations_list:
             logger.warning("Simulations list not specified, we grab all simulations! ")
             simulations_list = self.fetch_simulations()
-            if len(simulations_list) > 50:
-                logger.warning("To prevent throttling, we limit the sim list to 50")
-                simulations_list = simulations_list[:50]
         logger.info("Starting to grab sim statuses for %d simulations", len(simulations_list))
         for sim in simulations_list:
             spk = sim.id
