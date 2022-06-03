@@ -99,7 +99,6 @@ class LogInDialog(uicls, basecls):
             username, password = self.plugin_dock.plugin_settings.get_3di_auth()
             if not username or not password:
                 raise AuthorizationException(missing_personal_api_key_message)
-            print([username, password])
             self.threedi_api = get_api_client(username, password, self.api_url)
             tc = ThreediCalls(self.threedi_api)
             user_profile = tc.fetch_current_user()
