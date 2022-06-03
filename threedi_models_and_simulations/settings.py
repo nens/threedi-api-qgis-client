@@ -1,10 +1,10 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import os
-from collections import defaultdict
 from uuid import uuid4
 from tempfile import gettempdir
-from qgis.PyQt.QtWidgets import QDialog, QFileDialog
+from qgis.core import QgsApplication, QgsAuthMethodConfig
+from qgis.PyQt.QtWidgets import QDialog, QFileDialog, QInputDialog
 from qgis.PyQt.QtCore import QSettings, pyqtSignal
 from qgis.PyQt import uic
 from .communication import UICommunication
@@ -30,24 +30,64 @@ class SettingsDialog(QDialog):
         self.wss_url = None
         self.upload_timeout = None
         self.working_dir = None
-        self.authorization_variables_map = defaultdict(dict)
-        self.authorization_variables_map.update(
-            {
-                self.PRODUCTION_API_URL: {
-                    "client_id": "4d5br8uggl6189cnppqh89ilte",
-                    "scope": "3di.live/*:readwrite",
-                },
-                self.STAGING_API_URL: {
-                    "client_id": "6ku92ccak6htl6fr9jqg3255mi",
-                    "scope": "staging.3di.live/*:readwrite",
-                },
-            }
-        )
         self.browse_pb.clicked.connect(self.set_working_directory)
+        self.pak_pb.clicked.connect(self.set_personal_api_key)
         self.ui.defaults_pb.clicked.connect(self.restore_defaults)
         self.ui.cancel_pb.clicked.connect(self.reject)
         self.ui.save_pb.clicked.connect(self.accept)
         self.load_settings()
+
+    @staticmethod
+    def get_3di_auth():
+        """Getting 3Di credentials from the QGIS Authorization Manager."""
+        settings = QSettings()
+        authcfg = settings.value("threedi/authcfg", None)
+        auth_manager = QgsApplication.authManager()
+        cfg = QgsAuthMethodConfig()
+        auth_manager.loadAuthenticationConfig(authcfg, cfg, True)
+        username = cfg.config("username")
+        password = cfg.config("password")
+        return username, password
+
+    @staticmethod
+    def set_3di_auth(personal_api_key, username="__key__"):
+        """Setting 3Di credentials in the QGIS Authorization Manager."""
+        settings = QSettings()
+        authcfg = settings.value("threedi/authcfg", None)
+        cfg = QgsAuthMethodConfig()
+        auth_manager = QgsApplication.authManager()
+        auth_manager.setMasterPassword()
+        auth_manager.loadAuthenticationConfig(authcfg, cfg, True)
+
+        if cfg.id():
+            cfg.setConfig("username", username)
+            cfg.setConfig("password", personal_api_key)
+            auth_manager.updateAuthenticationConfig(cfg)
+        else:
+            cfg.setMethod("Basic")
+            cfg.setName("3Di Personal Api Key")
+            cfg.setConfig("username", username)
+            cfg.setConfig("password", personal_api_key)
+            auth_manager.storeAuthenticationConfig(cfg)
+            settings.setValue("threedi/authcfg", cfg.id())
+
+    def set_personal_api_key(self):
+        """Setting active Personal API Key."""
+        pak, accept = QInputDialog.getText(self, "Personal API Key", "Paste your Personal API Key:")
+        if accept is False:
+            return
+        self.set_3di_auth(pak)
+        self.set_personal_api_key_label(True)
+
+    def set_personal_api_key_label(self, personal_api_key_available):
+        """Setting Personal API Key label text."""
+        if personal_api_key_available:
+            label_txt = """<html><head/><body><p><span style=" color:#00aa00;">
+                Personal API Key is available</span></p></body></html>"""
+        else:
+            label_txt = """<html><head/><body><p><span style=" color:#ff0000;">
+                    Personal API Key not found</span></p></body></html>"""
+        self.pak_label.setText(label_txt)
 
     def set_working_directory(self):
         """Set working directory path widget."""
@@ -70,6 +110,11 @@ class SettingsDialog(QDialog):
         self.working_dir = QSettings().value("threedi/working_dir", "", type=str)
         self.working_dir_le.setText(self.working_dir)
         self.upload_timeout = QSettings().value("threedi/upload_timeout", self.DEFAULT_UPLOAD_TIMEOUT, type=int)
+        username, password = self.get_3di_auth()
+        if password:
+            self.set_personal_api_key_label(True)
+        else:
+            self.set_personal_api_key_label(False)
 
     def save_settings(self):
         """Saving plugin settings in QSettings."""
