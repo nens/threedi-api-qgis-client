@@ -16,7 +16,7 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import QgsFeature, QgsRasterLayer
 from threedi_api_client.openapi import ApiException
 from ..utils import LocalSchematisation, extract_error_message, EMPTY_DB_PATH
-from ..utils_ui import scan_widgets_parameters
+from ..utils_ui import get_filepath, scan_widgets_parameters
 from ..utils_qgis import sqlite_layer, execute_sqlite_queries
 from ..api_calls.threedi_calls import ThreediCalls
 
@@ -37,6 +37,10 @@ class CommitErrors(Exception):
     pass
 
 
+class SpatialiteError(Exception):
+    pass
+
+
 class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page):
     """Widget for the Schematisation Name and tags page."""
 
@@ -46,6 +50,7 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
         self.parent_page = parent_page
         self.organisations = self.parent_page.organisations
         self.populate_organisations()
+        self.btn_browse_spatialite.clicked.connect(self.browse_existing_spatialite)
 
     def populate_organisations(self):
         """Populating organisations."""
@@ -59,6 +64,12 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
         organisation = self.cbo_organisations.currentData()
         owner = organisation.unique_id
         return name, tags, owner
+
+    def browse_existing_spatialite(self):
+        """Show dialog for choosing an existing Spatialite file path."""
+        spatialite_path = get_filepath(self, dialog_title="Select Spatialite file")
+        if spatialite_path is not None:
+            self.le_spatialite_path.setText(spatialite_path)
 
 
 class SchematisationExplainWidget(uicls_schema_explain_page, basecls_schema_explain_page):
@@ -338,7 +349,41 @@ class SchematisationNamePage(QWizardPage):
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.registerField("schematisation_name*", self.main_widget.le_schematisation_name)
+        self.registerField("from_spatialite", self.main_widget.rb_existing_spatialite)
+        self.registerField("spatialite_path", self.main_widget.le_spatialite_path)
+        self.main_widget.rb_existing_spatialite.toggled.connect(self.update_pages_order)
+        self.main_widget.le_schematisation_name.textChanged.connect(self.update_pages_order)
+        self.main_widget.le_spatialite_path.textChanged.connect(self.update_pages_order)
         self.adjustSize()
+
+    def update_pages_order(self):
+        """Check if user wants to use an existing Spatialite and finalize the wizard, if needed."""
+        if self.main_widget.rb_existing_spatialite.isChecked():
+            self.main_widget.le_spatialite_path.setEnabled(True)
+            self.main_widget.btn_browse_spatialite.setEnabled(True)
+            if self.field("spatialite_path"):
+                self.setFinalPage(True)
+        else:
+            self.main_widget.le_spatialite_path.setEnabled(False)
+            self.main_widget.btn_browse_spatialite.setEnabled(False)
+            self.setFinalPage(False)
+        self.completeChanged.emit()
+
+    def nextId(self):
+        if self.main_widget.rb_existing_spatialite.isChecked() and self.field("spatialite_path"):
+            return -1
+        else:
+            return 1
+
+    def isComplete(self):
+        if self.field("schematisation_name") and (
+            self.main_widget.rb_new_spatialite.isChecked()
+            or (self.main_widget.rb_existing_spatialite.isChecked() and self.field("spatialite_path"))
+        ):
+            return True
+
+        else:
+            return False
 
 
 class SchematisationExplainPage(QWizardPage):
@@ -418,9 +463,16 @@ class NewSchematisationWizard(QWizard):
         self.cancel_btn.clicked.connect(self.cancel_wizard)
         self.setWindowTitle("New schematisation")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setOption(QWizard.HaveNextButtonOnLastPage, False)
         self.resize(self.settings.value("threedi/new_schematisation_wizard_size", QSize(790, 700)))
 
     def create_schematisation(self):
+        if self.schematisation_name_page.field("from_spatialite"):
+            self.create_schematisation_from_spatialite()
+        else:
+            self.create_new_schematisation()
+
+    def create_new_schematisation(self):
         """Get settings from the wizard and create new schematisation (locally and remotely)."""
         if not self.schematisation_settings_page.settings_are_valid:
             return
@@ -461,6 +513,85 @@ class NewSchematisationWizard(QWizard):
                         raise error
             time.sleep(0.5)
             execute_sqlite_queries(wip_revision.sqlite, aggregation_settings_queries)
+            self.new_schematisation = schematisation
+            self.new_local_schematisation = local_schematisation
+            msg = f"Schematisation '{name} ({schematisation.id})' created!"
+            self.plugin_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
+        except ApiException as e:
+            self.new_schematisation = None
+            self.new_local_schematisation = None
+            error_msg = extract_error_message(e)
+            self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+        except Exception as e:
+            self.new_schematisation = None
+            self.new_local_schematisation = None
+            error_msg = f"Error: {e}"
+            self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+
+    @staticmethod
+    def get_paths_from_sqlite(sqlite_path):
+        """Search SQLite database v2_global_settings for attributes with file paths."""
+        settings_lyr = sqlite_layer(sqlite_path, "v2_global_settings", geom_column=None)
+        if not settings_lyr.isValid():
+            raise SpatialiteError(f"Global Spatialite settings table could not be loaded from {sqlite_path}")
+        try:
+            set_feat = next(settings_lyr.getFeatures())
+        except StopIteration:
+            err = f"No global settings entries in {sqlite_path}"
+            raise SpatialiteError(f"Incorrect input Spatialite file: {err}")
+        paths = dict()
+        fields = set_feat.fields()
+        for field_idx in fields.allAttributesList():
+            field = fields.at(field_idx)
+            if field.name().endswith("_file") and set_feat[field_idx]:
+                paths[field.name()] = set_feat[field_idx]
+        return paths
+
+    def create_schematisation_from_spatialite(self):
+        """Get settings from existing Spatialite and create new schematisation (locally and remotely)."""
+        try:
+            name, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_name_data()
+            schematisation = self.tc.create_schematisation(name, owner, tags=tags)
+            local_schematisation = LocalSchematisation(
+                self.working_dir, schematisation.id, name, parent_revision_number=0, create=True
+            )
+            wip_revision = local_schematisation.wip_revision
+            sqlite_filename = f"{name}.sqlite"
+            sqlite_filepath = os.path.join(wip_revision.schematisation_dir, sqlite_filename)
+            src_db = self.schematisation_name_page.field("spatialite_path")
+            raster_paths = self.get_paths_from_sqlite(src_db)
+            src_dir = os.path.dirname(src_db)
+            shutil.copyfile(src_db, sqlite_filepath)
+            wip_revision.sqlite_filename = sqlite_filename
+            new_paths = dict()
+            for raster_name, raster_rel_path in raster_paths.items():
+                raster_full_path = os.path.join(src_dir, raster_rel_path)
+                if os.path.exists(raster_full_path):
+                    new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_rel_path))
+                    shutil.copyfile(raster_full_path, new_raster_filepath)
+                    new_paths[raster_name] = os.path.relpath(new_raster_filepath, wip_revision.schematisation_dir)
+                else:
+                    new_paths[raster_name] = None
+            settings_table_name = "v2_global_settings"
+            settings_layer = sqlite_layer(wip_revision.sqlite, settings_table_name, geom_column=None)
+            settings_layer.startEditing()
+            s_fields = settings_layer.fields()
+            s_feat = next(settings_layer.getFeatures())
+            new_values = dict()
+            for field_name, field_value in new_paths.items():
+                f_idx = s_fields.lookupField(field_name)
+                if f_idx > 0:
+                    new_values[f_idx] = field_value
+            settings_layer.changeAttributeValues(s_feat.id(), new_values)
+            settings_layer.commitChanges()
+            commit_errors = settings_layer.commitErrors()
+            if commit_errors:
+                if len(commit_errors) > 1 or commit_errors[0].startswith("SUCCESS:") is False:
+                    errors_str = "\n".join(commit_errors)
+                    error = CommitErrors(f"{settings_table_name} commit errors:\n{errors_str}")
+                    raise error
+            time.sleep(0.5)
+
             self.new_schematisation = schematisation
             self.new_local_schematisation = local_schematisation
             msg = f"Schematisation '{name} ({schematisation.id})' created!"
