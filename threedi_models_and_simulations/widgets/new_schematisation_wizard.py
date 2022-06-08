@@ -377,9 +377,8 @@ class SchematisationNamePage(QWizardPage):
 
     def isComplete(self):
         if self.field("schematisation_name") and (
-                self.main_widget.rb_new_spatialite.isChecked() or (
-                self.main_widget.rb_existing_spatialite.isChecked() and self.field("spatialite_path")
-                )
+            self.main_widget.rb_new_spatialite.isChecked()
+            or (self.main_widget.rb_existing_spatialite.isChecked() and self.field("spatialite_path"))
         ):
             return True
 
