@@ -71,12 +71,12 @@ class WSProgressesSentinel(QObject):
 
     def start_listening(self):
         """Start listening of active simulations websocket."""
-        identifier = "Bearer"
-        api_key = self.tc.threedi_api.api_client.configuration.api_key["Authorization"]
+        identifier = "Basic"
+        api_key = self.tc.threedi_api.api_client.configuration.api_key["Basic"]
         api_version = self.tc.threedi_api.version
-        token_with_prefix = f"{identifier} {api_key}"
+        basic_auth_token = f"{identifier} {api_key}"
         ws_request = QNetworkRequest(QUrl(f"{self.wss_url}/{api_version}/active-simulations/"))
-        ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(token_with_prefix))
+        ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(basic_auth_token))
         self.ws_client.open(ws_request)
 
     def stop_listening(self):

@@ -6,7 +6,7 @@ from collections import OrderedDict
 from subprocess import check_call, CalledProcessError
 from ..utils import parse_version_number
 
-REQUIRED_API_CLIENT_VERSION = "4.0.1.dev0"
+REQUIRED_API_CLIENT_VERSION = "4.0.1"
 REQUIRED_MODEL_CHECKER_VERSION = "0.27.1"
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 API_CLIENT_WHEEL = os.path.join(MAIN_DIR, f"threedi_api_client-{REQUIRED_API_CLIENT_VERSION}-py2.py3-none-any.whl")

@@ -6,7 +6,7 @@ from functools import wraps
 from time import sleep
 from qgis.PyQt import uic
 from threedi_api_client.openapi import ApiException
-from ..api_calls.threedi_calls import get_api_client, ThreediCalls
+from ..api_calls.threedi_calls import get_api_client_with_personal_api_token, ThreediCalls
 from ..utils import extract_error_message
 
 
@@ -96,10 +96,10 @@ class LogInDialog(uicls, basecls):
             self.fetch_msg.hide()
             self.done_msg.hide()
             self.log_pbar.setValue(25)
-            username, password = self.plugin_dock.plugin_settings.get_3di_auth()
-            if not username or not password:
+            username, personal_api_token = self.plugin_dock.plugin_settings.get_3di_auth()
+            if not username or not personal_api_token:
                 raise AuthorizationException(missing_personal_api_key_message)
-            self.threedi_api = get_api_client(username, password, self.api_url)
+            self.threedi_api = get_api_client_with_personal_api_token(personal_api_token, self.api_url)
             tc = ThreediCalls(self.threedi_api)
             user_profile = tc.fetch_current_user()
             self.user = user_profile.username
