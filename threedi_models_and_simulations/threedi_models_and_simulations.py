@@ -5,7 +5,14 @@ from qgis.PyQt.QtWidgets import QApplication, QAction
 from qgis.PyQt.QtGui import QIcon
 from .settings import SettingsDialog
 from .communication import UICommunication
-from .deps.custom_imports import patch_wheel_imports, api_client_version_matches, reinstall_required_api_client
+from .deps.custom_imports import (
+    patch_wheel_imports,
+    api_client_version_matches,
+    model_checker_version_matches,
+    reinstall_packages_from_wheels,
+    API_CLIENT_WHEEL,
+    MODEL_CHECKER_WHEEL,
+)
 import os.path
 
 
@@ -166,7 +173,8 @@ class ThreediModelsAndSimulations:
     def ensure_required_api_client_version(self, available_api_client_version):
         """Ensure availability of the required 'threedi_api_client' version."""
         uc = UICommunication(self.iface, "3Di Models and Simulations")
-        title = f"Wrong 'threedi-api-client' version ({available_api_client_version})"
+        available_api_client_version_str = ".".join([str(i) for i in available_api_client_version])
+        title = f"Wrong 'threedi-api-client' version ({available_api_client_version_str})"
         msg = (
             "Unsupported version of the python package 'threedi-api-client' has been installed in your python "
             "environment. It needs to be upgraded to be able to run the 3Di Models & Simulations plugin. "
@@ -176,7 +184,8 @@ class ThreediModelsAndSimulations:
         clicked_button = uc.custom_ask(None, title, msg, cancel, ok)
         if clicked_button == ok:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            package_reinstalled, feedback_message = reinstall_required_api_client()
+            reinstall_results = reinstall_packages_from_wheels(API_CLIENT_WHEEL)
+            package_reinstalled = reinstall_results[API_CLIENT_WHEEL]["success"]
             QApplication.restoreOverrideCursor()
             if package_reinstalled:
                 info = (
@@ -185,16 +194,52 @@ class ThreediModelsAndSimulations:
                 )
                 uc.show_info(info)
             else:
+                feedback_message = reinstall_results[API_CLIENT_WHEEL]["error"]
                 error = f"Upgrading of the 'threedi-api-client' failed due to following error:\n{feedback_message}"
+                uc.show_error(error)
+
+    def ensure_required_modelchecker_version(self, available_threedi_modelchecker_version):
+        """Ensure availability of the required 'threedi_modelchecker' version."""
+        uc = UICommunication(self.iface, "3Di Models and Simulations")
+        available_threedi_modelchecker_version_str = ".".join([str(i) for i in available_threedi_modelchecker_version])
+        title = f"Old 'threedi-modelchecker' version ({available_threedi_modelchecker_version_str})"
+        msg = (
+            "Old version of the python package 'threedi-modelchecker' has been installed in your python "
+            "environment. It needs to be upgraded to be able to run the latest schematisation checks and migrations. "
+            "This will now be attempted."
+        )
+        cancel, ok = "Cancel", "OK"
+        clicked_button = uc.custom_ask(None, title, msg, cancel, ok)
+        if clicked_button == ok:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            reinstall_results = reinstall_packages_from_wheels(MODEL_CHECKER_WHEEL)
+            package_reinstalled = reinstall_results[MODEL_CHECKER_WHEEL]["success"]
+            QApplication.restoreOverrideCursor()
+            if package_reinstalled:
+                info = (
+                    "Python package 'threedi-modelchecker' has been upgraded successfully. "
+                    "Please restart QGIS to be able to use the 3Di Models & Simulations plugin."
+                )
+                uc.show_info(info)
+            else:
+                feedback_message = reinstall_results[MODEL_CHECKER_WHEEL]["error"]
+                error = f"Upgrading of the 'threedi-modelchecker' failed due to following error:\n{feedback_message}"
                 uc.show_error(error)
 
     def run(self):
         """Run method that loads and starts the plugin"""
         patch_wheel_imports()
-        versions_matches, available_api_client_version = api_client_version_matches()
-        if not versions_matches:
+        api_client_versions_matches, available_api_client_version = api_client_version_matches(exact_match=True)
+        if not api_client_versions_matches:
             self.ensure_required_api_client_version(available_api_client_version)
             return
+        # TODO: This check should be enabled after refactoring ThreeDiToolbox dependencies handling
+        # modelchecker_versions_matches, available_modelchecker_version = model_checker_version_matches()
+        # if not modelchecker_versions_matches:
+        #     self.ensure_required_modelchecker_version(available_modelchecker_version)
+        # if not all([api_client_versions_matches, modelchecker_versions_matches]):
+        #     return
+
         from threedi_models_and_simulations.widgets.threedi_dockwidget import ThreediDockWidget
 
         if not self.plugin_settings.settings_are_valid():

@@ -129,13 +129,24 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         db_type = "spatialite"
         db_settings = {"db_path": self.schematisation_sqlite}
         threedi_db = ThreediDatabase(db_settings, db_type=db_type)
+        upgrade_spatialite_version = None
+        try:
+            from threedi_modelchecker.spatialite_versions import get_spatialite_version
+
+            lib_version, file_version = get_spatialite_version(threedi_db)
+            upgrade_spatialite_version = True if file_version == 3 and lib_version in (4, 5) else False
+        except ModuleNotFoundError:
+            pass
         schema = ModelSchema(threedi_db)
         try:
             schema.validate_schema()
         except errors.MigrationMissingError:
             wip_revision = self.current_local_schematisation.wip_revision
             backup_filepath = wip_revision.backup_sqlite()
-            schema.upgrade(backup=False)
+            if upgrade_spatialite_version is None:
+                schema.upgrade(backup=False)
+            else:
+                schema.upgrade(backup=False, upgrade_spatialite_version=upgrade_spatialite_version)
             shutil.rmtree(os.path.dirname(backup_filepath))
         except Exception as e:
             error_msg = f"{e}"
