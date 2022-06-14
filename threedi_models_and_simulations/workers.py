@@ -410,9 +410,7 @@ class UploadProgressWorker(QRunnable):
                 err = RevisionUploadError(error_msg)
                 raise err
         # Create 3Di model
-        model = self.tc.create_schematisation_revision_3di_model(
-            self.schematisation.id, self.revision.id, **self.revision.to_dict()
-        )
+        model = self.tc.create_schematisation_revision_3di_model(self.schematisation.id, self.revision.id)
         model_id = model.id
         finished_tasks = {
             "make_gridadmin": False,
