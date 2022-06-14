@@ -504,13 +504,13 @@ class NewSchematisationWizard(QWizard):
                     if field_name in table_fields_names:
                         new_settings_feat[field_name] = field_value
                 table_layer.addFeature(new_settings_feat)
-                table_layer.commitChanges()
-                commit_errors = table_layer.commitErrors()
-                if commit_errors:
-                    if len(commit_errors) > 1 or commit_errors[0].startswith("SUCCESS:") is False:
-                        errors_str = "\n".join(commit_errors)
-                        error = CommitErrors(f"{table_name} commit errors:\n{errors_str}")
-                        raise error
+                success = table_layer.commitChanges()
+
+                if not success:
+                    commit_errors = table_layer.commitErrors()
+                    errors_str = "\n".join(commit_errors)
+                    error = CommitErrors(f"{table_name} commit errors:\n{errors_str}")
+                    raise error
             time.sleep(0.5)
             execute_sqlite_queries(wip_revision.sqlite, aggregation_settings_queries)
             self.new_schematisation = schematisation
@@ -583,13 +583,12 @@ class NewSchematisationWizard(QWizard):
                 if f_idx > 0:
                     new_values[f_idx] = field_value
             settings_layer.changeAttributeValues(s_feat.id(), new_values)
-            settings_layer.commitChanges()
-            commit_errors = settings_layer.commitErrors()
-            if commit_errors:
-                if len(commit_errors) > 1 or commit_errors[0].startswith("SUCCESS:") is False:
-                    errors_str = "\n".join(commit_errors)
-                    error = CommitErrors(f"{settings_table_name} commit errors:\n{errors_str}")
-                    raise error
+            success = settings_layer.commitChanges()
+            if not success:
+                commit_errors = settings_layer.commitErrors()
+                errors_str = "\n".join(commit_errors)
+                error = CommitErrors(f"{settings_table_name} commit errors:\n{errors_str}")
+                raise error
             time.sleep(0.5)
 
             self.new_schematisation = schematisation
