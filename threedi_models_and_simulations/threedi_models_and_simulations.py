@@ -8,7 +8,6 @@ from .communication import UICommunication
 from .deps.custom_imports import (
     patch_wheel_imports,
     api_client_version_matches,
-    model_checker_version_matches,
     reinstall_packages_from_wheels,
     API_CLIENT_WHEEL,
     MODEL_CHECKER_WHEEL,
