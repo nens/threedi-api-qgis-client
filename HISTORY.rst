@@ -4,7 +4,7 @@ History
 3.0.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Prepared for release.
 
 
 3.0.3 (2022-03-10)
