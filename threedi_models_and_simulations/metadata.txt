@@ -11,13 +11,16 @@ version=3.2
 author=Lutra Consulting for 3Di Water Management
 email=servicedesk@nelen-schuurmans.nl
 
-about=Work with 3Di models and simulations in the cloud from the Modeller Interface
+about=Work with 3Di models and simulations in the cloud from the Modeller Interface.
 
     Check, upload and download schematizations, start calculations, and download results. A 3Di subscription is required.
+	
+	Note: before version 3.0, this plugin was called '3Di API Client'. Please uninstall that plugin to prevent any confusion.
 
 	Although we aim to be as backwards compatible as possible, it is possible that at some point old schematizations
     will not work with the newest version of the plugin. We expressly disclaim any
     guarantee or warranty of compatibility between the two.
+	
     For questions on 3Di or the use of this plugin please contact us via
     servicedesk@nelen-schuurmans.nl
 
