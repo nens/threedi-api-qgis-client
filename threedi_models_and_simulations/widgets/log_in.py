@@ -6,9 +6,8 @@ from functools import wraps
 from time import sleep
 from qgis.PyQt import uic
 from threedi_api_client.openapi import ApiException
-from ..api_calls.threedi_calls import get_api_client_with_personal_api_token, ThreediCalls
+from ..api_calls.threedi_calls import get_api_client, ThreediCalls
 from ..utils import extract_error_message
-
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "log_in.ui"))
@@ -45,10 +44,6 @@ def api_client_required(fn):
     return wrapper
 
 
-class AuthorizationException(Exception):
-    pass
-
-
 class LogInDialog(uicls, basecls):
     """Dialog with widgets and methods used in logging process."""
 
@@ -60,9 +55,6 @@ class LogInDialog(uicls, basecls):
         self.user = None
         self.user_full_name = None
         self.threedi_api = None
-        self.api_url = self.plugin_dock.plugin_settings.api_url
-        self.client_id = None
-        self.scope = None
         self.organisations = {}
         self.log_in_widget.hide()
         self.wait_widget.hide()
@@ -83,26 +75,25 @@ class LogInDialog(uicls, basecls):
 
     def log_in_threedi(self):
         """Method which runs all logging widgets methods and setting up needed variables."""
+        username = self.le_user.text()
+        password = self.le_pass.text()
+        api_url = self.plugin_dock.plugin_settings.api_url
         api_url_error_message = (
-            f"Error: Invalid Base API URL '{self.api_url}'. "
+            f"Error: Invalid Base API URL '{api_url}'. "
             f"The 3Di API expects that the version is not included. "
             f"Please change the Base API URL in the 3Di Models and Simulations plugin settings."
-        )
-        missing_personal_api_key_message = (
-            "Personal API Key is not set. " "Please set it in the plugin settings before trying to log in."
         )
         try:
             self.show_wait_widget()
             self.fetch_msg.hide()
             self.done_msg.hide()
+            self.le_user.setText("")
+            self.le_pass.setText("")
             self.log_pbar.setValue(25)
-            username, personal_api_token = self.plugin_dock.plugin_settings.get_3di_auth()
-            if not username or not personal_api_token:
-                raise AuthorizationException(missing_personal_api_key_message)
-            self.threedi_api = get_api_client_with_personal_api_token(personal_api_token, self.api_url)
+            self.threedi_api = get_api_client(username, password, api_url)
             tc = ThreediCalls(self.threedi_api)
             user_profile = tc.fetch_current_user()
-            self.user = user_profile.username
+            self.user = username
             self.user_full_name = f"{user_profile.first_name} {user_profile.last_name}"
             self.wait_widget.update()
             self.log_pbar.setValue(75)
@@ -127,6 +118,3 @@ class LogInDialog(uicls, basecls):
                 error_msg = f"Error: {e}"
             self.close()
             self.communication.show_error(error_msg)
-
-    def reject(self):
-        super().reject()
