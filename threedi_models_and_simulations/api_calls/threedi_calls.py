@@ -1,7 +1,6 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import logging
-import os
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Tuple, Callable, Any
 from threedi_api_client import ThreediApi
@@ -66,11 +65,13 @@ logger = logging.getLogger(__name__)
 
 
 def get_api_client(api_username: str, api_password: str, api_host: str, version: str = "v3-beta") -> ThreediApi:
-    """Setup open_api client using username and password."""
-    os.environ["THREEDI_API_HOST"] = api_host
-    os.environ["THREEDI_API_USERNAME"] = api_username
-    os.environ["THREEDI_API_PASSWORD"] = api_password
-    api_client = ThreediApi(version=version)
+    """Setup 3Di API Client using username and password."""
+    config = {
+        "THREEDI_API_HOST": api_host,
+        "THREEDI_API_USERNAME": api_username,
+        "THREEDI_API_PASSWORD": api_password,
+    }
+    api_client = ThreediApi(config=config, version=version)
     return api_client
 
 
