@@ -138,7 +138,10 @@ class ThreediDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.simulations_progresses_thread is not None:
             self.terminate_fetching_simulations_progresses_thread()
         self.simulations_progresses_thread = QThread()
-        self.simulations_progresses_sentinel = WSProgressesSentinel(self.threedi_api, self.plugin_settings.wss_url)
+        username, personal_api_key = self.plugin_settings.get_3di_auth()
+        self.simulations_progresses_sentinel = WSProgressesSentinel(
+            self.threedi_api, self.plugin_settings.wss_url, personal_api_key
+        )
         self.simulations_progresses_sentinel.moveToThread(self.simulations_progresses_thread)
         self.simulations_progresses_sentinel.thread_finished.connect(self.on_fetching_simulations_progresses_finished)
         self.simulations_progresses_sentinel.thread_failed.connect(self.on_fetching_simulations_progresses_failed)
