@@ -75,6 +75,27 @@ def get_api_client(api_username: str, api_password: str, api_host: str, version:
     return api_client
 
 
+def get_api_client_with_tokens(
+    api_host: str, api_access_token: str, api_refresh_token: str, version: str = "v3-beta"
+) -> ThreediApi:
+    """Setup 3Di API Client using access and refresh tokens."""
+    os.environ["THREEDI_API_HOST"] = api_host
+    os.environ["THREEDI_API_ACCESS_TOKEN"] = api_access_token
+    os.environ["THREEDI_API_REFRESH_TOKEN"] = api_refresh_token
+    api_client = ThreediApi(version=version)
+    return api_client
+
+
+def get_api_client_with_personal_api_token(
+    personal_api_token: str, api_host: str, version: str = "v3-beta"
+) -> ThreediApi:
+    """Setup 3Di API Client using Personal API Token."""
+    os.environ["THREEDI_API_HOST"] = api_host
+    os.environ["THREEDI_API_PERSONAL_API_TOKEN"] = personal_api_token
+    api_client = ThreediApi(version=version)
+    return api_client
+
+
 class ThreediCalls:
     """Class with methods used for the communication with the 3Di API."""
 
