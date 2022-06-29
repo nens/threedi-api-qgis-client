@@ -126,31 +126,35 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             from threedi_modelchecker import errors
         except ImportError:
             raise
-        db_type = "spatialite"
         db_settings = {"db_path": self.schematisation_sqlite}
-        threedi_db = ThreediDatabase(db_settings, db_type=db_type)
-        upgrade_spatialite_version = None
-        try:
-            from threedi_modelchecker.spatialite_versions import get_spatialite_version
-
-            lib_version, file_version = get_spatialite_version(threedi_db)
-            upgrade_spatialite_version = True if file_version == 3 and lib_version in (4, 5) else False
-        except ModuleNotFoundError:
-            pass
+        threedi_db = ThreediDatabase(db_settings)
         schema = ModelSchema(threedi_db)
         try:
             schema.validate_schema()
         except errors.MigrationMissingError:
+            warn_and_ask_msg = (
+                "The selected spatialite cannot be used because its database schema version is out of date. "
+                "Would you like to migrate your spatialite to the current schema version?"
+            )
+            do_migration = self.communication.ask(None, "Missing migration", warn_and_ask_msg)
+            if not do_migration:
+                self.communication.bar_warn("Schematisation checks skipped!")
+                return
             wip_revision = self.current_local_schematisation.wip_revision
             backup_filepath = wip_revision.backup_sqlite()
-            if upgrade_spatialite_version is None:
-                schema.upgrade(backup=False)
-            else:
-                schema.upgrade(backup=False, upgrade_spatialite_version=upgrade_spatialite_version)
+            schema.upgrade(backup=False, upgrade_spatialite_version=True)
             shutil.rmtree(os.path.dirname(backup_filepath))
+        except errors.UpgradeFailedError:
+            error_msg = (
+                "There are errors in the spatialite. Please re-open this file in QGIS 3.16, run the model checker and "
+                "fix error messages. Then attempt to upgrade again. For questions please contact the servicedesk."
+            )
+            self.communication.show_error(error_msg, self)
+            return
         except Exception as e:
             error_msg = f"{e}"
             self.communication.show_error(error_msg, self)
+            return
         model_checker = None
         try:
             model_checker = ThreediModelChecker(threedi_db)
