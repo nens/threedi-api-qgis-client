@@ -136,8 +136,9 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                 "The selected spatialite cannot be used because its database schema version is out of date. "
                 "Would you like to migrate your spatialite to the current schema version?"
             )
-            do_migration = self.communication.ask("Missing migration", warn_and_ask_msg)
+            do_migration = self.communication.ask(None, "Missing migration", warn_and_ask_msg)
             if not do_migration:
+                self.communication.bar_warn("Schematisation checks skipped!")
                 return
             wip_revision = self.current_local_schematisation.wip_revision
             backup_filepath = wip_revision.backup_sqlite()
