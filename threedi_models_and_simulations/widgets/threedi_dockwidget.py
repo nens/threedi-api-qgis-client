@@ -3,7 +3,7 @@
 import os
 import webbrowser
 from qgis.PyQt import QtWidgets, uic
-from qgis.PyQt.QtCore import Qt, QThread, pyqtSignal
+from qgis.PyQt.QtCore import Qt, QThread, QTimer, pyqtSignal
 from threedi_models_and_simulations.widgets.upload_overview import UploadOverview
 from .log_in import LogInDialog, api_client_required
 from .build_options import BuildOptions
@@ -77,8 +77,10 @@ class ThreediDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def on_log_in(self):
         """Handle logging-in."""
         log_in_dialog = LogInDialog(self)
-        accepted = log_in_dialog.exec_()
-        if accepted:
+        log_in_dialog.show()
+        QTimer.singleShot(10, log_in_dialog.log_in_threedi)
+        log_in_dialog.exec_()
+        if log_in_dialog.LOGGED_IN:
             self.threedi_api = log_in_dialog.threedi_api
             self.current_user = log_in_dialog.user
             self.current_user_full_name = log_in_dialog.user_full_name

@@ -1,6 +1,7 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import os
+import webbrowser
 from uuid import uuid4
 from tempfile import gettempdir
 from qgis.core import QgsApplication, QgsAuthMethodConfig
@@ -31,7 +32,8 @@ class SettingsDialog(QDialog):
         self.upload_timeout = None
         self.working_dir = None
         self.browse_pb.clicked.connect(self.set_working_directory)
-        self.pak_pb.clicked.connect(self.set_personal_api_key)
+        self.set_pak_pb.clicked.connect(self.set_personal_api_key)
+        self.obtain_pak_pb.clicked.connect(self.obtain_personal_api_key)
         self.ui.defaults_pb.clicked.connect(self.restore_defaults)
         self.ui.cancel_pb.clicked.connect(self.reject)
         self.ui.save_pb.clicked.connect(self.accept)
@@ -78,6 +80,11 @@ class SettingsDialog(QDialog):
             return
         self.set_3di_auth(pak)
         self.set_personal_api_key_label(True)
+
+    @staticmethod
+    def obtain_personal_api_key():
+        """Open website where user can get his Personal API Key."""
+        webbrowser.open("https://management.3di.live/personal_api_keys/")
 
     def set_personal_api_key_label(self, personal_api_key_available):
         """Setting Personal API Key label text."""
@@ -178,3 +185,8 @@ class SettingsDialog(QDialog):
         self.load_settings()
         if self.settings_are_valid():
             super().reject()
+
+    def exec_(self):
+        """Opening settings dialog."""
+        self.load_settings()
+        super().exec_()
