@@ -591,3 +591,79 @@ def parse_version_number(version_str):
     """Parse version number in a string format and convert it into list of an integers."""
     version = [int(i) for i in version_str.split(".") if i.isnumeric()]
     return version
+
+
+class SchematisationRasterReferences:
+    @staticmethod
+    def global_settings_rasters():
+        """Rasters mapping for the Terrain Model."""
+        raster_info = OrderedDict(
+            (
+                ("dem_file", "Digital Elevation Model"),
+                ("frict_coef_file", "Friction coefficient"),
+                ("initial_groundwater_level_file", "Initial groundwater level"),
+                ("initial_waterlevel_file", "Initial waterlevel"),
+                ("interception_file", "Interception"),
+            )
+        )
+        return raster_info
+
+    @staticmethod
+    def simple_infiltration_rasters():
+        """Rasters mapping for the Infiltration."""
+        raster_info = OrderedDict(
+            (
+                ("infiltration_rate_file", "Infiltration rate"),
+                ("max_infiltration_capacity_file", "Max infiltration capacity"),
+            )
+        )
+        return raster_info
+
+    @staticmethod
+    def groundwater_rasters():
+        """Rasters mapping for the Groundwater."""
+        raster_info = OrderedDict(
+            (
+                ("equilibrium_infiltration_rate_file", "Equilibrium infiltration rate"),
+                ("groundwater_hydro_connectivity_file", "Groundwater hydro connectivity"),
+                ("groundwater_impervious_layer_level_file", "Groundwater impervious layer level"),
+                ("infiltration_decay_period_file", "Infiltration decay period"),
+                ("initial_infiltration_rate_file", "Initial infiltration rate"),
+                ("leakage_file", "Leakage"),
+                ("phreatic_storage_capacity_file", "Phreatic storage capacity"),
+            )
+        )
+        return raster_info
+
+    @staticmethod
+    def interflow_rasters():
+        """Rasters mapping for the Interflow."""
+        raster_info = OrderedDict(
+            (
+                ("hydraulic_conductivity_file", "Hydraulic conductivity"),
+                ("porosity_file", "Porosity"),
+            )
+        )
+        return raster_info
+
+    @classmethod
+    def raster_reference_tables(cls):
+        """Spatialite tables mapping with references to the rasters."""
+        reference_tables = OrderedDict(
+            (
+                ("v2_global_settings", cls.global_settings_rasters()),
+                ("v2_simple_infiltration", cls.simple_infiltration_rasters()),
+                ("v2_groundwater", cls.groundwater_rasters()),
+                ("v2_interflow", cls.interflow_rasters()),
+            )
+        )
+        return reference_tables
+
+    @classmethod
+    def raster_table_mapping(cls):
+        """Rasters to spatialite tables mapping."""
+        table_mapping = {}
+        for table_name, raster_files_references in cls.raster_reference_tables().items():
+            for raster_type in raster_files_references.keys():
+                table_mapping[raster_type] = table_name
+        return table_mapping
