@@ -174,21 +174,28 @@
    <item row="7" column="1">
     <widget class="QLabel" name="pak_label">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;Personal API Key not found&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;✕ Not found&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>
    <item row="7" column="3">
     <widget class="QPushButton" name="set_pak_pb">
      <property name="text">
-      <string>Set Personal API Key</string>
+      <string>Set...</string>
      </property>
     </widget>
    </item>
    <item row="7" column="4">
     <widget class="QPushButton" name="obtain_pak_pb">
      <property name="text">
-      <string>Obtain API Key</string>
+      <string>Obtain...</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>API Key:</string>
      </property>
     </widget>
    </item>

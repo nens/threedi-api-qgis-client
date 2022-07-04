@@ -90,10 +90,10 @@ class SettingsDialog(QDialog):
         """Setting Personal API Key label text."""
         if personal_api_key_available:
             label_txt = """<html><head/><body><p><span style=" color:#00aa00;">
-                Personal API Key is available</span></p></body></html>"""
+            ✓ Available</span></p></body></html>"""
         else:
             label_txt = """<html><head/><body><p><span style=" color:#ff0000;">
-                    Personal API Key not found</span></p></body></html>"""
+            ✕ Not found</span></p></body></html>"""
         self.pak_label.setText(label_txt)
 
     def set_working_directory(self):
