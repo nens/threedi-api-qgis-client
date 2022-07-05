@@ -543,7 +543,8 @@ class NewSchematisationWizard(QWizard):
             except StopIteration:
                 continue
             for field_name in settings_fields:
-                paths[table_name][field_name] = set_feat[field_name]
+                field_value = set_feat[field_name]
+                paths[table_name][field_name] = field_value if field_value else None
         return paths
 
     def create_schematisation_from_spatialite(self):
@@ -566,6 +567,8 @@ class NewSchematisationWizard(QWizard):
             missing_rasters = []
             for table_name, raster_paths_info in raster_paths.items():
                 for raster_name, raster_rel_path in raster_paths_info.items():
+                    if not raster_rel_path:
+                        continue
                     raster_full_path = os.path.join(src_dir, raster_rel_path)
                     if os.path.exists(raster_full_path):
                         new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_rel_path))
