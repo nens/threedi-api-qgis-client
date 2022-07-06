@@ -19,7 +19,13 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit,
 )
 from threedi_api_client.openapi import ApiException, SchematisationRevision
-from ..utils import is_file_checksum_equal, UploadFileType, UploadFileStatus, zip_into_archive
+from ..utils import (
+    is_file_checksum_equal,
+    SchematisationRasterReferences,
+    UploadFileType,
+    UploadFileStatus,
+    zip_into_archive,
+)
 from ..utils_ui import get_filepath
 from ..utils_qgis import sqlite_layer
 from ..communication import TreeViewLogger, LogLevels
@@ -322,7 +328,6 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         self.detected_files = self.check_files_states()
         self.widgets_per_file = {}
         self.initialize_widgets()
-        # set_widget_background_color(self)
 
     @property
     def general_files(self):
@@ -333,76 +338,32 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
     @property
     def terrain_model_files(self):
         """Files mapping for the Terrain Model group widget."""
-        files_info = OrderedDict(
-            (
-                ("dem_file", "Digital Elevation Model"),
-                ("frict_coef_file", "Friction coefficient"),
-                ("initial_groundwater_level_file", "Initial groundwater level"),
-                ("initial_waterlevel_file", "Initial waterlevel"),
-                ("interception_file", "Interception"),
-            )
-        )
-        return files_info
+        return SchematisationRasterReferences.global_settings_rasters()
 
     @property
     def simple_infiltration_files(self):
         """Files mapping for the Infiltration group widget."""
-        files_info = OrderedDict(
-            (
-                ("infiltration_rate_file", "Infiltration rate"),
-                ("max_infiltration_capacity_file", "Max infiltration capacity"),
-            )
-        )
-        return files_info
+        return SchematisationRasterReferences.simple_infiltration_rasters()
 
     @property
     def groundwater_files(self):
         """Files mapping for the Groundwater group widget."""
-        files_info = OrderedDict(
-            (
-                ("equilibrium_infiltration_rate_file", "Equilibrium infiltration rate"),
-                ("groundwater_hydro_connectivity_file", "Groundwater hydro connectivity"),
-                ("groundwater_impervious_layer_level_file", "Groundwater impervious layer level"),
-                ("infiltration_decay_period_file", "Infiltration decay period"),
-                ("initial_infiltration_rate_file", "Initial infiltration rate"),
-                ("leakage_file", "Leakage"),
-                ("phreatic_storage_capacity_file", "Phreatic storage capacity"),
-            )
-        )
-        return files_info
+        return SchematisationRasterReferences.groundwater_rasters()
 
     @property
     def interflow_files(self):
         """Files mapping for the Interflow group widget."""
-        files_info = OrderedDict(
-            (
-                ("hydraulic_conductivity_file", "Hydraulic conductivity"),
-                ("porosity_file", "Porosity"),
-            )
-        )
-        return files_info
+        return SchematisationRasterReferences.interflow_rasters()
 
     @property
     def files_reference_tables(self):
         """Spatialite tables mapping with references to the files."""
-        files_ref_tables = OrderedDict(
-            (
-                ("v2_global_settings", self.terrain_model_files),
-                ("v2_simple_infiltration", self.simple_infiltration_files),
-                ("v2_groundwater", self.groundwater_files),
-                ("v2_interflow", self.interflow_files),
-            )
-        )
-        return files_ref_tables
+        return SchematisationRasterReferences.raster_reference_tables()
 
     @property
     def file_table_mapping(self):
         """Files to spatialite tables mapping."""
-        table_mapping = {}
-        for table_name, raster_files_references in self.files_reference_tables.items():
-            for raster_type in raster_files_references.keys():
-                table_mapping[raster_type] = table_name
-        return table_mapping
+        return SchematisationRasterReferences.raster_table_mapping()
 
     def check_files_states(self):
         """Check raster (and spatialite) files presence and compare local and remote data."""

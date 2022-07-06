@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 from collections import defaultdict
+from operator import itemgetter
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtCore import QSettings, QSize, QDate, QTime, Qt
@@ -15,7 +16,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.core import QgsFeature, QgsRasterLayer
 from threedi_api_client.openapi import ApiException
-from ..utils import LocalSchematisation, extract_error_message, EMPTY_DB_PATH
+from ..utils import LocalSchematisation, extract_error_message, SchematisationRasterReferences, EMPTY_DB_PATH
 from ..utils_ui import get_filepath, scan_widgets_parameters
 from ..utils_qgis import sqlite_layer, execute_sqlite_queries
 from ..api_calls.threedi_calls import ThreediCalls
@@ -530,21 +531,20 @@ class NewSchematisationWizard(QWizard):
 
     @staticmethod
     def get_paths_from_sqlite(sqlite_path):
-        """Search SQLite database v2_global_settings for attributes with file paths."""
-        settings_lyr = sqlite_layer(sqlite_path, "v2_global_settings", geom_column=None)
-        if not settings_lyr.isValid():
-            raise SpatialiteError(f"Global Spatialite settings table could not be loaded from {sqlite_path}")
-        try:
-            set_feat = next(settings_lyr.getFeatures())
-        except StopIteration:
-            err = f"No global settings entries in {sqlite_path}"
-            raise SpatialiteError(f"Incorrect input Spatialite file: {err}")
-        paths = dict()
-        fields = set_feat.fields()
-        for field_idx in fields.allAttributesList():
-            field = fields.at(field_idx)
-            if field.name().endswith("_file") and set_feat[field_idx]:
-                paths[field.name()] = set_feat[field_idx]
+        """Search SQLite database tables for attributes with file paths."""
+        paths = defaultdict(dict)
+        for table_name, raster_info in SchematisationRasterReferences.raster_reference_tables().items():
+            settings_fields = list(raster_info.keys())
+            settings_lyr = sqlite_layer(sqlite_path, table_name, geom_column=None)
+            if not settings_lyr.isValid():
+                raise SpatialiteError(f"'{table_name}' table could not be loaded from {sqlite_path}")
+            try:
+                set_feat = next(settings_lyr.getFeatures())
+            except StopIteration:
+                continue
+            for field_name in settings_fields:
+                field_value = set_feat[field_name]
+                paths[table_name][field_name] = field_value if field_value else None
         return paths
 
     def create_schematisation_from_spatialite(self):
@@ -563,35 +563,47 @@ class NewSchematisationWizard(QWizard):
             src_dir = os.path.dirname(src_db)
             shutil.copyfile(src_db, sqlite_filepath)
             wip_revision.sqlite_filename = sqlite_filename
-            new_paths = dict()
-            for raster_name, raster_rel_path in raster_paths.items():
-                raster_full_path = os.path.join(src_dir, raster_rel_path)
-                if os.path.exists(raster_full_path):
-                    new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_rel_path))
-                    shutil.copyfile(raster_full_path, new_raster_filepath)
-                    new_paths[raster_name] = os.path.relpath(new_raster_filepath, wip_revision.schematisation_dir)
-                else:
-                    new_paths[raster_name] = None
-            settings_table_name = "v2_global_settings"
-            settings_layer = sqlite_layer(wip_revision.sqlite, settings_table_name, geom_column=None)
-            settings_layer.startEditing()
-            s_fields = settings_layer.fields()
-            s_feat = next(settings_layer.getFeatures())
-            new_values = dict()
-            for field_name, field_value in new_paths.items():
-                f_idx = s_fields.lookupField(field_name)
-                if f_idx > 0:
-                    new_values[f_idx] = field_value
-            settings_layer.changeAttributeValues(s_feat.id(), new_values)
-            success = settings_layer.commitChanges()
-            if not success:
-                commit_errors = settings_layer.commitErrors()
-                errors_str = "\n".join(commit_errors)
-                error = CommitErrors(f"{settings_table_name} commit errors:\n{errors_str}")
-                raise error
-            time.sleep(0.5)
-
-            self.new_schematisation = schematisation
+            new_paths = defaultdict(dict)
+            missing_rasters = []
+            for table_name, raster_paths_info in raster_paths.items():
+                for raster_name, raster_rel_path in raster_paths_info.items():
+                    if not raster_rel_path:
+                        continue
+                    raster_full_path = os.path.join(src_dir, raster_rel_path)
+                    if os.path.exists(raster_full_path):
+                        new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_rel_path))
+                        shutil.copyfile(raster_full_path, new_raster_filepath)
+                        new_paths[table_name][raster_name] = os.path.relpath(
+                            new_raster_filepath, wip_revision.schematisation_dir
+                        )
+                    else:
+                        new_paths[table_name][raster_name] = None
+                        missing_rasters.append((raster_name, raster_rel_path))
+            if missing_rasters:
+                missing_rasters.sort(key=itemgetter(0))
+                missing_rasters_string = "\n".join(f"{rname}: {rpath}" for rname, rpath in missing_rasters)
+                warn_msg = f"Warning: the following raster files where not found:\n{missing_rasters_string}"
+                self.plugin_dock.communication.show_warn(warn_msg)
+                self.plugin_dock.communication.bar_warn("Schematisation creation aborted!")
+                return
+            for settings_table_name, new_raster_paths_info in new_paths.items():
+                settings_layer = sqlite_layer(wip_revision.sqlite, settings_table_name, geom_column=None)
+                settings_layer.startEditing()
+                s_fields = settings_layer.fields()
+                s_feat = next(settings_layer.getFeatures())
+                new_values = dict()
+                for field_name, field_value in new_raster_paths_info.items():
+                    f_idx = s_fields.lookupField(field_name)
+                    if f_idx > 0 and field_value is not None:
+                        new_values[f_idx] = field_value
+                settings_layer.changeAttributeValues(s_feat.id(), new_values)
+                success = settings_layer.commitChanges()
+                if not success:
+                    commit_errors = settings_layer.commitErrors()
+                    errors_str = "\n".join(commit_errors)
+                    error = CommitErrors(f"{settings_table_name} commit errors:\n{errors_str}")
+                    raise error
+                time.sleep(0.5)
             self.new_local_schematisation = local_schematisation
             msg = f"Schematisation '{name} ({schematisation.id})' created!"
             self.plugin_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
