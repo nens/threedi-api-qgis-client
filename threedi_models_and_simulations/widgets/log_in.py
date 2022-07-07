@@ -5,9 +5,11 @@ import os
 from functools import wraps
 from time import sleep
 from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QTimer
 from threedi_api_client.openapi import ApiException
-from ..api_calls.threedi_calls import get_api_client, ThreediCalls
+from ..api_calls.threedi_calls import get_api_client_with_personal_api_token, ThreediCalls
 from ..utils import extract_error_message
+
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "log_in.ui"))
@@ -26,10 +28,12 @@ def api_client_required(fn):
             plugin_dock = self
         threedi_api = getattr(plugin_dock, "threedi_api", None)
         if threedi_api is None:
-            plugin_dock.communication.bar_info("Action reserved for logged in users. Please log-in before proceeding.")
+            plugin_dock.communication.bar_info("Action reserved for logged in users. Logging-in...")
             log_in_dialog = LogInDialog(plugin_dock)
-            accepted = log_in_dialog.exec_()
-            if accepted:
+            log_in_dialog.show()
+            QTimer.singleShot(10, log_in_dialog.log_in_threedi)
+            log_in_dialog.exec_()
+            if log_in_dialog.LOGGED_IN:
                 plugin_dock.threedi_api = log_in_dialog.threedi_api
                 plugin_dock.current_user = log_in_dialog.user
                 plugin_dock.current_user_full_name = log_in_dialog.user_full_name
@@ -44,8 +48,14 @@ def api_client_required(fn):
     return wrapper
 
 
+class AuthorizationException(Exception):
+    pass
+
+
 class LogInDialog(uicls, basecls):
     """Dialog with widgets and methods used in logging process."""
+
+    LOGGED_IN = False
 
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
@@ -55,45 +65,38 @@ class LogInDialog(uicls, basecls):
         self.user = None
         self.user_full_name = None
         self.threedi_api = None
+        self.api_url = self.plugin_dock.plugin_settings.api_url
+        self.client_id = None
+        self.scope = None
         self.organisations = {}
-        self.log_in_widget.hide()
-        self.wait_widget.hide()
-        self.pb_log_in.clicked.connect(self.log_in_threedi)
-        self.pb_cancel.clicked.connect(self.reject)
-        self.resize(500, 250)
-        self.show_log_widget()
-
-    def show_log_widget(self):
-        """Showing logging form widget."""
-        self.log_in_widget.show()
-        self.setWindowTitle("Log in")
-
-    def show_wait_widget(self):
-        """Showing widget with logging progress."""
-        self.log_in_widget.hide()
-        self.wait_widget.show()
 
     def log_in_threedi(self):
         """Method which runs all logging widgets methods and setting up needed variables."""
-        username = self.le_user.text()
-        password = self.le_pass.text()
-        api_url = self.plugin_dock.plugin_settings.api_url
         api_url_error_message = (
-            f"Error: Invalid Base API URL '{api_url}'. "
+            f"Error: Invalid Base API URL '{self.api_url}'. "
             f"The 3Di API expects that the version is not included. "
             f"Please change the Base API URL in the 3Di Models and Simulations plugin settings."
         )
+        missing_personal_api_key_message = (
+            "Personal API Key is not set. " "Please set it in the plugin settings before trying to log in."
+        )
+        ssl_error = (
+            "An error occurred. This specific error is probably caused by issues with an expired SSL "
+            "certificate that has not properly been removed by your operating system. Please ask your system "
+            "administrator to remove this expired SSL certificate manually. Instructions can be found here: "
+            "https://docs.3di.live/f_problem_solving.html#connecting-to-the-3di-api"
+        )
         try:
-            self.show_wait_widget()
             self.fetch_msg.hide()
             self.done_msg.hide()
-            self.le_user.setText("")
-            self.le_pass.setText("")
             self.log_pbar.setValue(25)
-            self.threedi_api = get_api_client(username, password, api_url)
+            username, personal_api_token = self.plugin_dock.plugin_settings.get_3di_auth()
+            if not username or not personal_api_token:
+                raise AuthorizationException(missing_personal_api_key_message)
+            self.threedi_api = get_api_client_with_personal_api_token(personal_api_token, self.api_url)
             tc = ThreediCalls(self.threedi_api)
             user_profile = tc.fetch_current_user()
-            self.user = username
+            self.user = user_profile.username
             self.user_full_name = f"{user_profile.first_name} {user_profile.last_name}"
             self.wait_widget.update()
             self.log_pbar.setValue(75)
@@ -102,6 +105,7 @@ class LogInDialog(uicls, basecls):
             self.done_msg.show()
             self.wait_widget.update()
             self.log_pbar.setValue(100)
+            self.LOGGED_IN = True
             sleep(1)
             super().accept()
         except ApiException as e:
@@ -110,7 +114,13 @@ class LogInDialog(uicls, basecls):
                 error_msg = api_url_error_message
             else:
                 error_msg = extract_error_message(e)
+            if "SSLError" in error_msg:
+                error_msg = f"{ssl_error}\n\n{error_msg}"
             self.communication.show_error(error_msg)
+        except AuthorizationException:
+            self.close()
+            self.communication.show_warn("Personal API Key is not filled. Please set it in the Settings Dialog.")
+            self.plugin_dock.plugin_settings.exec_()
         except Exception as e:
             if "THREEDI_API_HOST" in str(e):
                 error_msg = api_url_error_message

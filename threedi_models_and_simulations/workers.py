@@ -2,13 +2,14 @@
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import logging
 import os
+import base64
 import json
 import time
 import requests
 from functools import partial
-from qgis.PyQt.QtCore import QObject, QRunnable, QUrl, QByteArray, pyqtSignal, pyqtSlot
-from qgis.PyQt import QtNetwork
 from PyQt5 import QtWebSockets
+from PyQt5.QtNetwork import QNetworkRequest
+from qgis.PyQt.QtCore import QObject, QRunnable, QUrl, QByteArray, pyqtSignal, pyqtSlot
 from threedi_api_client.openapi import ApiException, Progress
 from threedi_api_client.files import upload_file
 from .api_calls.threedi_calls import ThreediCalls
@@ -20,7 +21,6 @@ from .utils import (
     UploadFileStatus,
     CHUNK_SIZE,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +35,11 @@ class WSProgressesSentinel(QObject):
     thread_failed = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
 
-    def __init__(self, threedi_api, wss_url, model_id=None):
+    def __init__(self, threedi_api, wss_url, personal_api_key, model_id=None):
         super().__init__()
         self.threedi_api = threedi_api
         self.wss_url = wss_url
+        self.personal_api_key = personal_api_key
         self.tc = None
         self.ws_client = None
         self.progresses = {}
@@ -72,12 +73,12 @@ class WSProgressesSentinel(QObject):
 
     def start_listening(self):
         """Start listening of active simulations websocket."""
-        identifier = "Bearer"
-        api_key = self.tc.threedi_api.api_client.configuration.api_key["Authorization"]
+        identifier = "Basic"
+        api_key = base64.b64encode(f"__key__:{self.personal_api_key}".encode()).decode()
+        basic_auth_token = f"{identifier} {api_key}"
         api_version = self.tc.threedi_api.version
-        token_with_prefix = f"{identifier} {api_key}"
-        ws_request = QtNetwork.QNetworkRequest(QUrl(f"{self.wss_url}/{api_version}/active-simulations/"))
-        ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(token_with_prefix))
+        ws_request = QNetworkRequest(QUrl(f"{self.wss_url}/{api_version}/active-simulations/"))
+        ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(basic_auth_token))
         self.ws_client.open(ws_request)
 
     def stop_listening(self):
