@@ -1,7 +1,7 @@
 History
 =======
 
-3.2 (unreleased)
+3.2 (2022-07-08)
 ----------------
 
 - Simplified schema migration workflow.
