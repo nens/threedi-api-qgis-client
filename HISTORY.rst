@@ -4,7 +4,8 @@ History
 3.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Simplified schema migration workflow.
+- Improved authorization.
 
 
 3.1 (2022-06-14)
