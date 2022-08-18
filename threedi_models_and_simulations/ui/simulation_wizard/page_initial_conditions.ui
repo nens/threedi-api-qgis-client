@@ -139,8 +139,8 @@
            <property name="font">
             <font>
              <family>Segoe UI</family>
-             <pointsize>12</pointsize>
-             <italic>false</italic>
+             <pointsize>10</pointsize>
+             <italic>true</italic>
             </font>
            </property>
            <property name="text">
@@ -150,6 +150,12 @@
          </item>
          <item row="3" column="0">
           <widget class="QRadioButton" name="rb_2d_local_raster">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Local raster</string>
            </property>
@@ -157,6 +163,12 @@
          </item>
          <item row="2" column="0">
           <widget class="QRadioButton" name="rb_2d_online_raster">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Online raster</string>
            </property>
@@ -167,10 +179,28 @@
            <property name="enabled">
             <bool>false</bool>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
+           </property>
           </widget>
          </item>
          <item row="5" column="2">
-          <widget class="QComboBox" name="gb_2d_aggregation">
+          <widget class="QComboBox" name="cb_2d_aggregation">
            <property name="minimumSize">
             <size>
              <width>300</width>
@@ -186,7 +216,7 @@
            <property name="font">
             <font>
              <family>Segoe UI</family>
-             <pointsize>12</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="styleSheet">
@@ -214,6 +244,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QRadioButton" name="rb_2d_global_value">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Global value</string>
            </property>
@@ -239,7 +275,7 @@
            <property name="font">
             <font>
              <family>Segoe UI</family>
-             <pointsize>12</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="styleSheet">
@@ -275,6 +311,24 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Segoe UI</family>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+             </property>
+             <property name="frame">
+              <bool>false</bool>
+             </property>
              <property name="showCrs">
               <bool>true</bool>
              </property>
@@ -284,6 +338,18 @@
             <widget class="QToolButton" name="btn_browse_2d_local_raster">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Segoe UI</family>
+               <pointsize>10</pointsize>
+              </font>
              </property>
              <property name="text">
               <string>...</string>
@@ -336,7 +402,7 @@
            <property name="font">
             <font>
              <family>Segoe UI</family>
-             <pointsize>12</pointsize>
+             <pointsize>10</pointsize>
              <italic>true</italic>
             </font>
            </property>
@@ -362,7 +428,7 @@
            <property name="font">
             <font>
              <family>Segoe UI</family>
-             <pointsize>12</pointsize>
+             <pointsize>10</pointsize>
              <kerning>true</kerning>
             </font>
            </property>
@@ -391,6 +457,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QRadioButton" name="rb_gw_online_raster">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Online raster</string>
            </property>
@@ -401,10 +473,34 @@
            <property name="enabled">
             <bool>false</bool>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
+           </property>
           </widget>
          </item>
          <item row="0" column="0">
           <widget class="QRadioButton" name="rb_gw_global_value">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Global value</string>
            </property>
@@ -415,6 +511,12 @@
          </item>
          <item row="2" column="0">
           <widget class="QRadioButton" name="rb_gw_local_raster">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Local raster</string>
            </property>
@@ -437,7 +539,7 @@
            <property name="font">
             <font>
              <family>Segoe UI</family>
-             <pointsize>12</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="styleSheet">
@@ -470,12 +572,42 @@
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Segoe UI</family>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+             </property>
+             <property name="frame">
+              <bool>false</bool>
+             </property>
             </widget>
            </item>
            <item>
             <widget class="QToolButton" name="btn_browse_gw_local_raster">
              <property name="enabled">
               <bool>false</bool>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Segoe UI</family>
+               <pointsize>10</pointsize>
+              </font>
              </property>
              <property name="text">
               <string>...</string>
@@ -504,6 +636,12 @@
         <layout class="QGridLayout" name="gridLayout_7">
          <item row="1" column="0">
           <widget class="QRadioButton" name="rb_d1_dd">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>From Spatialite</string>
            </property>
@@ -526,7 +664,7 @@
            <property name="font">
             <font>
              <family>Segoe UI</family>
-             <pointsize>12</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="styleSheet">
@@ -557,6 +695,12 @@
          </item>
          <item row="0" column="0">
           <widget class="QRadioButton" name="rb_d1_gv">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Global value:</string>
            </property>
@@ -594,7 +738,7 @@
         <property name="font">
          <font>
           <family>Segoe UI</family>
-          <pointsize>12</pointsize>
+          <pointsize>10</pointsize>
          </font>
         </property>
         <property name="text">
@@ -619,7 +763,7 @@
         <property name="font">
          <font>
           <family>Segoe UI</family>
-          <pointsize>12</pointsize>
+          <pointsize>10</pointsize>
          </font>
         </property>
         <property name="styleSheet">
@@ -648,7 +792,7 @@
          <font>
           <family>Segoe UI</family>
           <pointsize>12</pointsize>
-          <italic>true</italic>
+          <italic>false</italic>
          </font>
         </property>
         <property name="text">
@@ -665,7 +809,7 @@
   <customwidget>
    <class>QgsMapLayerComboBox</class>
    <extends>QComboBox</extends>
-   <header>qgis.gui</header>
+   <header>qgsmaplayercombobox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -262,7 +262,8 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             error_msg = f"Error: {e}"
             self.parent_page.parent_wizard.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
 
-    def browse_for_local_raster(self, layers_widget):
+    @staticmethod
+    def browse_for_local_raster(layers_widget):
         """Allow user to browse for a raster layer and insert it to the layers_widget."""
         name_filter = "GeoTIFF (*.tif *.TIF *.tiff *.TIFF)"
         title = "Select raster file"
@@ -273,61 +274,6 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         if raster_file not in items:
             items.append(raster_file)
         layers_widget.setAdditionalItems(items)
-
-    # def dropdown_1d_changed(self):
-    #     """Handling dropdown menus selection changes."""
-    #     return
-    #     if self.dd_1d.currentText() == "Global value":
-    #         self.sp_1d_global_value.setEnabled(True)
-    #         self.sp_1d_global_value.show()
-    #         self.label_1d_gv.show()
-    #     else:
-    #         self.sp_1d_global_value.setDisabled(True)
-    #         self.sp_1d_global_value.hide()
-    #         self.label_1d_gv.hide()
-    #
-    # def dropdown_2d_changed(self):
-    #     """Handling dropdown menus selection changes."""
-    #     if self.dd_2d.currentIndex() <= 0:
-    #         self.sp_2d_global_value.setEnabled(True)
-    #         self.sp_2d_global_value.show()
-    #         self.label_2d_gv.show()
-    #     else:
-    #         self.sp_2d_global_value.setDisabled(True)
-    #         self.sp_2d_global_value.hide()
-    #         self.label_2d_gv.hide()
-    #
-    # def dropdown_groundwater_changed(self):
-    #     """Handling dropdown menus selection changes."""
-    #     if self.dd_groundwater.currentIndex() <= 0:
-    #         self.sp_gwater_global_value.setEnabled(True)
-    #         self.sp_gwater_global_value.show()
-    #         self.label_gw_gv.show()
-    #     else:
-    #         self.sp_gwater_global_value.setDisabled(True)
-    #         self.sp_gwater_global_value.hide()
-    #         self.label_gw_gv.hide()
-    #
-    # def checkbox_1d_changed(self, value):
-    #     """Handling checkbox state changes."""
-    #     if value == 0:
-    #         self.d1_widget.hide()
-    #     if value == 2:
-    #         self.d1_widget.show()
-    #
-    # def checkbox_2d_changed(self, value):
-    #     """Handling checkbox state changes."""
-    #     if value == 0:
-    #         self.d2_widget.hide()
-    #     if value == 2:
-    #         self.d2_widget.show()
-    #
-    # def checkbox_groundwater_changed(self, value):
-    #     """Handling checkbox state changes."""
-    #     if value == 0:
-    #         self.groundwater_widget.hide()
-    #     if value == 2:
-    #         self.groundwater_widget.show()
 
 
 class LateralsWidget(uicls_laterals, basecls_laterals):
@@ -2111,28 +2057,45 @@ class SimulationWizard(QWizard):
         start_datetime, end_datetime = self.duration_page.main_widget.to_datetime()
         duration = self.duration_page.main_widget.calculate_simulation_duration()
         # initial conditions page attributes
-        global_value_1d, raster_2d, global_value_2d, raster_groundwater, global_value_groundwater, saved_state = (
-            None,
-        ) * 6
-        local_raster_2d = None
-        local_raster_gw = None
+        (
+            global_value_1d,
+            global_value_2d,
+            raster_2d,
+            local_raster_2d,
+            aggregation_method_2d,
+            global_value_groundwater,
+            raster_groundwater,
+            local_raster_gw,
+            aggregation_method_gw,
+            saved_state,
+        ) = (None,) * 10
         if self.init_conditions.include_initial_conditions:
+            # 1D
             global_value_1d = self.init_conditions_page.main_widget.sp_1d_global_value.value()
+            # 2D
+            global_value_2d = self.init_conditions_page.main_widget.sp_2d_global_value.value()
             raster_2d = self.init_conditions_page.main_widget.rasters.get(
                 self.init_conditions_page.main_widget.cbo_2d_online_raster.currentText()
             )
             if self.init_conditions_page.main_widget.rb_2d_local_raster.isChecked():
-                local_raster_2d = qgis_layers_cbo_get_layer_uri(self.cbo_2d_local_raster)
-            global_value_2d = self.init_conditions_page.main_widget.sp_2d_global_value.value()
+                local_raster_2d = qgis_layers_cbo_get_layer_uri(
+                    self.init_conditions_page.main_widget.cbo_2d_local_raster
+                )
+                aggregation_method_2d = self.init_conditions_page.main_widget.cb_2d_aggregation.currentText()
+            # Groundwater
+            global_value_groundwater = self.init_conditions_page.main_widget.sp_gwater_global_value.value()
             raster_groundwater = self.init_conditions_page.main_widget.rasters.get(
                 self.init_conditions_page.main_widget.cbo_gw_online_raster.currentText()
             )
             if self.init_conditions_page.main_widget.rb_gw_local_raster.isChecked():
-                local_raster_gw = qgis_layers_cbo_get_layer_uri(self.cbo_gw_local_raster)
-            global_value_groundwater = self.init_conditions_page.main_widget.sp_gwater_global_value.value()
+                local_raster_gw = qgis_layers_cbo_get_layer_uri(
+                    self.init_conditions_page.main_widget.cbo_gw_local_raster
+                )
+                aggregation_method_gw = self.init_conditions_page.main_widget.cb_gwater_aggregation.currentText()
             saved_state = self.init_conditions_page.main_widget.saved_states.get(
                 self.init_conditions_page.main_widget.cb_saved_states.currentText()
             )
+
         try:
             simulation_template = self.init_conditions_dlg.simulation_template
             sim_temp_id = simulation_template.simulation.id
@@ -2188,19 +2151,6 @@ class SimulationWizard(QWizard):
                 current_status = tc.fetch_simulation_status(new_simulation.id)
                 sim_id = new_simulation.id
 
-                # check if a local raster needs to be uploaded first
-                if local_raster_2d is not None:
-                    init_waterlevel_upload = tc.create_simulation_initial_2d_water_level_raster(
-                        sim_id, filename=local_raster_2d
-                    )
-                    # TODO: do the upload
-                    # raster_2d = what comes from upload
-                if local_raster_gw is not None:
-                    gw_upload = tc.create_simulation_initial_groundwater_level_raster(
-                        sim_id, filename=local_raster_gw
-                    )
-                    # TODO: do the upload
-                    # raster_groundwater= what comes from upload
                 if self.init_conditions.include_filestructure_controls:
                     sc_file = self.init_conditions_dlg.events.filestructurecontrols[0]
                     sc_file_download = tc.fetch_structure_control_file_download(sim_temp_id, sc_file.id)
@@ -2254,44 +2204,90 @@ class SimulationWizard(QWizard):
                     tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
 
                 if self.init_conditions.include_initial_conditions:
+                    # 1D
                     if self.init_conditions_page.main_widget.gb_1d.isChecked():
                         if self.init_conditions_page.main_widget.rb_2d_global_value.isChecked():
                             tc.create_simulation_initial_1d_water_level_constant(sim_id, value=global_value_1d)
                         else:
                             tc.create_simulation_initial_1d_water_level_predefined(sim_id)
-
+                    # 2D
                     if self.init_conditions_page.main_widget.gb_2d.isChecked():
-                        aggregation_method = self.init_conditions_page.main_widget.cb_2d_aggregation.currentText()
                         if self.init_conditions_page.main_widget.rb_2d_global_value.isChecked():
                             tc.create_simulation_initial_2d_water_level_constant(sim_id, value=global_value_2d)
                         else:
-                            # an uploaded raster selected or a local raster was selected and uploaded already
+                            if self.init_conditions_page.main_widget.rb_2d_local_raster.isChecked():
+                                # Upload local 2D raster
+                                if local_raster_2d is not None:
+                                    initial_water_level_2d = tc.create_initial_water_level(
+                                        threedimodel_id, dimension="two_d"
+                                    )
+                                    initial_wl_2d_id = initial_water_level_2d.id
+                                    init_water_level_upload_2d = tc.upload_initial_water_level(
+                                        threedimodel_id,
+                                        initial_wl_2d_id,
+                                        filename=os.path.basename(local_raster_2d),
+                                    )
+                                    upload_file(init_water_level_upload_2d, local_raster_2d)
+                                    for ti in range(int(upload_timeout // 2)):
+                                        uploaded_2d_wl = tc.fetch_3di_model_initial_waterlevel(
+                                            threedimodel_id, initial_wl_2d_id
+                                        )
+                                        if uploaded_2d_wl.file.state in valid_states:
+                                            break
+                                        else:
+                                            time.sleep(2)
                             try:
                                 tc.create_simulation_initial_2d_water_level_raster(
-                                    sim_id, aggregation_method=aggregation_method, initial_waterlevel=raster_2d.url
+                                    sim_id, aggregation_method=aggregation_method_2d, initial_waterlevel=raster_2d.url
                                 )
                             except AttributeError:
-                                error_msg = "Error: selected 2D raster for initial waterlevel is not valid."
+                                error_msg = "Error: selected 2D raster for initial water level is not valid."
                                 self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
                                 return
-
+                    # Groundwater
                     if self.init_conditions_page.main_widget.gb_gwater.isChecked():
-                        aggregation_method = self.init_conditions_page.main_widget.cb_gwater_aggregation.currentText()
                         if self.init_conditions_page.main_widget.rb_gw_global_value.isChecked():
                             tc.create_simulation_initial_groundwater_level_constant(
                                 sim_id, value=global_value_groundwater
                             )
-                        else:
-                            # an uploaded raster selected or a local raster was selected and uploaded already
+                        elif self.init_conditions_page.main_widget.rb_gw_online_raster.isChecked():
                             try:
                                 tc.create_simulation_initial_groundwater_level_raster(
-                                    sim_id, aggregation_method=aggregation_method, initial_waterlevel=raster_groundwater.url
+                                    sim_id,
+                                    aggregation_method=aggregation_method_gw,
+                                    initial_waterlevel=raster_groundwater.url,
                                 )
                             except AttributeError:
                                 error_msg = "Error: selected groundwater raster is not valid."
                                 self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
                                 return
-
+                        else:
+                            if local_raster_gw is not None:
+                                # Upload local Groundwater raster
+                                initial_water_level_gw = tc.create_initial_water_level(
+                                    threedimodel_id, dimension="two_d"
+                                )
+                                initial_wl_gw_id = initial_water_level_gw.id
+                                init_water_level_upload_gw = tc.upload_initial_water_level(
+                                    threedimodel_id,
+                                    initial_wl_gw_id,
+                                    filename=os.path.basename(local_raster_gw),
+                                )
+                                upload_file(init_water_level_upload_gw, local_raster_gw)
+                                for ti in range(int(upload_timeout // 2)):
+                                    uploaded_gw_wl = tc.fetch_3di_model_initial_waterlevel(
+                                        threedimodel_id, initial_wl_gw_id
+                                    )
+                                    if uploaded_gw_wl.file.state in valid_states:
+                                        break
+                                    else:
+                                        time.sleep(2)
+                                tc.create_simulation_initial_groundwater_level_raster(
+                                    sim_id,
+                                    aggregation_method=aggregation_method_gw,
+                                    initial_waterlevel=initial_water_level_gw.url,
+                                )
+                    # Saved state
                     if self.init_conditions.load_from_saved_state and saved_state:
                         saved_state_id = saved_state.url.strip("/").split("/")[-1]
                         tc.create_simulation_initial_saved_state(sim_id, saved_state=saved_state_id)

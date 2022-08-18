@@ -289,9 +289,14 @@ class ThreediCalls:
         return breach
 
     def fetch_3di_model_initial_waterlevels(self, threedimodel_id: str) -> List[InitialWaterlevel]:
-        """Fetch initial waterlevels list"""
-        waterlevels = self.paginated_fetch(self.threedi_api.threedimodels_initial_waterlevels_list, threedimodel_id)
-        return waterlevels
+        """Fetch initial water levels list"""
+        water_levels = self.paginated_fetch(self.threedi_api.threedimodels_initial_waterlevels_list, threedimodel_id)
+        return water_levels
+
+    def fetch_3di_model_initial_waterlevel(self, threedimodel_id: str, water_level_id: int) -> InitialWaterlevel:
+        """Fetch initial water level with given id"""
+        water_level = self.threedi_api.threedimodels_initial_waterlevels_read(water_level_id, threedimodel_id)
+        return water_level
 
     def fetch_3di_model_saved_states(self, threedimodel_id: str) -> List[ThreediModelSavedState]:
         """Fetch saved states list."""
@@ -485,6 +490,18 @@ class ThreediCalls:
             str(simulation_pk), data
         )
         return groundwater_raster
+
+    def create_initial_water_level(self, threedimodel_id: str, **data) -> InitialWaterlevel:
+        """Add initial water level to the given 3Di model."""
+        initial_water_level = self.threedi_api.threedimodels_initial_waterlevels_create(threedimodel_id, data)
+        return initial_water_level
+
+    def upload_initial_water_level(self, threedimodel_id: str, water_level_id: int, **data) -> Upload:
+        """Upload initial water level to the given 3Di model."""
+        initial_water_level_upload = self.threedi_api.threedimodels_initial_waterlevels_upload(
+            water_level_id, threedimodel_id, data
+        )
+        return initial_water_level_upload
 
     def create_simulation_initial_saved_state(self, simulation_pk: int, **data) -> InitialSavedState:
         """Add initial saved state to the given simulation."""

@@ -131,15 +131,15 @@ def get_filepath(parent, extension_filter=None, extension=None, save=False, dial
     return file_name
 
 
-def qgis_layers_cbo_get_layer_uri(qgis_maplayers_cbo):
-    """Get selected map layer source uri, or additional path, from QgsMapLayerComboBox. """
-    cur_layer = qgis_maplayers_cbo.currentLayer()
+def qgis_layers_cbo_get_layer_uri(qgis_map_layers_cbo):
+    """Get selected map layer source uri, or additional path, from QgsMapLayerComboBox."""
+    cur_layer = qgis_map_layers_cbo.currentLayer()
     if cur_layer is not None and cur_layer.isValid():
         dp = cur_layer.dataProvider()
         return dp.dataSourceUri()
     # no layer selected - check if there are any additional items
-    if qgis_maplayers_cbo.currentText():
+    if qgis_map_layers_cbo.currentText():
         # check if additional item path exists on disk
-        lyr_path = qgis_maplayers_cbo.currentText()
+        lyr_path = qgis_map_layers_cbo.currentText()
         if os.path.exists(lyr_path):
             return lyr_path
