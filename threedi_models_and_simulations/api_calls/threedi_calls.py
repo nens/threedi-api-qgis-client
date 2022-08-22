@@ -58,6 +58,7 @@ from threedi_api_client.openapi import (
     AggregationSettings,
     Event,
     User,
+    Raster,
 )
 
 
@@ -298,6 +299,11 @@ class ThreediCalls:
         water_level = self.threedi_api.threedimodels_initial_waterlevels_read(water_level_id, threedimodel_id)
         return water_level
 
+    def fetch_3di_model_raster(self, threedimodel_id: str, raster_id: int) -> Raster:
+        """Fetch raster with given id"""
+        raster = self.threedi_api.threedimodels_rasters_read(raster_id, threedimodel_id)
+        return raster
+
     def fetch_3di_model_saved_states(self, threedimodel_id: str) -> List[ThreediModelSavedState]:
         """Fetch saved states list."""
         states = self.paginated_fetch(self.threedi_api.threedimodels_saved_states_list, threedimodel_id)
@@ -497,11 +503,21 @@ class ThreediCalls:
         return initial_water_level
 
     def upload_initial_water_level(self, threedimodel_id: str, water_level_id: int, **data) -> Upload:
-        """Upload initial water level to the given 3Di model."""
+        """Upload initial water level for the given 3Di model."""
         initial_water_level_upload = self.threedi_api.threedimodels_initial_waterlevels_upload(
             water_level_id, threedimodel_id, data
         )
         return initial_water_level_upload
+
+    def create_3di_model_raster(self, threedimodel_id: str, **data) -> Raster:
+        """Create raster for the given 3Di model."""
+        raster = self.threedi_api.threedimodels_rasters_create(threedimodel_id, data)
+        return raster
+
+    def upload_3di_model_raster(self, threedimodel_id: str, raster_id: int, **data) -> Upload:
+        """Upload raster to the given 3Di model."""
+        raster_upload = self.threedi_api.threedimodels_rasters_upload(raster_id, threedimodel_id, data)
+        return raster_upload
 
     def create_simulation_initial_saved_state(self, simulation_pk: int, **data) -> InitialSavedState:
         """Add initial saved state to the given simulation."""

@@ -2218,24 +2218,26 @@ class SimulationWizard(QWizard):
                             if self.init_conditions_page.main_widget.rb_2d_local_raster.isChecked():
                                 # Upload local 2D raster
                                 if local_raster_2d is not None:
-                                    initial_water_level_2d = tc.create_initial_water_level(
-                                        threedimodel_id, dimension="two_d"
+                                    local_raster_2d_name = os.path.basename(local_raster_2d)
+                                    initial_water_level_raster_2d = tc.create_3di_model_raster(
+                                        threedimodel_id, name=local_raster_2d_name, type="initial_waterlevel_file"
                                     )
-                                    initial_wl_2d_id = initial_water_level_2d.id
-                                    init_water_level_upload_2d = tc.upload_initial_water_level(
+                                    initial_wl_raster_2d_id = initial_water_level_raster_2d.id
+                                    init_water_level_upload_2d = tc.upload_3di_model_raster(
                                         threedimodel_id,
-                                        initial_wl_2d_id,
-                                        filename=os.path.basename(local_raster_2d),
+                                        initial_wl_raster_2d_id,
+                                        filename=local_raster_2d_name,
                                     )
                                     upload_file(init_water_level_upload_2d, local_raster_2d)
                                     for ti in range(int(upload_timeout // 2)):
-                                        uploaded_2d_wl = tc.fetch_3di_model_initial_waterlevel(
-                                            threedimodel_id, initial_wl_2d_id
+                                        uploaded_2d_wl_raster = tc.fetch_3di_model_raster(
+                                            threedimodel_id, initial_wl_raster_2d_id
                                         )
-                                        if uploaded_2d_wl.file.state in valid_states:
+                                        if uploaded_2d_wl_raster.file.state in valid_states:
                                             break
                                         else:
                                             time.sleep(2)
+                                    raster_2d = initial_water_level_raster_2d
                             try:
                                 tc.create_simulation_initial_2d_water_level_raster(
                                     sim_id, aggregation_method=aggregation_method_2d, initial_waterlevel=raster_2d.url
@@ -2250,7 +2252,27 @@ class SimulationWizard(QWizard):
                             tc.create_simulation_initial_groundwater_level_constant(
                                 sim_id, value=global_value_groundwater
                             )
-                        elif self.init_conditions_page.main_widget.rb_gw_online_raster.isChecked():
+                        else:
+                            if local_raster_gw is not None:
+                                # Upload local Groundwater raster
+                                local_raster_gw_name = os.path.basename(local_raster_gw)
+                                initial_water_level_raster_gw = tc.create_3di_model_raster(
+                                    threedimodel_id, name=local_raster_gw_name, type="initial_groundwater_level_file"
+                                )
+                                initial_wl_raster_gw_id = initial_water_level_raster_gw.id
+                                init_water_level_upload_gw = tc.upload_3di_model_raster(
+                                    threedimodel_id,
+                                    initial_wl_raster_gw_id,
+                                    filename=local_raster_gw_name,
+                                )
+                                upload_file(init_water_level_upload_gw, local_raster_gw)
+                                for ti in range(int(upload_timeout // 2)):
+                                    uploaded_gw_wl = tc.fetch_3di_model_raster(threedimodel_id, initial_wl_raster_gw_id)
+                                    if uploaded_gw_wl.file.state in valid_states:
+                                        break
+                                    else:
+                                        time.sleep(2)
+                                raster_groundwater = initial_water_level_raster_gw
                             try:
                                 tc.create_simulation_initial_groundwater_level_raster(
                                     sim_id,
@@ -2261,32 +2283,6 @@ class SimulationWizard(QWizard):
                                 error_msg = "Error: selected groundwater raster is not valid."
                                 self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
                                 return
-                        else:
-                            if local_raster_gw is not None:
-                                # Upload local Groundwater raster
-                                initial_water_level_gw = tc.create_initial_water_level(
-                                    threedimodel_id, dimension="two_d"
-                                )
-                                initial_wl_gw_id = initial_water_level_gw.id
-                                init_water_level_upload_gw = tc.upload_initial_water_level(
-                                    threedimodel_id,
-                                    initial_wl_gw_id,
-                                    filename=os.path.basename(local_raster_gw),
-                                )
-                                upload_file(init_water_level_upload_gw, local_raster_gw)
-                                for ti in range(int(upload_timeout // 2)):
-                                    uploaded_gw_wl = tc.fetch_3di_model_initial_waterlevel(
-                                        threedimodel_id, initial_wl_gw_id
-                                    )
-                                    if uploaded_gw_wl.file.state in valid_states:
-                                        break
-                                    else:
-                                        time.sleep(2)
-                                tc.create_simulation_initial_groundwater_level_raster(
-                                    sim_id,
-                                    aggregation_method=aggregation_method_gw,
-                                    initial_waterlevel=initial_water_level_gw.url,
-                                )
                     # Saved state
                     if self.init_conditions.load_from_saved_state and saved_state:
                         saved_state_id = saved_state.url.strip("/").split("/")[-1]
@@ -2413,6 +2409,7 @@ class SimulationWizard(QWizard):
             self.new_simulation_statuses = None
             error_msg = extract_error_message(e)
             self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+            raise e
         except Exception as e:
             self.new_simulations = None
             self.new_simulation_statuses = None
