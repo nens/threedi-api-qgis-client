@@ -314,6 +314,11 @@ class ThreediCalls:
         tasks = self.paginated_fetch(self.threedi_api.threedimodels_tasks_list, threedimodel_id)
         return tasks
 
+    def fetch_3di_model_task(self, threedimodel_id: str, task_id: int) -> ThreediModelTask:
+        """Fetch 3Di model task with given ID."""
+        task = self.threedi_api.threedimodels_tasks_read(task_id, threedimodel_id)
+        return task
+
     def fetch_revisions(self) -> List[Revision]:
         """Fetch all Revisions available for current user."""
         revisions_list = self.paginated_fetch(self.threedi_api.revisions_list)

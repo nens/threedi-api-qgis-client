@@ -2101,7 +2101,7 @@ class SimulationWizard(QWizard):
             sim_temp_id = simulation_template.simulation.id
             self.new_simulations = []
             self.new_simulation_statuses = {}
-            valid_states = ["processed", "valid"]
+            valid_states = ["processed", "valid", "success"]
             simulation_difference = self.init_conditions.simulations_difference
             ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate, pfpath, pcsv, pnetcdf = (None,) * 10
             wtype, woffset, wduration, wspeed, wdirection, wunits, wdrag_coeff, wispeed, widirection, wvalues = (
@@ -2229,11 +2229,20 @@ class SimulationWizard(QWizard):
                                         filename=local_raster_2d_name,
                                     )
                                     upload_file(init_water_level_upload_2d, local_raster_2d)
+                                    raster_task_2d = None
                                     for ti in range(int(upload_timeout // 2)):
-                                        uploaded_2d_wl_raster = tc.fetch_3di_model_raster(
-                                            threedimodel_id, initial_wl_raster_2d_id
-                                        )
-                                        if uploaded_2d_wl_raster.file.state in valid_states:
+                                        if raster_task_2d is None:
+                                            model_tasks = tc.fetch_3di_model_tasks(threedimodel_id)
+                                            for task in model_tasks:
+                                                try:
+                                                    if initial_wl_raster_2d_id in task.params["only_raster_ids"]:
+                                                        raster_task_2d = task
+                                                        break
+                                                except KeyError:
+                                                    continue
+                                        else:
+                                            raster_task_2d = tc.fetch_3di_model_task(threedimodel_id, raster_task_2d.id)
+                                        if raster_task_2d and raster_task_2d.status in valid_states:
                                             break
                                         else:
                                             time.sleep(2)
@@ -2266,9 +2275,20 @@ class SimulationWizard(QWizard):
                                     filename=local_raster_gw_name,
                                 )
                                 upload_file(init_water_level_upload_gw, local_raster_gw)
+                                raster_task_gw = None
                                 for ti in range(int(upload_timeout // 2)):
-                                    uploaded_gw_wl = tc.fetch_3di_model_raster(threedimodel_id, initial_wl_raster_gw_id)
-                                    if uploaded_gw_wl.file.state in valid_states:
+                                    if raster_task_gw is None:
+                                        model_tasks = tc.fetch_3di_model_tasks(threedimodel_id)
+                                        for task in model_tasks:
+                                            try:
+                                                if initial_wl_raster_gw_id in task.params["only_raster_ids"]:
+                                                    raster_task_gw = task
+                                                    break
+                                            except KeyError:
+                                                continue
+                                    else:
+                                        raster_task_gw = tc.fetch_3di_model_task(threedimodel_id, raster_task_gw.id)
+                                    if raster_task_gw and raster_task_gw.status in valid_states:
                                         break
                                     else:
                                         time.sleep(2)
