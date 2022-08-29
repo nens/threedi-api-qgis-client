@@ -1910,7 +1910,7 @@ class SimulationWizard(QWizard):
                     for raster_filename, raster in init_conditions_widget.rasters.items():
                         if raster.url == events.initial_twodwaterraster.initial_waterlevel:
                             init_conditions_widget.cbo_2d_online_raster.setCurrentText(raster_filename)
-                            init_conditions_widget.gb_2d_aggregation.setCurrentText(
+                            init_conditions_widget.cb_2d_aggregation.setCurrentText(
                                 events.initial_twodwaterraster.aggregation_method
                             )
                             break
