@@ -2060,11 +2060,11 @@ class SimulationWizard(QWizard):
         (
             global_value_1d,
             global_value_2d,
-            raster_2d,
+            initial_wl_file_2d,
             local_raster_2d,
             aggregation_method_2d,
             global_value_groundwater,
-            raster_groundwater,
+            initial_wl_file_groundwater,
             local_raster_gw,
             aggregation_method_gw,
             saved_state,
@@ -2074,7 +2074,7 @@ class SimulationWizard(QWizard):
             global_value_1d = self.init_conditions_page.main_widget.sp_1d_global_value.value()
             # 2D
             global_value_2d = self.init_conditions_page.main_widget.sp_2d_global_value.value()
-            raster_2d = self.init_conditions_page.main_widget.rasters.get(
+            initial_wl_file_2d = self.init_conditions_page.main_widget.rasters.get(
                 self.init_conditions_page.main_widget.cbo_2d_online_raster.currentText()
             )
             if self.init_conditions_page.main_widget.rb_2d_local_raster.isChecked():
@@ -2084,7 +2084,7 @@ class SimulationWizard(QWizard):
                 aggregation_method_2d = self.init_conditions_page.main_widget.cb_2d_aggregation.currentText()
             # Groundwater
             global_value_groundwater = self.init_conditions_page.main_widget.sp_gwater_global_value.value()
-            raster_groundwater = self.init_conditions_page.main_widget.rasters.get(
+            initial_wl_file_groundwater = self.init_conditions_page.main_widget.rasters.get(
                 self.init_conditions_page.main_widget.cbo_gw_online_raster.currentText()
             )
             if self.init_conditions_page.main_widget.rb_gw_local_raster.isChecked():
@@ -2246,10 +2246,16 @@ class SimulationWizard(QWizard):
                                             break
                                         else:
                                             time.sleep(2)
-                                    raster_2d = initial_water_level_raster_2d
+                                    initial_wlevels = tc.fetch_3di_model_initial_waterlevels(threedimodel_id)
+                                    for iw in initial_wlevels:
+                                        if iw.source_raster_id == initial_wl_raster_2d_id:
+                                            initial_wl_file_2d = iw
+                                            break
                             try:
                                 tc.create_simulation_initial_2d_water_level_raster(
-                                    sim_id, aggregation_method=aggregation_method_2d, initial_waterlevel=raster_2d.url
+                                    sim_id,
+                                    aggregation_method=aggregation_method_2d,
+                                    initial_waterlevel=initial_wl_file_2d.url,
                                 )
                             except AttributeError:
                                 error_msg = "Error: selected 2D raster for initial water level is not valid."
@@ -2292,12 +2298,16 @@ class SimulationWizard(QWizard):
                                         break
                                     else:
                                         time.sleep(2)
-                                raster_groundwater = initial_water_level_raster_gw
+                                initial_wlevels = tc.fetch_3di_model_initial_waterlevels(threedimodel_id)
+                                for iw in initial_wlevels:
+                                    if iw.source_raster_id == initial_wl_raster_gw_id:
+                                        initial_wl_file_groundwater = iw
+                                        break
                             try:
                                 tc.create_simulation_initial_groundwater_level_raster(
                                     sim_id,
                                     aggregation_method=aggregation_method_gw,
-                                    initial_waterlevel=raster_groundwater.url,
+                                    initial_waterlevel=initial_wl_file_groundwater.url,
                                 )
                             except AttributeError:
                                 error_msg = "Error: selected groundwater raster is not valid."
@@ -2429,7 +2439,6 @@ class SimulationWizard(QWizard):
             self.new_simulation_statuses = None
             error_msg = extract_error_message(e)
             self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
-            raise e
         except Exception as e:
             self.new_simulations = None
             self.new_simulation_statuses = None
