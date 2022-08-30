@@ -604,6 +604,7 @@ class NewSchematisationWizard(QWizard):
                     error = CommitErrors(f"{settings_table_name} commit errors:\n{errors_str}")
                     raise error
                 time.sleep(0.5)
+            self.new_schematisation = schematisation
             self.new_local_schematisation = local_schematisation
             msg = f"Schematisation '{name} ({schematisation.id})' created!"
             self.plugin_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
