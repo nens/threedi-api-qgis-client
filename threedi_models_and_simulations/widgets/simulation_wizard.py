@@ -608,6 +608,9 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.sb_duration.valueChanged.connect(self.write_values_into_dict)
         self.sb_width.valueChanged.connect(self.write_values_into_dict)
         self.sp_start_after.valueChanged.connect(self.write_values_into_dict)
+        self.sb_discharge_coefficient_positive.valueChanged.connect(self.write_values_into_dict)
+        self.sb_discharge_coefficient_negative.valueChanged.connect(self.write_values_into_dict)
+        self.sb_max_breach_depth.valueChanged.connect(self.write_values_into_dict)
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
             self.simulation_widget.show()
         else:
@@ -638,12 +641,18 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         width = self.sb_width.value()
         units = self.dd_units.currentText()
         offset = self.sp_start_after.value()
+        discharge_coefficient_positive = self.sb_discharge_coefficient_positive.value()
+        discharge_coefficient_negative = self.sb_discharge_coefficient_negative.value()
+        max_breach_depth = self.sb_max_breach_depth.value()
         self.values[simulation] = {
             "breach_id": breach_id,
             "width": width,
             "duration": duration,
             "units": units,
             "offset": offset,
+            "discharge_coefficient_positive": discharge_coefficient_positive,
+            "discharge_coefficient_negative": discharge_coefficient_negative,
+            "max_breach_depth": max_breach_depth,
         }
         if self.breaches_layer is not None:
             self.parent_page.parent_wizard.plugin_dock.iface.setActiveLayer(self.breaches_layer)
@@ -659,12 +668,18 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             self.sb_width.setValue(vals.get("width"))
             self.dd_units.setCurrentIndex(self.dd_units.findText(vals.get("units")))
             self.sp_start_after.setValue(vals.get("offset"))
+            self.sb_discharge_coefficient_positive.setValue(vals.get("discharge_coefficient_positive"))
+            self.sb_discharge_coefficient_negative.setValue(vals.get("discharge_coefficient_negative"))
+            self.sb_max_breach_depth.setValue(vals.get("max_breach_depth"))
         else:
             self.dd_breach_id.setCurrentIndex(0)
             self.sb_duration.setValue(0.1)
             self.sb_width.setValue(10)
             self.dd_units.setCurrentIndex(0)
             self.sp_start_after.setValue(0)
+            self.sb_discharge_coefficient_positive.setValue(0)
+            self.sb_discharge_coefficient_negative.setValue(0)
+            self.sb_max_breach_depth.setValue(0)
 
     def get_breaches_data(self):
         """Getting all needed data for adding breaches to the simulation."""
@@ -674,11 +689,17 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         units = self.dd_units.currentText()
         offset = self.sp_start_after.value()
         duration_in_units = duration * self.SECONDS_MULTIPLIERS[units]
+        discharge_coefficient_positive = self.sb_discharge_coefficient_positive.value()
+        discharge_coefficient_negative = self.sb_discharge_coefficient_negative.value()
+        max_breach_depth = self.sb_max_breach_depth.value()
         breach_data = (
             breach_id,
             width,
             duration_in_units,
             offset,
+            discharge_coefficient_positive,
+            discharge_coefficient_negative,
+            max_breach_depth,
         )
         return breach_data
 
@@ -1989,6 +2010,9 @@ class SimulationWizard(QWizard):
                 breaches_widget.sb_duration.setValue(breach.duration_till_max_depth)
                 breaches_widget.dd_units.setCurrentText("s")
                 breaches_widget.sp_start_after.setValue(breach.offset)
+                breaches_widget.sb_discharge_coefficient_positive.setValue(breach.discharge_coefficient_positive)
+                breaches_widget.sb_discharge_coefficient_negative.setValue(breach.discharge_coefficient_negative)
+                breaches_widget.sb_max_breach_depth.setValue(breach.maximum_breach_depth)
         if init_conditions.include_precipitations:
             precipitation_widget = self.precipitation_page.main_widget
             if events.timeseriesrain:
@@ -2107,7 +2131,15 @@ class SimulationWizard(QWizard):
             wtype, woffset, wduration, wspeed, wdirection, wunits, wdrag_coeff, wispeed, widirection, wvalues = (
                 None,
             ) * 10
-            breach_id, width, d_duration, breach_offset = (None,) * 4
+            (
+                breach_id,
+                width,
+                d_duration,
+                breach_offset,
+                discharge_coefficient_positive,
+                discharge_coefficient_negative,
+                max_breach_depth,
+            ) = (None,) * 7
             for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
                 laterals = []
                 if hasattr(self, "laterals_page"):
@@ -2119,7 +2151,15 @@ class SimulationWizard(QWizard):
                     self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                     breach_data = self.breaches_page.main_widget.get_breaches_data()
                     if simulation_difference == "breaches" or i == 1:
-                        breach_id, width, d_duration, breach_offset = breach_data
+                        (
+                            breach_id,
+                            width,
+                            d_duration,
+                            breach_offset,
+                            discharge_coefficient_positive,
+                            discharge_coefficient_negative,
+                            max_breach_depth,
+                        ) = breach_data
                 if hasattr(self, "precipitation_page"):
                     self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                     pdata = self.precipitation_page.main_widget.get_precipitation_data()
