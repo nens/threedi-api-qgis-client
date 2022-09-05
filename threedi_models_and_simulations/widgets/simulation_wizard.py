@@ -238,6 +238,9 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             rasters = tc.fetch_3di_model_initial_waterlevels(
                 self.parent_page.parent_wizard.model_selection_dlg.current_model.id
             )
+            if rasters:
+                self.rb_2d_online_raster.setChecked(True)
+                self.rb_gw_online_raster.setChecked(True)
             for raster in rasters or []:
                 if raster.dimension != "two_d":
                     continue
@@ -2105,7 +2108,7 @@ class SimulationWizard(QWizard):
                 local_raster_2d = qgis_layers_cbo_get_layer_uri(
                     self.init_conditions_page.main_widget.cbo_2d_local_raster
                 )
-                aggregation_method_2d = self.init_conditions_page.main_widget.cb_2d_aggregation.currentText()
+            aggregation_method_2d = self.init_conditions_page.main_widget.cb_2d_aggregation.currentText()
             # Groundwater
             global_value_groundwater = self.init_conditions_page.main_widget.sp_gwater_global_value.value()
             initial_wl_file_groundwater = self.init_conditions_page.main_widget.rasters.get(
@@ -2115,7 +2118,7 @@ class SimulationWizard(QWizard):
                 local_raster_gw = qgis_layers_cbo_get_layer_uri(
                     self.init_conditions_page.main_widget.cbo_gw_local_raster
                 )
-                aggregation_method_gw = self.init_conditions_page.main_widget.cb_gwater_aggregation.currentText()
+            aggregation_method_gw = self.init_conditions_page.main_widget.cb_gwater_aggregation.currentText()
             saved_state = self.init_conditions_page.main_widget.saved_states.get(
                 self.init_conditions_page.main_widget.cb_saved_states.currentText()
             )
