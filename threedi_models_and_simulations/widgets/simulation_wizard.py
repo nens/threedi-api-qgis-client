@@ -677,8 +677,8 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             self.sb_width.setValue(10)
             self.dd_units.setCurrentIndex(0)
             self.sp_start_after.setValue(0)
-            self.sb_discharge_coefficient_positive.setValue(0)
-            self.sb_discharge_coefficient_negative.setValue(0)
+            self.sb_discharge_coefficient_positive.setValue(1.0)
+            self.sb_discharge_coefficient_negative.setValue(1.0)
             self.sb_max_breach_depth.setValue(0)
 
     def get_breaches_data(self):
@@ -2010,9 +2010,9 @@ class SimulationWizard(QWizard):
                 breaches_widget.sb_duration.setValue(breach.duration_till_max_depth)
                 breaches_widget.dd_units.setCurrentText("s")
                 breaches_widget.sp_start_after.setValue(breach.offset)
-                breaches_widget.sb_discharge_coefficient_positive.setValue(breach.discharge_coefficient_positive)
-                breaches_widget.sb_discharge_coefficient_negative.setValue(breach.discharge_coefficient_negative)
-                breaches_widget.sb_max_breach_depth.setValue(breach.maximum_breach_depth)
+                breaches_widget.sb_discharge_coefficient_positive.setValue(breach.discharge_coefficient_positive or 1)
+                breaches_widget.sb_discharge_coefficient_negative.setValue(breach.discharge_coefficient_negative or 1)
+                breaches_widget.sb_max_breach_depth.setValue(potential_breach.maximum_breach_depth)
         if init_conditions.include_precipitations:
             precipitation_widget = self.precipitation_page.main_widget
             if events.timeseriesrain:
@@ -2395,6 +2395,9 @@ class SimulationWizard(QWizard):
                         duration_till_max_depth=d_duration,
                         initial_width=width,
                         offset=breach_offset,
+                        discharge_coefficient_positive=discharge_coefficient_positive,
+                        discharge_coefficient_negative=discharge_coefficient_negative,
+                        maximum_breach_depth=max_breach_depth,
                     )
                 if ptype == CONSTANT:
                     tc.create_simulation_constant_precipitation(

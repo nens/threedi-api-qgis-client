@@ -133,6 +133,12 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="sb_width">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>150</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>150</width>
@@ -280,7 +286,7 @@
       <widget class="QSpinBox" name="sp_start_after">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
+         <horstretch>150</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
@@ -340,8 +346,8 @@
       <widget class="QLabel" name="label_2">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
+         <horstretch>225</horstretch>
+         <verstretch>25</verstretch>
         </sizepolicy>
        </property>
        <property name="minimumSize">
@@ -371,13 +377,13 @@
       <widget class="QDoubleSpinBox" name="sb_duration">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-         <horstretch>0</horstretch>
+         <horstretch>95</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
        <property name="minimumSize">
         <size>
-         <width>100</width>
+         <width>95</width>
          <height>25</height>
         </size>
        </property>
@@ -417,7 +423,7 @@
       <widget class="QComboBox" name="dd_units">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-         <horstretch>0</horstretch>
+         <horstretch>50</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
@@ -554,6 +560,12 @@
      </property>
      <item>
       <widget class="QLabel" name="label_6">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>225</horstretch>
+         <verstretch>25</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>225</width>
@@ -573,10 +585,22 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="sb_discharge_coefficient_positive">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>150</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>150</width>
          <height>25</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
         </size>
        </property>
        <property name="styleSheet">
@@ -594,6 +618,9 @@
        <property name="maximum">
         <double>100000000000000000.000000000000000</double>
        </property>
+       <property name="value">
+        <double>1.000000000000000</double>
+       </property>
       </widget>
      </item>
     </layout>
@@ -602,6 +629,12 @@
     <layout class="QHBoxLayout" name="horizontalLayout_6">
      <item>
       <widget class="QLabel" name="label_7">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>225</horstretch>
+         <verstretch>25</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>225</width>
@@ -621,10 +654,22 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="sb_discharge_coefficient_negative">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>150</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>150</width>
          <height>25</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
         </size>
        </property>
        <property name="styleSheet">
@@ -641,6 +686,9 @@
        </property>
        <property name="maximum">
         <double>100000000000000000.000000000000000</double>
+       </property>
+       <property name="value">
+        <double>1.000000000000000</double>
        </property>
       </widget>
      </item>
@@ -666,6 +714,12 @@
      </item>
      <item>
       <widget class="QLabel" name="label_8">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>150</horstretch>
+         <verstretch>25</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>150</width>
@@ -685,10 +739,22 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="sb_max_breach_depth">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>150</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>150</width>
          <height>25</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
         </size>
        </property>
        <property name="font">
