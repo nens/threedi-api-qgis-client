@@ -9,6 +9,7 @@ from datetime import datetime
 from copy import deepcopy
 from collections import defaultdict
 from functools import partial
+from operator import attrgetter
 from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor, QStandardItemModel, QStandardItem, QFont
@@ -213,7 +214,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         set_widget_background_color(self)
         self.new_simulations = None
         self.new_simulation_statuses = None
-        self.rasters = {}
+        self.initial_waterlevels = {}
         self.saved_states = {}
         self.gb_1d.setChecked(False)
         self.gb_2d.setChecked(False)
@@ -235,17 +236,17 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         """Setup initial conditions widget."""
         try:
             tc = ThreediCalls(self.parent_page.parent_wizard.plugin_dock.threedi_api)
-            rasters = tc.fetch_3di_model_initial_waterlevels(
-                self.parent_page.parent_wizard.model_selection_dlg.current_model.id
-            )
-            if rasters:
+            model_id = self.parent_page.parent_wizard.model_selection_dlg.current_model.id
+            initial_waterlevels = tc.fetch_3di_model_initial_waterlevels(model_id) or []
+            if initial_waterlevels:
                 self.rb_2d_online_raster.setChecked(True)
                 self.rb_gw_online_raster.setChecked(True)
-            for raster in rasters or []:
-                if raster.dimension != "two_d":
+            for iw in sorted(initial_waterlevels, key=attrgetter("id")):
+                if iw.dimension != "two_d":
                     continue
+                raster = tc.fetch_3di_model_raster(model_id, iw.source_raster_id)
                 raster_filename = raster.file.filename
-                self.rasters[raster_filename] = raster
+                self.initial_waterlevels[raster_filename] = iw
                 self.cbo_2d_online_raster.addItem(raster_filename)
                 self.cbo_gw_online_raster.addItem(raster_filename)
 
@@ -1931,8 +1932,8 @@ class SimulationWizard(QWizard):
                 if events.initial_twodwaterlevel:
                     init_conditions_widget.sp_2d_global_value.setValue(events.initial_twodwaterlevel.value)
                 elif events.initial_twodwaterraster:
-                    for raster_filename, raster in init_conditions_widget.rasters.items():
-                        if raster.url == events.initial_twodwaterraster.initial_waterlevel:
+                    for raster_filename, iw in init_conditions_widget.initial_waterlevels.items():
+                        if iw.url == events.initial_twodwaterraster.initial_waterlevel:
                             init_conditions_widget.cbo_2d_online_raster.setCurrentText(raster_filename)
                             init_conditions_widget.cb_2d_aggregation.setCurrentText(
                                 events.initial_twodwaterraster.aggregation_method
@@ -1943,8 +1944,8 @@ class SimulationWizard(QWizard):
                 if events.initial_groundwaterlevel:
                     init_conditions_widget.sp_gwater_global_value.setValue(events.initial_groundwaterlevel.value)
                 elif events.initial_groundwaterraster:
-                    for raster_filename, raster in init_conditions_widget.rasters.items():
-                        if raster.url == events.initial_groundwaterraster.initial_waterlevel:
+                    for raster_filename, iw in init_conditions_widget.initial_waterlevels.items():
+                        if iw.url == events.initial_groundwaterraster.initial_waterlevel:
                             init_conditions_widget.cbo_gw_online_raster.setCurrentText(raster_filename)
                             init_conditions_widget.cb_gwater_aggregation.setCurrentText(
                                 events.initial_groundwaterraster.aggregation_method
@@ -2101,7 +2102,7 @@ class SimulationWizard(QWizard):
             global_value_1d = self.init_conditions_page.main_widget.sp_1d_global_value.value()
             # 2D
             global_value_2d = self.init_conditions_page.main_widget.sp_2d_global_value.value()
-            initial_wl_file_2d = self.init_conditions_page.main_widget.rasters.get(
+            initial_wl_file_2d = self.init_conditions_page.main_widget.initial_waterlevels.get(
                 self.init_conditions_page.main_widget.cbo_2d_online_raster.currentText()
             )
             if self.init_conditions_page.main_widget.rb_2d_local_raster.isChecked():
@@ -2111,7 +2112,7 @@ class SimulationWizard(QWizard):
             aggregation_method_2d = self.init_conditions_page.main_widget.cb_2d_aggregation.currentText()
             # Groundwater
             global_value_groundwater = self.init_conditions_page.main_widget.sp_gwater_global_value.value()
-            initial_wl_file_groundwater = self.init_conditions_page.main_widget.rasters.get(
+            initial_wl_file_groundwater = self.init_conditions_page.main_widget.initial_waterlevels.get(
                 self.init_conditions_page.main_widget.cbo_gw_online_raster.currentText()
             )
             if self.init_conditions_page.main_widget.rb_gw_local_raster.isChecked():
