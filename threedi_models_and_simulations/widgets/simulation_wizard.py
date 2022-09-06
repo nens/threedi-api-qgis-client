@@ -24,7 +24,7 @@ from qgis.PyQt.QtWidgets import (
     QDoubleSpinBox,
     QLineEdit,
 )
-from qgis.core import QgsMapLayerProxyModel
+from qgis.core import QgsMapLayerProxyModel, NULL
 from threedi_api_client.openapi import ApiException
 from ..utils_ui import (
     get_filepath,
@@ -603,11 +603,12 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.values = dict()
+        self.potential_breaches = dict()
         self.breaches_layer = parent_page.parent_wizard.model_selection_dlg.breaches_layer
         self.dd_breach_id = FilteredComboBox(self)
         self.breach_lout.addWidget(self.dd_breach_id)
-        self.dd_breach_id.currentIndexChanged.connect(self.write_values_into_dict)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
+        self.dd_breach_id.currentIndexChanged.connect(self.potential_breach_changed)
         self.dd_units.currentIndexChanged.connect(self.write_values_into_dict)
         self.sb_duration.valueChanged.connect(self.write_values_into_dict)
         self.sb_width.valueChanged.connect(self.write_values_into_dict)
@@ -626,16 +627,33 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         """Setup breaches data with corresponding vector layer."""
         cached_breaches = self.parent_page.parent_wizard.model_selection_dlg.current_model_breaches
         if cached_breaches is not None:
+            field_names = [field.name() for field in self.breaches_layer.fields()]
             if self.breaches_layer.selectedFeatureCount() > 0:
                 first_id = [str(feat["content_pk"]) for feat in self.breaches_layer.selectedFeatures()][0]
             else:
                 first_id = None
-            breaches_ids = [str(feat["content_pk"]) for feat in self.breaches_layer.getFeatures()]
+            breaches_ids = []
+            for feat in self.breaches_layer.getFeatures():
+                breach_id = str(feat["content_pk"])
+                breaches_ids.append(breach_id)
+                self.potential_breaches[breach_id] = {field_name: feat[field_name] for field_name in field_names}
             breaches_ids.sort(key=lambda i: int(i))
             self.dd_breach_id.addItems(breaches_ids)
             if first_id is not None:
                 self.dd_breach_id.setCurrentText(first_id)
+                self.set_values_from_feature()
         self.write_values_into_dict()
+
+    def set_values_from_feature(self):
+        """Set potential breach parameters to the widgets."""
+        breach_id = self.dd_breach_id.currentText()
+        try:
+            breach_attributes = self.potential_breaches[breach_id]
+            max_breach_depth = breach_attributes["levbr"]
+            if max_breach_depth not in (None, NULL):
+                self.sb_max_breach_depth.setValue(max_breach_depth)
+        except KeyError:
+            pass
 
     def write_values_into_dict(self):
         """Store current widget values."""
@@ -684,6 +702,12 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             self.sb_discharge_coefficient_positive.setValue(1.0)
             self.sb_discharge_coefficient_negative.setValue(1.0)
             self.sb_max_breach_depth.setValue(0)
+            self.set_values_from_feature()
+
+    def potential_breach_changed(self):
+        """Handle potential breach ID change."""
+        self.set_values_from_feature()
+        self.write_values_into_dict()
 
     def get_breaches_data(self):
         """Getting all needed data for adding breaches to the simulation."""
