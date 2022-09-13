@@ -2040,7 +2040,7 @@ class SimulationWizard(QWizard):
                 breaches_widget.sp_start_after.setValue(breach.offset)
                 breaches_widget.sb_discharge_coefficient_positive.setValue(breach.discharge_coefficient_positive or 1)
                 breaches_widget.sb_discharge_coefficient_negative.setValue(breach.discharge_coefficient_negative or 1)
-                breaches_widget.sb_max_breach_depth.setValue(potential_breach.maximum_breach_depth)
+                breaches_widget.sb_max_breach_depth.setValue(breach.maximum_breach_depth)
         if init_conditions.include_precipitations:
             precipitation_widget = self.precipitation_page.main_widget
             if events.timeseriesrain:
