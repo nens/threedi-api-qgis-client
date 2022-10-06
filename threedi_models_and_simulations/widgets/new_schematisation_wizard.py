@@ -195,6 +195,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "manhole_storage_area": None,
             "max_angle_1d_advection": 90.0,
             "maximum_sim_time_step": None,
+            "maximum_table_step_size": None,
             "minimum_sim_time_step": 0.01,
             "name": "default",
             "nr_timesteps": 9999,
@@ -204,9 +205,8 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "simple_infiltration_settings_id": None,
             "start_date": QDate.fromString("2000-01-01", "yyyy-MM-dd"),
             "start_time": QTime.fromString("00:00:00", "HH:MM:SS"),
-            "table_step_size": 0.01,
+            "table_step_size": 0.05,
             "table_step_size_1d": 0.01,
-            "table_step_size_volume_2d": None,
             "timestep_plus": 0,
             "use_0d_inflow": None,
             "use_1d_flow": None,
@@ -318,8 +318,8 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         user_settings["max_degree"] = max_degree
         return user_settings
 
-    def rasters_filepaths(self):
-        """Get rasters filepahts."""
+    def raster_filepaths(self):
+        """Get raster filepaths."""
         dem_file = self.dem_file.filePath()
         frict_coef_file = self.frict_coef_file.filePath()
         return dem_file, frict_coef_file
@@ -479,7 +479,7 @@ class NewSchematisationWizard(QWizard):
             return
         name, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_name_data()
         schematisation_settings = self.schematisation_settings_page.main_widget.collect_new_schematisation_settings()
-        raster_filepaths = self.schematisation_settings_page.main_widget.rasters_filepaths()
+        raster_filepaths = self.schematisation_settings_page.main_widget.raster_filepaths()
         aggregation_settings_queries = self.schematisation_settings_page.main_widget.aggregation_settings_queries
         try:
             schematisation = self.tc.create_schematisation(name, owner, tags=tags)

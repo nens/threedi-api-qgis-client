@@ -92,6 +92,7 @@
        <widget class="QLabel" name="label_12">
         <property name="font">
          <font>
+          <family>Segoe UI</family>
           <pointsize>14</pointsize>
           <weight>75</weight>
           <bold>true</bold>
@@ -115,6 +116,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -130,6 +132,7 @@
           <widget class="QLabel" name="label_14">
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -157,6 +160,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -208,6 +212,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -250,6 +255,7 @@
         </property>
         <property name="font">
          <font>
+          <family>Segoe UI</family>
           <pointsize>12</pointsize>
          </font>
         </property>
@@ -276,21 +282,66 @@
            </property>
           </spacer>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_3">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label">
+           <property name="minimumSize">
+            <size>
+             <width>350</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
            <property name="toolTip">
-            <string>This value is used to fill in the 'grid_space' attribute in the global settings</string>
+            <string>Raster file (.tif) that contains the elevation (m MSL) for each pixel</string>
            </property>
            <property name="text">
-            <string>Computational cell size [m]:</string>
+            <string>Digital elevation model:</string>
            </property>
-           <property name="textFormat">
-            <enum>Qt::PlainText</enum>
+          </widget>
+         </item>
+         <item row="0" column="1" colspan="3">
+          <widget class="QgsFileWidget" name="dem_file">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Raster file (.tif) that contains the elevation (m MSL) for each pixel</string>
+           </property>
+           <property name="dialogTitle">
+            <string>Select DEM file</string>
+           </property>
+           <property name="filter">
+            <string>GeoTIFF (*.tif *.TIF *.tiff *.TIFF)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_5">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>For sloping areas, the appropriate numerical limiters will be set.</string>
+           </property>
+           <property name="text">
+            <string>The model area is predominantly:</string>
            </property>
           </widget>
          </item>
@@ -304,6 +355,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -324,31 +376,7 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1" colspan="3">
-          <widget class="QgsFileWidget" name="dem_file">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>25</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Raster file (.tif) that contains the elevation (m MSL) for each pixel</string>
-           </property>
-           <property name="dialogTitle">
-            <string>Select DEM file</string>
-           </property>
-           <property name="filter">
-            <string>GeoTIFF (*.tif *.TIF *.tiff *.TIFF)</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1" colspan="3">
+         <item row="2" column="1" colspan="3">
           <layout class="QHBoxLayout" name="horizontalLayout">
            <property name="bottomMargin">
             <number>0</number>
@@ -357,6 +385,7 @@
             <widget class="QRadioButton" name="frict_shallow_water_correction_flat">
              <property name="font">
               <font>
+               <family>Segoe UI</family>
                <pointsize>10</pointsize>
               </font>
              </property>
@@ -375,6 +404,7 @@
             <widget class="QRadioButton" name="frict_shallow_water_correction_sloping">
              <property name="font">
               <font>
+               <family>Segoe UI</family>
                <pointsize>10</pointsize>
               </font>
              </property>
@@ -388,84 +418,22 @@
            </item>
           </layout>
          </item>
-         <item row="2" column="2" colspan="2">
-          <widget class="QDoubleSpinBox" name="table_step_size">
-           <property name="minimumSize">
-            <size>
-             <width>150</width>
-             <height>25</height>
-            </size>
-           </property>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_3">
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
            <property name="toolTip">
-            <string>Vertical increment used by 3Di to analyse the DEM</string>
-           </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
-           </property>
-           <property name="minimum">
-            <double>0.050000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>1.990000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.010000000000000</double>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_4">
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Vertical increment used by 3Di to analyse the DEM</string>
+            <string>This value is used to fill in the 'grid_space' attribute in the global settings</string>
            </property>
            <property name="text">
-            <string>Table step size [m]:</string>
+            <string>Computational cell size [m]:</string>
            </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label">
-           <property name="minimumSize">
-            <size>
-             <width>350</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Raster file (.tif) that contains the elevation (m MSL) for each pixel</string>
-           </property>
-           <property name="text">
-            <string>Digital elevation model:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_5">
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>For sloping areas, the appropriate numerical limiters will be set.</string>
-           </property>
-           <property name="text">
-            <string>The model area is predominantly:</string>
+           <property name="textFormat">
+            <enum>Qt::PlainText</enum>
            </property>
           </widget>
          </item>
@@ -476,6 +444,7 @@
        <widget class="QGroupBox" name="use_1d_flow_group">
         <property name="font">
          <font>
+          <family>Segoe UI</family>
           <pointsize>12</pointsize>
          </font>
         </property>
@@ -515,6 +484,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -539,6 +509,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -569,6 +540,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -590,6 +562,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -605,6 +578,7 @@
        <widget class="QGroupBox" name="use_0d_inflow_group">
         <property name="font">
          <font>
+          <family>Segoe UI</family>
           <pointsize>12</pointsize>
          </font>
         </property>
@@ -625,6 +599,7 @@
           <widget class="QRadioButton" name="use_0d_inflow_surfaces">
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -643,6 +618,7 @@
           <widget class="QRadioButton" name="use_0d_inflow_impervious_surfaces">
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -664,6 +640,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -682,6 +659,7 @@
        <widget class="QLabel" name="label_6">
         <property name="font">
          <font>
+          <family>Segoe UI</family>
           <pointsize>14</pointsize>
           <weight>75</weight>
           <bold>true</bold>
@@ -696,6 +674,7 @@
        <widget class="QGroupBox" name="friction_coefficients_group">
         <property name="font">
          <font>
+          <family>Segoe UI</family>
           <pointsize>12</pointsize>
          </font>
         </property>
@@ -707,6 +686,7 @@
           <widget class="QLabel" name="frict_coef_label">
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -728,6 +708,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -743,6 +724,7 @@
           <widget class="QLabel" name="label_11">
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -777,6 +759,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -805,6 +788,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
@@ -829,6 +813,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
