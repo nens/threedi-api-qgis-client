@@ -1,5 +1,6 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
+import math
 import os
 import shutil
 import time
@@ -133,30 +134,30 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         """Aggregation settings query."""
         sql_qry = """
             DELETE FROM v2_aggregation_settings;
-            INSERT INTO v2_aggregation_settings(global_settings_id, var_name, flow_variable, aggregation_method, aggregation_in_space, timestep)
-            SELECT id, 'pump_discharge_cum', 'pump_discharge', 'cum', 0, output_time_step FROM v2_global_settings
+            INSERT INTO v2_aggregation_settings(global_settings_id, var_name, flow_variable, aggregation_method, timestep)
+            SELECT id, 'pump_discharge_cum', 'pump_discharge', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'lateral_discharge_cum', 'lateral_discharge', 'cum', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'lateral_discharge_cum', 'lateral_discharge', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'simple_infiltration_cum', 'simple_infiltration', 'cum', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'simple_infiltration_cum', 'simple_infiltration', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'rain_cum', 'rain', 'cum', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'rain_cum', 'rain', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'leakage_cum', 'leakage', 'cum', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'leakage_cum', 'leakage', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'interception_current', 'interception', 'current', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'interception_current', 'interception', 'current', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'discharge_cum', 'discharge', 'cum', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'discharge_cum', 'discharge', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'discharge_cum_neg', 'discharge', 'cum_negative', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'discharge_cum_neg', 'discharge', 'cum_negative', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'discharge_cum_pos', 'discharge', 'cum_positive', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'discharge_cum_pos', 'discharge', 'cum_positive', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'volume_current', 'volume', 'current', 0, output_time_step  FROM v2_global_settings
+            SELECT id, 'volume_current', 'volume', 'current', output_time_step  FROM v2_global_settings
             UNION
-            SELECT id, 'qsss_cum_pos', 'surface_source_sink_discharge', 'cum_positive', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'qsss_cum_pos', 'surface_source_sink_discharge', 'cum_positive', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'qsss_cum_neg', 'surface_source_sink_discharge', 'cum_negative', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'qsss_cum_neg', 'surface_source_sink_discharge', 'cum_negative', output_time_step FROM v2_global_settings
             ;"""
         return sql_qry
 
@@ -315,7 +316,8 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             max_degree = 7
         else:
             max_degree = 5
-        user_settings["max_degree"] = max_degree
+        max_degree_in_radians = math.radians(max_degree)
+        user_settings["max_degree"] = max_degree_in_radians
         return user_settings
 
     def raster_filepaths(self):
