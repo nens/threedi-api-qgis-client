@@ -1,5 +1,6 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
+import math
 import os
 import shutil
 import time
@@ -133,30 +134,30 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         """Aggregation settings query."""
         sql_qry = """
             DELETE FROM v2_aggregation_settings;
-            INSERT INTO v2_aggregation_settings(global_settings_id, var_name, flow_variable, aggregation_method, aggregation_in_space, timestep)
-            SELECT id, 'pump_discharge_cum', 'pump_discharge', 'cum', 0, output_time_step FROM v2_global_settings
+            INSERT INTO v2_aggregation_settings(global_settings_id, var_name, flow_variable, aggregation_method, timestep)
+            SELECT id, 'pump_discharge_cum', 'pump_discharge', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'lateral_discharge_cum', 'lateral_discharge', 'cum', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'lateral_discharge_cum', 'lateral_discharge', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'simple_infiltration_cum', 'simple_infiltration', 'cum', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'simple_infiltration_cum', 'simple_infiltration', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'rain_cum', 'rain', 'cum', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'rain_cum', 'rain', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'leakage_cum', 'leakage', 'cum', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'leakage_cum', 'leakage', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'interception_current', 'interception', 'current', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'interception_current', 'interception', 'current', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'discharge_cum', 'discharge', 'cum', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'discharge_cum', 'discharge', 'cum', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'discharge_cum_neg', 'discharge', 'cum_negative', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'discharge_cum_neg', 'discharge', 'cum_negative', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'discharge_cum_pos', 'discharge', 'cum_positive', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'discharge_cum_pos', 'discharge', 'cum_positive', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'volume_current', 'volume', 'current', 0, output_time_step  FROM v2_global_settings
+            SELECT id, 'volume_current', 'volume', 'current', output_time_step  FROM v2_global_settings
             UNION
-            SELECT id, 'qsss_cum_pos', 'surface_source_sink_discharge', 'cum_positive', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'qsss_cum_pos', 'surface_source_sink_discharge', 'cum_positive', output_time_step FROM v2_global_settings
             UNION
-            SELECT id, 'qsss_cum_neg', 'surface_source_sink_discharge', 'cum_negative', 0, output_time_step FROM v2_global_settings
+            SELECT id, 'qsss_cum_neg', 'surface_source_sink_discharge', 'cum_negative', output_time_step FROM v2_global_settings
             ;"""
         return sql_qry
 
@@ -193,8 +194,9 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "max_interception_file": None,
             "kmax": 1,
             "manhole_storage_area": None,
-            "max_angle_1d_advection": 90.0,
+            "max_angle_1d_advection": math.radians(90),
             "maximum_sim_time_step": None,
+            "maximum_table_step_size": None,
             "minimum_sim_time_step": 0.01,
             "name": "default",
             "nr_timesteps": 9999,
@@ -204,9 +206,8 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "simple_infiltration_settings_id": None,
             "start_date": QDate.fromString("2000-01-01", "yyyy-MM-dd"),
             "start_time": QTime.fromString("00:00:00", "HH:MM:SS"),
-            "table_step_size": 0.01,
+            "table_step_size": 0.05,
             "table_step_size_1d": 0.01,
-            "table_step_size_volume_2d": None,
             "timestep_plus": 0,
             "use_0d_inflow": None,
             "use_1d_flow": None,
@@ -318,8 +319,8 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         user_settings["max_degree"] = max_degree
         return user_settings
 
-    def rasters_filepaths(self):
-        """Get rasters filepahts."""
+    def raster_filepaths(self):
+        """Get raster filepaths."""
         dem_file = self.dem_file.filePath()
         frict_coef_file = self.frict_coef_file.filePath()
         return dem_file, frict_coef_file
@@ -479,7 +480,7 @@ class NewSchematisationWizard(QWizard):
             return
         name, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_name_data()
         schematisation_settings = self.schematisation_settings_page.main_widget.collect_new_schematisation_settings()
-        raster_filepaths = self.schematisation_settings_page.main_widget.rasters_filepaths()
+        raster_filepaths = self.schematisation_settings_page.main_widget.raster_filepaths()
         aggregation_settings_queries = self.schematisation_settings_page.main_widget.aggregation_settings_queries
         try:
             schematisation = self.tc.create_schematisation(name, owner, tags=tags)
