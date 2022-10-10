@@ -194,7 +194,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "max_interception_file": None,
             "kmax": 1,
             "manhole_storage_area": None,
-            "max_angle_1d_advection": 90.0,
+            "max_angle_1d_advection": math.radians(90),
             "maximum_sim_time_step": None,
             "maximum_table_step_size": None,
             "minimum_sim_time_step": 0.01,
@@ -316,8 +316,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             max_degree = 7
         else:
             max_degree = 5
-        max_degree_in_radians = math.radians(max_degree)
-        user_settings["max_degree"] = max_degree_in_radians
+        user_settings["max_degree"] = max_degree
         return user_settings
 
     def raster_filepaths(self):
