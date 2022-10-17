@@ -232,12 +232,6 @@ class ThreediModelsAndSimulations:
         if not api_client_versions_matches:
             self.ensure_required_api_client_version(available_api_client_version)
             return
-        # TODO: This check should be enabled after refactoring ThreeDiToolbox dependencies handling
-        # modelchecker_versions_matches, available_modelchecker_version = model_checker_version_matches()
-        # if not modelchecker_versions_matches:
-        #     self.ensure_required_modelchecker_version(available_modelchecker_version)
-        # if not all([api_client_versions_matches, modelchecker_versions_matches]):
-        #     return
 
         from threedi_models_and_simulations.widgets.threedi_dockwidget import ThreediDockWidget
 
@@ -251,5 +245,7 @@ class ThreediModelsAndSimulations:
                 self.dockwidget = ThreediDockWidget(self.iface, self.plugin_settings)
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
-            self.dockwidget.show()
+            self.iface.addTabifiedDockWidget(Qt.RightDockWidgetArea, self.dockwidget, raiseTab=True)
+            # Workaround for the issue with the interface elements getting invisible after combining with identify tool.
+            self.iface.mainWindow().showNormal()
+            self.iface.mainWindow().showMaximized()
