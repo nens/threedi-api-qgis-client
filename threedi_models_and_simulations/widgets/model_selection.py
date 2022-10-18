@@ -37,10 +37,8 @@ class ModelSelectionDialog(uicls, basecls):
         self.threedi_models = None
         self.simulation_templates = None
         self.current_model = None
-        self.current_model_cells = None
         self.current_model_breaches = None
         self.current_simulation_template = None
-        self.cells_layer = None
         self.breaches_layer = None
         self.organisation = None
         self.model_is_loaded = False
@@ -179,21 +177,12 @@ class ModelSelectionDialog(uicls, basecls):
 
     def load_cached_layers(self):
         """Loading cached layers into the map canvas."""
-        if self.current_model_cells is not None:
-            self.cells_layer = QgsVectorLayer(self.current_model_cells, "cells", "ogr")
-            set_named_style(self.cells_layer, "cells.qml")
-            QgsProject.instance().addMapLayer(self.cells_layer, False)
-            QgsProject.instance().layerTreeRoot().insertLayer(0, self.cells_layer)
-            self.cells_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
         if self.current_model_breaches is not None:
             self.breaches_layer = QgsVectorLayer(self.current_model_breaches, "breaches", "ogr")
             set_named_style(self.breaches_layer, "breaches.qml")
             QgsProject.instance().addMapLayer(self.breaches_layer, False)
             QgsProject.instance().layerTreeRoot().insertLayer(0, self.breaches_layer)
             self.breaches_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
-        if self.current_model_cells is not None:
-            self.plugin_dock.iface.setActiveLayer(self.cells_layer)
-            self.plugin_dock.iface.zoomToActiveLayer()
 
     def unload_cached_layers(self):
         """Removing model related vector layers from map canvas."""
@@ -201,11 +190,8 @@ class ModelSelectionDialog(uicls, basecls):
             if self.breaches_layer is not None:
                 QgsProject.instance().removeMapLayer(self.breaches_layer)
                 self.breaches_layer = None
-            if self.cells_layer is not None:
-                QgsProject.instance().removeMapLayer(self.cells_layer)
-                self.cells_layer = None
             self.plugin_dock.iface.mapCanvas().refresh()
-        except AttributeError:
+        except (AttributeError, RuntimeError):
             pass
 
     def load_model(self):
@@ -217,7 +203,6 @@ class ModelSelectionDialog(uicls, basecls):
             current_row = index.row()
             name_item = self.models_model.item(current_row, self.NAME_COLUMN_IDX)
             self.current_model = name_item.data(Qt.UserRole)
-            self.current_model_cells = self.get_cached_data("cells")
             self.current_model_breaches = self.get_cached_data("breaches")
             self.current_simulation_template = self.get_selected_template()
             self.load_cached_layers()
@@ -260,8 +245,6 @@ class ModelSelectionDialog(uicls, basecls):
             model_id = self.current_model.id
             if geojson_name == "breaches":
                 download = tc.fetch_3di_model_geojson_breaches_download(model_id)
-            elif geojson_name == "cells":
-                download = tc.fetch_3di_model_geojson_cells_download(model_id)
             else:
                 return cached_file_path
             filename = f"{geojson_name}_{model_id}_{download.etag}.json"
