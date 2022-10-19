@@ -801,6 +801,11 @@ class ThreediCalls:
         commit = self.threedi_api.schematisations_revisions_commit(revision_pk, schematisation_pk, data)
         return commit
 
+    def fetch_schematisation_revision_3di_models(self, schematisation_pk: int, revision_pk: int) -> List[ThreediModel]:
+        """Fetch 3Di models belonging to the particular schematisation revision."""
+        threedi_models = self.threedi_api.schematisations_revisions_threedimodels(revision_pk, schematisation_pk)
+        return threedi_models
+
     def create_schematisation_revision_3di_model(self, schematisation_pk: int, revision_pk: int) -> ThreediModel:
         """Create a new 3Di model out of committed revision."""
         threedi_model = self.threedi_api.schematisations_revisions_create_threedimodel(revision_pk, schematisation_pk)

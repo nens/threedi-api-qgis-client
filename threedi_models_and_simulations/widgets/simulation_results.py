@@ -1,6 +1,7 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import os
+import shutil
 from dateutil.relativedelta import relativedelta
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt, QThread, QSettings
@@ -10,7 +11,13 @@ from threedi_api_client.openapi import ApiException
 from .custom_items import DownloadProgressDelegate
 from ..api_calls.threedi_calls import ThreediCalls
 from ..workers import DownloadProgressWorker
-from ..utils import extract_error_message, list_local_schematisations, LocalSchematisation, LocalRevision
+from ..utils import (
+    bypass_max_path_limit,
+    extract_error_message,
+    list_local_schematisations,
+    LocalSchematisation,
+    LocalRevision,
+)
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_results.ui"))
@@ -88,6 +95,13 @@ class SimulationResults(uicls, basecls):
     def on_download_finished_success(self, msg):
         """Reporting finish successfully status and closing download thread."""
         self.plugin_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
+        results_dir = self.download_worker.directory
+        grid_file = os.path.join(results_dir, "gridadmin.h5")
+        if os.path.exists(grid_file):
+            grid_dir = os.path.join(os.path.dirname(os.path.dirname(results_dir)), "grid")
+            if os.path.exists(grid_dir):
+                grid_file_copy = os.path.join(grid_dir, "gridadmin.h5")
+                shutil.copyfile(grid_file, bypass_max_path_limit(grid_file_copy, is_file=True))
         self.download_results_thread.quit()
         self.download_results_thread.wait()
         self.download_results_thread = None

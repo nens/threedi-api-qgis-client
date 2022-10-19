@@ -4,6 +4,7 @@ import logging
 import os
 from math import ceil
 from time import sleep
+from operator import attrgetter
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
@@ -265,19 +266,29 @@ class SchematisationDownload(uicls, basecls):
                 return
 
             tc = ThreediCalls(self.threedi_api)
+            self.communication.show_info(f"{schematisation_pk} {revision_pk}")
             sqlite_download = tc.download_schematisation_revision_sqlite(schematisation_pk, revision_pk)
+            revision_models = tc.fetch_schematisation_revision_3di_models(schematisation_pk, revision_pk)
             rasters_downloads = []
             for raster_file in revision.rasters or []:
                 raster_download = tc.download_schematisation_revision_raster(
                     raster_file.id, schematisation_pk, revision_pk
                 )
                 rasters_downloads.append((raster_file.name, raster_download))
+            number_of_steps = len(rasters_downloads) + 1
+
+            gridadmin_file, gridadmin_download = (None, None)
+            for revision_model in sorted(revision_models, key=attrgetter("id"), reverse=True):
+                gridadmin_file, gridadmin_download = tc.fetch_3di_model_gridadmin_download(revision_model.id)
+                if gridadmin_download is not None:
+                    number_of_steps += 1
+                    break
 
             if revision_pk in local_schematisation.revisions:
                 local_schematisation.add_revision(revision_pk)
 
             zip_filepath = os.path.join(schematisation_db_dir, revision_sqlite.file.filename)
-            self.pbar_download.setMaximum(len(rasters_downloads) + 1)
+            self.pbar_download.setMaximum(number_of_steps)
             current_progress = 0
             self.pbar_download.setValue(current_progress)
             get_download_file(sqlite_download, zip_filepath)
@@ -286,6 +297,11 @@ class SchematisationDownload(uicls, basecls):
             sqlite_file = content_list[0]
             current_progress += 1
             self.pbar_download.setValue(current_progress)
+            if gridadmin_download is not None:
+                grid_filepath = os.path.join(os.path.dirname(schematisation_db_dir), "grid", gridadmin_file.filename)
+                get_download_file(gridadmin_download, grid_filepath)
+                current_progress += 1
+                self.pbar_download.setValue(current_progress)
             for raster_filename, raster_download in rasters_downloads:
                 raster_filepath = os.path.join(schematisation_db_dir, "rasters", raster_filename)
                 get_download_file(raster_download, raster_filepath)
