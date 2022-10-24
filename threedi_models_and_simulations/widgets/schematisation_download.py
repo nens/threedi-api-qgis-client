@@ -266,7 +266,6 @@ class SchematisationDownload(uicls, basecls):
                 return
 
             tc = ThreediCalls(self.threedi_api)
-            self.communication.show_info(f"{schematisation_pk} {revision_pk}")
             sqlite_download = tc.download_schematisation_revision_sqlite(schematisation_pk, revision_pk)
             revision_models = tc.fetch_schematisation_revision_3di_models(schematisation_pk, revision_pk)
             rasters_downloads = []
