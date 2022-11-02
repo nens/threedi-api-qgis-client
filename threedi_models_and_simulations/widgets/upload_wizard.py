@@ -137,6 +137,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         schema = ModelSchema(threedi_db)
         try:
             schema.validate_schema()
+            schema.set_spatial_indexes()
         except errors.MigrationMissingError:
             warn_and_ask_msg = (
                 "The selected spatialite cannot be used because its database schema version is out of date. "
@@ -149,6 +150,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             wip_revision = self.current_local_schematisation.wip_revision
             backup_filepath = wip_revision.backup_sqlite()
             schema.upgrade(backup=False, upgrade_spatialite_version=True)
+            schema.set_spatial_indexes()
             shutil.rmtree(os.path.dirname(backup_filepath))
         except errors.UpgradeFailedError:
             error_msg = (
