@@ -3,12 +3,12 @@
 import os
 
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QThreadPool
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from qgis.PyQt.QtWidgets import QMessageBox
 from threedi_api_client.openapi import ApiException, Progress
-
 from threedi_models_and_simulations.widgets.simulation_init import SimulationInit
+from threedi_models_and_simulations.workers import SimulationsRunner
 from .simulation_wizard import SimulationWizard
 from .model_selection import ModelSelectionDialog
 from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
@@ -31,6 +31,7 @@ class SimulationOverview(uicls, basecls):
         self.threedi_api = self.plugin_dock.threedi_api
         self.user = self.plugin_dock.current_user
         self.model_selection_dlg = ModelSelectionDialog(self.plugin_dock, parent=self)
+        self.simulation_runner = QThreadPool()
         self.simulation_init_wizard = None
         self.simulation_wizard = None
         self.simulations_keys = {}
@@ -131,8 +132,11 @@ class SimulationOverview(uicls, basecls):
             self.simulation_wizard.load_template_parameters(simulation, settings_overview, events)
         self.close()
         self.simulation_wizard.exec_()
-        new_simulations = self.simulation_wizard.new_simulations
+        simulations_to_run = self.simulation_wizard.new_simulations
         if new_simulations is not None:
+            simulations_runner = SimulationsRunner(
+                self.threedi_api,
+            )
             for sim in new_simulations:
                 initial_status = self.simulation_wizard.new_simulation_statuses.get(sim.id)
                 initial_progress = Progress(percentage=0, time=sim.duration)

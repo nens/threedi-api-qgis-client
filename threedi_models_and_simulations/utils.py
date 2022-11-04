@@ -6,6 +6,7 @@ import hashlib
 import requests
 import shutil
 import tempfile
+from enum import Enum
 from uuid import uuid4
 from zipfile import ZipFile, ZIP_DEFLATED
 from enum import Enum
@@ -25,6 +26,14 @@ CHUNK_SIZE = 1024 ** 2
 DIR_MAX_PATH = 248
 FILE_MAX_PATH = 260
 UNC_PREFIX = "\\\\?\\"
+RADAR_ID = "d6c2347d-7bd1-4d9d-a1f6-b342c865516f"
+
+
+class EventTypes(Enum):
+    CONSTANT = "Constant"
+    CUSTOM = "Custom"
+    DESIGN = "Design"
+    RADAR = "Radar - NL Only"
 
 
 def mmh_to_ms(mmh_value):

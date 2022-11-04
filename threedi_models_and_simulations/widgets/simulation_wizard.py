@@ -2,8 +2,8 @@
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import os
 import csv
-import time
 import pyqtgraph as pg
+import simulation_wizard_data_models as dm
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from copy import deepcopy
@@ -41,15 +41,11 @@ from ..utils import (
     ms_to_mmh,
     mmh_to_mmtimestep,
     mmtimestep_to_mmh,
-    write_laterals_to_json,
     get_download_file,
-    upload_file,
     read_json_data,
-    split_to_even_chunks,
     intervals_are_even,
     TEMPDIR,
-    LATERALS_FILE_TEMPLATE,
-    DWF_FILE_TEMPLATE,
+    EventTypes,
 )
 from .custom_items import FilteredComboBox
 from ..api_calls.threedi_calls import ThreediCalls
@@ -78,10 +74,6 @@ uicls_summary_page, basecls_summary_page = uic.loadUiType(
 )
 
 
-CONSTANT = "Constant"
-CUSTOM = "Custom"
-DESIGN = "Design"
-RADAR = "Radar - NL Only"
 AREA_WIDE_RAIN = {
     "0": [0.0],
     "1": [0.0],
@@ -122,8 +114,6 @@ RAIN_LOOKUP = {
     "15": ("250.00", "c"),
     "16": ("1000.00", "c"),
 }
-
-RADAR_ID = "d6c2347d-7bd1-4d9d-a1f6-b342c865516f"
 
 
 class NameWidget(uicls_name_page, basecls_name_page):
@@ -212,13 +202,11 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
         set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
-        self.new_simulations = None
-        self.new_simulation_statuses = None
         self.initial_waterlevels = {}
         self.saved_states = {}
         self.gb_1d.setChecked(False)
         self.gb_2d.setChecked(False)
-        self.gb_gwater.setChecked(False)
+        self.gb_groundwater.setChecked(False)
         self.cbo_2d_local_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.cbo_gw_local_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.btn_browse_2d_local_raster.clicked.connect(partial(self.browse_for_local_raster, self.cbo_2d_local_raster))
@@ -258,8 +246,6 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                 self.saved_states[state_name] = state
                 self.cb_saved_states.addItem(state_name)
         except ApiException as e:
-            self.new_simulations = None
-            self.new_simulation_statuses = None
             error_msg = extract_error_message(e)
             self.parent_page.parent_wizard.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
         except Exception as e:
@@ -808,7 +794,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         """Store current widget values."""
         simulation = self.dd_simulation.currentText()
         precipitation_type = self.cbo_prec_type.currentText()
-        if precipitation_type == CONSTANT:
+        if precipitation_type == EventTypes.CONSTANT.value:
             start_after = self.sp_start_after_constant.value()
             start_after_units = self.start_after_constant_u.currentText()
             stop_after = self.sp_stop_after_constant.value()
@@ -822,7 +808,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "stop_after_units": stop_after_units,
                 "intensity": intensity,
             }
-        elif precipitation_type == CUSTOM:
+        elif precipitation_type == EventTypes.CUSTOM.value:
             start_after = self.sp_start_after_custom.value()
             start_after_units = self.start_after_custom_u.currentText()
             units = self.cbo_units.currentText()
@@ -842,7 +828,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "from_csv": from_csv,
                 "from_netcdf": from_netcdf,
             }
-        elif precipitation_type == DESIGN:
+        elif precipitation_type == EventTypes.DESIGN.value:
             start_after = self.sp_start_after_design.value()
             start_after_units = self.start_after_design_u.currentText()
             design_number = self.cbo_design.currentText()
@@ -854,7 +840,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "design_number": design_number,
                 "time_series": design_time_series,
             }
-        elif precipitation_type == RADAR:
+        elif precipitation_type == EventTypes.RADAR.value:
             start_after = self.sp_start_after_radar.value()
             start_after_units = self.start_after_radar_u.currentText()
             stop_after = self.sp_stop_after_radar.value()
@@ -877,7 +863,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.cbo_design.setCurrentIndex(0)
             self.plot_precipitation()
             return
-        if vals.get("precipitation_type") == CONSTANT:
+        if vals.get("precipitation_type") == EventTypes.CONSTANT.value:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_constant.setValue(vals.get("start_after"))
             self.start_after_constant_u.setCurrentIndex(
@@ -888,7 +874,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 self.stop_after_constant_u.findText(vals.get("stop_after_units"))
             )
             self.sp_intensity.setValue(vals.get("intensity"))
-        elif vals.get("precipitation_type") == CUSTOM:
+        elif vals.get("precipitation_type") == EventTypes.CUSTOM.value:
             # Temporary disconnect radio buttons signals
             self.rb_from_csv.toggled.disconnect(self.change_time_series_source)
             self.rb_from_netcdf.toggled.disconnect(self.change_time_series_source)
@@ -905,14 +891,14 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             # Connect radio buttons signals again
             self.rb_from_csv.toggled.connect(self.change_time_series_source)
             self.rb_from_netcdf.toggled.connect(self.change_time_series_source)
-        elif vals.get("precipitation_type") == DESIGN:
+        elif vals.get("precipitation_type") == EventTypes.DESIGN.value:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_design.setValue(vals.get("start_after"))
             self.start_after_design_u.setCurrentIndex(self.start_after_design_u.findText(vals.get("start_after_units")))
             design_number = vals.get("design_number")
             self.cbo_design.setCurrentIndex(self.cbo_design.findText(design_number))
             self.design_time_series[simulation] = vals.get("time_series", [])
-        elif vals.get("precipitation_type") == RADAR:
+        elif vals.get("precipitation_type") == EventTypes.RADAR.value:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_radar.setValue(vals.get("start_after"))
             self.start_after_radar_u.setCurrentIndex(self.start_after_radar_u.findText(vals.get("start_after_units")))
@@ -954,17 +940,17 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
     def sync_units(self, idx):
         """Syncing units widgets."""
         current_text = self.cbo_prec_type.currentText()
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             if self.start_after_constant_u.currentIndex != idx:
                 self.start_after_constant_u.setCurrentIndex(idx)
             if self.stop_after_constant_u.currentIndex != idx:
                 self.stop_after_constant_u.setCurrentIndex(idx)
             self.current_units = self.start_after_constant_u.currentText()
-        elif current_text == CUSTOM:
+        elif current_text == EventTypes.CUSTOM.value:
             self.current_units = self.start_after_custom_u.currentText()
-        elif current_text == DESIGN:
+        elif current_text == EventTypes.DESIGN.value:
             self.current_units = self.start_after_design_u.currentText()
-        elif current_text == RADAR:
+        elif current_text == EventTypes.RADAR.value:
             if self.start_after_radar_u.currentIndex != idx:
                 self.start_after_radar_u.setCurrentIndex(idx)
             if self.stop_after_radar_u.currentIndex != idx:
@@ -975,13 +961,13 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
     def refresh_current_units(self):
         """Refreshing current units value."""
         current_text = self.cbo_prec_type.currentText()
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             self.current_units = self.start_after_constant_u.currentText()
-        elif current_text == CUSTOM:
+        elif current_text == EventTypes.CUSTOM.value:
             self.current_units = self.start_after_custom_u.currentText()
-        elif current_text == DESIGN:
+        elif current_text == EventTypes.DESIGN.value:
             self.current_units = self.start_after_design_u.currentText()
-        elif current_text == RADAR:
+        elif current_text == EventTypes.RADAR.value:
             self.current_units = self.start_after_radar_u.currentText()
 
     def refresh_duration(self):
@@ -1063,13 +1049,13 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         """Calculating precipitation offset in seconds."""
         current_text = self.cbo_prec_type.currentText()
         to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             start = self.sp_start_after_constant.value()
-        elif current_text == CUSTOM:
+        elif current_text == EventTypes.CUSTOM.value:
             start = self.sp_start_after_custom.value()
-        elif current_text == DESIGN:
+        elif current_text == EventTypes.DESIGN.value:
             start = self.sp_start_after_design.value()
-        elif current_text == RADAR:
+        elif current_text == EventTypes.RADAR.value:
             start = self.sp_start_after_radar.value()
         else:
             return 0.0
@@ -1080,9 +1066,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         """Calculating precipitation duration in seconds."""
         simulation = self.dd_simulation.currentText()
         current_text = self.cbo_prec_type.currentText()
-        if current_text == CONSTANT or current_text == RADAR:
+        if current_text == EventTypes.CONSTANT.value or current_text == EventTypes.RADAR.value:
             to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
-            if current_text == CONSTANT:
+            if current_text == EventTypes.CONSTANT.value:
                 start = self.sp_start_after_constant.value()
                 end = self.sp_stop_after_constant.value()
             else:
@@ -1100,10 +1086,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             precipitation_duration = end_in_seconds - start_in_seconds
             if precipitation_duration < 0:
                 precipitation_duration = 0
-        elif current_text == CUSTOM:
+        elif current_text == EventTypes.CUSTOM.value:
             end_in_seconds = self.custom_time_series[simulation][-1][0] if self.custom_time_series[simulation] else 0
             precipitation_duration = end_in_seconds
-        elif current_text == DESIGN:
+        elif current_text == EventTypes.DESIGN.value:
             end_in_seconds = self.design_time_series[simulation][-1][0] if self.design_time_series[simulation] else 0
             precipitation_duration = end_in_seconds
         else:
@@ -1114,16 +1100,16 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         """Calculating precipitation values in 'm/s'."""
         simulation = self.dd_simulation.currentText()
         current_text = self.cbo_prec_type.currentText()
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             values = mmh_to_ms(self.get_intensity())
-        elif current_text == CUSTOM:
+        elif current_text == EventTypes.CUSTOM.value:
             ts = self.custom_time_series[simulation]
             if self.cbo_units.currentText() == "mm/h":
                 values = [[t, mmh_to_ms(v)] for t, v in ts]
             else:
                 timestep = ts[1][0] - ts[0][0] if len(ts) > 1 else 1
                 values = [[t, mmh_to_ms(mmtimestep_to_mmh(v, timestep))] for t, v in ts]
-        elif current_text == DESIGN:
+        elif current_text == EventTypes.DESIGN.value:
             values = [
                 [t, mmh_to_ms(mmtimestep_to_mmh(v, self.DESIGN_5_MINUTES_TIMESTEP))]
                 for t, v in self.design_time_series[simulation]
@@ -1191,13 +1177,13 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.plot_bar_graph = None
         self.plot_ticks = None
         current_text = self.cbo_prec_type.currentText()
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             x_values, y_values = self.constant_values()
-        elif current_text == CUSTOM:
+        elif current_text == EventTypes.CUSTOM.value:
             x_values, y_values = self.custom_values()
-        elif current_text == DESIGN:
+        elif current_text == EventTypes.DESIGN.value:
             x_values, y_values = self.design_values()
-        elif current_text == RADAR:
+        elif current_text == EventTypes.RADAR.value:
             x_values, y_values = [], []
             self.plot_widget.hide()
             self.plot_label.hide()
@@ -1220,13 +1206,13 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         ax.setTicks(self.plot_ticks)
         self.plot_bar_graph = pg.BarGraphItem(x=x_values, height=y_values, width=timestep, brush=QColor("#1883D7"))
         self.plot_widget.addItem(self.plot_bar_graph)
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             precipitation_values = y_values[:-1]
         else:
             precipitation_values = y_values
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             self.total_precipitation = sum(mmh_to_mmtimestep(v, 1, self.current_units) for v in precipitation_values)
-        elif current_text == CUSTOM and self.cbo_units.currentText() == "mm/h":
+        elif current_text == EventTypes.CUSTOM.value and self.cbo_units.currentText() == "mm/h":
             self.total_precipitation = sum(
                 mmh_to_mmtimestep(v, timestep, self.current_units) for v in precipitation_values
             )
@@ -1285,7 +1271,7 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
     def sync_units(self, idx):
         """Syncing units widgets."""
         current_text = self.cbo_wind_type.currentText()
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             if self.start_wind_constant_u.currentIndex != idx:
                 self.start_wind_constant_u.setCurrentIndex(idx)
             if self.stop_wind_constant_u.currentIndex != idx:
@@ -1311,7 +1297,7 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
     def refresh_current_units(self):
         """Refreshing current units value."""
         current_text = self.cbo_wind_type.currentText()
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             self.current_units = self.start_wind_constant_u.currentText()
         else:
             self.current_units = self.start_wind_custom_u.currentText()
@@ -1341,9 +1327,9 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
         """Calculating wind offset in seconds."""
         current_text = self.cbo_wind_type.currentText()
         to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             start = self.sp_start_wind_constant.value()
-        elif current_text == CUSTOM:
+        elif current_text == EventTypes.CUSTOM.value:
             start = self.sp_start_wind_custom.value()
         else:
             return 0.0
@@ -1353,7 +1339,7 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
     def get_wind_duration(self):
         """Calculating wind duration in seconds."""
         current_text = self.cbo_wind_type.currentText()
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
             start = self.sp_start_wind_constant.value()
             end = self.sp_stop_wind_constant.value()
@@ -1369,7 +1355,7 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
             wind_duration = end_in_seconds - start_in_seconds
             if wind_duration < 0:
                 wind_duration = 0
-        elif current_text == CUSTOM:
+        elif current_text == EventTypes.CUSTOM.value:
             end_in_seconds = self.custom_wind[-1][0] if self.custom_wind else 0
             wind_duration = end_in_seconds
         else:
@@ -1389,7 +1375,7 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
     def get_drag_coefficient(self):
         """Getting drag coefficient value."""
         current_text = self.cbo_wind_type.currentText()
-        if current_text == CONSTANT:
+        if current_text == EventTypes.CONSTANT.value:
             drag_coefficient = self.sp_dc_constant.value()
         else:
             drag_coefficient = self.sp_dc_custom.value()
@@ -1594,7 +1580,7 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
             self.plot_overview_precipitation()
             if data:
                 ptype = data.get("precipitation_type")
-                if ptype != RADAR:
+                if ptype != EventTypes.RADAR.value:
                     total_prec_val = self.parent_page.parent_wizard.precipitation_page.main_widget.total_precipitation
                     total_prec = f"{total_prec_val:.1f}"
                 else:
@@ -1829,8 +1815,7 @@ class SimulationWizard(QWizard):
         self.finish_btn.clicked.connect(self.run_new_simulation)
         self.cancel_btn = self.button(QWizard.CancelButton)
         self.cancel_btn.clicked.connect(self.cancel_wizard)
-        self.new_simulations = None
-        self.new_simulation_statuses = None
+        self.new_simulations = []
         self.setWindowTitle("New simulation")
         self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -1884,7 +1869,7 @@ class SimulationWizard(QWizard):
             )
             total_precipitation = self.precipitation_page.main_widget.total_precipitation
             self.summary_page.main_widget.sim_prec_type.setText(precipitation_type)
-            if precipitation_type != RADAR:
+            if precipitation_type != EventTypes.RADAR.value:
                 total_precipitation_text = f"{total_precipitation:.0f} mm"
             else:
                 total_precipitation_text = "N/A"
@@ -1964,7 +1949,7 @@ class SimulationWizard(QWizard):
                             )
                             break
             if any([events.initial_groundwaterlevel, events.initial_groundwaterraster]):
-                init_conditions_widget.gb_gwater.setChecked(True)
+                init_conditions_widget.gb_groundwater.setChecked(True)
                 if events.initial_groundwaterlevel:
                     init_conditions_widget.sp_gwater_global_value.setValue(events.initial_groundwaterlevel.value)
                 elif events.initial_groundwaterraster:
@@ -2108,413 +2093,118 @@ class SimulationWizard(QWizard):
         organisation_uuid = self.model_selection_dlg.organisation.unique_id
         start_datetime, end_datetime = self.duration_page.main_widget.to_datetime()
         duration = self.duration_page.main_widget.calculate_simulation_duration()
-        # initial conditions page attributes
-        (
-            global_value_1d,
-            global_value_2d,
-            initial_wl_file_2d,
-            local_raster_2d,
-            aggregation_method_2d,
-            global_value_groundwater,
-            initial_wl_file_groundwater,
-            local_raster_gw,
-            aggregation_method_gw,
-            saved_state,
-        ) = (None,) * 10
+        # Initialization options
+        init_options = dm.InitOptions()
+        if self.init_conditions.include_filestructure_controls:
+            init_options.sc_file = self.init_conditions_dlg.events.filestructurecontrols[0]
+        if self.init_conditions.include_boundary_conditions:
+            init_options.bc_file = self.init_conditions_dlg.events.fileboundaryconditions
+        init_options.basic_processed_results = self.init_conditions.basic_processed_results
+        init_options.arrival_time_map = self.init_conditions.arrival_time_map
+        if self.init_conditions.damage_estimation:
+            damage_estimation = dm.DamageEstimation(
+                self.init_conditions.cost_type,
+                self.init_conditions.flood_month,
+                self.init_conditions.period,
+                self.init_conditions.repair_time_infrastructure,
+                self.init_conditions.repair_time_buildings,
+            )
+            init_options.damage_estimation = damage_estimation
+        init_options.generate_saved_state = self.init_conditions.generate_saved_state
+        # Initial conditions page attributes
+        initial_conditions = dm.InitialConditions()
         if self.init_conditions.include_initial_conditions:
             # 1D
-            global_value_1d = self.init_conditions_page.main_widget.sp_1d_global_value.value()
+            if self.init_conditions_page.main_widget.gb_1d.isChecked():
+                if self.init_conditions_page.main_widget.rb_d1_gv.isChecked():
+                    initial_conditions.global_value_1d = (
+                        self.init_conditions_page.main_widget.sp_1d_global_value.value()
+                    )
+                else:
+                    initial_conditions.from_spatialite_1d = True
             # 2D
-            global_value_2d = self.init_conditions_page.main_widget.sp_2d_global_value.value()
-            initial_wl_file_2d = self.init_conditions_page.main_widget.initial_waterlevels.get(
-                self.init_conditions_page.main_widget.cbo_2d_online_raster.currentText()
-            )
-            if self.init_conditions_page.main_widget.rb_2d_local_raster.isChecked():
-                local_raster_2d = qgis_layers_cbo_get_layer_uri(
-                    self.init_conditions_page.main_widget.cbo_2d_local_raster
+            if self.init_conditions_page.main_widget.gb_2d.isChecked():
+                if self.init_conditions_page.main_widget.rb_2d_global_value.isChecked():
+                    initial_conditions.global_value_2d = (
+                        self.init_conditions_page.main_widget.sp_2d_global_value.value()
+                    )
+                elif self.init_conditions_page.main_widget.rb_2d_online_raster.isChecked():
+                    initial_conditions.online_raster_2d = self.init_conditions_page.main_widget.initial_waterlevels.get(
+                        self.init_conditions_page.main_widget.cbo_2d_online_raster.currentText()
+                    )
+                else:
+                    initial_conditions.local_raster_2d = qgis_layers_cbo_get_layer_uri(
+                        self.init_conditions_page.main_widget.cbo_2d_local_raster
+                    )
+                initial_conditions.aggregation_method_2d = (
+                    self.init_conditions_page.main_widget.cb_2d_aggregation.currentText()
                 )
-            aggregation_method_2d = self.init_conditions_page.main_widget.cb_2d_aggregation.currentText()
             # Groundwater
-            global_value_groundwater = self.init_conditions_page.main_widget.sp_gwater_global_value.value()
-            initial_wl_file_groundwater = self.init_conditions_page.main_widget.initial_waterlevels.get(
-                self.init_conditions_page.main_widget.cbo_gw_online_raster.currentText()
-            )
-            if self.init_conditions_page.main_widget.rb_gw_local_raster.isChecked():
-                local_raster_gw = qgis_layers_cbo_get_layer_uri(
-                    self.init_conditions_page.main_widget.cbo_gw_local_raster
+            if self.init_conditions_page.main_widget.gb_groundwater.isChecked():
+                if self.init_conditions_page.main_widget.rb_gw_global_value.isChecked():
+                    initial_conditions.global_value_groundwater = (
+                        self.init_conditions_page.main_widget.sp_gwater_global_value.value()
+                    )
+                elif self.init_conditions_page.main_widget.rb_gw_online_raster.isChecked():
+                    initial_conditions.online_raster_groundwater = (
+                        self.init_conditions_page.main_widget.initial_waterlevels.get(
+                            self.init_conditions_page.main_widget.cbo_gw_online_raster.currentText()
+                        )
+                    )
+                else:
+                    initial_conditions.local_raster_groundwater = qgis_layers_cbo_get_layer_uri(
+                        self.init_conditions_page.main_widget.cbo_gw_local_raster
+                    )
+                initial_conditions.aggregation_method_groundwater = (
+                    self.init_conditions_page.main_widget.cb_gwater_aggregation.currentText()
                 )
-            aggregation_method_gw = self.init_conditions_page.main_widget.cb_gwater_aggregation.currentText()
-            saved_state = self.init_conditions_page.main_widget.saved_states.get(
+
+            # Saved state
+            initial_conditions.saved_state = self.init_conditions_page.main_widget.saved_states.get(
                 self.init_conditions_page.main_widget.cb_saved_states.currentText()
             )
 
-        try:
-            simulation_template = self.init_conditions_dlg.simulation_template
-            sim_temp_id = simulation_template.simulation.id
-            self.new_simulations = []
-            self.new_simulation_statuses = {}
-            valid_states = ["processed", "valid", "success"]
-            simulation_difference = self.init_conditions.simulations_difference
-            ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate, pfpath, pcsv, pnetcdf = (None,) * 10
-            wtype, woffset, wduration, wspeed, wdirection, wunits, wdrag_coeff, wispeed, widirection, wvalues = (
-                None,
-            ) * 10
-            (
-                breach_id,
-                width,
-                d_duration,
-                breach_offset,
-                discharge_coefficient_positive,
-                discharge_coefficient_negative,
-                max_breach_depth,
-            ) = (None,) * 7
-            for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
-                laterals = []
-                if hasattr(self, "laterals_page"):
-                    laterals = self.laterals_page.main_widget.get_laterals_data(timesteps_in_seconds=True)
-                dwf = []
-                if hasattr(self, "dwf_page"):
-                    dwf = self.dwf_page.main_widget.get_dwf_data(timeseries24=True)
-                if hasattr(self, "breaches_page"):
-                    self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
-                    breach_data = self.breaches_page.main_widget.get_breaches_data()
-                    if simulation_difference == "breaches" or i == 1:
-                        (
-                            breach_id,
-                            width,
-                            d_duration,
-                            breach_offset,
-                            discharge_coefficient_positive,
-                            discharge_coefficient_negative,
-                            max_breach_depth,
-                        ) = breach_data
-                if hasattr(self, "precipitation_page"):
-                    self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
-                    pdata = self.precipitation_page.main_widget.get_precipitation_data()
-                    if simulation_difference == "precipitation" or i == 1:
-                        ptype, poffset, pduration, punits, pvalues, pstart, pinterpolate, pfpath, pcsv, pnetcdf = pdata
-                if hasattr(self, "wind_page"):
-                    (
-                        wtype,
-                        woffset,
-                        wduration,
-                        wspeed,
-                        wdirection,
-                        wunits,
-                        wdrag_coeff,
-                        wispeed,
-                        widirection,
-                        wvalues,
-                    ) = self.wind_page.main_widget.get_wind_data()
-                tc = ThreediCalls(self.plugin_dock.threedi_api)
-                sim_name = f"{name}_{i}" if self.init_conditions.multiple_simulations is True else name
-                new_simulation = tc.create_simulation(
-                    name=sim_name,
-                    tags=tags,
-                    threedimodel=threedimodel_id,
-                    start_datetime=start_datetime,
-                    organisation=organisation_uuid,
-                    duration=duration,
-                )
-                current_status = tc.fetch_simulation_status(new_simulation.id)
-                sim_id = new_simulation.id
+        # Settings page attributes
+        main_settings = self.settings_page.main_widget.collect_single_settings()
+        physical_settings, numerical_settings, time_step_settings = main_settings
+        aggregation_settings_list = self.settings_page.main_widget.collect_aggregation_settings()
+        settings = dm.Settings(physical_settings, numerical_settings, time_step_settings, aggregation_settings_list)
+        simulation_template = self.init_conditions_dlg.simulation_template
+        sim_temp_id = simulation_template.simulation.id
+        simulation_difference = self.init_conditions.simulations_difference
+        for i, simulation in enumerate(self.init_conditions.simulations_list, start=1):
+            sim_name = f"{name}_{i}" if self.init_conditions.multiple_simulations is True else name
+            new_simulation = dm.NewSimulation(
+                sim_temp_id, sim_name, tags, threedimodel_id, organisation_uuid, start_datetime, end_datetime, duration
+            )
+            new_simulation.init_options = init_options
+            new_simulation.initial_conditions = initial_conditions
+            if hasattr(self, "laterals_page"):
+                laterals_data = self.laterals_page.main_widget.get_laterals_data(timesteps_in_seconds=True)
+                new_simulation.laterals = dm.Laterals(laterals_data)
+            if hasattr(self, "dwf_page"):
+                dwf_data = self.dwf_page.main_widget.get_dwf_data(timeseries24=True)
+                new_simulation.dwf = dm.DWF(dwf_data)
+            if hasattr(self, "breaches_page"):
+                self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
+                breach_data = self.breaches_page.main_widget.get_breaches_data()
+                if simulation_difference == "breaches" or i == 1:
+                    new_simulation.breach = dm.Breach(*breach_data)
+                else:
+                    new_simulation.breach = dm.Breach()
+            if hasattr(self, "precipitation_page"):
+                self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
+                precipitation_data = self.precipitation_page.main_widget.get_precipitation_data()
+                if simulation_difference == "precipitation" or i == 1:
+                    new_simulation.precipitation = dm.Precipitation(*precipitation_data)
+                else:
+                    new_simulation.precipitation = dm.Precipitation()
+            if hasattr(self, "wind_page"):
+                wind_data = self.wind_page.main_widget.get_wind_data()
+                new_simulation.wind = dm.Wind(*wind_data)
 
-                if self.init_conditions.include_filestructure_controls:
-                    sc_file = self.init_conditions_dlg.events.filestructurecontrols[0]
-                    sc_file_download = tc.fetch_structure_control_file_download(sim_temp_id, sc_file.id)
-                    sc_file_name = sc_file.file.filename
-                    sc_file_offset = sc_file.offset
-                    sc_temp_filepath = os.path.join(TEMPDIR, sc_file_name)
-                    get_download_file(sc_file_download, sc_temp_filepath)
-                    sc_upload = tc.create_simulation_structure_control_file(
-                        sim_id, filename=sc_file_name, offset=sc_file_offset
-                    )
-                    upload_file(sc_upload, sc_temp_filepath)
-                    for ti in range(int(upload_timeout // 2)):
-                        uploaded_sc = tc.fetch_structure_control_files(sim_id)[0]
-                        if uploaded_sc.state in valid_states:
-                            break
-                        else:
-                            time.sleep(2)
-                    os.remove(sc_temp_filepath)
-                if self.init_conditions.include_boundary_conditions:
-                    bc_file = self.init_conditions_dlg.events.fileboundaryconditions
-                    bc_file_download = tc.fetch_boundarycondition_file_download(sim_temp_id, bc_file.id)
-                    bc_file_name = bc_file.file.filename
-                    bc_temp_filepath = os.path.join(TEMPDIR, bc_file_name)
-                    get_download_file(bc_file_download, bc_temp_filepath)
-                    bc_upload = tc.create_simulation_boundarycondition_file(sim_id, filename=bc_file_name)
-                    upload_file(bc_upload, bc_temp_filepath)
-                    for ti in range(int(upload_timeout // 2)):
-                        uploaded_bc = tc.fetch_boundarycondition_files(sim_id)[0]
-                        if uploaded_bc.state in valid_states:
-                            break
-                        else:
-                            time.sleep(2)
-                    os.remove(bc_temp_filepath)
-                if self.init_conditions.basic_processed_results:
-                    tc.create_simulation_post_processing_lizard_basic(
-                        sim_id, scenario_name=sim_name, process_basic_results=True
-                    )
-                if self.init_conditions.arrival_time_map:
-                    tc.create_simulation_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=True)
-                if self.init_conditions.damage_estimation:
-                    tc.create_simulation_post_processing_lizard_damage(
-                        sim_id,
-                        basic_post_processing=True,
-                        cost_type=self.init_conditions.cost_type,
-                        flood_month=self.init_conditions.flood_month,
-                        inundation_period=self.init_conditions.period,
-                        repair_time_infrastructure=self.init_conditions.repair_time_infrastructure,
-                        repair_time_buildings=self.init_conditions.repair_time_buildings,
-                    )
-                if self.init_conditions.generate_saved_state:
-                    tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
-
-                if self.init_conditions.include_initial_conditions:
-                    # 1D
-                    if self.init_conditions_page.main_widget.gb_1d.isChecked():
-                        if self.init_conditions_page.main_widget.rb_2d_global_value.isChecked():
-                            tc.create_simulation_initial_1d_water_level_constant(sim_id, value=global_value_1d)
-                        else:
-                            tc.create_simulation_initial_1d_water_level_predefined(sim_id)
-                    # 2D
-                    if self.init_conditions_page.main_widget.gb_2d.isChecked():
-                        if self.init_conditions_page.main_widget.rb_2d_global_value.isChecked():
-                            tc.create_simulation_initial_2d_water_level_constant(sim_id, value=global_value_2d)
-                        else:
-                            if self.init_conditions_page.main_widget.rb_2d_local_raster.isChecked():
-                                # Upload local 2D raster
-                                if local_raster_2d is not None:
-                                    local_raster_2d_name = os.path.basename(local_raster_2d)
-                                    initial_water_level_raster_2d = tc.create_3di_model_raster(
-                                        threedimodel_id, name=local_raster_2d_name, type="initial_waterlevel_file"
-                                    )
-                                    initial_wl_raster_2d_id = initial_water_level_raster_2d.id
-                                    init_water_level_upload_2d = tc.upload_3di_model_raster(
-                                        threedimodel_id,
-                                        initial_wl_raster_2d_id,
-                                        filename=local_raster_2d_name,
-                                    )
-                                    upload_file(init_water_level_upload_2d, local_raster_2d)
-                                    raster_task_2d = None
-                                    for ti in range(int(upload_timeout // 2)):
-                                        if raster_task_2d is None:
-                                            model_tasks = tc.fetch_3di_model_tasks(threedimodel_id)
-                                            for task in model_tasks:
-                                                try:
-                                                    if initial_wl_raster_2d_id in task.params["only_raster_ids"]:
-                                                        raster_task_2d = task
-                                                        break
-                                                except KeyError:
-                                                    continue
-                                        else:
-                                            raster_task_2d = tc.fetch_3di_model_task(threedimodel_id, raster_task_2d.id)
-                                        if raster_task_2d and raster_task_2d.status in valid_states:
-                                            break
-                                        else:
-                                            time.sleep(2)
-                                    initial_wlevels = tc.fetch_3di_model_initial_waterlevels(threedimodel_id)
-                                    for iw in initial_wlevels:
-                                        if iw.source_raster_id == initial_wl_raster_2d_id:
-                                            initial_wl_file_2d = iw
-                                            break
-                            try:
-                                tc.create_simulation_initial_2d_water_level_raster(
-                                    sim_id,
-                                    aggregation_method=aggregation_method_2d,
-                                    initial_waterlevel=initial_wl_file_2d.url,
-                                )
-                            except AttributeError:
-                                error_msg = "Error: selected 2D raster for initial water level is not valid."
-                                self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
-                                return
-                    # Groundwater
-                    if self.init_conditions_page.main_widget.gb_gwater.isChecked():
-                        if self.init_conditions_page.main_widget.rb_gw_global_value.isChecked():
-                            tc.create_simulation_initial_groundwater_level_constant(
-                                sim_id, value=global_value_groundwater
-                            )
-                        else:
-                            if local_raster_gw is not None:
-                                # Upload local Groundwater raster
-                                local_raster_gw_name = os.path.basename(local_raster_gw)
-                                initial_water_level_raster_gw = tc.create_3di_model_raster(
-                                    threedimodel_id, name=local_raster_gw_name, type="initial_groundwater_level_file"
-                                )
-                                initial_wl_raster_gw_id = initial_water_level_raster_gw.id
-                                init_water_level_upload_gw = tc.upload_3di_model_raster(
-                                    threedimodel_id,
-                                    initial_wl_raster_gw_id,
-                                    filename=local_raster_gw_name,
-                                )
-                                upload_file(init_water_level_upload_gw, local_raster_gw)
-                                raster_task_gw = None
-                                for ti in range(int(upload_timeout // 2)):
-                                    if raster_task_gw is None:
-                                        model_tasks = tc.fetch_3di_model_tasks(threedimodel_id)
-                                        for task in model_tasks:
-                                            try:
-                                                if initial_wl_raster_gw_id in task.params["only_raster_ids"]:
-                                                    raster_task_gw = task
-                                                    break
-                                            except KeyError:
-                                                continue
-                                    else:
-                                        raster_task_gw = tc.fetch_3di_model_task(threedimodel_id, raster_task_gw.id)
-                                    if raster_task_gw and raster_task_gw.status in valid_states:
-                                        break
-                                    else:
-                                        time.sleep(2)
-                                initial_wlevels = tc.fetch_3di_model_initial_waterlevels(threedimodel_id)
-                                for iw in initial_wlevels:
-                                    if iw.source_raster_id == initial_wl_raster_gw_id:
-                                        initial_wl_file_groundwater = iw
-                                        break
-                            try:
-                                tc.create_simulation_initial_groundwater_level_raster(
-                                    sim_id,
-                                    aggregation_method=aggregation_method_gw,
-                                    initial_waterlevel=initial_wl_file_groundwater.url,
-                                )
-                            except AttributeError:
-                                error_msg = "Error: selected groundwater raster is not valid."
-                                self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
-                                return
-                    # Saved state
-                    if self.init_conditions.load_from_saved_state and saved_state:
-                        saved_state_id = saved_state.url.strip("/").split("/")[-1]
-                        tc.create_simulation_initial_saved_state(sim_id, saved_state=saved_state_id)
-                if self.init_conditions.include_laterals:
-                    lateral_values = list(laterals.values())
-                    write_laterals_to_json(lateral_values, LATERALS_FILE_TEMPLATE)
-                    upload_event_file = tc.create_simulation_lateral_file(
-                        sim_id, filename=f"{sim_name}_laterals.json", offset=0
-                    )
-                    upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
-                    for ti in range(int(upload_timeout // 2)):
-                        uploaded_lateral = tc.fetch_lateral_files(sim_id)[0]
-                        if uploaded_lateral.state in valid_states:
-                            break
-                        else:
-                            time.sleep(2)
-                if self.init_conditions.include_dwf:
-                    dwf_values = list(dwf.values())
-                    write_laterals_to_json(dwf_values, DWF_FILE_TEMPLATE)
-                    upload_event_file = tc.create_simulation_lateral_file(
-                        sim_id,
-                        filename=f"{sim_name}_dwf.json",
-                        offset=0,
-                        periodic="daily",
-                    )
-                    upload_file(upload_event_file, DWF_FILE_TEMPLATE)
-                    for ti in range(int(upload_timeout // 2)):
-                        uploaded_dwf = tc.fetch_lateral_files(sim_id)[0]
-                        if uploaded_dwf.state in valid_states:
-                            break
-                        else:
-                            time.sleep(2)
-                if self.init_conditions.include_breaches:
-                    breach_obj = tc.fetch_3di_model_point_potential_breach(threedimodel_id, int(breach_id))
-                    breach = breach_obj.to_dict()
-                    tc.create_simulation_breaches(
-                        sim_id,
-                        potential_breach=breach["url"],
-                        duration_till_max_depth=d_duration,
-                        initial_width=width,
-                        offset=breach_offset,
-                        discharge_coefficient_positive=discharge_coefficient_positive,
-                        discharge_coefficient_negative=discharge_coefficient_negative,
-                        maximum_breach_depth=max_breach_depth,
-                    )
-                if ptype == CONSTANT:
-                    tc.create_simulation_constant_precipitation(
-                        sim_id, value=pvalues, units=punits, duration=pduration, offset=poffset
-                    )
-                elif ptype == CUSTOM:
-                    if pcsv:
-                        for values_chunk in split_to_even_chunks(pvalues, 300):
-                            chunk_offset = values_chunk[0][0]
-                            values_chunk = [[t - chunk_offset, v] for t, v in values_chunk]
-                            tc.create_simulation_custom_precipitation(
-                                sim_id,
-                                values=values_chunk,
-                                units=punits,
-                                duration=pduration,
-                                offset=poffset + chunk_offset,
-                                interpolate=pinterpolate,
-                            )
-                    else:
-                        filename = os.path.basename(pfpath)
-                        upload = tc.create_simulation_custom_netcdf_precipitation(sim_id, filename=filename)
-                        upload_file(upload, pfpath)
-                elif ptype == DESIGN:
-                    tc.create_simulation_custom_precipitation(
-                        sim_id, values=pvalues, units=punits, duration=pduration, offset=poffset
-                    )
-                elif ptype == RADAR:
-                    tc.create_simulation_radar_precipitation(
-                        sim_id,
-                        reference_uuid=RADAR_ID,
-                        units=punits,
-                        duration=pduration,
-                        offset=poffset,
-                        start_datetime=pstart,
-                    )
-                if self.init_conditions.include_wind:
-                    tc.create_simulation_initial_wind_drag_coefficient(sim_id, value=wdrag_coeff)
-                if wtype == CONSTANT:
-                    tc.create_simulation_constant_wind(
-                        sim_id,
-                        offset=woffset,
-                        duration=wduration,
-                        units=wunits,
-                        speed_value=wspeed,
-                        direction_value=wdirection,
-                    )
-                elif wtype == CUSTOM:
-                    tc.create_simulation_custom_wind(
-                        sim_id,
-                        offset=woffset,
-                        values=wvalues,
-                        units=wunits,
-                        speed_interpolate=wispeed,
-                        direction_interpolate=widirection,
-                    )
-                # Create settings instances
-                main_settings = self.settings_page.main_widget.collect_single_settings()
-                physical_settings, numerical_settings, time_step_settings = main_settings
-                aggregation_settings_list = self.settings_page.main_widget.collect_aggregation_settings()
-                tc.create_simulation_settings_physical(sim_id, **physical_settings)
-                tc.create_simulation_settings_numerical(sim_id, **numerical_settings)
-                tc.create_simulation_settings_time_step(sim_id, **time_step_settings)
-                for aggregation_settings in aggregation_settings_list:
-                    tc.create_simulation_settings_aggregation(sim_id, **aggregation_settings)
-                # Run simulation
-                try:
-                    tc.create_simulation_action(sim_id, name="start")
-                except ApiException as e:
-                    if e.status == 429:
-                        tc.create_simulation_action(sim_id, name="queue")
-                    else:
-                        raise e
-                if self.summary_page.main_widget.cb_save_template.isChecked():
-                    template_name = self.summary_page.main_widget.template_name.text()
-                    tc.create_template_from_simulation(template_name, str(sim_id))
-                self.new_simulations.append(new_simulation)
-                self.new_simulation_statuses[new_simulation.id] = current_status
-                msg = f"Simulation {new_simulation.name} added to queue!"
-                self.plugin_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
-        except ApiException as e:
-            self.new_simulations = None
-            self.new_simulation_statuses = None
-            error_msg = extract_error_message(e)
-            self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
-        except Exception as e:
-            self.new_simulations = None
-            self.new_simulation_statuses = None
-            error_msg = f"Error: {e}"
-            self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+            new_simulation.settings = settings
+            self.new_simulations.append(new_simulation)
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""
