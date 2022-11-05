@@ -3,7 +3,6 @@
 import os
 import csv
 import pyqtgraph as pg
-import simulation_wizard_data_models as dm
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from copy import deepcopy
@@ -26,14 +25,9 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.core import QgsMapLayerProxyModel, NULL
 from threedi_api_client.openapi import ApiException
-from ..utils_ui import (
-    get_filepath,
-    qgis_layers_cbo_get_layer_uri,
-    icon_path,
-    set_widget_background_color,
-    scan_widgets_parameters,
-    set_widgets_parameters,
-)
+from .custom_items import FilteredComboBox
+from ..api_calls.threedi_calls import ThreediCalls
+from ..data_models import simulation_data_models as dm
 from ..utils import (
     apply_24h_timeseries,
     extract_error_message,
@@ -47,8 +41,14 @@ from ..utils import (
     TEMPDIR,
     EventTypes,
 )
-from .custom_items import FilteredComboBox
-from ..api_calls.threedi_calls import ThreediCalls
+from ..utils_ui import (
+    get_filepath,
+    qgis_layers_cbo_get_layer_uri,
+    icon_path,
+    set_widget_background_color,
+    scan_widgets_parameters,
+    set_widgets_parameters,
+)
 
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -2086,7 +2086,6 @@ class SimulationWizard(QWizard):
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
         self.settings.setValue("threedi/wizard_size", self.size())
-        upload_timeout = self.settings.value("threedi/upload_timeout", 45, type=int)
         name = self.name_page.main_widget.le_sim_name.text()
         tags = self.name_page.main_widget.le_tags.text()
         threedimodel_id = self.model_selection_dlg.current_model.id

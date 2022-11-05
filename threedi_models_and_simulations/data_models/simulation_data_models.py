@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from threedi_api_client.openapi import (
+    Simulation,
     InitialWaterlevel,
     FileStructureControl,
     FileBoundaryCondition,
@@ -124,5 +125,6 @@ class NewSimulation:
     wind: Wind = None
     settings: Settings = None
     template_name: str = None
+    # Last two attributes will be added after new simulation initialization
+    simulation: Simulation = None
     initial_status: str = None
-    simulation_id: int = None

@@ -13,6 +13,7 @@ from qgis.PyQt.QtCore import QObject, QRunnable, QUrl, QByteArray, pyqtSignal, p
 from threedi_api_client.openapi import ApiException, Progress
 from threedi_api_client.files import upload_file
 from .api_calls.threedi_calls import ThreediCalls
+from .data_models import simulation_data_models as dm
 from .utils import (
     extract_error_message,
     zip_into_archive,
@@ -462,22 +463,42 @@ class UploadProgressWorker(QRunnable):
 
 
 class SimulationRunnerError(Exception):
+    """Simulation runner exception class."""
+
     pass
 
 
+class SimulationRunnerSignals(QObject):
+    """Definition of the simulation runner signals."""
+
+    # new simulation, simulation initialized, current progress, total progress
+    initializing_simulations_progress = pyqtSignal(dm.NewSimulation, bool, int, int)
+    # error message
+    initializing_simulations_failed = pyqtSignal(str)
+    # message
+    initializing_simulations_finished = pyqtSignal(str)
+
+
 class SimulationsRunner(QRunnable):
+    """Worker object responsible for running simulations."""
+
     def __init__(self, threedi_api, simulations_to_run, upload_timeout=45):
         super().__init__()
         self.threedi_api = threedi_api
         self.simulations_to_run = simulations_to_run
-        self.current_task = "NO TASK"
-        self.current_task_progress = 0.0
-        self.total_progress = 0.0
+        self.current_simulation = None
         self.valid_states = ["processed", "valid", "success"]
         self.upload_timeout = upload_timeout
-        self.tc = ThreediCalls(threedi_api)
+        self.tc = None
+        self.signals = SimulationRunnerSignals()
+        self.total_progress = 100
+        self.steps_per_simulation = 10
+        self.current_step = 0
+        self.number_of_steps = len(self.simulations_to_run) * self.steps_per_simulation
+        self.percentage_per_step = self.total_progress / self.number_of_steps
 
     def create_simulation(self, simulation_to_run):
+        """Create a new simulation out of NewSimulation data model."""
         new_simulation = self.tc.create_simulation(
             name=simulation_to_run.name,
             tags=simulation_to_run.tags,
@@ -486,12 +507,13 @@ class SimulationsRunner(QRunnable):
             organisation=simulation_to_run.organisation_uuid,
             duration=simulation_to_run.duration,
         )
-        simulation_to_run.simulation_id = new_simulation.id
+        simulation_to_run.simulation = new_simulation
         simulation_to_run.initial_status = self.tc.fetch_simulation_status(new_simulation.id)
 
     def include_init_options(self, simulation_to_run):
+        """Apply initialization options to the new simulation."""
         sim_temp_id = simulation_to_run.simulation_template_id
-        sim_id = simulation_to_run.simulation_id
+        sim_id = simulation_to_run.simulation.id
         sim_name = simulation_to_run.name
         duration = simulation_to_run.duration
         init_options = simulation_to_run.init_options
@@ -549,7 +571,8 @@ class SimulationsRunner(QRunnable):
             self.tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
 
     def include_initial_conditions(self, simulation_to_run):
-        sim_id = simulation_to_run.simulation_id
+        """Add initial conditions to the new simulation."""
+        sim_id = simulation_to_run.simulation.id
         threedimodel_id = simulation_to_run.threedimodel_id
         initial_conditions = simulation_to_run.initial_conditions
         # 1D
@@ -664,7 +687,8 @@ class SimulationsRunner(QRunnable):
             self.tc.create_simulation_initial_saved_state(sim_id, saved_state=saved_state_id)
 
     def include_laterals(self, simulation_to_run):
-        sim_id = simulation_to_run.simulation_id
+        """Add initial laterals to the new simulation."""
+        sim_id = simulation_to_run.simulation.id
         sim_name = simulation_to_run.name
         if simulation_to_run.laterals is not None:
             lateral_values = list(simulation_to_run.laterals.data.values())
@@ -681,7 +705,8 @@ class SimulationsRunner(QRunnable):
                     time.sleep(2)
 
     def include_dwf(self, simulation_to_run):
-        sim_id = simulation_to_run.simulation_id
+        """Add Dry Weather Flow to the new simulation."""
+        sim_id = simulation_to_run.simulation.id
         sim_name = simulation_to_run.name
         if simulation_to_run.dwf is not None:
             dwf_values = list(simulation_to_run.dwf.data.values())
@@ -701,7 +726,8 @@ class SimulationsRunner(QRunnable):
                     time.sleep(2)
 
     def include_breaches(self, simulation_to_run):
-        sim_id = simulation_to_run.simulation_id
+        """Add breaches to the new simulation."""
+        sim_id = simulation_to_run.simulation.id
         threedimodel_id = simulation_to_run.threedimodel_id
         if simulation_to_run.breach is not None:
             breach_obj = self.tc.fetch_3di_model_point_potential_breach(
@@ -720,7 +746,8 @@ class SimulationsRunner(QRunnable):
             )
 
     def include_precipitation(self, simulation_to_run):
-        sim_id = simulation_to_run.simulation_id
+        """Add precipitation to the new simulation."""
+        sim_id = simulation_to_run.simulation.id
         if simulation_to_run.precipitation is not None:
             precipitation_type = simulation_to_run.precipitation.precipitation_type
             values = simulation_to_run.precipitation.values
@@ -768,7 +795,8 @@ class SimulationsRunner(QRunnable):
                 )
 
     def include_wind(self, simulation_to_run):
-        sim_id = simulation_to_run.simulation_id
+        """Add wind to the new simulation."""
+        sim_id = simulation_to_run.simulation.id
         if simulation_to_run.wind is not None:
             wind_type = simulation_to_run.wind.wind_type
             offset = simulation_to_run.wind.offset
@@ -801,7 +829,8 @@ class SimulationsRunner(QRunnable):
                 )
 
     def include_settings(self, simulation_to_run):
-        sim_id = simulation_to_run.simulation_id
+        """Add settings to the new simulation."""
+        sim_id = simulation_to_run.simulation.id
         settings = simulation_to_run.settings
         self.tc.create_simulation_settings_physical(sim_id, **settings.physical_settings)
         self.tc.create_simulation_settings_numerical(sim_id, **settings.numerical_settings)
@@ -810,7 +839,8 @@ class SimulationsRunner(QRunnable):
             self.tc.create_simulation_settings_aggregation(sim_id, **aggregation_settings)
 
     def start_simulation(self, simulation_to_run):
-        sim_id = simulation_to_run.simulation_id
+        """Start (or add to queue) given simulation."""
+        sim_id = simulation_to_run.simulation.id
         try:
             self.tc.create_simulation_action(sim_id, name="start")
         except ApiException as e:
@@ -825,19 +855,51 @@ class SimulationsRunner(QRunnable):
     def run(self):
         """Run new simulation(s)."""
         try:
+            self.tc = ThreediCalls(self.threedi_api)
             for simulation_to_run in self.simulations_to_run:
+                self.current_simulation = simulation_to_run
+                self.report_progress(increase_current_step=False)
                 self.create_simulation(simulation_to_run)
+                self.report_progress()
                 self.include_init_options(simulation_to_run)
+                self.report_progress()
                 self.include_initial_conditions(simulation_to_run)
+                self.report_progress()
                 self.include_laterals(simulation_to_run)
+                self.report_progress()
                 self.include_dwf(simulation_to_run)
+                self.report_progress()
                 self.include_breaches(simulation_to_run)
+                self.report_progress()
                 self.include_precipitation(simulation_to_run)
+                self.report_progress()
                 self.include_wind(simulation_to_run)
+                self.report_progress()
                 self.include_settings(simulation_to_run)
+                self.report_progress()
                 self.start_simulation(simulation_to_run)
-                info_msg = f"Simulation {simulation_to_run.name} added to queue!"
+                self.report_progress(simulation_initialized=True)
+            self.report_finished("Simulations successfully initialized!")
         except ApiException as e:
             error_msg = extract_error_message(e)
+            self.report_failure(error_msg)
         except Exception as e:
             error_msg = f"Error: {e}"
+            self.report_failure(error_msg)
+
+    def report_progress(self, simulation_initialized=False, increase_current_step=True):
+        """Report worker progress."""
+        current_progress = int(self.current_step * self.percentage_per_step)
+        if increase_current_step:
+            self.current_step += 1
+        self.signals.initializing_simulations_progress.emit(
+            self.current_simulation, simulation_initialized, current_progress, self.total_progress
+        )
+
+    def report_failure(self, error_message):
+        """Report worker failure message."""
+        self.signals.initializing_simulations_failed.emit(error_message)
+
+    def report_finished(self, message):
+        """Report worker finished message."""
+        self.signals.initializing_simulations_finished.emit(message)
