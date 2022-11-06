@@ -32,6 +32,7 @@ class SimulationOverview(uicls, basecls):
         self.model_selection_dlg = ModelSelectionDialog(self.plugin_dock, parent=self)
         self.settings = QSettings()
         self.simulation_runner_pool = QThreadPool()
+        self.simulation_runner_pool.setMaxThreadCount(1)
         self.simulation_init_wizard = None
         self.simulation_wizard = None
         self.simulations_keys = {}
