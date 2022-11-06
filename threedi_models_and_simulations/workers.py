@@ -148,12 +148,16 @@ class WSProgressesSentinel(QObject):
         self.progresses_fetched.emit(result)
 
 
-class DownloadProgressWorker(QObject):
-    """Worker object responsible for downloading simulations results."""
+class DownloadWorkerSignals(QObject):
+    """Definition of the download worker signals."""
 
-    thread_finished = pyqtSignal(str)
+    thread_finished = pyqtSignal(str, str)  # finish message, download directory
     download_failed = pyqtSignal(str)
     download_progress = pyqtSignal(float)
+
+
+class DownloadProgressWorker(QRunnable):
+    """Worker object responsible for downloading simulations results."""
 
     NOT_STARTED = -1
     FINISHED = 100
@@ -165,6 +169,7 @@ class DownloadProgressWorker(QObject):
         self.downloads = downloads
         self.directory = bypass_max_path_limit(directory)
         self.success = True
+        self.signals = DownloadWorkerSignals()
 
     @pyqtSlot()
     def run(self):
@@ -178,7 +183,7 @@ class DownloadProgressWorker(QObject):
             finished_message = "Nothing to download!"
         total_size = sum(download.size for result_file, download in self.downloads)
         size = 0
-        self.download_progress.emit(size)
+        self.signals.download_progress.emit(size)
         for result_file, download in self.downloads:
             filename = result_file.filename
             filename_path = bypass_max_path_limit(os.path.join(self.directory, filename), is_file=True)
@@ -190,19 +195,19 @@ class DownloadProgressWorker(QObject):
                         if chunk:
                             f.write(chunk)
                             size += len(chunk)
-                            self.download_progress.emit(size / total_size * 100)
+                            self.signals.download_progress.emit(size / total_size * 100)
                 if filename.lower().endswith(".zip"):
                     unzip_archive(filename_path)
                 continue
             except Exception as e:
                 error_msg = f"Error: {e}"
-            self.download_progress.emit(self.FAILED)
-            self.download_failed.emit(error_msg)
+            self.signals.download_progress.emit(self.FAILED)
+            self.signals.download_failed.emit(error_msg)
             self.success = False
             break
         if self.success is True:
-            self.download_progress.emit(self.FINISHED)
-            self.thread_finished.emit(finished_message)
+            self.signals.download_progress.emit(self.FINISHED)
+            self.signals.thread_finished.emit(finished_message, self.directory)
 
 
 class UploadWorkerSignals(QObject):

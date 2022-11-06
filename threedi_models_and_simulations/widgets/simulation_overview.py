@@ -22,6 +22,7 @@ class SimulationOverview(uicls, basecls):
     """Dialog with methods for handling running simulations."""
 
     PROGRESS_COLUMN_IDX = 2
+    MAX_THREAD_COUNT = 1
 
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
@@ -32,7 +33,7 @@ class SimulationOverview(uicls, basecls):
         self.model_selection_dlg = ModelSelectionDialog(self.plugin_dock, parent=self)
         self.settings = QSettings()
         self.simulation_runner_pool = QThreadPool()
-        self.simulation_runner_pool.setMaxThreadCount(1)
+        self.simulation_runner_pool.setMaxThreadCount(self.MAX_THREAD_COUNT)
         self.simulation_init_wizard = None
         self.simulation_wizard = None
         self.simulations_keys = {}

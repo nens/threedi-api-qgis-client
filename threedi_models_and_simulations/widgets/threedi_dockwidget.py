@@ -94,7 +94,6 @@ class ThreediDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.simulation_overview_dlg.model_selection_dlg.unload_cached_layers()
             self.simulation_overview_dlg = None
         if self.simulation_results_dlg is not None:
-            self.simulation_results_dlg.terminate_download_thread()
             self.simulation_results_dlg = None
         if self.upload_dlg:
             self.upload_dlg.hide()
