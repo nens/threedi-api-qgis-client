@@ -476,7 +476,7 @@ class SimulationRunnerError(Exception):
 class SimulationRunnerSignals(QObject):
     """Definition of the simulation runner signals."""
 
-    # new simulation, simulation initialized, current progress, total progress
+    # simulation to run, simulation initialized, current progress, total progress
     initializing_simulations_progress = pyqtSignal(dm.NewSimulation, bool, int, int)
     # error message
     initializing_simulations_failed = pyqtSignal(str)
@@ -502,26 +502,26 @@ class SimulationsRunner(QRunnable):
         self.number_of_steps = len(self.simulations_to_run) * self.steps_per_simulation
         self.percentage_per_step = self.total_progress / self.number_of_steps
 
-    def create_simulation(self, simulation_to_run):
-        """Create a new simulation out of NewSimulation data model."""
-        new_simulation = self.tc.create_simulation(
-            name=simulation_to_run.name,
-            tags=simulation_to_run.tags,
-            threedimodel=simulation_to_run.threedimodel_id,
-            start_datetime=simulation_to_run.start_datetime,
-            organisation=simulation_to_run.organisation_uuid,
-            duration=simulation_to_run.duration,
+    def create_simulation(self):
+        """Create a new simulation out of the NewSimulation data model."""
+        simulation = self.tc.create_simulation(
+            name=self.current_simulation.name,
+            tags=self.current_simulation.tags,
+            threedimodel=self.current_simulation.threedimodel_id,
+            start_datetime=self.current_simulation.start_datetime,
+            organisation=self.current_simulation.organisation_uuid,
+            duration=self.current_simulation.duration,
         )
-        simulation_to_run.simulation = new_simulation
-        simulation_to_run.initial_status = self.tc.fetch_simulation_status(new_simulation.id)
+        self.current_simulation.simulation = simulation
+        self.current_simulation.initial_status = self.tc.fetch_simulation_status(simulation.id)
 
-    def include_init_options(self, simulation_to_run):
+    def include_init_options(self):
         """Apply initialization options to the new simulation."""
-        sim_temp_id = simulation_to_run.simulation_template_id
-        sim_id = simulation_to_run.simulation.id
-        sim_name = simulation_to_run.name
-        duration = simulation_to_run.duration
-        init_options = simulation_to_run.init_options
+        sim_temp_id = self.current_simulation.simulation_template_id
+        sim_id = self.current_simulation.simulation.id
+        sim_name = self.current_simulation.name
+        duration = self.current_simulation.duration
+        init_options = self.current_simulation.init_options
         if init_options.filestructure_controls_file is not None:
             sc_file = init_options.filestructure_controls_file
             sc_file_download = self.tc.fetch_structure_control_file_download(sim_temp_id, sc_file.id)
@@ -575,11 +575,11 @@ class SimulationsRunner(QRunnable):
         if init_options.generate_saved_state:
             self.tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
 
-    def include_initial_conditions(self, simulation_to_run):
+    def include_initial_conditions(self):
         """Add initial conditions to the new simulation."""
-        sim_id = simulation_to_run.simulation.id
-        threedimodel_id = simulation_to_run.threedimodel_id
-        initial_conditions = simulation_to_run.initial_conditions
+        sim_id = self.current_simulation.simulation.id
+        threedimodel_id = self.current_simulation.threedimodel_id
+        initial_conditions = self.current_simulation.initial_conditions
         # 1D
         if initial_conditions.global_value_1d is not None:
             self.tc.create_simulation_initial_1d_water_level_constant(sim_id, value=initial_conditions.global_value_1d)
@@ -691,12 +691,12 @@ class SimulationsRunner(QRunnable):
             saved_state_id = initial_conditions.saved_state.url.strip("/").split("/")[-1]
             self.tc.create_simulation_initial_saved_state(sim_id, saved_state=saved_state_id)
 
-    def include_laterals(self, simulation_to_run):
+    def include_laterals(self):
         """Add initial laterals to the new simulation."""
-        sim_id = simulation_to_run.simulation.id
-        sim_name = simulation_to_run.name
-        if simulation_to_run.laterals is not None:
-            lateral_values = list(simulation_to_run.laterals.data.values())
+        sim_id = self.current_simulation.simulation.id
+        sim_name = self.current_simulation.name
+        if self.current_simulation.laterals:
+            lateral_values = list(self.current_simulation.laterals.data.values())
             write_laterals_to_json(lateral_values, LATERALS_FILE_TEMPLATE)
             upload_event_file = self.tc.create_simulation_lateral_file(
                 sim_id, filename=f"{sim_name}_laterals.json", offset=0
@@ -709,12 +709,12 @@ class SimulationsRunner(QRunnable):
                 else:
                     time.sleep(2)
 
-    def include_dwf(self, simulation_to_run):
+    def include_dwf(self):
         """Add Dry Weather Flow to the new simulation."""
-        sim_id = simulation_to_run.simulation.id
-        sim_name = simulation_to_run.name
-        if simulation_to_run.dwf is not None:
-            dwf_values = list(simulation_to_run.dwf.data.values())
+        sim_id = self.current_simulation.simulation.id
+        sim_name = self.current_simulation.name
+        if self.current_simulation.dwf:
+            dwf_values = list(self.current_simulation.dwf.data.values())
             write_laterals_to_json(dwf_values, DWF_FILE_TEMPLATE)
             upload_event_file = self.tc.create_simulation_lateral_file(
                 sim_id,
@@ -730,39 +730,39 @@ class SimulationsRunner(QRunnable):
                 else:
                     time.sleep(2)
 
-    def include_breaches(self, simulation_to_run):
+    def include_breaches(self):
         """Add breaches to the new simulation."""
-        sim_id = simulation_to_run.simulation.id
-        threedimodel_id = simulation_to_run.threedimodel_id
-        if simulation_to_run.breach is not None:
+        sim_id = self.current_simulation.simulation.id
+        threedimodel_id = self.current_simulation.threedimodel_id
+        if self.current_simulation.breach:
             breach_obj = self.tc.fetch_3di_model_point_potential_breach(
-                threedimodel_id, int(simulation_to_run.breach.breach_id)
+                threedimodel_id, int(self.current_simulation.breach.breach_id)
             )
             breach = breach_obj.to_dict()
             self.tc.create_simulation_breaches(
                 sim_id,
                 potential_breach=breach["url"],
-                duration_till_max_depth=simulation_to_run.breach.duration_in_units,
-                initial_width=simulation_to_run.breach.width,
-                offset=simulation_to_run.breach.offset,
-                discharge_coefficient_positive=simulation_to_run.breach.discharge_coefficient_positive,
-                discharge_coefficient_negative=simulation_to_run.breach.discharge_coefficient_negative,
-                maximum_breach_depth=simulation_to_run.breach.max_breach_depth,
+                duration_till_max_depth=self.current_simulation.breach.duration_in_units,
+                initial_width=self.current_simulation.breach.width,
+                offset=self.current_simulation.breach.offset,
+                discharge_coefficient_positive=self.current_simulation.breach.discharge_coefficient_positive,
+                discharge_coefficient_negative=self.current_simulation.breach.discharge_coefficient_negative,
+                maximum_breach_depth=self.current_simulation.breach.max_breach_depth,
             )
 
-    def include_precipitation(self, simulation_to_run):
+    def include_precipitation(self):
         """Add precipitation to the new simulation."""
-        sim_id = simulation_to_run.simulation.id
-        if simulation_to_run.precipitation is not None:
-            precipitation_type = simulation_to_run.precipitation.precipitation_type
-            values = simulation_to_run.precipitation.values
-            units = simulation_to_run.precipitation.units
-            duration = simulation_to_run.precipitation.duration
-            offset = simulation_to_run.precipitation.offset
-            start = simulation_to_run.precipitation.start
-            interpolate = simulation_to_run.precipitation.interpolate
-            filepath = simulation_to_run.precipitation.filepath
-            from_csv = simulation_to_run.precipitation.from_csv
+        sim_id = self.current_simulation.simulation.id
+        if self.current_simulation.precipitation:
+            precipitation_type = self.current_simulation.precipitation.precipitation_type
+            values = self.current_simulation.precipitation.values
+            units = self.current_simulation.precipitation.units
+            duration = self.current_simulation.precipitation.duration
+            offset = self.current_simulation.precipitation.offset
+            start = self.current_simulation.precipitation.start
+            interpolate = self.current_simulation.precipitation.interpolate
+            filepath = self.current_simulation.precipitation.filepath
+            from_csv = self.current_simulation.precipitation.from_csv
 
             if precipitation_type == EventTypes.CONSTANT.value:
                 self.tc.create_simulation_constant_precipitation(
@@ -799,20 +799,20 @@ class SimulationsRunner(QRunnable):
                     start_datetime=start,
                 )
 
-    def include_wind(self, simulation_to_run):
+    def include_wind(self):
         """Add wind to the new simulation."""
-        sim_id = simulation_to_run.simulation.id
-        if simulation_to_run.wind is not None:
-            wind_type = simulation_to_run.wind.wind_type
-            offset = simulation_to_run.wind.offset
-            duration = simulation_to_run.wind.duration
-            speed = simulation_to_run.wind.speed
-            direction = simulation_to_run.wind.direction
-            units = simulation_to_run.wind.units
-            drag_coefficient = simulation_to_run.wind.drag_coefficient
-            interpolate_speed = simulation_to_run.wind.interpolate_speed
-            interpolate_direction = simulation_to_run.wind.interpolate_speed
-            values = simulation_to_run.wind.values
+        sim_id = self.current_simulation.simulation.id
+        if self.current_simulation.wind:
+            wind_type = self.current_simulation.wind.wind_type
+            offset = self.current_simulation.wind.offset
+            duration = self.current_simulation.wind.duration
+            speed = self.current_simulation.wind.speed
+            direction = self.current_simulation.wind.direction
+            units = self.current_simulation.wind.units
+            drag_coefficient = self.current_simulation.wind.drag_coefficient
+            interpolate_speed = self.current_simulation.wind.interpolate_speed
+            interpolate_direction = self.current_simulation.wind.interpolate_speed
+            values = self.current_simulation.wind.values
             self.tc.create_simulation_initial_wind_drag_coefficient(sim_id, value=drag_coefficient)
             if wind_type == EventTypes.CONSTANT.value:
                 self.tc.create_simulation_constant_wind(
@@ -833,19 +833,19 @@ class SimulationsRunner(QRunnable):
                     direction_interpolate=interpolate_direction,
                 )
 
-    def include_settings(self, simulation_to_run):
+    def include_settings(self):
         """Add settings to the new simulation."""
-        sim_id = simulation_to_run.simulation.id
-        settings = simulation_to_run.settings
+        sim_id = self.current_simulation.simulation.id
+        settings = self.current_simulation.settings
         self.tc.create_simulation_settings_physical(sim_id, **settings.physical_settings)
         self.tc.create_simulation_settings_numerical(sim_id, **settings.numerical_settings)
         self.tc.create_simulation_settings_time_step(sim_id, **settings.time_step_settings)
         for aggregation_settings in settings.aggregation_settings_list:
             self.tc.create_simulation_settings_aggregation(sim_id, **aggregation_settings)
 
-    def start_simulation(self, simulation_to_run):
+    def start_simulation(self):
         """Start (or add to queue) given simulation."""
-        sim_id = simulation_to_run.simulation.id
+        sim_id = self.current_simulation.simulation.id
         try:
             self.tc.create_simulation_action(sim_id, name="start")
         except ApiException as e:
@@ -853,8 +853,8 @@ class SimulationsRunner(QRunnable):
                 self.tc.create_simulation_action(sim_id, name="queue")
             else:
                 raise e
-        if simulation_to_run.template_name is not None:
-            self.tc.create_template_from_simulation(simulation_to_run.template_name, str(sim_id))
+        if self.current_simulation.template_name is not None:
+            self.tc.create_template_from_simulation(self.current_simulation.template_name, str(sim_id))
 
     @pyqtSlot()
     def run(self):
@@ -864,25 +864,25 @@ class SimulationsRunner(QRunnable):
             for simulation_to_run in self.simulations_to_run:
                 self.current_simulation = simulation_to_run
                 self.report_progress(increase_current_step=False)
-                self.create_simulation(simulation_to_run)
+                self.create_simulation()
                 self.report_progress()
-                self.include_init_options(simulation_to_run)
+                self.include_init_options()
                 self.report_progress()
-                self.include_initial_conditions(simulation_to_run)
+                self.include_initial_conditions()
                 self.report_progress()
-                self.include_laterals(simulation_to_run)
+                self.include_laterals()
                 self.report_progress()
-                self.include_dwf(simulation_to_run)
+                self.include_dwf()
                 self.report_progress()
-                self.include_breaches(simulation_to_run)
+                self.include_breaches()
                 self.report_progress()
-                self.include_precipitation(simulation_to_run)
+                self.include_precipitation()
                 self.report_progress()
-                self.include_wind(simulation_to_run)
+                self.include_wind()
                 self.report_progress()
-                self.include_settings(simulation_to_run)
+                self.include_settings()
                 self.report_progress()
-                self.start_simulation(simulation_to_run)
+                self.start_simulation()
                 self.report_progress(simulation_initialized=True)
             self.report_finished("Simulations successfully initialized!")
         except ApiException as e:

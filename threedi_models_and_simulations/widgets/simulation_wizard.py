@@ -2163,6 +2163,25 @@ class SimulationWizard(QWizard):
                 self.init_conditions_page.main_widget.cb_saved_states.currentText()
             )
 
+        # Laterals
+        if self.init_conditions.include_laterals:
+            laterals_data = self.laterals_page.main_widget.get_laterals_data(timesteps_in_seconds=True)
+            laterals = dm.Laterals(laterals_data)
+        else:
+            laterals = dm.Laterals()
+        # DWF
+        if self.init_conditions.include_dwf:
+            dwf_data = self.dwf_page.main_widget.get_dwf_data(timeseries24=True)
+            dwf = dm.DWF(dwf_data)
+        else:
+            dwf = dm.DWF()
+        # Wind
+        if self.init_conditions.include_wind:
+            wind_data = self.wind_page.main_widget.get_wind_data()
+            wind = dm.Wind(*wind_data)
+        else:
+            wind = dm.Wind()
+
         # Settings page attributes
         main_settings = self.settings_page.main_widget.collect_single_settings()
         physical_settings, numerical_settings, time_step_settings = main_settings
@@ -2178,30 +2197,23 @@ class SimulationWizard(QWizard):
             )
             new_simulation.init_options = init_options
             new_simulation.initial_conditions = initial_conditions
-            if hasattr(self, "laterals_page"):
-                laterals_data = self.laterals_page.main_widget.get_laterals_data(timesteps_in_seconds=True)
-                new_simulation.laterals = dm.Laterals(laterals_data)
-            if hasattr(self, "dwf_page"):
-                dwf_data = self.dwf_page.main_widget.get_dwf_data(timeseries24=True)
-                new_simulation.dwf = dm.DWF(dwf_data)
-            if hasattr(self, "breaches_page"):
+            new_simulation.laterals = laterals
+            new_simulation.dwf = dwf
+            if self.init_conditions.include_breaches:
                 self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                 breach_data = self.breaches_page.main_widget.get_breaches_data()
                 if simulation_difference == "breaches" or i == 1:
                     new_simulation.breach = dm.Breach(*breach_data)
                 else:
                     new_simulation.breach = dm.Breach()
-            if hasattr(self, "precipitation_page"):
+            if self.init_conditions.include_precipitations:
                 self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                 precipitation_data = self.precipitation_page.main_widget.get_precipitation_data()
                 if simulation_difference == "precipitation" or i == 1:
                     new_simulation.precipitation = dm.Precipitation(*precipitation_data)
                 else:
                     new_simulation.precipitation = dm.Precipitation()
-            if hasattr(self, "wind_page"):
-                wind_data = self.wind_page.main_widget.get_wind_data()
-                new_simulation.wind = dm.Wind(*wind_data)
-
+            new_simulation.wind = wind
             new_simulation.settings = settings
             self.new_simulations.append(new_simulation)
 

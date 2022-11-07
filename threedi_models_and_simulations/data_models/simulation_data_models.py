@@ -11,55 +11,61 @@ from threedi_api_client.openapi import (
 
 
 @dataclass
-class DamageEstimation:
-    cost_type: str
-    flood_month: str
-    inundation_period: float
-    repair_time_infrastructure: int
-    repair_time_buildings: int
+class SimulationElement:
+    def __bool__(self):
+        for field in self.__dataclass_fields__:
+            field_value = getattr(self, field)
+            if field_value is not None:
+                return True
+        return False
 
 
 @dataclass
-class InitOptions:
+class DamageEstimation(SimulationElement):
+    cost_type: str = None
+    flood_month: str = None
+    inundation_period: float = None
+    repair_time_infrastructure: int = None
+    repair_time_buildings: int = None
+
+
+@dataclass
+class InitOptions(SimulationElement):
     filestructure_controls_file: FileStructureControl = None
     boundary_conditions_file: FileBoundaryCondition = None
-    basic_processed_results: bool = False
-    arrival_time_map: bool = False
+    basic_processed_results: bool = None
+    arrival_time_map: bool = None
     damage_estimation: DamageEstimation = None
-    generate_saved_state: bool = False
+    generate_saved_state: bool = None
 
 
 @dataclass
-class InitialConditions:
-    # 1D
+class InitialConditions(SimulationElement):
     global_value_1d: float = None
-    from_spatialite_1d: bool = False
-    # 2D
+    from_spatialite_1d: bool = None
     global_value_2d: float = None
     online_raster_2d: InitialWaterlevel = None
     local_raster_2d: str = None
     aggregation_method_2d: str = None
-    # Groundwater
     global_value_groundwater: str = None
     online_raster_groundwater: InitialWaterlevel = None
     local_raster_groundwater: str = None
     aggregation_method_groundwater: str = None
-    # Saved state
     saved_state: str = None
 
 
 @dataclass
-class Laterals:
-    data: dict
+class Laterals(SimulationElement):
+    data: dict = None
 
 
 @dataclass
-class DWF:
-    data: dict
+class DWF(SimulationElement):
+    data: dict = None
 
 
 @dataclass
-class Breach:
+class Breach(SimulationElement):
     breach_id: str = None
     width: float = None
     duration_in_units: float = None
@@ -70,7 +76,7 @@ class Breach:
 
 
 @dataclass
-class Precipitation:
+class Precipitation(SimulationElement):
     precipitation_type: str = None
     offset: float = None
     duration: int = None
@@ -85,25 +91,25 @@ class Precipitation:
 
 
 @dataclass
-class Wind:
-    wind_type: str
-    offset: float
-    duration: int
-    speed: int
-    direction: int
-    units: str
-    drag_coefficient: float
-    interpolate_speed: bool
-    interpolate_direction: bool
-    values: list
+class Wind(SimulationElement):
+    wind_type: str = None
+    offset: float = None
+    duration: int = None
+    speed: int = None
+    direction: int = None
+    units: str = None
+    drag_coefficient: float = None
+    interpolate_speed: bool = None
+    interpolate_direction: bool = None
+    values: list = None
 
 
 @dataclass
-class Settings:
-    physical_settings: dict
-    numerical_settings: dict
-    time_step_settings: dict
-    aggregation_settings_list: list
+class Settings(SimulationElement):
+    physical_settings: dict = None
+    numerical_settings: dict = None
+    time_step_settings: dict = None
+    aggregation_settings_list: list = None
 
 
 @dataclass
