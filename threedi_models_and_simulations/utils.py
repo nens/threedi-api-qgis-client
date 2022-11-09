@@ -6,13 +6,13 @@ import hashlib
 import requests
 import shutil
 import tempfile
+from collections import OrderedDict, defaultdict
+from datetime import datetime
 from enum import Enum
+from itertools import chain
 from uuid import uuid4
 from zipfile import ZipFile, ZIP_DEFLATED
-from enum import Enum
-from collections import OrderedDict, defaultdict
-from itertools import chain
-from datetime import datetime
+
 
 TEMPDIR = tempfile.gettempdir()
 PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))

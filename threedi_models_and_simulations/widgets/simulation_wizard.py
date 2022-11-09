@@ -2095,9 +2095,9 @@ class SimulationWizard(QWizard):
         # Initialization options
         init_options = dm.InitOptions()
         if self.init_conditions.include_filestructure_controls:
-            init_options.sc_file = self.init_conditions_dlg.events.filestructurecontrols[0]
+            init_options.filestructure_controls_file = self.init_conditions_dlg.events.filestructurecontrols[0]
         if self.init_conditions.include_boundary_conditions:
-            init_options.bc_file = self.init_conditions_dlg.events.fileboundaryconditions
+            init_options.boundary_conditions_file = self.init_conditions_dlg.events.fileboundaryconditions
         init_options.basic_processed_results = self.init_conditions.basic_processed_results
         init_options.arrival_time_map = self.init_conditions.arrival_time_map
         if self.init_conditions.damage_estimation:
