@@ -162,9 +162,9 @@ class UploadOverview(uicls_log, basecls_log):
             return
         if not new_upload["upload_only"]:
             deletion_dlg = ModelDeletionDialog(self.plugin_dock, self)
-            if len(deletion_dlg.threedi_models) >= self.MAX_SCHEMATISATION_MODELS:
+            if deletion_dlg.threedi_models_to_show:
                 deletion_dlg.exec_()
-                if len(deletion_dlg.threedi_models) >= self.MAX_SCHEMATISATION_MODELS:
+                if deletion_dlg.threedi_models_to_show:
                     self.communication.bar_warn("Uploading canceled...")
                     return
         self.add_upload_to_model(new_upload)

@@ -19,22 +19,20 @@
    <string>Delete excess models</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="3">
-    <widget class="QLabel" name="label">
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-      </font>
+   <item row="3" column="1">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
-     <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;Maximum number of active 3Di models for a schematisation is 3. Please remove any excess models to continue uploading.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
      </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
+    </spacer>
    </item>
-   <item row="2" column="0">
+   <item row="3" column="0">
     <widget class="QPushButton" name="pb_cancel">
      <property name="minimumSize">
       <size>
@@ -59,7 +57,7 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="2">
+   <item row="3" column="2">
     <widget class="QPushButton" name="pb_delete">
      <property name="enabled">
       <bool>false</bool>
@@ -87,18 +85,20 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="1">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+   <item row="0" column="0" colspan="3">
+    <widget class="QLabel" name="label">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;Maximum number of active 3Di models for {} is {}. Please remove any excess models to continue uploading.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
-    </spacer>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
    </item>
    <item row="1" column="0" colspan="3">
     <widget class="QTreeView" name="models_tv">
@@ -115,6 +115,13 @@
      </property>
      <property name="selectionMode">
       <enum>QAbstractItemView::ExtendedSelection</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QCheckBox" name="cb_filter">
+     <property name="text">
+      <string>Only show my own 3Di models</string>
      </property>
     </widget>
    </item>
