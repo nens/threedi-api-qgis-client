@@ -1,5 +1,6 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
+import csv
 import os
 import shutil
 from operator import attrgetter
@@ -81,7 +82,6 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
     """Widget for the Check Model page."""
 
     SCHEMA_CHECKS_HEADER = ("Level", "Error code", "ID", "Table", "Column", "Value", "Description")
-    RASTER_CHECKS_HEADER = ("Level", "Global settings ID", "Error code", "Description")
 
     def __init__(self, parent_page):
         super().__init__()
@@ -91,10 +91,9 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
         self.communication = self.parent_page.parent_wizard.plugin_dock.communication
         self.schematisation_checker_logger = TreeViewLogger(self.tv_schema_check_result, self.SCHEMA_CHECKS_HEADER)
-        self.raster_checker_logger = TreeViewLogger(self.tv_raster_check_result, self.RASTER_CHECKS_HEADER)
         self.pb_check_model.clicked.connect(self.run_model_checks)
+        self.pb_export_check_results.clicked.connect(self.export_schematisation_checker_results)
         self.lbl_check_spatialite.hide()
-        self.lbl_check_rasters.hide()
         self.test_external_imports()
 
     def test_external_imports(self):
@@ -112,15 +111,10 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
     def run_model_checks(self):
         """Run all model checks."""
         self.lbl_check_spatialite.hide()
-        self.lbl_check_rasters.hide()
         self.pbar_check_spatialite.show()
-        self.pbar_check_rasters.show()
         self.schematisation_checker_logger.initialize_view()
-        self.raster_checker_logger.initialize_view()
         self.pbar_check_spatialite.setValue(0)
-        self.pbar_check_rasters.setValue(0)
         self.check_schematisation()
-        self.check_rasters()
 
     def check_schematisation(self):
         """Run schematisation checker."""
@@ -198,6 +192,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             )
             self.communication.bar_warn(warn_msg)
         session = model_checker.db.get_session()
+        session.model_checker_context = model_checker.context
         total_checks = len(model_checker.config.checks)
         self.pbar_check_spatialite.setMaximum(total_checks)
         self.pbar_check_spatialite.setValue(0)
@@ -225,95 +220,29 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.pbar_check_spatialite.hide()
         self.lbl_check_spatialite.show()
 
-    def check_rasters(self):
-        """Run rasters checker."""
-        try:
-            from ThreeDiToolbox.tool_commands.raster_checker.raster_checker_main import RasterChecker
-            from ThreeDiToolbox.utils.threedi_database import ThreediDatabase
-        except ImportError:
-            raise
-
-        class PatchedRasterChecker(RasterChecker):
-            def run_all_checks(self, progress_bar):
-                """
-                Overriding an existing method to use QProgressBar instance instead of feedback
-                """
-                progress_per_phase = 100 / self.nr_phases
-                nr_items = len(self.entries.items())
-                progress_per_item = progress_per_phase / nr_items
-
-                phase = 1
-                progress_bar.setValue(0)
-                current_progress = 0
-                for setting_id, rasters in self.entries.items():
-                    self.run_phase_checks(setting_id, rasters, phase)
-                    self.results.update_result_per_phase(setting_id, rasters, phase)
-                    current_progress += progress_per_item
-                    progress_bar.setValue(current_progress)
-
-                phase = 2
-                for setting_id, rasters in self.entries.items():
-                    # we only check rasters that passed blocking checks previous phase
-                    rasters_ready = self.results.get_rasters_ready(setting_id, phase)
-                    if rasters_ready:
-                        self.run_phase_checks(setting_id, rasters_ready, phase)
-                    self.results.update_result_per_phase(setting_id, rasters, phase)
-                    current_progress += progress_per_item
-                    progress_bar.setValue(current_progress)
-
-                phase = 3
-                for setting_id, rasters in self.entries.items():
-                    rasters_ready = self.results.get_rasters_ready(setting_id, phase)
-                    self.run_phase_checks(setting_id, rasters_ready, phase)
-                    self.results.update_result_per_phase(setting_id, rasters, phase)
-                    current_progress += progress_per_item
-                    progress_bar.setValue(current_progress)
-
-                phase = 4
-                for setting_id, rasters in self.entries.items():
-                    rasters_ready = self.results.get_rasters_ready(setting_id, 3)
-                    if len(rasters_ready) >= 2 and rasters[0] in rasters_ready:
-                        rasters_sorted = self.dem_to_first_index(rasters, rasters_ready)
-                        self.run_phase_checks(setting_id, rasters_sorted, phase)
-                    self.results.update_result_per_phase(setting_id, rasters, phase)
-                    current_progress += progress_per_item
-                    progress_bar.setValue(current_progress)
-
-                phase = 5
-                self.input_data_shp = []
-                for setting_id, rasters in self.entries.items():
-                    rasters_ready = self.results.get_rasters_ready(setting_id, phase)
-                    if len(rasters_ready) >= 1:
-                        rasters_ready.insert(0, rasters[0])
-                        self.run_phase_checks(setting_id, rasters_ready, phase)
-                    self.results.update_result_per_phase(setting_id, rasters, phase)
-                    current_progress += progress_per_item
-                    progress_bar.setValue(current_progress)
-
-        # Run raster checks
-        db_type = "spatialite"
-        db_settings = {"db_path": self.schematisation_sqlite}
-        try:
-            db = ThreediDatabase(db_settings, db_type)
-            checker = PatchedRasterChecker(db)
-            checker.run_all_checks(self.pbar_check_rasters)
-            checker.close_session()
-        except Exception as e:
-            error_msg = f"Raster checker errors:\n{e}"
-            self.communication.show_error(error_msg, self)
+    def export_schematisation_checker_results(self):
+        """Save schematisation checker results into the CSV file."""
+        model = self.schematisation_checker_logger.model
+        row_count = model.rowCount()
+        column_count = model.columnCount()
+        checker_results = []
+        for row_idx in range(row_count):
+            row_items = [model.item(row_idx, col_idx) for col_idx in range(column_count)]
+            row = [it.text() for it in row_items]
+            checker_results.append(row)
+        if not checker_results:
+            self.communication.show_warn("There is nothing to export. Action aborted.")
             return
-        for result_row_dict in checker.results.result_per_check:
-            result_row_str = checker.results.result_per_check_to_msg(result_row_dict)
-            result_row = result_row_str.split(",")
-            level = result_row[0].upper()
-            if level == LogLevels.INFO.value:
-                continue
-            self.raster_checker_logger.log_result_row(result_row, level)
-        self.pbar_check_rasters.setMaximum(100)
-        self.pbar_check_rasters.setValue(100)
-        self.communication.bar_info("Finished raster checks.")
-        self.pbar_check_rasters.hide()
-        self.lbl_check_rasters.show()
+        csv_filepath = get_filepath(
+            self, extension_filter="CSV file (*.csv)", save=True, dialog_title="Export schematisation checker results"
+        )
+        if not csv_filepath:
+            return
+        with open(csv_filepath, "w", newline="") as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter=",")
+            csv_writer.writerow(self.SCHEMA_CHECKS_HEADER)
+            csv_writer.writerows(checker_results)
+        self.communication.show_info("Schematisation checker results successfully exported!")
 
 
 class SelectFilesWidget(uicls_files_page, basecls_files_page):
