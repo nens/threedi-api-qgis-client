@@ -92,7 +92,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.communication = self.parent_page.parent_wizard.plugin_dock.communication
         self.schematisation_checker_logger = TreeViewLogger(self.tv_schema_check_result, self.SCHEMA_CHECKS_HEADER)
         self.pb_check_model.clicked.connect(self.run_model_checks)
-        self.pb_export_check_results.clicked.connect(self.export_schematisation_checker_results)
+        self.btn_export_check_results.clicked.connect(self.export_schematisation_checker_results)
         self.lbl_check_spatialite.hide()
         self.test_external_imports()
 
