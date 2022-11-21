@@ -404,7 +404,7 @@
            </font>
           </property>
           <property name="text">
-           <string>Load model</string>
+           <string>Next</string>
           </property>
          </widget>
         </item>

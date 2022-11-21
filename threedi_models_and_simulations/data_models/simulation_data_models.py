@@ -83,7 +83,6 @@ class Precipitation(SimulationElement):
     units: str = None
     values: list = None
     start: datetime = None
-    end: datetime = None
     interpolate: bool = None
     filepath: str = None
     from_csv: bool = None
