@@ -4,7 +4,21 @@ History
 3.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Local init water level (#388).
+- Added discharge coefficients and max breach depth to the breach tab.
+- Fix for the issue #385, #402, #403. (#404)
+- Breaches simulation tab fixes.
+- Initial conditions simulation tab fixes.
+- Breaches tab labels font size change.
+- Fixed an initial water level raster names in the simulation wizard combobox.
+- Fixed breach label font size.
+- Default max breach depth fix.
+- Fixed setting correct 'max_breach_depth' value from template.
+- Compatibility with schema 208 (#401).
+- Use constant for max_angle_1d_advection.
+- Workaround for the issue #153.
+- Stopped loading the "cells" layer to the map canvas during running simulation.
+- Updated minimal schema version to 209.
 
 
 3.2 (2022-07-08)
