@@ -1,7 +1,7 @@
 History
 =======
 
-3.3 (unreleased)
+3.3 (2022-11-28)
 ----------------
 
 - Local init water level (#388).
