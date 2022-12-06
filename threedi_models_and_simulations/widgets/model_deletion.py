@@ -28,13 +28,16 @@ class ModelDeletionDialog(uicls, basecls):
         self.communication = self.plugin_dock.communication
         self.threedi_api = self.plugin_dock.threedi_api
         self.local_schematisation = self.plugin_dock.current_local_schematisation
-        self.threedi_models = None
+        self.organisation = self.plugin_dock.organisations[self.parent_widget.schematisation.owner]
+        self.label_template = self.label.text()
+        self.threedi_models_to_show = []
         self.models_model = QStandardItemModel()
         self.models_tv.setModel(self.models_model)
         self.pb_delete.clicked.connect(self.delete_models)
         self.pb_cancel.clicked.connect(self.reject)
+        self.cb_filter.stateChanged.connect(self.filter_models_by_username)
         self.models_tv.selectionModel().selectionChanged.connect(self.toggle_delete_models)
-        self.fetch_3di_models()
+        self.check_limits()
 
     def toggle_delete_models(self):
         """Toggle delete button if any model is selected."""
@@ -44,38 +47,71 @@ class ModelDeletionDialog(uicls, basecls):
         else:
             self.pb_delete.setDisabled(True)
 
-    def fetch_3di_models(self):
-        """Fetching 3Di models list."""
+    def filter_models_by_username(self):
+        """Filter models list and show only those created by currently logged-in user."""
+        if self.cb_filter.isChecked():
+            user_models = [
+                model for model in self.threedi_models_to_show if model.user == self.plugin_dock.current_user
+            ]
+            self.populate_models(user_models)
+        else:
+            self.populate_models(self.threedi_models_to_show)
+
+    def check_limits(self):
+        """Check 3Di models creation limits."""
+        self.threedi_models_to_show.clear()
         try:
             tc = ThreediCalls(self.threedi_api)
-            threedi_models, models_count = tc.fetch_3di_models_with_count(
-                limit=tc.FETCH_LIMIT, schematisation_name=self.local_schematisation.name, show_invalid=True
-            )
-            self.models_model.clear()
-            if models_count < self.parent_widget.MAX_SCHEMATISATION_MODELS:
-                self.accept()
-            header = ["ID", "Model", "Schematisation", "Revision", "Last updated", "Updated by"]
-            self.models_model.setHorizontalHeaderLabels(header)
-            for sim_model in sorted(threedi_models, key=attrgetter("revision_commit_date"), reverse=True):
-                if sim_model.schematisation_id != self.local_schematisation.id:
-                    continue
-                id_item = QStandardItem(str(sim_model.id))
-                name_item = QStandardItem(sim_model.name)
-                name_item.setData(sim_model, role=Qt.UserRole)
-                schema_item = QStandardItem(sim_model.schematisation_name)
-                rev_item = QStandardItem(sim_model.revision_number)
-                last_updated_day = sim_model.revision_commit_date.split("T")[0]
-                lu_datetime = QDateTime.fromString(last_updated_day, "yyyy-MM-dd")
-                lu_item = QStandardItem(lu_datetime.toString("dd-MMMM-yyyy"))
-                ub_item = QStandardItem(sim_model.user)
-                self.models_model.appendRow([id_item, name_item, schema_item, rev_item, lu_item, ub_item])
-            self.threedi_models = threedi_models
+            filters = {
+                "limit": tc.FETCH_LIMIT,
+                "show_invalid": True,
+                "schematisation_name": self.local_schematisation.name,
+            }
+            limit = self.parent_widget.MAX_SCHEMATISATION_MODELS
+            threedi_models, models_count = tc.fetch_3di_models_with_count(**filters)
+            if models_count > limit:
+                self.label.setText(self.label_template.format("schematisation", limit))
+                self.activate_dialog(threedi_models)
+                return
+            filters = {"limit": tc.FETCH_LIMIT, "show_invalid": True, "organisation_id": self.organisation.unique_id}
+            contract = tc.fetch_contracts(organisation__unique_id=self.organisation.unique_id)[0]
+            limit = contract.threedimodel_limit
+            threedi_models, models_count = tc.fetch_3di_models_with_count(**filters)
+            if models_count > limit:
+                self.label.setText(self.label_template.format("organisation", limit))
+                self.activate_dialog(threedi_models)
         except ApiException as e:
             error_msg = extract_error_message(e)
             self.communication.show_error(error_msg)
         except Exception as e:
             error_msg = f"Error: {e}"
             self.communication.show_error(error_msg)
+
+    def activate_dialog(self, threedi_models):
+        """Activate model deletion dialog."""
+        self.accept()
+        self.populate_models(threedi_models)
+        self.threedi_models_to_show = threedi_models
+
+    def populate_models(self, threedi_models):
+        """Populate 3Di models within a dialog."""
+        self.models_tv.clearSelection()
+        self.models_model.clear()
+        header = ["ID", "Model", "Schematisation", "Revision", "Created By", "Created On"]
+        self.models_model.setHorizontalHeaderLabels(header)
+        for sim_model in sorted(threedi_models, key=attrgetter("revision_commit_date"), reverse=True):
+            if sim_model.schematisation_id != self.local_schematisation.id:
+                continue
+            id_item = QStandardItem(str(sim_model.id))
+            name_item = QStandardItem(sim_model.name)
+            name_item.setData(sim_model, role=Qt.UserRole)
+            schema_item = QStandardItem(sim_model.schematisation_name)
+            rev_item = QStandardItem(sim_model.revision_number)
+            created_by_item = QStandardItem(sim_model.user)
+            created_on = sim_model.revision_commit_date.split("T")[0]
+            created_on_datetime = QDateTime.fromString(created_on, "yyyy-MM-dd")
+            created_on_item = QStandardItem(created_on_datetime.toString("dd-MMMM-yyyy"))
+            self.models_model.appendRow([id_item, name_item, schema_item, rev_item, created_by_item, created_on_item])
 
     def delete_models(self):
         """Deleting selected model(s)."""
@@ -96,4 +132,4 @@ class ModelDeletionDialog(uicls, basecls):
             error_msg = f"Error: {e}"
             self.communication.show_error(error_msg)
         finally:
-            self.fetch_3di_models()
+            self.check_limits()

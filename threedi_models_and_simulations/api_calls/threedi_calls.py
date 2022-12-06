@@ -59,6 +59,7 @@ from threedi_api_client.openapi import (
     Event,
     User,
     Raster,
+    Contract,
 )
 
 
@@ -153,6 +154,8 @@ class ThreediCalls:
         offset: int = None,
         name_contains: str = None,
         schematisation_name: str = None,
+        schematisation_owner: str = None,
+        organisation_id: str = None,
         show_invalid: bool = False,
     ) -> Tuple[List[ThreediModel], int]:
         """Fetch 3Di models available for current user."""
@@ -165,6 +168,10 @@ class ThreediCalls:
             params["name__icontains"] = name_contains.lower()
         if schematisation_name is not None:
             params["revision__schematisation__name"] = schematisation_name
+        if schematisation_owner is not None:
+            params["revision__schematisation__owner__unique_id"] = schematisation_owner
+        if organisation_id is None:
+            params["revision__repository__organisation__unique_id"] = organisation_id
         if show_invalid:
             params["is_valid"] = ""
         logger.debug("Fetching 3di models for current user...")
@@ -925,3 +932,8 @@ class ThreediCalls:
     def update_simulation_settings_aggregation(self, setting_id: int, simulation_pk: int, **data) -> None:
         """Update a simulation aggregation settings."""
         self.threedi_api.simulations_settings_aggregation_partial_update(setting_id, str(simulation_pk), data)
+
+    def fetch_contracts(self, **data) -> List[Contract]:
+        """Get valid 3Di contracts list."""
+        contracts_list = self.paginated_fetch(self.threedi_api.contracts_list, **data)
+        return contracts_list
