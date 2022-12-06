@@ -2,7 +2,7 @@
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 from enum import Enum
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QMessageBox, QInputDialog, QPushButton
+from qgis.PyQt.QtWidgets import QMessageBox, QInputDialog, QPushButton, QProgressBar
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
 from qgis.core import Qgis
 
@@ -117,6 +117,28 @@ class UICommunication(object):
         if accept is False:
             return None
         return item
+
+    def progress_bar(self, msg, minimum=0, maximum=0, init_value=0, clear_msg_bar=False):
+        """Setting progress bar."""
+        if self.iface is None:
+            return None
+        if clear_msg_bar:
+            self.iface.messageBar().clearWidgets()
+        pmb = self.iface.messageBar().createMessage(msg)
+        pb = QProgressBar()
+        pb.setMinimum(minimum)
+        pb.setMaximum(maximum)
+        pb.setValue(init_value)
+        pb.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        pmb.layout().addWidget(pb)
+        self.iface.messageBar().pushWidget(pmb, Qgis.Info)
+        return pb
+
+    def clear_message_bar(self):
+        """Clearing message bar."""
+        if self.iface is None:
+            return None
+        self.iface.messageBar().clearWidgets()
 
 
 class ListViewLogger(object):

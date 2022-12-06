@@ -4,7 +4,7 @@ import os
 import shutil
 from dateutil.relativedelta import relativedelta
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QThread, QSettings
+from qgis.PyQt.QtCore import Qt, QThreadPool, QSettings
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.PyQt.QtWidgets import QFileDialog
 from threedi_api_client.openapi import ApiException
@@ -27,14 +27,15 @@ class SimulationResults(uicls, basecls):
     """Dialog with methods for handling simulations results."""
 
     PROGRESS_COLUMN_IDX = 3
+    MAX_THREAD_COUNT = 1
 
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
         self.setupUi(self)
         self.plugin_dock = plugin_dock
         self.api_client = self.plugin_dock.threedi_api
-        self.download_results_thread = None
-        self.download_worker = None
+        self.download_results_pool = QThreadPool()
+        self.download_results_pool.setMaxThreadCount(self.MAX_THREAD_COUNT)
         self.finished_simulations = {}
         self.tv_model = None
         self.last_progress_item = None
@@ -54,7 +55,7 @@ class SimulationResults(uicls, basecls):
 
     def toggle_download_results(self):
         """Toggle download if any simulation is selected."""
-        if self.download_results_thread is None:
+        if self.download_results_pool.activeThreadCount() == 0:
             selection_model = self.tv_finished_sim_tree.selectionModel()
             if selection_model.hasSelection():
                 self.pb_download.setEnabled(True)
@@ -92,41 +93,21 @@ class SimulationResults(uicls, basecls):
             msg = f"Downloading results of {name_text} started!"
             self.plugin_dock.communication.bar_info(msg)
 
-    def on_download_finished_success(self, msg):
+    def on_download_finished_success(self, msg, results_dir):
         """Reporting finish successfully status and closing download thread."""
         self.plugin_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
-        results_dir = self.download_worker.directory
         grid_file = os.path.join(results_dir, "gridadmin.h5")
         if os.path.exists(grid_file):
             grid_dir = os.path.join(os.path.dirname(os.path.dirname(results_dir)), "grid")
             if os.path.exists(grid_dir):
                 grid_file_copy = os.path.join(grid_dir, "gridadmin.h5")
                 shutil.copyfile(grid_file, bypass_max_path_limit(grid_file_copy, is_file=True))
-        self.download_results_thread.quit()
-        self.download_results_thread.wait()
-        self.download_results_thread = None
-        self.download_worker = None
         self.toggle_download_results()
 
     def on_download_finished_failed(self, msg):
         """Reporting failure and closing download thread."""
         self.plugin_dock.communication.bar_error(msg, log_text_color=Qt.red)
-        self.download_results_thread.quit()
-        self.download_results_thread.wait()
-        self.download_results_thread = None
-        self.download_worker = None
         self.toggle_download_results()
-
-    def terminate_download_thread(self):
-        """Forcing termination of download background thread."""
-        if self.download_results_thread is not None and self.download_results_thread.isRunning():
-            self.plugin_dock.communication.bar_info("Terminating download thread.")
-            self.download_results_thread.terminate()
-            self.plugin_dock.communication.bar_info("Waiting for download thread termination.")
-            self.download_results_thread.wait()
-            self.plugin_dock.communication.bar_info("Download worker terminated.")
-            self.download_results_thread = None
-            self.download_worker = None
 
     def pick_results_destination_dir(self):
         """Pick folder where results will be written to."""
@@ -216,11 +197,8 @@ class SimulationResults(uicls, basecls):
             self.plugin_dock.communication.show_error(error_msg)
             return
         self.pb_download.setDisabled(True)
-        self.download_results_thread = QThread()
-        self.download_worker = DownloadProgressWorker(simulation, downloads, simulation_subdirectory)
-        self.download_worker.moveToThread(self.download_results_thread)
-        self.download_worker.thread_finished.connect(self.on_download_finished_success)
-        self.download_worker.download_failed.connect(self.on_download_finished_failed)
-        self.download_worker.download_progress.connect(self.on_download_progress_update)
-        self.download_results_thread.started.connect(self.download_worker.run)
-        self.download_results_thread.start()
+        download_worker = DownloadProgressWorker(simulation, downloads, simulation_subdirectory)
+        download_worker.signals.thread_finished.connect(self.on_download_finished_success)
+        download_worker.signals.download_failed.connect(self.on_download_finished_failed)
+        download_worker.signals.download_progress.connect(self.on_download_progress_update)
+        self.download_results_pool.start(download_worker)

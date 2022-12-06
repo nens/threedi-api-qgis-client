@@ -13,6 +13,7 @@ from qgis.PyQt.QtCore import QObject, QRunnable, QUrl, QByteArray, pyqtSignal, p
 from threedi_api_client.openapi import ApiException, Progress
 from threedi_api_client.files import upload_file
 from .api_calls.threedi_calls import ThreediCalls
+from .data_models import simulation_data_models as dm
 from .utils import (
     extract_error_message,
     zip_into_archive,
@@ -20,6 +21,15 @@ from .utils import (
     bypass_max_path_limit,
     UploadFileStatus,
     CHUNK_SIZE,
+    write_laterals_to_json,
+    get_download_file,
+    upload_file,
+    split_to_even_chunks,
+    TEMPDIR,
+    LATERALS_FILE_TEMPLATE,
+    DWF_FILE_TEMPLATE,
+    EventTypes,
+    RADAR_ID,
 )
 
 logger = logging.getLogger(__name__)
@@ -138,12 +148,16 @@ class WSProgressesSentinel(QObject):
         self.progresses_fetched.emit(result)
 
 
-class DownloadProgressWorker(QObject):
-    """Worker object responsible for downloading simulations results."""
+class DownloadWorkerSignals(QObject):
+    """Definition of the download worker signals."""
 
-    thread_finished = pyqtSignal(str)
+    thread_finished = pyqtSignal(str, str)  # finish message, download directory
     download_failed = pyqtSignal(str)
     download_progress = pyqtSignal(float)
+
+
+class DownloadProgressWorker(QRunnable):
+    """Worker object responsible for downloading simulations results."""
 
     NOT_STARTED = -1
     FINISHED = 100
@@ -155,6 +169,7 @@ class DownloadProgressWorker(QObject):
         self.downloads = downloads
         self.directory = bypass_max_path_limit(directory)
         self.success = True
+        self.signals = DownloadWorkerSignals()
 
     @pyqtSlot()
     def run(self):
@@ -168,7 +183,7 @@ class DownloadProgressWorker(QObject):
             finished_message = "Nothing to download!"
         total_size = sum(download.size for result_file, download in self.downloads)
         size = 0
-        self.download_progress.emit(size)
+        self.signals.download_progress.emit(size)
         for result_file, download in self.downloads:
             filename = result_file.filename
             filename_path = bypass_max_path_limit(os.path.join(self.directory, filename), is_file=True)
@@ -180,19 +195,19 @@ class DownloadProgressWorker(QObject):
                         if chunk:
                             f.write(chunk)
                             size += len(chunk)
-                            self.download_progress.emit(size / total_size * 100)
+                            self.signals.download_progress.emit(size / total_size * 100)
                 if filename.lower().endswith(".zip"):
                     unzip_archive(filename_path)
                 continue
             except Exception as e:
                 error_msg = f"Error: {e}"
-            self.download_progress.emit(self.FAILED)
-            self.download_failed.emit(error_msg)
+            self.signals.download_progress.emit(self.FAILED)
+            self.signals.download_failed.emit(error_msg)
             self.success = False
             break
         if self.success is True:
-            self.download_progress.emit(self.FINISHED)
-            self.thread_finished.emit(finished_message)
+            self.signals.download_progress.emit(self.FINISHED)
+            self.signals.thread_finished.emit(finished_message, self.directory)
 
 
 class UploadWorkerSignals(QObject):
@@ -450,3 +465,446 @@ class UploadProgressWorker(QRunnable):
         upload_progress = chunk_size / total_size * 100
         self.current_task_progress = upload_progress
         self.report_upload_progress()
+
+
+class SimulationRunnerError(Exception):
+    """Simulation runner exception class."""
+
+    pass
+
+
+class SimulationRunnerSignals(QObject):
+    """Definition of the simulation runner signals."""
+
+    # simulation to run, simulation initialized, current progress, total progress
+    initializing_simulations_progress = pyqtSignal(dm.NewSimulation, bool, int, int)
+    # error message
+    initializing_simulations_failed = pyqtSignal(str)
+    # message
+    initializing_simulations_finished = pyqtSignal(str)
+
+
+class SimulationsRunner(QRunnable):
+    """Worker object responsible for running simulations."""
+
+    def __init__(self, threedi_api, simulations_to_run, upload_timeout=45):
+        super().__init__()
+        self.threedi_api = threedi_api
+        self.simulations_to_run = simulations_to_run
+        self.current_simulation = None
+        self.valid_states = ["processed", "valid", "success"]
+        self.upload_timeout = upload_timeout
+        self.tc = None
+        self.signals = SimulationRunnerSignals()
+        self.total_progress = 100
+        self.steps_per_simulation = 10
+        self.current_step = 0
+        self.number_of_steps = len(self.simulations_to_run) * self.steps_per_simulation
+        self.percentage_per_step = self.total_progress / self.number_of_steps
+
+    def create_simulation(self):
+        """Create a new simulation out of the NewSimulation data model."""
+        simulation = self.tc.create_simulation(
+            name=self.current_simulation.name,
+            tags=self.current_simulation.tags,
+            threedimodel=self.current_simulation.threedimodel_id,
+            start_datetime=self.current_simulation.start_datetime,
+            organisation=self.current_simulation.organisation_uuid,
+            duration=self.current_simulation.duration,
+        )
+        self.current_simulation.simulation = simulation
+        self.current_simulation.initial_status = self.tc.fetch_simulation_status(simulation.id)
+
+    def include_init_options(self):
+        """Apply initialization options to the new simulation."""
+        sim_temp_id = self.current_simulation.simulation_template_id
+        sim_id = self.current_simulation.simulation.id
+        sim_name = self.current_simulation.name
+        duration = self.current_simulation.duration
+        init_options = self.current_simulation.init_options
+        if init_options.filestructure_controls_file is not None:
+            sc_file = init_options.filestructure_controls_file
+            sc_file_download = self.tc.fetch_structure_control_file_download(sim_temp_id, sc_file.id)
+            sc_file_name = sc_file.file.filename
+            sc_file_offset = sc_file.offset
+            sc_temp_filepath = os.path.join(TEMPDIR, sc_file_name)
+            get_download_file(sc_file_download, sc_temp_filepath)
+            sc_upload = self.tc.create_simulation_structure_control_file(
+                sim_id, filename=sc_file_name, offset=sc_file_offset
+            )
+            upload_file(sc_upload, sc_temp_filepath)
+            for ti in range(int(self.upload_timeout // 2)):
+                uploaded_sc = self.tc.fetch_structure_control_files(sim_id)[0]
+                if uploaded_sc.state in self.valid_states:
+                    break
+                else:
+                    time.sleep(2)
+            os.remove(sc_temp_filepath)
+        if init_options.boundary_conditions_file is not None:
+            bc_file = init_options.boundary_conditions_file
+            bc_file_download = self.tc.fetch_boundarycondition_file_download(sim_temp_id, bc_file.id)
+            bc_file_name = bc_file.file.filename
+            bc_temp_filepath = os.path.join(TEMPDIR, bc_file_name)
+            get_download_file(bc_file_download, bc_temp_filepath)
+            bc_upload = self.tc.create_simulation_boundarycondition_file(sim_id, filename=bc_file_name)
+            upload_file(bc_upload, bc_temp_filepath)
+            for ti in range(int(self.upload_timeout // 2)):
+                uploaded_bc = self.tc.fetch_boundarycondition_files(sim_id)[0]
+                if uploaded_bc.state in self.valid_states:
+                    break
+                else:
+                    time.sleep(2)
+            os.remove(bc_temp_filepath)
+        if init_options.basic_processed_results:
+            self.tc.create_simulation_post_processing_lizard_basic(
+                sim_id, scenario_name=sim_name, process_basic_results=True
+            )
+        if init_options.arrival_time_map:
+            self.tc.create_simulation_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=True)
+        if init_options.damage_estimation is not None:
+            de = init_options.damage_estimation
+            self.tc.create_simulation_post_processing_lizard_damage(
+                sim_id,
+                basic_post_processing=True,
+                cost_type=de.cost_type,
+                flood_month=de.flood_month,
+                inundation_period=de.period,
+                repair_time_infrastructure=de.repair_time_infrastructure,
+                repair_time_buildings=de.repair_time_buildings,
+            )
+        if init_options.generate_saved_state:
+            self.tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
+
+    def include_initial_conditions(self):
+        """Add initial conditions to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        threedimodel_id = self.current_simulation.threedimodel_id
+        initial_conditions = self.current_simulation.initial_conditions
+        # 1D
+        if initial_conditions.global_value_1d is not None:
+            self.tc.create_simulation_initial_1d_water_level_constant(sim_id, value=initial_conditions.global_value_1d)
+        if initial_conditions.from_spatialite_1d:
+            self.tc.create_simulation_initial_1d_water_level_predefined(sim_id)
+        # 2D
+        if initial_conditions.global_value_2d is not None:
+            self.tc.create_simulation_initial_2d_water_level_constant(sim_id, value=initial_conditions.global_value_2d)
+        if initial_conditions.online_raster_2d is None and initial_conditions.local_raster_2d is not None:
+            local_raster_2d_name = os.path.basename(initial_conditions.local_raster_2d)
+            initial_water_level_raster_2d = self.tc.create_3di_model_raster(
+                threedimodel_id, name=local_raster_2d_name, type="initial_waterlevel_file"
+            )
+            initial_wl_raster_2d_id = initial_water_level_raster_2d.id
+            init_water_level_upload_2d = self.tc.upload_3di_model_raster(
+                threedimodel_id,
+                initial_wl_raster_2d_id,
+                filename=local_raster_2d_name,
+            )
+            upload_file(init_water_level_upload_2d, initial_conditions.local_raster_2d)
+            raster_task_2d = None
+            for ti in range(int(self.upload_timeout // 2)):
+                if raster_task_2d is None:
+                    model_tasks = self.tc.fetch_3di_model_tasks(threedimodel_id)
+                    for task in model_tasks:
+                        try:
+                            if initial_wl_raster_2d_id in task.params["only_raster_ids"]:
+                                raster_task_2d = task
+                                break
+                        except KeyError:
+                            continue
+                else:
+                    raster_task_2d = self.tc.fetch_3di_model_task(threedimodel_id, raster_task_2d.id)
+                if raster_task_2d and raster_task_2d.status in self.valid_states:
+                    break
+                else:
+                    time.sleep(2)
+            initial_waterlevels = self.tc.fetch_3di_model_initial_waterlevels(threedimodel_id)
+            for iw in initial_waterlevels:
+                if iw.source_raster_id == initial_wl_raster_2d_id:
+                    initial_conditions.online_raster_2d = iw
+                    break
+        if initial_conditions.online_raster_2d is not None:
+            try:
+                self.tc.create_simulation_initial_2d_water_level_raster(
+                    sim_id,
+                    aggregation_method=initial_conditions.aggregation_method_2d,
+                    initial_waterlevel=initial_conditions.online_raster_2d.url,
+                )
+            except AttributeError:
+                error_msg = "Error: selected 2D raster for initial water level is not valid."
+                raise SimulationRunnerError(error_msg)
+        # Groundwater
+        if initial_conditions.global_value_groundwater is not None:
+            self.tc.create_simulation_initial_groundwater_level_constant(
+                sim_id, value=initial_conditions.global_value_groundwater
+            )
+        if (
+            initial_conditions.online_raster_groundwater is None
+            and initial_conditions.local_raster_groundwater is not None
+        ):
+            local_raster_groundwater_name = os.path.basename(initial_conditions.local_raster_groundwater)
+            initial_water_level_raster_gw = self.tc.create_3di_model_raster(
+                threedimodel_id,
+                name=local_raster_groundwater_name,
+                type="initial_groundwater_level_file",
+            )
+            initial_wl_raster_gw_id = initial_water_level_raster_gw.id
+            init_water_level_upload_gw = self.tc.upload_3di_model_raster(
+                threedimodel_id,
+                initial_wl_raster_gw_id,
+                filename=local_raster_groundwater_name,
+            )
+            upload_file(init_water_level_upload_gw, initial_conditions.local_raster_groundwater)
+            raster_task_gw = None
+            for ti in range(int(self.upload_timeout // 2)):
+                if raster_task_gw is None:
+                    model_tasks = self.tc.fetch_3di_model_tasks(threedimodel_id)
+                    for task in model_tasks:
+                        try:
+                            if initial_wl_raster_gw_id in task.params["only_raster_ids"]:
+                                raster_task_gw = task
+                                break
+                        except KeyError:
+                            continue
+                else:
+                    raster_task_gw = self.tc.fetch_3di_model_task(threedimodel_id, raster_task_gw.id)
+                if raster_task_gw and raster_task_gw.status in self.valid_states:
+                    break
+                else:
+                    time.sleep(2)
+            initial_waterlevels = self.tc.fetch_3di_model_initial_waterlevels(threedimodel_id)
+            for iw in initial_waterlevels:
+                if iw.source_raster_id == initial_wl_raster_gw_id:
+                    initial_conditions.online_raster_groundwater = iw
+                    break
+        if initial_conditions.online_raster_groundwater is not None:
+            try:
+                self.tc.create_simulation_initial_groundwater_level_raster(
+                    sim_id,
+                    aggregation_method=initial_conditions.aggregation_method_groundwater,
+                    initial_waterlevel=initial_conditions.online_raster_groundwater.url,
+                )
+            except AttributeError:
+                error_msg = "Error: selected groundwater raster is not valid."
+                raise SimulationRunnerError(error_msg)
+        # Saved state
+        if initial_conditions.saved_state:
+            saved_state_id = initial_conditions.saved_state.url.strip("/").split("/")[-1]
+            self.tc.create_simulation_initial_saved_state(sim_id, saved_state=saved_state_id)
+
+    def include_laterals(self):
+        """Add initial laterals to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        sim_name = self.current_simulation.name
+        if self.current_simulation.laterals:
+            lateral_values = list(self.current_simulation.laterals.data.values())
+            write_laterals_to_json(lateral_values, LATERALS_FILE_TEMPLATE)
+            upload_event_file = self.tc.create_simulation_lateral_file(
+                sim_id, filename=f"{sim_name}_laterals.json", offset=0
+            )
+            upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
+            for ti in range(int(self.upload_timeout // 2)):
+                uploaded_lateral = self.tc.fetch_lateral_files(sim_id)[0]
+                if uploaded_lateral.state in self.valid_states:
+                    break
+                else:
+                    time.sleep(2)
+
+    def include_dwf(self):
+        """Add Dry Weather Flow to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        sim_name = self.current_simulation.name
+        if self.current_simulation.dwf:
+            dwf_values = list(self.current_simulation.dwf.data.values())
+            write_laterals_to_json(dwf_values, DWF_FILE_TEMPLATE)
+            upload_event_file = self.tc.create_simulation_lateral_file(
+                sim_id,
+                filename=f"{sim_name}_dwf.json",
+                offset=0,
+                periodic="daily",
+            )
+            upload_file(upload_event_file, DWF_FILE_TEMPLATE)
+            for ti in range(int(self.upload_timeout // 2)):
+                uploaded_dwf = self.tc.fetch_lateral_files(sim_id)[0]
+                if uploaded_dwf.state in self.valid_states:
+                    break
+                else:
+                    time.sleep(2)
+
+    def include_breaches(self):
+        """Add breaches to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        threedimodel_id = self.current_simulation.threedimodel_id
+        if self.current_simulation.breach:
+            breach_obj = self.tc.fetch_3di_model_point_potential_breach(
+                threedimodel_id, int(self.current_simulation.breach.breach_id)
+            )
+            breach = breach_obj.to_dict()
+            self.tc.create_simulation_breaches(
+                sim_id,
+                potential_breach=breach["url"],
+                duration_till_max_depth=self.current_simulation.breach.duration_in_units,
+                initial_width=self.current_simulation.breach.width,
+                offset=self.current_simulation.breach.offset,
+                discharge_coefficient_positive=self.current_simulation.breach.discharge_coefficient_positive,
+                discharge_coefficient_negative=self.current_simulation.breach.discharge_coefficient_negative,
+                maximum_breach_depth=self.current_simulation.breach.max_breach_depth,
+            )
+
+    def include_precipitation(self):
+        """Add precipitation to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        if self.current_simulation.precipitation:
+            precipitation_type = self.current_simulation.precipitation.precipitation_type
+            values = self.current_simulation.precipitation.values
+            units = self.current_simulation.precipitation.units
+            duration = self.current_simulation.precipitation.duration
+            offset = self.current_simulation.precipitation.offset
+            start = self.current_simulation.precipitation.start
+            interpolate = self.current_simulation.precipitation.interpolate
+            filepath = self.current_simulation.precipitation.filepath
+            from_csv = self.current_simulation.precipitation.from_csv
+
+            if precipitation_type == EventTypes.CONSTANT.value:
+                self.tc.create_simulation_constant_precipitation(
+                    sim_id, value=values, units=units, duration=duration, offset=offset
+                )
+            elif precipitation_type == EventTypes.CUSTOM.value:
+                if from_csv:
+                    for values_chunk in split_to_even_chunks(values, 300):
+                        chunk_offset = values_chunk[0][0]
+                        values_chunk = [[t - chunk_offset, v] for t, v in values_chunk]
+                        self.tc.create_simulation_custom_precipitation(
+                            sim_id,
+                            values=values_chunk,
+                            units=units,
+                            duration=duration,
+                            offset=offset + chunk_offset,
+                            interpolate=interpolate,
+                        )
+                else:
+                    filename = os.path.basename(filepath)
+                    upload = self.tc.create_simulation_custom_netcdf_precipitation(sim_id, filename=filename)
+                    upload_file(upload, filepath)
+            elif precipitation_type == EventTypes.DESIGN.value:
+                self.tc.create_simulation_custom_precipitation(
+                    sim_id, values=values, units=units, duration=duration, offset=offset
+                )
+            elif precipitation_type == EventTypes.RADAR.value:
+                self.tc.create_simulation_radar_precipitation(
+                    sim_id,
+                    reference_uuid=RADAR_ID,
+                    units=units,
+                    duration=duration,
+                    offset=offset,
+                    start_datetime=start,
+                )
+
+    def include_wind(self):
+        """Add wind to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        if self.current_simulation.wind:
+            wind_type = self.current_simulation.wind.wind_type
+            offset = self.current_simulation.wind.offset
+            duration = self.current_simulation.wind.duration
+            speed = self.current_simulation.wind.speed
+            direction = self.current_simulation.wind.direction
+            units = self.current_simulation.wind.units
+            drag_coefficient = self.current_simulation.wind.drag_coefficient
+            interpolate_speed = self.current_simulation.wind.interpolate_speed
+            interpolate_direction = self.current_simulation.wind.interpolate_speed
+            values = self.current_simulation.wind.values
+            self.tc.create_simulation_initial_wind_drag_coefficient(sim_id, value=drag_coefficient)
+            if wind_type == EventTypes.CONSTANT.value:
+                self.tc.create_simulation_constant_wind(
+                    sim_id,
+                    offset=offset,
+                    duration=duration,
+                    units=units,
+                    speed_value=speed,
+                    direction_value=direction,
+                )
+            elif wind_type == EventTypes.CUSTOM.value:
+                self.tc.create_simulation_custom_wind(
+                    sim_id,
+                    offset=offset,
+                    values=values,
+                    units=units,
+                    speed_interpolate=interpolate_speed,
+                    direction_interpolate=interpolate_direction,
+                )
+
+    def include_settings(self):
+        """Add settings to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        settings = self.current_simulation.settings
+        self.tc.create_simulation_settings_physical(sim_id, **settings.physical_settings)
+        self.tc.create_simulation_settings_numerical(sim_id, **settings.numerical_settings)
+        self.tc.create_simulation_settings_time_step(sim_id, **settings.time_step_settings)
+        for aggregation_settings in settings.aggregation_settings_list:
+            self.tc.create_simulation_settings_aggregation(sim_id, **aggregation_settings)
+
+    def start_simulation(self):
+        """Start (or add to queue) given simulation."""
+        sim_id = self.current_simulation.simulation.id
+        try:
+            self.tc.create_simulation_action(sim_id, name="start")
+        except ApiException as e:
+            if e.status == 429:
+                self.tc.create_simulation_action(sim_id, name="queue")
+            else:
+                raise e
+        if self.current_simulation.template_name is not None:
+            self.tc.create_template_from_simulation(self.current_simulation.template_name, str(sim_id))
+
+    @pyqtSlot()
+    def run(self):
+        """Run new simulation(s)."""
+        try:
+            self.tc = ThreediCalls(self.threedi_api)
+            for simulation_to_run in self.simulations_to_run:
+                self.current_simulation = simulation_to_run
+                self.report_progress(increase_current_step=False)
+                self.create_simulation()
+                self.report_progress()
+                self.include_init_options()
+                self.report_progress()
+                self.include_initial_conditions()
+                self.report_progress()
+                self.include_laterals()
+                self.report_progress()
+                self.include_dwf()
+                self.report_progress()
+                self.include_breaches()
+                self.report_progress()
+                self.include_precipitation()
+                self.report_progress()
+                self.include_wind()
+                self.report_progress()
+                self.include_settings()
+                self.report_progress()
+                self.start_simulation()
+                self.report_progress(simulation_initialized=True)
+            self.report_finished("Simulations successfully initialized!")
+        except ApiException as e:
+            error_msg = extract_error_message(e)
+            self.report_failure(error_msg)
+        except Exception as e:
+            error_msg = f"Error: {e}"
+            self.report_failure(error_msg)
+
+    def report_progress(self, simulation_initialized=False, increase_current_step=True):
+        """Report worker progress."""
+        current_progress = int(self.current_step * self.percentage_per_step)
+        if increase_current_step:
+            self.current_step += 1
+        self.signals.initializing_simulations_progress.emit(
+            self.current_simulation, simulation_initialized, current_progress, self.total_progress
+        )
+
+    def report_failure(self, error_message):
+        """Report worker failure message."""
+        self.signals.initializing_simulations_failed.emit(error_message)
+
+    def report_finished(self, message):
+        """Report worker finished message."""
+        self.signals.initializing_simulations_finished.emit(message)

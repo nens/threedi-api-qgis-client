@@ -28,6 +28,7 @@ class UploadOverview(uicls_log, basecls_log):
     """Upload status overview dialog."""
 
     MAX_SCHEMATISATION_MODELS = 3
+    MAX_THREAD_COUNT = 1
 
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
@@ -38,6 +39,7 @@ class UploadOverview(uicls_log, basecls_log):
         self.communication = self.plugin_dock.communication
         self.feedback_logger = ListViewLogger(self.lv_upload_feedback)
         self.upload_thread_pool = QThreadPool()
+        self.upload_thread_pool.setMaxThreadCount(self.MAX_THREAD_COUNT)
         self.ended_tasks = OrderedDict()
         self.upload_progresses = defaultdict(lambda: ("NO TASK", 0.0, 0.0))
         self.current_upload_row = 0

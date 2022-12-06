@@ -1,14 +1,13 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2022 by Lutra Consulting for 3Di Water Management
 import os
-
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QSettings, QThreadPool
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from qgis.PyQt.QtWidgets import QMessageBox
 from threedi_api_client.openapi import ApiException, Progress
-
 from threedi_models_and_simulations.widgets.simulation_init import SimulationInit
+from threedi_models_and_simulations.workers import SimulationsRunner
 from .simulation_wizard import SimulationWizard
 from .model_selection import ModelSelectionDialog
 from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
@@ -23,6 +22,7 @@ class SimulationOverview(uicls, basecls):
     """Dialog with methods for handling running simulations."""
 
     PROGRESS_COLUMN_IDX = 2
+    MAX_THREAD_COUNT = 1
 
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
@@ -31,6 +31,9 @@ class SimulationOverview(uicls, basecls):
         self.threedi_api = self.plugin_dock.threedi_api
         self.user = self.plugin_dock.current_user
         self.model_selection_dlg = ModelSelectionDialog(self.plugin_dock, parent=self)
+        self.settings = QSettings()
+        self.simulation_runner_pool = QThreadPool()
+        self.simulation_runner_pool.setMaxThreadCount(self.MAX_THREAD_COUNT)
         self.simulation_init_wizard = None
         self.simulation_wizard = None
         self.simulations_keys = {}
@@ -131,12 +134,14 @@ class SimulationOverview(uicls, basecls):
             self.simulation_wizard.load_template_parameters(simulation, settings_overview, events)
         self.close()
         self.simulation_wizard.exec_()
-        new_simulations = self.simulation_wizard.new_simulations
-        if new_simulations is not None:
-            for sim in new_simulations:
-                initial_status = self.simulation_wizard.new_simulation_statuses.get(sim.id)
-                initial_progress = Progress(percentage=0, time=sim.duration)
-                self.add_simulation_to_model(sim, initial_status, initial_progress)
+        simulations_to_run = self.simulation_wizard.new_simulations
+        if simulations_to_run:
+            upload_timeout = self.settings.value("threedi/upload_timeout", 45, type=int)
+            simulations_runner = SimulationsRunner(self.threedi_api, simulations_to_run, upload_timeout=upload_timeout)
+            simulations_runner.signals.initializing_simulations_progress.connect(self.on_initializing_progress)
+            simulations_runner.signals.initializing_simulations_failed.connect(self.on_initializing_failed)
+            simulations_runner.signals.initializing_simulations_finished.connect(self.on_initializing_finished)
+            self.simulation_runner_pool.start(simulations_runner)
 
     def stop_simulation(self):
         """Sending request to shut down currently selected simulation."""
@@ -160,3 +165,25 @@ class SimulationOverview(uicls, basecls):
             except Exception as e:
                 error_msg = f"Error: {e}"
                 self.plugin_dock.communication.show_error(error_msg)
+
+    def on_initializing_progress(self, new_simulation, new_simulation_initialized, current_progress, total_progress):
+        """Feedback on new simulation(s) initialization progress signal."""
+        msg = f'Initializing simulation "{new_simulation.name}"...'
+        self.plugin_dock.communication.progress_bar(msg, 0, total_progress, current_progress, clear_msg_bar=True)
+        if new_simulation_initialized:
+            sim = new_simulation.simulation
+            initial_status = new_simulation.initial_status
+            initial_progress = Progress(percentage=0, time=sim.duration)
+            self.add_simulation_to_model(sim, initial_status, initial_progress)
+            info_msg = f"Simulation {new_simulation.name} added to queue!"
+            self.plugin_dock.communication.bar_info(info_msg)
+
+    def on_initializing_failed(self, error_message):
+        """Feedback on new simulation(s) initialization failure signal."""
+        self.plugin_dock.communication.clear_message_bar()
+        self.plugin_dock.communication.bar_error(error_message, log_text_color=QColor(Qt.red))
+
+    def on_initializing_finished(self, message):
+        """Feedback on new simulation(s) initialization finished signal."""
+        self.plugin_dock.communication.clear_message_bar()
+        self.plugin_dock.communication.bar_info(message)
