@@ -121,7 +121,7 @@ def write_laterals_to_json(laterals_values, laterals_file_template):
         json_file.write(jsonf)
 
 
-def upload_file(upload, filepath):
+def upload_local_file(upload, filepath):
     """Upload file."""
     with open(filepath, "rb") as file:
         response = requests.put(upload.put_url, data=file)

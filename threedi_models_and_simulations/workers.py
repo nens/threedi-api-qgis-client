@@ -23,7 +23,7 @@ from .utils import (
     CHUNK_SIZE,
     write_laterals_to_json,
     get_download_file,
-    upload_file,
+    upload_local_file,
     split_to_even_chunks,
     TEMPDIR,
     LATERALS_FILE_TEMPLATE,
@@ -532,7 +532,7 @@ class SimulationsRunner(QRunnable):
             sc_upload = self.tc.create_simulation_structure_control_file(
                 sim_id, filename=sc_file_name, offset=sc_file_offset
             )
-            upload_file(sc_upload, sc_temp_filepath)
+            upload_local_file(sc_upload, sc_temp_filepath)
             for ti in range(int(self.upload_timeout // 2)):
                 uploaded_sc = self.tc.fetch_structure_control_files(sim_id)[0]
                 if uploaded_sc.state in self.valid_states:
@@ -547,7 +547,7 @@ class SimulationsRunner(QRunnable):
             bc_temp_filepath = os.path.join(TEMPDIR, bc_file_name)
             get_download_file(bc_file_download, bc_temp_filepath)
             bc_upload = self.tc.create_simulation_boundarycondition_file(sim_id, filename=bc_file_name)
-            upload_file(bc_upload, bc_temp_filepath)
+            upload_local_file(bc_upload, bc_temp_filepath)
             for ti in range(int(self.upload_timeout // 2)):
                 uploaded_bc = self.tc.fetch_boundarycondition_files(sim_id)[0]
                 if uploaded_bc.state in self.valid_states:
@@ -599,7 +599,7 @@ class SimulationsRunner(QRunnable):
                 initial_wl_raster_2d_id,
                 filename=local_raster_2d_name,
             )
-            upload_file(init_water_level_upload_2d, initial_conditions.local_raster_2d)
+            upload_local_file(init_water_level_upload_2d, initial_conditions.local_raster_2d)
             raster_task_2d = None
             for ti in range(int(self.upload_timeout // 2)):
                 if raster_task_2d is None:
@@ -653,7 +653,7 @@ class SimulationsRunner(QRunnable):
                 initial_wl_raster_gw_id,
                 filename=local_raster_groundwater_name,
             )
-            upload_file(init_water_level_upload_gw, initial_conditions.local_raster_groundwater)
+            upload_local_file(init_water_level_upload_gw, initial_conditions.local_raster_groundwater)
             raster_task_gw = None
             for ti in range(int(self.upload_timeout // 2)):
                 if raster_task_gw is None:
@@ -701,7 +701,7 @@ class SimulationsRunner(QRunnable):
             upload_event_file = self.tc.create_simulation_lateral_file(
                 sim_id, filename=f"{sim_name}_laterals.json", offset=0
             )
-            upload_file(upload_event_file, LATERALS_FILE_TEMPLATE)
+            upload_local_file(upload_event_file, LATERALS_FILE_TEMPLATE)
             for ti in range(int(self.upload_timeout // 2)):
                 uploaded_lateral = self.tc.fetch_lateral_files(sim_id)[0]
                 if uploaded_lateral.state in self.valid_states:
@@ -722,7 +722,7 @@ class SimulationsRunner(QRunnable):
                 offset=0,
                 periodic="daily",
             )
-            upload_file(upload_event_file, DWF_FILE_TEMPLATE)
+            upload_local_file(upload_event_file, DWF_FILE_TEMPLATE)
             for ti in range(int(self.upload_timeout // 2)):
                 uploaded_dwf = self.tc.fetch_lateral_files(sim_id)[0]
                 if uploaded_dwf.state in self.valid_states:
@@ -784,7 +784,7 @@ class SimulationsRunner(QRunnable):
                 else:
                     filename = os.path.basename(filepath)
                     upload = self.tc.create_simulation_custom_netcdf_precipitation(sim_id, filename=filename)
-                    upload_file(upload, filepath)
+                    upload_local_file(upload, filepath)
             elif precipitation_type == EventTypes.DESIGN.value:
                 self.tc.create_simulation_custom_precipitation(
                     sim_id, values=values, units=units, duration=duration, offset=offset
