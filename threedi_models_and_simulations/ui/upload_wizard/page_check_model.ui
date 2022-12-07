@@ -91,6 +91,9 @@
         </item>
         <item>
          <widget class="QToolButton" name="btn_export_check_results">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="minimumSize">
            <size>
             <width>40</width>

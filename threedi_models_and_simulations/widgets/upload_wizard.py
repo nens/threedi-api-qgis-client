@@ -114,6 +114,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.pbar_check_spatialite.show()
         self.schematisation_checker_logger.initialize_view()
         self.pbar_check_spatialite.setValue(0)
+        self.btn_export_check_results.setDisabled(True)
         self.check_schematisation()
 
     def check_schematisation(self):
@@ -215,6 +216,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             for result_row in results_rows:
                 level = result_row[0].upper()
                 self.schematisation_checker_logger.log_result_row(result_row, level)
+            self.btn_export_check_results.setEnabled(True)
         self.communication.bar_info("Finished schematisation checks.")
         self.pbar_check_spatialite.setValue(total_checks)
         self.pbar_check_spatialite.hide()
