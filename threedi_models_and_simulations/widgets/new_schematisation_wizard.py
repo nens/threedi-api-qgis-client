@@ -236,7 +236,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "limiter_slope_friction_2d": None,
             "max_degree": None,
             "max_nonlin_iterations": 20,
-            "minimum_friction_velocity": 0.05,
+            "minimum_friction_velocity": 0.005,
             "minimum_surface_area": 0.00000001,
             "precon_cg": 1,
             "preissmann_slot": 0.0,
