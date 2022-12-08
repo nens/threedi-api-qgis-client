@@ -59,7 +59,6 @@ class ModelDeletionDialog(uicls, basecls):
 
     def check_limits(self):
         """Check 3Di models creation limits."""
-        self.threedi_models_to_show.clear()
         try:
             tc = ThreediCalls(self.threedi_api)
             filters = {
@@ -70,16 +69,19 @@ class ModelDeletionDialog(uicls, basecls):
             limit = self.parent_widget.MAX_SCHEMATISATION_MODELS
             threedi_models, models_count = tc.fetch_3di_models_with_count(**filters)
             if models_count > limit:
-                self.label.setText(self.label_template.format("schematisation", limit))
-                self.activate_dialog(threedi_models)
+                self.label.setText(self.label_template.format("schematisation", limit, models_count))
+                self.setup_dialog(threedi_models)
                 return
-            filters = {"limit": tc.FETCH_LIMIT, "show_invalid": True, "organisation_id": self.organisation.unique_id}
-            contract = tc.fetch_contracts(organisation__unique_id=self.organisation.unique_id)[0]
+            organisation_uuid = self.organisation.unique_id
+            filters = {"limit": tc.FETCH_LIMIT, "show_invalid": True, "organisation_id": organisation_uuid}
+            contract = tc.fetch_contracts(organisation__unique_id=organisation_uuid)[0]
             limit = contract.threedimodel_limit
             threedi_models, models_count = tc.fetch_3di_models_with_count(**filters)
             if models_count > limit:
-                self.label.setText(self.label_template.format("organisation", limit))
-                self.activate_dialog(threedi_models)
+                self.label.setText(self.label_template.format("organisation", limit, models_count))
+                self.setup_dialog(threedi_models)
+            else:
+                self.accept()
         except ApiException as e:
             error_msg = extract_error_message(e)
             self.communication.show_error(error_msg)
@@ -87,9 +89,9 @@ class ModelDeletionDialog(uicls, basecls):
             error_msg = f"Error: {e}"
             self.communication.show_error(error_msg)
 
-    def activate_dialog(self, threedi_models):
-        """Activate model deletion dialog."""
-        self.accept()
+    def setup_dialog(self, threedi_models):
+        """Setup model deletion dialog."""
+        self.threedi_models_to_show.clear()
         self.populate_models(threedi_models)
         self.threedi_models_to_show = threedi_models
 

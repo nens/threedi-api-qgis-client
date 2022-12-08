@@ -89,11 +89,12 @@
     <widget class="QLabel" name="label">
      <property name="font">
       <font>
+       <family>Segoe UI</family>
        <pointsize>12</pointsize>
       </font>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;Maximum number of active 3Di models for {} is {}. Please remove any excess models to continue uploading.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;Maximum number of active 3Di models for {} is {} ({} found). Please remove any excess models to continue uploading.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -104,6 +105,7 @@
     <widget class="QTreeView" name="models_tv">
      <property name="font">
       <font>
+       <family>Segoe UI</family>
        <pointsize>10</pointsize>
       </font>
      </property>

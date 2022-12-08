@@ -170,7 +170,7 @@ class ThreediCalls:
             params["revision__schematisation__name"] = schematisation_name
         if schematisation_owner is not None:
             params["revision__schematisation__owner__unique_id"] = schematisation_owner
-        if organisation_id is None:
+        if organisation_id is not None:
             params["revision__repository__organisation__unique_id"] = organisation_id
         if show_invalid:
             params["is_valid"] = ""
