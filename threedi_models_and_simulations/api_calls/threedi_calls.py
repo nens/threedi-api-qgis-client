@@ -155,7 +155,6 @@ class ThreediCalls:
         name_contains: str = None,
         schematisation_name: str = None,
         schematisation_owner: str = None,
-        organisation_id: str = None,
         show_invalid: bool = False,
     ) -> Tuple[List[ThreediModel], int]:
         """Fetch 3Di models available for current user."""
@@ -170,8 +169,6 @@ class ThreediCalls:
             params["revision__schematisation__name"] = schematisation_name
         if schematisation_owner is not None:
             params["revision__schematisation__owner__unique_id"] = schematisation_owner
-        if organisation_id is not None:
-            params["revision__repository__organisation__unique_id"] = organisation_id
         if show_invalid:
             params["is_valid"] = ""
         logger.debug("Fetching 3di models for current user...")

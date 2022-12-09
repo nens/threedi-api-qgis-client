@@ -73,7 +73,7 @@ class ModelDeletionDialog(uicls, basecls):
                 self.setup_dialog(threedi_models)
                 return
             organisation_uuid = self.organisation.unique_id
-            filters = {"limit": tc.FETCH_LIMIT, "show_invalid": True, "organisation_id": organisation_uuid}
+            filters = {"limit": tc.FETCH_LIMIT, "show_invalid": True, "schematisation_owner": organisation_uuid}
             contract = tc.fetch_contracts(organisation__unique_id=organisation_uuid)[0]
             limit = contract.threedimodel_limit
             threedi_models, models_count = tc.fetch_3di_models_with_count(**filters)
