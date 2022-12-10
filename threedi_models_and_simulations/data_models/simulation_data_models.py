@@ -6,6 +6,9 @@ from threedi_api_client.openapi import (
     Simulation,
     InitialWaterlevel,
     FileStructureControl,
+    MemoryStructureControl,
+    TableStructureControl,
+    TimedStructureControl,
     FileBoundaryCondition,
 )
 
@@ -31,12 +34,19 @@ class DamageEstimation(SimulationElement):
 
 @dataclass
 class InitOptions(SimulationElement):
-    filestructure_controls_file: FileStructureControl = None
     boundary_conditions_file: FileBoundaryCondition = None
     basic_processed_results: bool = None
     arrival_time_map: bool = None
     damage_estimation: DamageEstimation = None
     generate_saved_state: bool = None
+
+
+@dataclass
+class StructureControls(SimulationElement):
+    file_structure_controls: FileStructureControl = None
+    memory_structure_controls: MemoryStructureControl = None
+    table_structure_controls: TableStructureControl = None
+    timed_structure_controls: TimedStructureControl = None
 
 
 @dataclass

@@ -638,16 +638,6 @@
    <item row="1" column="1">
     <layout class="QVBoxLayout" name="verticalLayout_6">
      <item>
-      <widget class="QCheckBox" name="cb_filestructure_controls">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Include filestructure controls</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QCheckBox" name="cb_boundary">
        <property name="enabled">
         <bool>false</bool>
@@ -666,6 +656,16 @@
        </property>
        <property name="text">
         <string>Include boundary conditions</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="cb_filestructure_controls">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Include structure controls</string>
        </property>
       </widget>
      </item>

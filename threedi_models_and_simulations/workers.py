@@ -522,24 +522,6 @@ class SimulationsRunner(QRunnable):
         sim_name = self.current_simulation.name
         duration = self.current_simulation.duration
         init_options = self.current_simulation.init_options
-        if init_options.filestructure_controls_file is not None:
-            sc_file = init_options.filestructure_controls_file
-            sc_file_download = self.tc.fetch_structure_control_file_download(sim_temp_id, sc_file.id)
-            sc_file_name = sc_file.file.filename
-            sc_file_offset = sc_file.offset
-            sc_temp_filepath = os.path.join(TEMPDIR, sc_file_name)
-            get_download_file(sc_file_download, sc_temp_filepath)
-            sc_upload = self.tc.create_simulation_structure_control_file(
-                sim_id, filename=sc_file_name, offset=sc_file_offset
-            )
-            upload_local_file(sc_upload, sc_temp_filepath)
-            for ti in range(int(self.upload_timeout // 2)):
-                uploaded_sc = self.tc.fetch_structure_control_files(sim_id)[0]
-                if uploaded_sc.state in self.valid_states:
-                    break
-                else:
-                    time.sleep(2)
-            os.remove(sc_temp_filepath)
         if init_options.boundary_conditions_file is not None:
             bc_file = init_options.boundary_conditions_file
             bc_file_download = self.tc.fetch_boundarycondition_file_download(sim_temp_id, bc_file.id)
@@ -574,6 +556,28 @@ class SimulationsRunner(QRunnable):
             )
         if init_options.generate_saved_state:
             self.tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
+
+    def include_structure_controls(self):
+        sim_id = self.current_simulation.simulation.id
+        sim_temp_id = self.current_simulation.simulation_template_id
+        if self.current_simulation.file_structure_controls:
+            sc_file = self.current_simulation.file_structure_controls
+            sc_file_download = self.tc.fetch_structure_control_file_download(sim_temp_id, sc_file.id)
+            sc_file_name = sc_file.file.filename
+            sc_file_offset = sc_file.offset
+            sc_temp_filepath = os.path.join(TEMPDIR, sc_file_name)
+            get_download_file(sc_file_download, sc_temp_filepath)
+            sc_upload = self.tc.create_simulation_structure_control_file(
+                sim_id, filename=sc_file_name, offset=sc_file_offset
+            )
+            upload_local_file(sc_upload, sc_temp_filepath)
+            for ti in range(int(self.upload_timeout // 2)):
+                uploaded_sc = self.tc.fetch_structure_control_files(sim_id)[0]
+                if uploaded_sc.state in self.valid_states:
+                    break
+                else:
+                    time.sleep(2)
+            os.remove(sc_temp_filepath)
 
     def include_initial_conditions(self):
         """Add initial conditions to the new simulation."""

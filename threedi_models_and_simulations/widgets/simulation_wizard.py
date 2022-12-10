@@ -56,6 +56,9 @@ uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui",
 uicls_duration_page, basecls_duration_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_duration.ui")
 )
+uicls_structure_controls, basecls_structure_controls = uic.loadUiType(
+    os.path.join(base_dir, "ui", "simulation_wizard", "page_structure_controls.ui")
+)
 uicls_initial_conds, basecls_initial_conds = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_initial_conditions.ui")
 )
@@ -186,6 +189,76 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
             self.label_total_time.setText("{} years, {} months, {} days, {} hours, {} minutes".format(*duration))
         except ValueError:
             self.label_total_time.setText("Invalid datetime format!")
+
+
+class ControlStructuresWidget(uicls_structure_controls, basecls_structure_controls):
+    """Widget for the Structure Controls page."""
+
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_structure_controls.svg"))
+        self.svg_widget.setMinimumHeight(75)
+        self.svg_widget.setMinimumWidth(700)
+        self.svg_lout.addWidget(self.svg_widget)
+        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
+        set_widget_background_color(self.svg_widget)
+        set_widget_background_color(self)
+        self.template_file_structure_controls = None
+        self.template_memory_structure_controls = None
+        self.template_table_structure_controls = None
+        self.template_timed_structure_controls = None
+        self.connect_signals()
+
+    def connect_signals(self):
+        """Connecting widgets signals."""
+        self.pb_upload_file_sc.clicked.connect(self.set_control_structure_file)
+
+    def set_template_structure_controls(
+        self,
+        template_file_structure_controls=None,
+        template_memory_structure_controls=None,
+        template_table_structure_controls=None,
+        template_timed_structure_controls=None,
+    ):
+        if not any(
+            [
+                template_file_structure_controls,
+                template_memory_structure_controls,
+                template_table_structure_controls,
+                template_timed_structure_controls,
+            ]
+        ):
+            return
+        self.gb_from_template.setEnabled(True)
+        self.gb_from_template.setChecked(True)
+        if template_file_structure_controls is not None:
+            self.template_file_structure_controls = template_file_structure_controls
+            self.cb_file_sc.setChecked(True)
+        if template_memory_structure_controls is not None:
+            self.template_memory_structure_controls = template_memory_structure_controls
+            self.cb_memory_sc.setChecked(True)
+        if template_table_structure_controls is not None:
+            self.template_table_structure_controls = template_table_structure_controls
+            self.cb_table_sc.setChecked(True)
+        if template_file_structure_controls is not None:
+            self.template_timed_structure_controls = template_timed_structure_controls
+            self.cb_timed_sc.setChecked(True)
+
+    def set_control_structure_file(self):
+        """Selecting and setting up structure control file in JSON format."""
+        file_filter = "JSON (*.json);;All Files (*)"
+        last_folder = QSettings().value("threedi/last_control_structure_file_folder", os.path.expanduser("~"), type=str)
+        filename, __ = QFileDialog.getOpenFileName(self, "Wind Time Series", last_folder, file_filter)
+        if len(filename) == 0:
+            return
+        QSettings().setValue("threedi/last_control_structure_file_folder", os.path.dirname(filename))
+        self.file_sc_upload.setText(filename)
+
+    def get_structure_control_data(self):
+        """Getting all needed data for adding structure controls to the simulation."""
+        pass
 
 
 class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
@@ -1651,6 +1724,20 @@ class SimulationDurationPage(QWizardPage):
         self.main_widget = SimulationDurationWidget(self)
         layout = QGridLayout()
         layout.addWidget(self.main_widget, 0, 0)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+
+class ControlStructuresPage(QWizardPage):
+    """Control structures definition page."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = ControlStructuresWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.adjustSize()
