@@ -47,6 +47,7 @@ class StructureControls(SimulationElement):
     memory_structure_controls: MemoryStructureControl = None
     table_structure_controls: TableStructureControl = None
     timed_structure_controls: TimedStructureControl = None
+    local_file_structure_controls: str = None
 
 
 @dataclass
@@ -132,6 +133,7 @@ class NewSimulation:
     end_datetime: datetime
     duration: float
     init_options: InitOptions = None
+    structure_controls: StructureControls = None
     initial_conditions: InitialConditions = None
     laterals: Laterals = None
     dwf: DWF = None

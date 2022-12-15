@@ -179,7 +179,7 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
             return 0.0
 
     def update_time_difference(self):
-        """Updating label with simulation duration showed in the human readable format."""
+        """Updating label with simulation duration showed in the human-readable format."""
         try:
             start, end = self.to_datetime()
             if start > end:
@@ -191,14 +191,14 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
             self.label_total_time.setText("Invalid datetime format!")
 
 
-class ControlStructuresWidget(uicls_structure_controls, basecls_structure_controls):
+class StructureControlsWidget(uicls_structure_controls, basecls_structure_controls):
     """Widget for the Structure Controls page."""
 
     def __init__(self, parent_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_structure_controls.svg"))
+        self.svg_widget = QSvgWidget(icon_path("sim_wizard_initial_con.svg"))
         self.svg_widget.setMinimumHeight(75)
         self.svg_widget.setMinimumWidth(700)
         self.svg_lout.addWidget(self.svg_widget)
@@ -213,7 +213,28 @@ class ControlStructuresWidget(uicls_structure_controls, basecls_structure_contro
 
     def connect_signals(self):
         """Connecting widgets signals."""
+        self.gb_from_template.toggled.connect(self.toggle_template_structures)
         self.pb_upload_file_sc.clicked.connect(self.set_control_structure_file)
+
+    def toggle_template_structures(self, checked):
+        """Enabling/disabling template structure controls checkboxes."""
+        if checked:
+            if self.template_file_structure_controls is not None:
+                self.cb_file_sc.setEnabled(True)
+            else:
+                self.cb_file_sc.setDisabled(True)
+            if self.template_memory_structure_controls is not None:
+                self.cb_memory_sc.setEnabled(True)
+            else:
+                self.cb_memory_sc.setDisabled(True)
+            if self.template_table_structure_controls is not None:
+                self.cb_table_sc.setEnabled(True)
+            else:
+                self.cb_table_sc.setDisabled(True)
+            if self.template_timed_structure_controls is not None:
+                self.cb_timed_sc.setEnabled(True)
+            else:
+                self.cb_timed_sc.setDisabled(True)
 
     def set_template_structure_controls(
         self,
@@ -222,6 +243,7 @@ class ControlStructuresWidget(uicls_structure_controls, basecls_structure_contro
         template_table_structure_controls=None,
         template_timed_structure_controls=None,
     ):
+        """Setting structure controls data derived from the simulation template."""
         if not any(
             [
                 template_file_structure_controls,
@@ -231,8 +253,6 @@ class ControlStructuresWidget(uicls_structure_controls, basecls_structure_contro
             ]
         ):
             return
-        self.gb_from_template.setEnabled(True)
-        self.gb_from_template.setChecked(True)
         if template_file_structure_controls is not None:
             self.template_file_structure_controls = template_file_structure_controls
             self.cb_file_sc.setChecked(True)
@@ -242,9 +262,11 @@ class ControlStructuresWidget(uicls_structure_controls, basecls_structure_contro
         if template_table_structure_controls is not None:
             self.template_table_structure_controls = template_table_structure_controls
             self.cb_table_sc.setChecked(True)
-        if template_file_structure_controls is not None:
+        if template_timed_structure_controls is not None:
             self.template_timed_structure_controls = template_timed_structure_controls
             self.cb_timed_sc.setChecked(True)
+        self.gb_from_template.setEnabled(True)
+        self.gb_from_template.setChecked(True)
 
     def set_control_structure_file(self):
         """Selecting and setting up structure control file in JSON format."""
@@ -258,7 +280,15 @@ class ControlStructuresWidget(uicls_structure_controls, basecls_structure_contro
 
     def get_structure_control_data(self):
         """Getting all needed data for adding structure controls to the simulation."""
-        pass
+        local_sc_filepath = self.file_sc_upload.text()
+        structure_control_data = [
+            self.template_file_structure_controls,
+            self.template_memory_structure_controls,
+            self.template_table_structure_controls,
+            self.template_timed_structure_controls,
+            local_sc_filepath if local_sc_filepath else None,
+        ]
+        return structure_control_data
 
 
 class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
@@ -1729,13 +1759,13 @@ class SimulationDurationPage(QWizardPage):
         self.adjustSize()
 
 
-class ControlStructuresPage(QWizardPage):
+class StructureControlsPage(QWizardPage):
     """Control structures definition page."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
-        self.main_widget = ControlStructuresWidget(self)
+        self.main_widget = StructureControlsWidget(self)
         layout = QGridLayout()
         layout.addWidget(self.main_widget)
         self.setLayout(layout)
@@ -1872,6 +1902,9 @@ class SimulationWizard(QWizard):
         self.duration_page = SimulationDurationPage(self)
         self.addPage(self.name_page)
         self.addPage(self.duration_page)
+        if init_conditions.include_structure_controls:
+            self.structure_controls_page = StructureControlsPage(self)
+            self.addPage(self.structure_controls_page)
         if init_conditions.include_initial_conditions:
             self.init_conditions_page = InitialConditionsPage(
                 self, load_conditions=init_conditions.load_from_saved_state
@@ -2008,6 +2041,14 @@ class SimulationWizard(QWizard):
         simulation_duration = self.duration_page.main_widget.calculate_simulation_duration()
         init_conditions = self.init_conditions_dlg.initial_conditions
 
+        if init_conditions.include_structure_controls:
+            temp_file_sc = events.filestructurecontrols[0] if events.filestructurecontrols else None
+            temp_memory_sc = events.memorystructurecontrols[0] if events.memorystructurecontrols else None
+            temp_table_sc = events.tablestructurecontrols[0] if events.tablestructurecontrols else None
+            temp_timed_sc = events.timedstructurecontrols[0] if events.timedstructurecontrols else None
+            self.structure_controls_page.main_widget.set_template_structure_controls(
+                temp_file_sc, temp_memory_sc, temp_table_sc, temp_timed_sc
+            )
         if init_conditions.include_initial_conditions:
             init_conditions_widget = self.init_conditions_page.main_widget
             if any(
@@ -2181,8 +2222,6 @@ class SimulationWizard(QWizard):
         duration = self.duration_page.main_widget.calculate_simulation_duration()
         # Initialization options
         init_options = dm.InitOptions()
-        if self.init_conditions.include_filestructure_controls:
-            init_options.filestructure_controls_file = self.init_conditions_dlg.events.filestructurecontrols[0]
         if self.init_conditions.include_boundary_conditions:
             init_options.boundary_conditions_file = self.init_conditions_dlg.events.fileboundaryconditions
         init_options.basic_processed_results = self.init_conditions.basic_processed_results
@@ -2197,6 +2236,28 @@ class SimulationWizard(QWizard):
             )
             init_options.damage_estimation = damage_estimation
         init_options.generate_saved_state = self.init_conditions.generate_saved_state
+        # Structure controls page attributes
+        structure_controls = dm.StructureControls()
+        if self.init_conditions.include_structure_controls:
+            (
+                temp_file_structure_controls,
+                temp_memory_structure_controls,
+                temp_table_structure_controls,
+                temp_timed_structure_controls,
+                local_file_structure_controls,
+            ) = self.structure_controls_page.main_widget.get_structure_control_data()
+            if self.structure_controls_page.main_widget.gb_from_template.isChecked():
+                if self.structure_controls_page.main_widget.cb_file_sc.isChecked():
+                    structure_controls.file_structure_controls = temp_file_structure_controls
+                if self.structure_controls_page.main_widget.cb_memory_sc.isChecked():
+                    structure_controls.memory_structure_controls = temp_memory_structure_controls
+                if self.structure_controls_page.main_widget.cb_table_sc.isChecked():
+                    structure_controls.table_structure_controls = temp_table_structure_controls
+                if self.structure_controls_page.main_widget.cb_timed_sc.isChecked():
+                    structure_controls.timed_structure_controls = temp_timed_structure_controls
+            if self.structure_controls_page.main_widget.gb_upload_file.isChecked():
+                structure_controls.local_file_structure_controls = local_file_structure_controls
+
         # Initial conditions page attributes
         initial_conditions = dm.InitialConditions()
         if self.init_conditions.include_initial_conditions:
@@ -2283,6 +2344,7 @@ class SimulationWizard(QWizard):
                 sim_temp_id, sim_name, tags, threedimodel_id, organisation_uuid, start_datetime, end_datetime, duration
             )
             new_simulation.init_options = init_options
+            new_simulation.structure_controls = structure_controls
             new_simulation.initial_conditions = initial_conditions
             new_simulation.laterals = laterals
             new_simulation.dwf = dwf

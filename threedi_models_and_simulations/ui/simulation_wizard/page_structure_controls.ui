@@ -133,8 +133,8 @@
              </property>
              <property name="maximumSize">
               <size>
-               <width>14</width>
-               <height>14</height>
+               <width>16777215</width>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -144,40 +144,13 @@
               </font>
              </property>
              <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QCheckBox{background-color: white;}</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_11">
-             <property name="minimumSize">
-              <size>
-               <width>75</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>10</pointsize>
-              </font>
+              <enum>Qt::LeftToRight</enum>
              </property>
              <property name="text">
               <string>File structure controls</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -195,8 +168,8 @@
              </property>
              <property name="maximumSize">
               <size>
-               <width>14</width>
-               <height>14</height>
+               <width>16777215</width>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -206,40 +179,16 @@
               </font>
              </property>
              <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
+              <enum>Qt::LeftToRight</enum>
              </property>
              <property name="styleSheet">
-              <string notr="true">QCheckBox{background-color: white;}</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_12">
-             <property name="minimumSize">
-              <size>
-               <width>75</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>10</pointsize>
-              </font>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Memory structure controls</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -257,8 +206,8 @@
              </property>
              <property name="maximumSize">
               <size>
-               <width>14</width>
-               <height>14</height>
+               <width>16777215</width>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -268,40 +217,13 @@
               </font>
              </property>
              <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QCheckBox{background-color: white;}</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_13">
-             <property name="minimumSize">
-              <size>
-               <width>75</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>10</pointsize>
-              </font>
+              <enum>Qt::LeftToRight</enum>
              </property>
              <property name="text">
               <string>Table structure controls</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -319,8 +241,8 @@
              </property>
              <property name="maximumSize">
               <size>
-               <width>14</width>
-               <height>14</height>
+               <width>16777215</width>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -330,40 +252,13 @@
               </font>
              </property>
              <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QCheckBox{background-color: white;}</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_14">
-             <property name="minimumSize">
-              <size>
-               <width>75</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>10</pointsize>
-              </font>
+              <enum>Qt::LeftToRight</enum>
              </property>
              <property name="text">
               <string>Timed structure controls</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -486,6 +381,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Segoe UI</family>
              <pointsize>10</pointsize>
             </font>
            </property>
