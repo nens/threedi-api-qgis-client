@@ -6,10 +6,9 @@ import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from copy import deepcopy
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from functools import partial
 from operator import attrgetter
-from qgis.PyQt.QtSvg import QSvgWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QColor, QStandardItemModel, QStandardItem, QFont
 from qgis.PyQt.QtCore import QSettings, Qt, QSize
@@ -22,6 +21,8 @@ from qgis.PyQt.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QLineEdit,
+    QLabel,
+    QSpacerItem,
 )
 from qgis.core import QgsMapLayerProxyModel, NULL
 from threedi_api_client.openapi import ApiException
@@ -44,7 +45,6 @@ from ..utils import (
 from ..utils_ui import (
     get_filepath,
     qgis_layers_cbo_get_layer_uri,
-    icon_path,
     set_widget_background_color,
     scan_widgets_parameters,
     set_widgets_parameters,
@@ -126,12 +126,6 @@ class NameWidget(uicls_name_page, basecls_name_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_name.svg"))
-        self.svg_widget.setMinimumHeight(75)
-        self.svg_widget.setMinimumWidth(700)
-        self.svg_lout.addWidget(self.svg_widget)
-        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
-        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
 
 
@@ -142,12 +136,6 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_duration.svg"))
-        self.svg_widget.setMinimumHeight(75)
-        self.svg_widget.setMinimumWidth(700)
-        self.svg_lout.addWidget(self.svg_widget)
-        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
-        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.date_from.dateTimeChanged.connect(self.update_time_difference)
         self.date_to.dateTimeChanged.connect(self.update_time_difference)
@@ -298,12 +286,6 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_initial_con.svg"))
-        self.svg_widget.setMinimumHeight(75)
-        self.svg_widget.setMinimumWidth(700)
-        self.svg_lout.addWidget(self.svg_widget)
-        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
-        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.initial_waterlevels = {}
         self.saved_states = {}
@@ -376,12 +358,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_laterals.svg"))
-        self.svg_widget.setMinimumHeight(75)
-        self.svg_widget.setMinimumWidth(700)
-        self.svg_lout.addWidget(self.svg_widget)
-        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
-        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.laterals_timeseries = {}
         self.last_uploaded_laterals = None
@@ -567,12 +543,6 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_dwf.svg"))
-        self.svg_widget.setMinimumHeight(75)
-        self.svg_widget.setMinimumWidth(700)
-        self.svg_lout.addWidget(self.svg_widget)
-        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
-        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.dwf_timeseries = {}
         self.last_uploaded_dwf = None
@@ -684,12 +654,6 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_breaches.svg"))
-        self.svg_widget.setMinimumHeight(75)
-        self.svg_widget.setMinimumWidth(700)
-        self.svg_lout.addWidget(self.svg_widget)
-        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
-        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.values = dict()
         self.potential_breaches = dict()
@@ -832,12 +796,6 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_precipitation.svg"))
-        self.svg_widget.setMinimumHeight(75)
-        self.svg_widget.setMinimumWidth(700)
-        self.svg_lout.addWidget(self.svg_widget)
-        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
-        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.current_units = "hrs"
         self.precipitation_duration = 0
@@ -1335,12 +1293,6 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_wind.svg"))
-        self.svg_widget.setMinimumHeight(75)
-        self.svg_widget.setMinimumWidth(700)
-        self.svg_lout.addWidget(self.svg_widget)
-        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
-        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.current_units = "hrs"
         self.wind_duration = 0
@@ -1511,12 +1463,6 @@ class SettingsWidget(uicls_settings_page, basecls_settings_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_settings.svg"))
-        self.svg_widget.setMinimumHeight(75)
-        self.svg_widget.setMinimumWidth(700)
-        self.svg_lout.addWidget(self.svg_widget)
-        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
-        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.aggregation_model = QStandardItemModel()
         self.aggregation_tv.setModel(self.aggregation_model)
@@ -1648,12 +1594,6 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_initiation.svg"))
-        self.svg_widget.setMinimumHeight(75)
-        self.svg_widget.setMinimumWidth(700)
-        self.svg_lout.addWidget(self.svg_widget)
-        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
-        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
@@ -1733,6 +1673,8 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
 class NamePage(QWizardPage):
     """Simulation name definition page."""
 
+    STEP_NAME = "Name"
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -1747,6 +1689,8 @@ class NamePage(QWizardPage):
 
 class SimulationDurationPage(QWizardPage):
     """Simulation duration definition page."""
+
+    STEP_NAME = "Duration"
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1776,6 +1720,8 @@ class StructureControlsPage(QWizardPage):
 class InitialConditionsPage(QWizardPage):
     """Initial condition definition page."""
 
+    STEP_NAME = "Initial conditions"
+
     def __init__(self, parent=None, load_conditions=False):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -1789,6 +1735,8 @@ class InitialConditionsPage(QWizardPage):
 
 class LateralsPage(QWizardPage):
     """Laterals definition page."""
+
+    STEP_NAME = "Laterals"
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1805,6 +1753,8 @@ class LateralsPage(QWizardPage):
 class DWFPage(QWizardPage):
     """Dry Weather Flow definition page."""
 
+    STEP_NAME = "Dry weather flow"
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -1820,6 +1770,8 @@ class DWFPage(QWizardPage):
 class BreachesPage(QWizardPage):
     """Breaches definition page."""
 
+    STEP_NAME = "Breaches"
+
     def __init__(self, parent=None, initial_conditions=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -1833,6 +1785,8 @@ class BreachesPage(QWizardPage):
 
 class PrecipitationPage(QWizardPage):
     """Precipitation definition page."""
+
+    STEP_NAME = "Precipitation"
 
     def __init__(self, parent=None, initial_conditions=None):
         super().__init__(parent)
@@ -1848,6 +1802,8 @@ class PrecipitationPage(QWizardPage):
 class WindPage(QWizardPage):
     """Wind definition page."""
 
+    STEP_NAME = "Wind"
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -1862,6 +1818,8 @@ class WindPage(QWizardPage):
 class SettingsPage(QWizardPage):
     """Settings definition page."""
 
+    STEP_NAME = "Settings"
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_wizard = parent
@@ -1875,6 +1833,8 @@ class SettingsPage(QWizardPage):
 
 class SummaryPage(QWizardPage):
     """New simulation summary page."""
+
+    STEP_NAME = "Start the simulation"
 
     def __init__(self, parent=None, initial_conditions=None):
         super().__init__(parent)
@@ -1941,6 +1901,37 @@ class SimulationWizard(QWizard):
         self.resize(self.settings.value("threedi/wizard_size", QSize(800, 600)))
         self.first_simulation = init_conditions.simulations_list[0]
         self.init_conditions = init_conditions
+        self.setup_step_labels()
+
+    @property
+    def wizard_pages_mapping(self):
+        """Mapping of the page ids with their associated page objects."""
+        pages_mapping = OrderedDict((page_id, self.page(page_id)) for page_id in self.pageIds())
+        return pages_mapping
+
+    def setup_step_labels(self):
+        """Setup wizard steps labels."""
+        font = QFont("Segoe UI", 11)
+        for page_id, page in self.wizard_pages_mapping.items():
+            page_step_labels = []
+            for other_page_id, other_page in self.wizard_pages_mapping.items():
+                label = QLabel()
+                label.setFont(font)
+                label.setTextFormat(Qt.RichText)
+                if page_id > other_page_id:
+                    label.setText(f"✓ {other_page.STEP_NAME}")
+                elif page_id < other_page_id:
+                    label.setText(other_page.STEP_NAME)
+                    label.setStyleSheet("color: #6e6e6e")
+                else:
+                    label.setText(other_page.STEP_NAME)
+                    label.setStyleSheet("font-weight: bold")
+                page_step_labels.append(label)
+            for page_label in page_step_labels:
+                page.main_widget.wizard_steps_layout.addWidget(page_label)
+            spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            page.main_widget.wizard_steps_layout.addItem(spacer)
+            page.main_widget.wizard_steps_layout.setContentsMargins(0, 0, 10, 0)
 
     def page_changed(self):
         """Extra pre-processing triggered by changes of the wizard pages."""
