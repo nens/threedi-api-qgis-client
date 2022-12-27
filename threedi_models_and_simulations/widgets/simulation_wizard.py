@@ -1911,9 +1911,10 @@ class SimulationWizard(QWizard):
 
     def setup_step_labels(self):
         """Setup wizard steps labels."""
-        font = QFont("Segoe UI", 11)
+        font = QFont("Segoe UI", 10)
         for page_id, page in self.wizard_pages_mapping.items():
             page_step_labels = []
+            wizard_steps_layout = page.main_widget.wizard_steps_widget.layout()
             for other_page_id, other_page in self.wizard_pages_mapping.items():
                 label = QLabel()
                 label.setFont(font)
@@ -1928,10 +1929,9 @@ class SimulationWizard(QWizard):
                     label.setStyleSheet("font-weight: bold")
                 page_step_labels.append(label)
             for page_label in page_step_labels:
-                page.main_widget.wizard_steps_layout.addWidget(page_label)
+                wizard_steps_layout.addWidget(page_label)
             spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-            page.main_widget.wizard_steps_layout.addItem(spacer)
-            page.main_widget.wizard_steps_layout.setContentsMargins(0, 0, 10, 0)
+            wizard_steps_layout.addItem(spacer)
 
     def page_changed(self):
         """Extra pre-processing triggered by changes of the wizard pages."""
