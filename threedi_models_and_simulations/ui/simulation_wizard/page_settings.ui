@@ -101,7 +101,7 @@
              <string>Numerical settings</string>
             </property>
             <property name="collapsed">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <layout class="QGridLayout" name="gridLayout_9">
              <item row="0" column="0">
@@ -1325,7 +1325,7 @@
              <string>Timestep settings</string>
             </property>
             <property name="collapsed">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <layout class="QGridLayout" name="gridLayout_3">
              <item row="0" column="0">

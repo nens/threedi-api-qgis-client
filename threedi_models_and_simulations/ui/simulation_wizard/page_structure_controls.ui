@@ -327,7 +327,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Upload</string>
+            <string>Browse...</string>
            </property>
           </widget>
          </item>
@@ -352,7 +352,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Upload control structure file:</string>
+            <string>Structure control file:</string>
            </property>
           </widget>
          </item>
