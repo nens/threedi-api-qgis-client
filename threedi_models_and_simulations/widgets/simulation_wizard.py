@@ -1937,7 +1937,6 @@ class SimulationWizard(QWizard):
         self.cancel_btn.clicked.connect(self.cancel_wizard)
         self.new_simulations = []
         self.setWindowTitle("New simulation")
-        self.setStyleSheet("background-color:#F0F0F0")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.resize(self.settings.value("threedi/wizard_size", QSize(800, 600)))
         self.first_simulation = init_conditions.simulations_list[0]
