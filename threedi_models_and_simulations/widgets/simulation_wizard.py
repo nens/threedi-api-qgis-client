@@ -186,12 +186,6 @@ class StructureControlsWidget(uicls_structure_controls, basecls_structure_contro
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
-        self.svg_widget = QSvgWidget(icon_path("sim_wizard_initial_con.svg"))
-        self.svg_widget.setMinimumHeight(75)
-        self.svg_widget.setMinimumWidth(700)
-        self.svg_lout.addWidget(self.svg_widget)
-        self.svg_lout.setAlignment(self.svg_widget, Qt.AlignHCenter)
-        set_widget_background_color(self.svg_widget)
         set_widget_background_color(self)
         self.template_file_structure_controls = None
         self.template_memory_structure_controls = None
@@ -1705,6 +1699,8 @@ class SimulationDurationPage(QWizardPage):
 
 class StructureControlsPage(QWizardPage):
     """Control structures definition page."""
+
+    STEP_NAME = "Structure Controls"
 
     def __init__(self, parent=None):
         super().__init__(parent)
