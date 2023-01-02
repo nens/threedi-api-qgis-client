@@ -41,6 +41,9 @@ from threedi_api_client.openapi import (
     TimeseriesWind,
     WindDragCoefficient,
     FileStructureControl,
+    MemoryStructureControl,
+    TableStructureControl,
+    TimedStructureControl,
     FileBoundaryCondition,
     FileLateral,
     Schematisation,
@@ -376,6 +379,21 @@ class ThreediCalls:
         """Add structure control file to the given simulation."""
         sc_upload_file = self.threedi_api.simulations_events_structure_control_file_create(str(simulation_pk), data)
         return sc_upload_file
+
+    def create_simulation_structure_control_memory(self, simulation_pk: int, **data) -> MemoryStructureControl:
+        """Add memory structure control to the given simulation."""
+        sc_memory = self.threedi_api.simulations_events_structure_control_memory_create(str(simulation_pk), data)
+        return sc_memory
+
+    def create_simulation_structure_control_table(self, simulation_pk: int, **data) -> TableStructureControl:
+        """Add table structure control to the given simulation."""
+        sc_table = self.threedi_api.simulations_events_structure_control_table_create(str(simulation_pk), data)
+        return sc_table
+
+    def create_simulation_structure_control_timed(self, simulation_pk: int, **data) -> TimedStructureControl:
+        """Add timed structure control to the given simulation."""
+        sc_timed = self.threedi_api.simulations_events_structure_control_timed_create(str(simulation_pk), data)
+        return sc_timed
 
     def fetch_boundarycondition_files(self, simulation_pk: int) -> List[FileBoundaryCondition]:
         """Get list of the boundary condition files of the given simulation."""

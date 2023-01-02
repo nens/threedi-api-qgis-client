@@ -522,24 +522,6 @@ class SimulationsRunner(QRunnable):
         sim_name = self.current_simulation.name
         duration = self.current_simulation.duration
         init_options = self.current_simulation.init_options
-        if init_options.filestructure_controls_file is not None:
-            sc_file = init_options.filestructure_controls_file
-            sc_file_download = self.tc.fetch_structure_control_file_download(sim_temp_id, sc_file.id)
-            sc_file_name = sc_file.file.filename
-            sc_file_offset = sc_file.offset
-            sc_temp_filepath = os.path.join(TEMPDIR, sc_file_name)
-            get_download_file(sc_file_download, sc_temp_filepath)
-            sc_upload = self.tc.create_simulation_structure_control_file(
-                sim_id, filename=sc_file_name, offset=sc_file_offset
-            )
-            upload_local_file(sc_upload, sc_temp_filepath)
-            for ti in range(int(self.upload_timeout // 2)):
-                uploaded_sc = self.tc.fetch_structure_control_files(sim_id)[0]
-                if uploaded_sc.state in self.valid_states:
-                    break
-                else:
-                    time.sleep(2)
-            os.remove(sc_temp_filepath)
         if init_options.boundary_conditions_file is not None:
             bc_file = init_options.boundary_conditions_file
             bc_file_download = self.tc.fetch_boundarycondition_file_download(sim_temp_id, bc_file.id)
@@ -574,6 +556,54 @@ class SimulationsRunner(QRunnable):
             )
         if init_options.generate_saved_state:
             self.tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
+
+    def include_structure_controls(self):
+        """Apply structure controls to the new simulation."""
+        ignore_keys = {"id", "url", "uid", "state", "state_detail", "simulation"}
+        sim_id = self.current_simulation.simulation.id
+        sim_temp_id = self.current_simulation.simulation_template_id
+        structure_controls = self.current_simulation.structure_controls
+
+        def upload_file_structure_controls(filename, filepath, offset):
+            sc_upload = self.tc.create_simulation_structure_control_file(sim_id, filename=filename, offset=offset)
+            upload_local_file(sc_upload, filepath)
+            for ti in range(int(self.upload_timeout // 2)):
+                uploaded_files = {scf.file.filename: scf for scf in self.tc.fetch_structure_control_files(sim_id)}
+                uploaded_sc = uploaded_files[sc_upload.filename]
+                if uploaded_sc.state in self.valid_states:
+                    break
+                else:
+                    time.sleep(2)
+
+        if structure_controls.file_structure_controls:
+            sc_file = structure_controls.file_structure_controls
+            sc_file_download = self.tc.fetch_structure_control_file_download(sim_temp_id, sc_file.id)
+            sc_file_name = sc_file.file.filename
+            sc_file_offset = sc_file.offset
+            sc_filepath = os.path.join(TEMPDIR, sc_file_name)
+            get_download_file(sc_file_download, sc_filepath)
+            upload_file_structure_controls(sc_file_name, sc_filepath, sc_file_offset)
+            os.remove(sc_filepath)
+        if structure_controls.local_file_structure_controls:
+            sc_filepath = structure_controls.local_file_structure_controls
+            sc_file_name = os.path.basename(sc_filepath)
+            sc_file_offset = 0.0
+            upload_file_structure_controls(sc_file_name, sc_filepath, sc_file_offset)
+        if structure_controls.memory_structure_controls:
+            sc_memory_data = {
+                k: v for k, v in structure_controls.memory_structure_controls.to_dict().items() if k not in ignore_keys
+            }
+            self.tc.create_simulation_structure_control_memory(sim_id, **sc_memory_data)
+        if structure_controls.table_structure_controls:
+            sc_table_data = {
+                k: v for k, v in structure_controls.table_structure_controls.to_dict().items() if k not in ignore_keys
+            }
+            self.tc.create_simulation_structure_control_table(sim_id, **sc_table_data)
+        if structure_controls.timed_structure_controls:
+            sc_timed_data = {
+                k: v for k, v in structure_controls.timed_structure_controls.to_dict().items() if k not in ignore_keys
+            }
+            self.tc.create_simulation_structure_control_timed(sim_id, **sc_timed_data)
 
     def include_initial_conditions(self):
         """Add initial conditions to the new simulation."""
@@ -867,6 +897,8 @@ class SimulationsRunner(QRunnable):
                 self.create_simulation()
                 self.report_progress()
                 self.include_init_options()
+                self.report_progress()
+                self.include_structure_controls()
                 self.report_progress()
                 self.include_initial_conditions()
                 self.report_progress()

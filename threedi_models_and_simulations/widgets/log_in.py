@@ -80,7 +80,7 @@ class LogInDialog(uicls, basecls):
         missing_personal_api_key_message = (
             "Personal API Key is not set. " "Please set it in the plugin settings before trying to log in."
         )
-        ssl_error = (
+        ssl_error_message = (
             "An error occurred. This specific error is probably caused by issues with an expired SSL "
             "certificate that has not properly been removed by your operating system. Please ask your system "
             "administrator to remove this expired SSL certificate manually. Instructions can be found here: "
@@ -115,7 +115,7 @@ class LogInDialog(uicls, basecls):
             else:
                 error_msg = extract_error_message(e)
             if "SSLError" in error_msg:
-                error_msg = f"{ssl_error}\n\n{error_msg}"
+                error_msg = f"{ssl_error_message}\n\n{error_msg}"
             self.communication.show_error(error_msg)
         except AuthorizationException:
             self.close()

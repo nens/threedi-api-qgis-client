@@ -79,6 +79,7 @@
      </property>
      <property name="font">
       <font>
+       <family>Segoe UI</family>
        <pointsize>14</pointsize>
        <weight>75</weight>
        <bold>true</bold>
@@ -240,6 +241,7 @@
             <widget class="QComboBox" name="dd_flood_month">
              <property name="font">
               <font>
+               <family>Segoe UI</family>
                <pointsize>9</pointsize>
               </font>
              </property>
@@ -373,6 +375,7 @@
              </property>
              <property name="font">
               <font>
+               <family>Segoe UI</family>
                <pointsize>9</pointsize>
               </font>
              </property>
@@ -427,6 +430,7 @@
             <widget class="QDoubleSpinBox" name="sb_period">
              <property name="font">
               <font>
+               <family>Segoe UI</family>
                <pointsize>9</pointsize>
               </font>
              </property>
@@ -588,6 +592,7 @@
              </property>
              <property name="font">
               <font>
+               <family>Segoe UI</family>
                <pointsize>9</pointsize>
               </font>
              </property>
@@ -603,6 +608,7 @@
             <widget class="QComboBox" name="dd_repair_building">
              <property name="font">
               <font>
+               <family>Segoe UI</family>
                <pointsize>9</pointsize>
               </font>
              </property>
@@ -638,16 +644,6 @@
    <item row="1" column="1">
     <layout class="QVBoxLayout" name="verticalLayout_6">
      <item>
-      <widget class="QCheckBox" name="cb_filestructure_controls">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Include filestructure controls</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QCheckBox" name="cb_boundary">
        <property name="enabled">
         <bool>false</bool>
@@ -666,6 +662,16 @@
        </property>
        <property name="text">
         <string>Include boundary conditions</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="cb_structure_controls">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Include structure controls</string>
        </property>
       </widget>
      </item>
@@ -959,6 +965,7 @@
              </property>
              <property name="font">
               <font>
+               <family>Segoe UI</family>
                <pointsize>10</pointsize>
               </font>
              </property>
@@ -1142,6 +1149,7 @@
              </property>
              <property name="font">
               <font>
+               <family>Segoe UI</family>
                <pointsize>10</pointsize>
               </font>
              </property>
