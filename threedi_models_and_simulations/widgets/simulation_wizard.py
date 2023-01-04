@@ -1855,8 +1855,8 @@ class SimulationWizard(QWizard):
         init_conditions = self.init_conditions_dlg.initial_conditions
         self.plugin_dock = plugin_dock
         self.name_page = NamePage(self)
-        self.duration_page = SimulationDurationPage(self)
         self.addPage(self.name_page)
+        self.duration_page = SimulationDurationPage(self)
         self.addPage(self.duration_page)
         if init_conditions.include_structure_controls:
             self.structure_controls_page = StructureControlsPage(self)
@@ -1894,7 +1894,7 @@ class SimulationWizard(QWizard):
         self.new_simulations = []
         self.setWindowTitle("New simulation")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.resize(self.settings.value("threedi/wizard_size", QSize(800, 600)))
+        self.resize(self.settings.value("threedi/wizard_size", QSize(1000, 750)))
         self.first_simulation = init_conditions.simulations_list[0]
         self.init_conditions = init_conditions
         self.setup_step_labels()
