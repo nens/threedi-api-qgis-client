@@ -484,7 +484,7 @@ class SimulationRunnerSignals(QObject):
     initializing_simulations_finished = pyqtSignal(str)
 
 
-class SimulationsRunner(QRunnable):
+class SimulationRunner(QRunnable):
     """Worker object responsible for running simulations."""
 
     def __init__(self, threedi_api, simulations_to_run, upload_timeout=900):

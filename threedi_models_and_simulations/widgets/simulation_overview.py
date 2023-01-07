@@ -7,7 +7,7 @@ from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from qgis.PyQt.QtWidgets import QMessageBox
 from threedi_api_client.openapi import ApiException, Progress
 from threedi_models_and_simulations.widgets.simulation_init import SimulationInit
-from threedi_models_and_simulations.workers import SimulationsRunner
+from threedi_models_and_simulations.workers import SimulationRunner
 from .simulation_wizard import SimulationWizard
 from .model_selection import ModelSelectionDialog
 from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
@@ -137,7 +137,7 @@ class SimulationOverview(uicls, basecls):
         simulations_to_run = self.simulation_wizard.new_simulations
         if simulations_to_run:
             upload_timeout = self.settings.value("threedi/upload_timeout", 900, type=int)
-            simulations_runner = SimulationsRunner(self.threedi_api, simulations_to_run, upload_timeout=upload_timeout)
+            simulations_runner = SimulationRunner(self.threedi_api, simulations_to_run, upload_timeout=upload_timeout)
             simulations_runner.signals.initializing_simulations_progress.connect(self.on_initializing_progress)
             simulations_runner.signals.initializing_simulations_failed.connect(self.on_initializing_failed)
             simulations_runner.signals.initializing_simulations_finished.connect(self.on_initializing_finished)
