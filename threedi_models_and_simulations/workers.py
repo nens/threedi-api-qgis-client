@@ -487,7 +487,7 @@ class SimulationRunnerSignals(QObject):
 class SimulationsRunner(QRunnable):
     """Worker object responsible for running simulations."""
 
-    def __init__(self, threedi_api, simulations_to_run, upload_timeout=45):
+    def __init__(self, threedi_api, simulations_to_run, upload_timeout=900):
         super().__init__()
         self.threedi_api = threedi_api
         self.simulations_to_run = simulations_to_run

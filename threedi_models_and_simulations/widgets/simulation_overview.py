@@ -136,7 +136,7 @@ class SimulationOverview(uicls, basecls):
         self.simulation_wizard.exec_()
         simulations_to_run = self.simulation_wizard.new_simulations
         if simulations_to_run:
-            upload_timeout = self.settings.value("threedi/upload_timeout", 45, type=int)
+            upload_timeout = self.settings.value("threedi/upload_timeout", 900, type=int)
             simulations_runner = SimulationsRunner(self.threedi_api, simulations_to_run, upload_timeout=upload_timeout)
             simulations_runner.signals.initializing_simulations_progress.connect(self.on_initializing_progress)
             simulations_runner.signals.initializing_simulations_failed.connect(self.on_initializing_failed)

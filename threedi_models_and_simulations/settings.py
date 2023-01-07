@@ -16,7 +16,7 @@ class SettingsDialog(QDialog):
 
     PRODUCTION_API_URL = "https://api.3di.live"
     STAGING_API_URL = "https://api.staging.3di.live"
-    DEFAULT_UPLOAD_TIMEOUT = 45
+    DEFAULT_UPLOAD_TIMEOUT = 900
 
     settings_changed = pyqtSignal()
 
