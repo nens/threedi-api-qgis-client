@@ -277,15 +277,20 @@ class SchematisationDownload(uicls, basecls):
             number_of_steps = len(rasters_downloads) + 1
 
             gridadmin_file, gridadmin_download = (None, None)
+            ignore_error_message = "Gridadmin file not found"
             for revision_model in sorted(revision_models, key=attrgetter("id"), reverse=True):
-                gridadmin_file, gridadmin_download = tc.fetch_3di_model_gridadmin_download(revision_model.id)
-                if gridadmin_download is not None:
-                    number_of_steps += 1
-                    break
+                try:
+                    gridadmin_file, gridadmin_download = tc.fetch_3di_model_gridadmin_download(revision_model.id)
+                    if gridadmin_download is not None:
+                        number_of_steps += 1
+                        break
+                except ApiException as e:
+                    error_msg = extract_error_message(e)
+                    if ignore_error_message not in error_msg:
+                        raise
 
             if revision_pk in local_schematisation.revisions:
                 local_schematisation.add_revision(revision_pk)
-
             zip_filepath = os.path.join(schematisation_db_dir, revision_sqlite.file.filename)
             self.pbar_download.setMaximum(number_of_steps)
             current_progress = 0
