@@ -117,6 +117,7 @@ class SettingsDialog(QDialog):
         self.working_dir = QSettings().value("threedi/working_dir", "", type=str)
         self.working_dir_le.setText(self.working_dir)
         self.upload_timeout = QSettings().value("threedi/upload_timeout", self.DEFAULT_UPLOAD_TIMEOUT, type=int)
+        self.upload_timeout_sb.setValue(self.upload_timeout)
         username, password = self.get_3di_auth()
         if password:
             self.set_personal_api_key_label(True)
