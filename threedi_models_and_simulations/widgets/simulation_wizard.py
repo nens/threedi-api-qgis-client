@@ -254,7 +254,7 @@ class StructureControlsWidget(uicls_structure_controls, basecls_structure_contro
         """Selecting and setting up structure control file in JSON format."""
         file_filter = "JSON (*.json);;All Files (*)"
         last_folder = QSettings().value("threedi/last_control_structure_file_folder", os.path.expanduser("~"), type=str)
-        filename, __ = QFileDialog.getOpenFileName(self, "Wind Time Series", last_folder, file_filter)
+        filename, __ = QFileDialog.getOpenFileName(self, "Select structure control file", last_folder, file_filter)
         if len(filename) == 0:
             return
         QSettings().setValue("threedi/last_control_structure_file_folder", os.path.dirname(filename))
