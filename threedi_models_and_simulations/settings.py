@@ -116,7 +116,7 @@ class SettingsDialog(QDialog):
         self.api_url_le.setText(self.api_url)
         self.working_dir = QSettings().value("threedi/working_dir", "", type=str)
         self.working_dir_le.setText(self.working_dir)
-        self.upload_timeout = QSettings().value("threedi/upload_timeout", self.DEFAULT_UPLOAD_TIMEOUT, type=int)
+        self.upload_timeout = QSettings().value("threedi/timeout", self.DEFAULT_UPLOAD_TIMEOUT, type=int)
         self.upload_timeout_sb.setValue(self.upload_timeout)
         username, password = self.get_3di_auth()
         if password:
@@ -131,7 +131,7 @@ class SettingsDialog(QDialog):
         self.upload_timeout = self.upload_timeout_sb.value()
         QSettings().setValue("threedi/api_url", self.api_url)
         QSettings().setValue("threedi/working_dir", self.working_dir)
-        QSettings().setValue("threedi/upload_timeout", self.upload_timeout)
+        QSettings().setValue("threedi/timeout", self.upload_timeout)
 
     def settings_are_valid(self):
         """Check validity of the settings."""
