@@ -56,6 +56,9 @@ uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui",
 uicls_duration_page, basecls_duration_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_duration.ui")
 )
+uicls_boundary_conditions, basecls_boundary_conditions = uic.loadUiType(
+    os.path.join(base_dir, "ui", "simulation_wizard", "page_boundary_conditions.ui")
+)
 uicls_structure_controls, basecls_structure_controls = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_structure_controls.ui")
 )
@@ -177,6 +180,175 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
             self.label_total_time.setText("{} years, {} months, {} days, {} hours, {} minutes".format(*duration))
         except ValueError:
             self.label_total_time.setText("Invalid datetime format!")
+
+
+class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
+    """Widget for the Boundary Conditions page."""
+
+    TYPE_1D = "1D"
+    TYPE_2D = "2D"
+
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        set_widget_background_color(self)
+        self.template_boundary_conditions = None
+        self.boundary_conditions_1d_timeseries = {}
+        self.boundary_conditions_2d_timeseries = {}
+        self.connect_signals()
+
+    def connect_signals(self):
+        """Connecting widgets signals."""
+        self.rb_from_template.toggled.connect(self.change_boundary_conditions_source)
+        self.rb_upload_file.toggled.connect(self.change_boundary_conditions_source)
+        self.pb_upload_file_bc_1d.clicked.connect(partial(self.load_csv, self.TYPE_1D))
+        self.pb_upload_file_bc_2d.clicked.connect(partial(self.load_csv, self.TYPE_2D))
+        self.cb_interpolate_bc_1d.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_1D))
+        self.cb_interpolate_bc_2d.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_2D))
+
+    def set_template_boundary_conditions(self, template_boundary_conditions=None):
+        """Setting boundary conditions data derived from the simulation template."""
+        if template_boundary_conditions is not None:
+            self.template_boundary_conditions = template_boundary_conditions
+            self.rb_from_template.setEnabled(True)
+            self.rb_from_template.setChecked(True)
+        else:
+            self.rb_from_template.setDisabled(True)
+            self.rb_upload_file.setChecked(True)
+
+    def change_boundary_conditions_source(self):
+        """Disable/enable widgets based on the boundary conditions source."""
+        if self.rb_from_template.isChecked():
+            self.gb_upload_1d.setChecked(False)
+            self.gb_upload_2d.setChecked(False)
+            self.gb_upload_1d.setDisabled(True)
+            self.gb_upload_2d.setDisabled(True)
+        if self.rb_upload_file.isChecked():
+            self.gb_upload_1d.setEnabled(True)
+            self.gb_upload_2d.setEnabled(True)
+
+    def load_csv(self, boundary_conditions_type):
+        """Load boundary conditions from the CSV file."""
+        values, filename = self.open_upload_dialog(boundary_conditions_type)
+        if not filename:
+            return
+        if boundary_conditions_type == self.TYPE_1D:
+            self.file_bc_1d_upload.setText(filename)
+            self.boundary_conditions_1d_timeseries = values
+        elif boundary_conditions_type == self.TYPE_2D:
+            self.file_bc_2d_upload.setText(filename)
+            self.boundary_conditions_2d_timeseries = values
+        else:
+            raise NotImplementedError
+
+    def handle_boundary_conditions_header(self, boundary_conditions_list, log_error=True):
+        """
+        Fetch first boundary conditions file row and handle potential header.
+        Return None if fetch successful or error message if file is empty or have invalid structure.
+        """
+        error_message = None
+        if not boundary_conditions_list:
+            error_message = "Boundary conditions list is empty!"
+            if log_error:
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+            return error_message
+        header = boundary_conditions_list[0]
+        if len(header) != 2:
+            error_message = "Wrong timeseries format for boundary conditions!"
+        if error_message is None:
+            try:
+                timeseries_candidate = header[-1]
+                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+            except ValueError:
+                boundary_conditions_list.pop(0)
+        else:
+            if log_error:
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        return error_message
+
+    def open_upload_dialog(self, boundary_conditions_type):
+        """Open dialog for selecting CSV file with boundary conditions."""
+        last_folder = QSettings().value("threedi/last_boundary_conditions_folder", os.path.expanduser("~"), type=str)
+        file_filter = "CSV (*.csv );;All Files (*)"
+        filename, __ = QFileDialog.getOpenFileName(self, "Boundary Conditions Time Series", last_folder, file_filter)
+        if len(filename) == 0:
+            return None, None
+        QSettings().setValue("threedi/last_boundary_conditions_folder", os.path.dirname(filename))
+        values = {}
+        boundary_conditions_list = []
+        with open(filename, encoding="utf-8-sig") as boundary_conditions_file:
+            boundary_conditions_reader = csv.reader(boundary_conditions_file)
+            boundary_conditions_list += list(boundary_conditions_reader)
+        error_msg = self.handle_boundary_conditions_header(boundary_conditions_list)
+        if error_msg is not None:
+            return None, None
+        interpolate = (
+            self.cb_interpolate_bc_1d.isChecked()
+            if boundary_conditions_type == self.TYPE_1D
+            else self.cb_interpolate_bc_2d.isChecked()
+        )
+        for bc_id, timeseries in boundary_conditions_list:
+            try:
+                vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                boundary_condition = {
+                    "id": int(bc_id),
+                    "type": boundary_conditions_type,
+                    "interpolate": interpolate,
+                    "values": vals,
+                }
+                values[bc_id] = boundary_condition
+            except ValueError:
+                continue
+        return values, filename
+
+    def interpolate_changed(self, boundary_conditions_type):
+        """Handle interpolate checkbox."""
+        boundary_conditions_timeseries = (
+            self.boundary_conditions_1d_timeseries
+            if boundary_conditions_type == self.TYPE_1D
+            else self.boundary_conditions_2d_timeseries
+        )
+        interpolate = (
+            self.cb_interpolate_bc_1d.isChecked()
+            if boundary_conditions_type == self.TYPE_1D
+            else self.cb_interpolate_bc_2d.isChecked()
+        )
+        for val in boundary_conditions_timeseries.values():
+            val["interpolate"] = interpolate
+
+    def recalculate_boundary_conditions_timeseries(self, boundary_conditions_type, timesteps_in_seconds=False):
+        """Recalculate boundary conditions timeseries (timesteps in seconds)."""
+        boundary_conditions_timeseries = (
+            self.boundary_conditions_1d_timeseries
+            if boundary_conditions_type == self.TYPE_1D
+            else self.boundary_conditions_2d_timeseries
+        )
+        if timesteps_in_seconds is False:
+            return boundary_conditions_timeseries
+        boundary_conditions_data = deepcopy(boundary_conditions_timeseries)
+        units = (
+            self.cbo_bc_units_1d.currentText()
+            if boundary_conditions_type == self.TYPE_1D
+            else self.cbo_bc_units_2d.currentText()
+        )
+        if units == "hrs":
+            seconds_per_unit = 3600
+        elif units == "mins":
+            seconds_per_unit = 60
+        else:
+            seconds_per_unit = 1
+        for val in boundary_conditions_data.values():
+            val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
+        return boundary_conditions_data
+
+    def get_boundary_conditions_data(self, timesteps_in_seconds=False):
+        """Get boundary conditions data."""
+        boundary_conditions_data = self.recalculate_boundary_conditions_timeseries(self.TYPE_1D, timesteps_in_seconds)
+        boundary_conditions_data.update(
+            self.recalculate_boundary_conditions_timeseries(self.TYPE_2D, timesteps_in_seconds)
+        )
+        return self.template_boundary_conditions, boundary_conditions_data
 
 
 class StructureControlsWidget(uicls_structure_controls, basecls_structure_controls):
@@ -354,7 +526,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.parent_page = parent_page
         set_widget_background_color(self)
         self.laterals_timeseries = {}
-        self.last_uploaded_laterals = None
         self.last_upload_filepath = ""
         self.setup_laterals()
         self.connect_signals()
@@ -383,13 +554,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         interpolate = self.cb_interpolate_laterals.isChecked()
         for val in self.laterals_timeseries.values():
             val["interpolate"] = interpolate
-
-    def save_laterals(self):
-        """Save laterals time series."""
-        lat = self.laterals_timeseries.get(self.cb_laterals.currentText())
-        lat.values[0] = [float(f) for f in self.il_location.text().split(",")]
-        lat.values[1] = [float(f) for f in self.il_discharge.text().split(",")]
-        lat.offset(self.sb_offset.value())
 
     def selection_changed(self, index):
         """Handle dropdown menus selection changes."""
@@ -1697,6 +1861,48 @@ class SimulationDurationPage(QWizardPage):
         self.adjustSize()
 
 
+class BoundaryConditionsPage(QWizardPage):
+    """Boundary conditions definition page."""
+
+    STEP_NAME = "Boundary Conditions"
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = BoundaryConditionsWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+    def validatePage(self):
+        """Overriding page validation logic."""
+        if self.main_widget.rb_upload_file.isChecked():
+            if not any(
+                (
+                    self.main_widget.gb_upload_1d.isChecked(),
+                    self.main_widget.gb_upload_2d.isChecked(),
+                )
+            ):
+                warn = (
+                    "There are no any boundary conditions selected for the upload. "
+                    "Please select at least one 1D/2D boundary conditions file."
+                )
+                self.parent_wizard.plugin_dock.communication.show_warn(warn)
+                return False
+            else:
+                if self.main_widget.gb_upload_1d.isChecked() and not self.main_widget.file_bc_1d_upload.text():
+                    warn = "There is no 1D boundary conditions file specified. Please select it before proceeding."
+                    self.parent_wizard.plugin_dock.communication.show_warn(warn)
+                    return False
+                if self.main_widget.gb_upload_2d.isChecked() and not self.main_widget.file_bc_2d_upload.text():
+                    warn = "There is no 2D boundary conditions file specified. Please select it before proceeding."
+                    self.parent_wizard.plugin_dock.communication.show_warn(warn)
+                    return False
+        return True
+
+
 class StructureControlsPage(QWizardPage):
     """Control structures definition page."""
 
@@ -1858,6 +2064,9 @@ class SimulationWizard(QWizard):
         self.addPage(self.name_page)
         self.duration_page = SimulationDurationPage(self)
         self.addPage(self.duration_page)
+        if init_conditions.include_boundary_conditions:
+            self.boundary_conditions_page = BoundaryConditionsPage(self)
+            self.addPage(self.boundary_conditions_page)
         if init_conditions.include_structure_controls:
             self.structure_controls_page = StructureControlsPage(self)
             self.addPage(self.structure_controls_page)
@@ -2026,7 +2235,9 @@ class SimulationWizard(QWizard):
         # Simulation events
         simulation_duration = self.duration_page.main_widget.calculate_simulation_duration()
         init_conditions = self.init_conditions_dlg.initial_conditions
-
+        if init_conditions.include_boundary_conditions:
+            temp_file_bc = events.fileboundaryconditions if events.fileboundaryconditions else None
+            self.boundary_conditions_page.main_widget.set_template_boundary_conditions(temp_file_bc)
         if init_conditions.include_structure_controls:
             temp_file_sc = events.filestructurecontrols[0] if events.filestructurecontrols else None
             temp_memory_sc = events.memorystructurecontrols[0] if events.memorystructurecontrols else None
@@ -2208,8 +2419,6 @@ class SimulationWizard(QWizard):
         duration = self.duration_page.main_widget.calculate_simulation_duration()
         # Initialization options
         init_options = dm.InitOptions()
-        if self.init_conditions.include_boundary_conditions:
-            init_options.boundary_conditions_file = self.init_conditions_dlg.events.fileboundaryconditions
         init_options.basic_processed_results = self.init_conditions.basic_processed_results
         init_options.arrival_time_map = self.init_conditions.arrival_time_map
         if self.init_conditions.damage_estimation:
@@ -2222,6 +2431,17 @@ class SimulationWizard(QWizard):
             )
             init_options.damage_estimation = damage_estimation
         init_options.generate_saved_state = self.init_conditions.generate_saved_state
+        # Boundary conditions page attributes
+        boundary_conditions = dm.BoundaryConditions()
+        if self.init_conditions.include_boundary_conditions:
+            (
+                temp_file_boundary_conditions,
+                boundary_conditions_data,
+            ) = self.boundary_conditions_page.main_widget.get_boundary_conditions_data(timesteps_in_seconds=True)
+            if self.boundary_conditions_page.main_widget.rb_from_template.isChecked():
+                boundary_conditions.file_boundary_conditions = temp_file_boundary_conditions
+            else:
+                boundary_conditions.data = boundary_conditions_data
         # Structure controls page attributes
         structure_controls = dm.StructureControls()
         if self.init_conditions.include_structure_controls:
@@ -2330,6 +2550,7 @@ class SimulationWizard(QWizard):
                 sim_temp_id, sim_name, tags, threedimodel_id, organisation_uuid, start_datetime, end_datetime, duration
             )
             new_simulation.init_options = init_options
+            new_simulation.boundary_conditions = boundary_conditions
             new_simulation.structure_controls = structure_controls
             new_simulation.initial_conditions = initial_conditions
             new_simulation.laterals = laterals

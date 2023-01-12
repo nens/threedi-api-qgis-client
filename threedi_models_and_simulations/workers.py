@@ -21,11 +21,12 @@ from .utils import (
     bypass_max_path_limit,
     UploadFileStatus,
     CHUNK_SIZE,
-    write_laterals_to_json,
+    write_json_data,
     get_download_file,
     upload_local_file,
     split_to_even_chunks,
     TEMPDIR,
+    BOUNDARY_CONDITIONS_TEMPLATE,
     LATERALS_FILE_TEMPLATE,
     DWF_FILE_TEMPLATE,
     EventTypes,
@@ -517,26 +518,10 @@ class SimulationRunner(QRunnable):
 
     def include_init_options(self):
         """Apply initialization options to the new simulation."""
-        sim_temp_id = self.current_simulation.simulation_template_id
         sim_id = self.current_simulation.simulation.id
         sim_name = self.current_simulation.name
         duration = self.current_simulation.duration
         init_options = self.current_simulation.init_options
-        if init_options.boundary_conditions_file is not None:
-            bc_file = init_options.boundary_conditions_file
-            bc_file_download = self.tc.fetch_boundarycondition_file_download(sim_temp_id, bc_file.id)
-            bc_file_name = bc_file.file.filename
-            bc_temp_filepath = os.path.join(TEMPDIR, bc_file_name)
-            get_download_file(bc_file_download, bc_temp_filepath)
-            bc_upload = self.tc.create_simulation_boundarycondition_file(sim_id, filename=bc_file_name)
-            upload_local_file(bc_upload, bc_temp_filepath)
-            for ti in range(int(self.upload_timeout // 2)):
-                uploaded_bc = self.tc.fetch_boundarycondition_files(sim_id)[0]
-                if uploaded_bc.state in self.valid_states:
-                    break
-                else:
-                    time.sleep(2)
-            os.remove(bc_temp_filepath)
         if init_options.basic_processed_results:
             self.tc.create_simulation_post_processing_lizard_basic(
                 sim_id, scenario_name=sim_name, process_basic_results=True
@@ -556,6 +541,37 @@ class SimulationRunner(QRunnable):
             )
         if init_options.generate_saved_state:
             self.tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
+
+    def include_boundary_conditions(self):
+        """Apply boundary conditions to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        sim_name = self.current_simulation.name
+        boundary_conditions = self.current_simulation.boundary_conditions
+
+        def upload_file_boundary_conditions(filename, filepath):
+            bc_upload = self.tc.create_simulation_boundarycondition_file(sim_id, filename=filename)
+            upload_local_file(bc_upload, filepath)
+            for ti in range(int(self.upload_timeout // 2)):
+                uploaded_bc = self.tc.fetch_boundarycondition_files(sim_id)[0]
+                if uploaded_bc.state in self.valid_states:
+                    break
+                else:
+                    time.sleep(2)
+
+        if boundary_conditions.file_boundary_conditions is not None:
+            sim_temp_id = self.current_simulation.simulation_template_id
+            bc_file = boundary_conditions.file_boundary_conditions
+            bc_file_download = self.tc.fetch_boundarycondition_file_download(sim_temp_id, bc_file.id)
+            bc_file_name = bc_file.file.filename
+            bc_temp_filepath = os.path.join(TEMPDIR, bc_file_name)
+            get_download_file(bc_file_download, bc_temp_filepath)
+            upload_file_boundary_conditions(bc_file_name, bc_temp_filepath)
+            os.remove(bc_temp_filepath)
+        if boundary_conditions.data:
+            boundary_conditions_values = list(boundary_conditions.data.values())
+            write_json_data(boundary_conditions_values, BOUNDARY_CONDITIONS_TEMPLATE)
+            bc_file_name = f"{sim_name}_boundary_conditions.json"
+            upload_file_boundary_conditions(bc_file_name, BOUNDARY_CONDITIONS_TEMPLATE)
 
     def include_structure_controls(self):
         """Apply structure controls to the new simulation."""
@@ -727,7 +743,7 @@ class SimulationRunner(QRunnable):
         sim_name = self.current_simulation.name
         if self.current_simulation.laterals:
             lateral_values = list(self.current_simulation.laterals.data.values())
-            write_laterals_to_json(lateral_values, LATERALS_FILE_TEMPLATE)
+            write_json_data(lateral_values, LATERALS_FILE_TEMPLATE)
             upload_event_file = self.tc.create_simulation_lateral_file(
                 sim_id, filename=f"{sim_name}_laterals.json", offset=0
             )
@@ -745,7 +761,7 @@ class SimulationRunner(QRunnable):
         sim_name = self.current_simulation.name
         if self.current_simulation.dwf:
             dwf_values = list(self.current_simulation.dwf.data.values())
-            write_laterals_to_json(dwf_values, DWF_FILE_TEMPLATE)
+            write_json_data(dwf_values, DWF_FILE_TEMPLATE)
             upload_event_file = self.tc.create_simulation_lateral_file(
                 sim_id,
                 filename=f"{sim_name}_dwf.json",
@@ -897,6 +913,8 @@ class SimulationRunner(QRunnable):
                 self.create_simulation()
                 self.report_progress()
                 self.include_init_options()
+                self.report_progress()
+                self.include_boundary_conditions()
                 self.report_progress()
                 self.include_structure_controls()
                 self.report_progress()
