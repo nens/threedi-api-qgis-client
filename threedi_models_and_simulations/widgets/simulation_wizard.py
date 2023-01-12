@@ -1864,7 +1864,7 @@ class SimulationDurationPage(QWizardPage):
 class BoundaryConditionsPage(QWizardPage):
     """Boundary conditions definition page."""
 
-    STEP_NAME = "Boundary Conditions"
+    STEP_NAME = "Boundary conditions"
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1906,7 +1906,7 @@ class BoundaryConditionsPage(QWizardPage):
 class StructureControlsPage(QWizardPage):
     """Control structures definition page."""
 
-    STEP_NAME = "Structure Controls"
+    STEP_NAME = "Structure controls"
 
     def __init__(self, parent=None):
         super().__init__(parent)
