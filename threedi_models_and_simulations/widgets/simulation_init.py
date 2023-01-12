@@ -3,6 +3,7 @@
 import os
 from collections import OrderedDict
 from qgis.PyQt import uic
+from qgis.PyQt.QtCore import Qt
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "init_dialog.ui"))
@@ -73,6 +74,8 @@ class SimulationInit(uicls, basecls):
         self.dd_repair_infrastructure.addItems(list(self.REPAIR_TIME.keys()))
         self.dd_repair_building.addItems(list(self.REPAIR_TIME.keys()))
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
+        self.cb_boundary.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.cb_boundary.setFocusPolicy(Qt.NoFocus)
 
     def check_template_events(self):
         """Check events that are available for the simulation template."""
