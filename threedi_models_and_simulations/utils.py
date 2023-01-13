@@ -18,6 +18,7 @@ TEMPDIR = tempfile.gettempdir()
 PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))
 CACHE_PATH = os.path.join(PLUGIN_PATH, "_cached_data")
 TEMPLATE_PATH = os.path.join(CACHE_PATH, "templates.json")
+BOUNDARY_CONDITIONS_TEMPLATE = os.path.join(CACHE_PATH, "boundary_conditions.json")
 LATERALS_FILE_TEMPLATE = os.path.join(CACHE_PATH, "laterals.json")
 DWF_FILE_TEMPLATE = os.path.join(CACHE_PATH, "dwf.json")
 DATA_PATH = os.path.join(PLUGIN_PATH, "_data")
@@ -99,6 +100,13 @@ def read_json_data(json_filepath):
         return data
 
 
+def write_json_data(values, json_file_template):
+    """Writing data to the JSON file."""
+    with open(json_file_template, "w") as json_file:
+        jsonf = json.dumps(values)
+        json_file.write(jsonf)
+
+
 def write_template(template_name, simulation_template):
     """Writing parameters as a template."""
     with open(TEMPLATE_PATH, "a"):
@@ -112,13 +120,6 @@ def write_template(template_name, simulation_template):
         json_file.seek(0)
         json_file.write(jsonf)
         json_file.truncate()
-
-
-def write_laterals_to_json(laterals_values, laterals_file_template):
-    """Writing laterals values to the JSON file."""
-    with open(laterals_file_template, "w") as json_file:
-        jsonf = json.dumps(laterals_values)
-        json_file.write(jsonf)
 
 
 def upload_local_file(upload, filepath):

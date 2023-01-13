@@ -56,26 +56,60 @@
   <property name="font">
    <font>
     <family>Segoe UI</family>
+    <pointsize>12</pointsize>
    </font>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="1" rowspan="6">
-    <widget class="Line" name="line_2">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+   <item row="8" column="2">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="7" column="2">
+    <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="3" column="2">
+    <widget class="QRadioButton" name="rb_upload_file">
+     <property name="text">
+      <string>Upload file(s):</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
-   <item row="0" column="0" rowspan="6">
+   <item row="2" column="2">
+    <widget class="QRadioButton" name="rb_from_template">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>From simulation template</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" rowspan="9">
     <widget class="QWidget" name="wizard_steps_widget" native="true">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
@@ -98,31 +132,19 @@
      <layout class="QVBoxLayout" name="verticalLayout_2"/>
     </widget>
    </item>
-   <item row="3" column="2">
-    <widget class="QGroupBox" name="gb_upload_file">
+   <item row="4" column="2">
+    <widget class="QGroupBox" name="gb_upload_1d">
      <property name="enabled">
       <bool>true</bool>
-     </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
      </property>
      <property name="font">
       <font>
        <family>Segoe UI</family>
-       <pointsize>12</pointsize>
+       <pointsize>10</pointsize>
       </font>
      </property>
      <property name="title">
-      <string>Upload file</string>
+      <string>1D boundary conditions</string>
      </property>
      <property name="checkable">
       <bool>true</bool>
@@ -130,7 +152,7 @@
      <property name="checked">
       <bool>false</bool>
      </property>
-     <layout class="QGridLayout" name="gridLayout_2">
+     <layout class="QGridLayout" name="gridLayout_3">
       <item row="0" column="0">
        <layout class="QGridLayout" name="gridLayout_5">
         <property name="leftMargin">
@@ -139,6 +161,105 @@
         <property name="bottomMargin">
          <number>0</number>
         </property>
+        <item row="0" column="4">
+         <widget class="QCheckBox" name="cb_interpolate_bc_1d">
+          <property name="minimumSize">
+           <size>
+            <width>14</width>
+            <height>14</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Interpolate</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="file_bc_1d_upload">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {background-color: white;}</string>
+          </property>
+          <property name="frame">
+           <bool>false</bool>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QComboBox" name="cbo_bc_units_1d">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>55</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+          </property>
+          <property name="frame">
+           <bool>false</bool>
+          </property>
+          <item>
+           <property name="text">
+            <string>mins</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>hrs</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>s</string>
+           </property>
+          </item>
+         </widget>
+        </item>
         <item row="0" column="0">
          <widget class="QLabel" name="label">
           <property name="minimumSize">
@@ -160,52 +281,12 @@
            </font>
           </property>
           <property name="text">
-           <string>Structure control file:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLineEdit" name="file_sc_upload">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>25</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Segoe UI</family>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QLineEdit {background-color: white;}</string>
-          </property>
-          <property name="frame">
-           <bool>false</bool>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
+           <string>1D boundary conditions file:</string>
           </property>
          </widget>
         </item>
         <item row="0" column="2">
-         <widget class="QPushButton" name="pb_upload_file_sc">
+         <widget class="QPushButton" name="pb_upload_file_bc_1d">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -252,61 +333,36 @@
       </font>
      </property>
      <property name="text">
-      <string>Structure controls</string>
+      <string>Boundary conditions</string>
      </property>
     </widget>
    </item>
-   <item row="5" column="2">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="4" column="2">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="2" column="2">
-    <widget class="QGroupBox" name="gb_from_template">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
+   <item row="0" column="1" rowspan="9">
+    <widget class="Line" name="line_2">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+      <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>100</height>
-      </size>
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="2">
+    <widget class="QGroupBox" name="gb_upload_2d">
+     <property name="enabled">
+      <bool>true</bool>
      </property>
      <property name="font">
       <font>
        <family>Segoe UI</family>
-       <pointsize>12</pointsize>
+       <pointsize>10</pointsize>
       </font>
      </property>
      <property name="title">
-      <string>From simulation template</string>
+      <string>2D boundary conditions</string>
      </property>
      <property name="checkable">
       <bool>true</bool>
@@ -314,16 +370,16 @@
      <property name="checked">
       <bool>false</bool>
      </property>
-     <layout class="QGridLayout" name="gridLayout_7">
+     <layout class="QGridLayout" name="gridLayout_6">
       <item row="0" column="0">
-       <layout class="QGridLayout" name="gridLayout_3">
+       <layout class="QGridLayout" name="gridLayout_7">
         <property name="bottomMargin">
          <number>0</number>
         </property>
-        <item row="0" column="1">
-         <widget class="QCheckBox" name="cb_memory_sc">
+        <item row="0" column="2">
+         <widget class="QPushButton" name="pb_upload_file_bc_2d">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -331,7 +387,7 @@
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>14</height>
+            <height>25</height>
            </size>
           </property>
           <property name="maximumSize">
@@ -346,31 +402,16 @@
             <pointsize>10</pointsize>
            </font>
           </property>
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
-          <property name="styleSheet">
-           <string notr="true"/>
-          </property>
           <property name="text">
-           <string>Memory structure controls</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
+           <string>Browse...</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QCheckBox" name="cb_table_sc">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
+        <item row="0" column="4">
+         <widget class="QCheckBox" name="cb_interpolate_bc_2d">
           <property name="minimumSize">
            <size>
-            <width>0</width>
+            <width>14</width>
             <height>14</height>
            </size>
           </property>
@@ -390,62 +431,19 @@
            <enum>Qt::LeftToRight</enum>
           </property>
           <property name="text">
-           <string>Table structure controls</string>
+           <string>Interpolate</string>
           </property>
           <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QCheckBox" name="cb_timed_sc">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>14</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Segoe UI</family>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
-          <property name="text">
-           <string>Timed structure controls</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="0" column="0">
-         <widget class="QCheckBox" name="cb_file_sc">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
+         <widget class="QLabel" name="label_4">
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>14</height>
+            <height>25</height>
            </size>
           </property>
           <property name="maximumSize">
@@ -460,14 +458,76 @@
             <pointsize>10</pointsize>
            </font>
           </property>
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
           <property name="text">
-           <string>File structure controls</string>
+           <string>2D boundary conditions file:</string>
           </property>
-          <property name="checked">
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QComboBox" name="cbo_bc_units_2d">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>55</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+          </property>
+          <property name="frame">
            <bool>false</bool>
+          </property>
+          <item>
+           <property name="text">
+            <string>mins</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>hrs</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>s</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="file_bc_2d_upload">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {background-color: white;}</string>
+          </property>
+          <property name="frame">
+           <bool>false</bool>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
           </property>
          </widget>
         </item>

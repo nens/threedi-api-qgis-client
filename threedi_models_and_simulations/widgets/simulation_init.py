@@ -3,6 +3,7 @@
 import os
 from collections import OrderedDict
 from qgis.PyQt import uic
+from qgis.PyQt.QtCore import Qt
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "init_dialog.ui"))
@@ -73,9 +74,13 @@ class SimulationInit(uicls, basecls):
         self.dd_repair_infrastructure.addItems(list(self.REPAIR_TIME.keys()))
         self.dd_repair_building.addItems(list(self.REPAIR_TIME.keys()))
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
+        self.cb_boundary.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.cb_boundary.setFocusPolicy(Qt.NoFocus)
 
     def check_template_events(self):
         """Check events that are available for the simulation template."""
+        if self.events.fileboundaryconditions:
+            self.cb_boundary.setChecked(True)
         if any(
             (
                 self.events.filestructurecontrols,
@@ -85,8 +90,6 @@ class SimulationInit(uicls, basecls):
             )
         ):
             self.cb_structure_controls.setChecked(True)
-        if self.events.fileboundaryconditions:
-            self.cb_boundary.setChecked(True)
         initial_events = [
             "initial_onedwaterlevel",
             "initial_onedwaterlevelpredefined",
@@ -181,8 +184,8 @@ class SimulationInit(uicls, basecls):
     def start_wizard(self):
         """Start new simulation wizard based on selected options."""
         self.initial_conditions = SimulationInitObject()
-        self.initial_conditions.include_structure_controls = self.cb_structure_controls.isChecked()
         self.initial_conditions.include_boundary_conditions = self.cb_boundary.isChecked()
+        self.initial_conditions.include_structure_controls = self.cb_structure_controls.isChecked()
         self.initial_conditions.include_initial_conditions = self.cb_conditions.isChecked()
         self.initial_conditions.load_from_saved_state = self.cb_load_saved_state.isChecked()
         self.initial_conditions.include_laterals = self.cb_laterals.isChecked()
@@ -216,8 +219,8 @@ class SimulationInitObject:
     """Object for storing init options."""
 
     def __init__(self):
-        self.include_structure_controls = False
         self.include_boundary_conditions = False
+        self.include_structure_controls = False
         self.include_initial_conditions = False
         self.load_from_saved_state = False
         self.include_laterals = False

@@ -34,11 +34,16 @@ class DamageEstimation(SimulationElement):
 
 @dataclass
 class InitOptions(SimulationElement):
-    boundary_conditions_file: FileBoundaryCondition = None
     basic_processed_results: bool = None
     arrival_time_map: bool = None
     damage_estimation: DamageEstimation = None
     generate_saved_state: bool = None
+
+
+@dataclass
+class BoundaryConditions(SimulationElement):
+    file_boundary_conditions: FileBoundaryCondition = None
+    data: dict = None
 
 
 @dataclass
@@ -133,6 +138,7 @@ class NewSimulation:
     end_datetime: datetime
     duration: float
     init_options: InitOptions = None
+    boundary_conditions: BoundaryConditions = None
     structure_controls: StructureControls = None
     initial_conditions: InitialConditions = None
     laterals: Laterals = None
