@@ -104,7 +104,9 @@ class SimulationOverview(uicls, basecls):
         if self.model_selection_dlg.model_is_loaded:
             simulation_template = self.model_selection_dlg.current_simulation_template
             simulation, settings_overview, events = self.get_simulation_data_from_template(simulation_template)
-            self.simulation_init_wizard = SimulationInit(simulation_template, settings_overview, events, parent=self)
+            self.simulation_init_wizard = SimulationInit(
+                self.model_selection_dlg.current_model, simulation_template, settings_overview, events, parent=self
+            )
             self.simulation_init_wizard.exec_()
             if self.simulation_init_wizard.open_wizard:
                 self.new_simulation(simulation, settings_overview, events)

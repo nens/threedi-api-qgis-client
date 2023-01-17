@@ -42,9 +42,10 @@ class SimulationInit(uicls, basecls):
         )
     )
 
-    def __init__(self, simulation_template, settings_overview, events, parent=None):
+    def __init__(self, current_model, simulation_template, settings_overview, events, parent):
         super().__init__(parent)
         self.setupUi(self)
+        self.current_model = current_model
         self.simulation_template = simulation_template
         self.settings_overview = settings_overview
         self.events = events
@@ -79,8 +80,14 @@ class SimulationInit(uicls, basecls):
 
     def check_template_events(self):
         """Check events that are available for the simulation template."""
+        # Check boundary conditions
         if self.events.fileboundaryconditions:
             self.cb_boundary.setChecked(True)
+        else:
+            self.cb_boundary.setDisabled(True)
+        # Check structure controls
+        if self.current_model.extent_one_d is None:
+            self.cb_structure_controls.setDisabled(True)
         if any(
             (
                 self.events.filestructurecontrols,
@@ -90,6 +97,7 @@ class SimulationInit(uicls, basecls):
             )
         ):
             self.cb_structure_controls.setChecked(True)
+        # Check initial conditions
         initial_events = [
             "initial_onedwaterlevel",
             "initial_onedwaterlevelpredefined",
@@ -103,7 +111,11 @@ class SimulationInit(uicls, basecls):
         if any(getattr(self.events, event_name) for event_name in initial_events):
             self.cb_conditions.setChecked(True)
             if self.events.initial_savedstate:
+                self.cb_load_saved_state.setEnabled(True)
                 self.cb_load_saved_state.setChecked(True)
+        # Check laterals and DWF
+        if self.current_model.extent_one_d is None:
+            self.cb_dwf.setDisabled(True)
         if self.events.filelaterals:
             filelaterals = self.events.filelaterals
             laterals_events = [filelateral for filelateral in filelaterals if filelateral.periodic != "daily"]
@@ -112,8 +124,12 @@ class SimulationInit(uicls, basecls):
                 self.cb_laterals.setChecked(True)
             if dwf_events:
                 self.cb_dwf.setChecked(True)
+        # Check breaches
+        if int(self.current_model.breach_count) == 0:
+            self.cb_breaches.setDisabled(True)
         if self.events.breach:
             self.cb_breaches.setChecked(True)
+        # Check precipitation
         rain_events = [
             "lizardrasterrain",
             "lizardtimeseriesrain",
@@ -124,6 +140,7 @@ class SimulationInit(uicls, basecls):
         ]
         if any(getattr(self.events, rain_event_name) for rain_event_name in rain_events):
             self.cb_precipitation.setChecked(True)
+        # Check wind
         if self.events.initial_winddragcoefficient or self.events.wind:
             self.cb_wind.setChecked(True)
 
