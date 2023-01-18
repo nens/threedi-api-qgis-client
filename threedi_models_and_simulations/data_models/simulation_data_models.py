@@ -24,19 +24,7 @@ class SimulationElement:
 
 
 @dataclass
-class DamageEstimation(SimulationElement):
-    cost_type: str = None
-    flood_month: str = None
-    inundation_period: float = None
-    repair_time_infrastructure: int = None
-    repair_time_buildings: int = None
-
-
-@dataclass
 class InitOptions(SimulationElement):
-    basic_processed_results: bool = None
-    arrival_time_map: bool = None
-    damage_estimation: DamageEstimation = None
     generate_saved_state: bool = None
 
 
@@ -128,6 +116,21 @@ class Settings(SimulationElement):
 
 
 @dataclass
+class DamageEstimation(SimulationElement):
+    cost_type: str = None
+    flood_month: str = None
+    inundation_period: float = None
+    repair_time_infrastructure: int = None
+    repair_time_buildings: int = None
+
+
+@dataclass
+class LizardPostProcessing(SimulationElement):
+    arrival_time_map: bool = None
+    damage_estimation: DamageEstimation = None
+
+
+@dataclass
 class NewSimulation:
     simulation_template_id: str
     name: str
@@ -147,6 +150,7 @@ class NewSimulation:
     precipitation: Precipitation = None
     wind: Wind = None
     settings: Settings = None
+    lizard_post_processing: LizardPostProcessing = None
     template_name: str = None
     # Last two attributes will be added after new simulation initialization
     simulation: Simulation = None
