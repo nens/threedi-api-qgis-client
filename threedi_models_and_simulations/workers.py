@@ -522,23 +522,6 @@ class SimulationRunner(QRunnable):
         sim_name = self.current_simulation.name
         duration = self.current_simulation.duration
         init_options = self.current_simulation.init_options
-        if init_options.basic_processed_results:
-            self.tc.create_simulation_post_processing_lizard_basic(
-                sim_id, scenario_name=sim_name, process_basic_results=True
-            )
-        if init_options.arrival_time_map:
-            self.tc.create_simulation_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=True)
-        if init_options.damage_estimation is not None:
-            de = init_options.damage_estimation
-            self.tc.create_simulation_post_processing_lizard_damage(
-                sim_id,
-                basic_post_processing=True,
-                cost_type=de.cost_type,
-                flood_month=de.flood_month,
-                inundation_period=de.period,
-                repair_time_infrastructure=de.repair_time_infrastructure,
-                repair_time_buildings=de.repair_time_buildings,
-            )
         if init_options.generate_saved_state:
             self.tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
 
@@ -889,6 +872,29 @@ class SimulationRunner(QRunnable):
         for aggregation_settings in settings.aggregation_settings_list:
             self.tc.create_simulation_settings_aggregation(sim_id, **aggregation_settings)
 
+    def include_lizard_post_processing(self):
+        """Add post-processing in Lizard to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        sim_name = self.current_simulation.name
+        lizard_post_processing = self.current_simulation.lizard_post_processing
+        if lizard_post_processing:
+            self.tc.create_simulation_post_processing_lizard_basic(
+                sim_id, scenario_name=sim_name, process_basic_results=True
+            )
+            if lizard_post_processing.arrival_time_map:
+                self.tc.create_simulation_postprocessing_in_lizard_arrival(sim_id, basic_post_processing=True)
+            if lizard_post_processing.damage_estimation is not None:
+                de = lizard_post_processing.damage_estimation
+                self.tc.create_simulation_post_processing_lizard_damage(
+                    sim_id,
+                    basic_post_processing=True,
+                    cost_type=de.cost_type,
+                    flood_month=de.flood_month,
+                    inundation_period=de.inundation_period,
+                    repair_time_infrastructure=de.repair_time_infrastructure,
+                    repair_time_buildings=de.repair_time_buildings,
+                )
+
     def start_simulation(self):
         """Start (or add to queue) given simulation."""
         sim_id = self.current_simulation.simulation.id
@@ -931,6 +937,8 @@ class SimulationRunner(QRunnable):
                 self.include_wind()
                 self.report_progress()
                 self.include_settings()
+                self.report_progress()
+                self.include_lizard_post_processing()
                 self.report_progress()
                 self.start_simulation()
                 self.report_progress(simulation_initialized=True)

@@ -1,7 +1,6 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os
-from collections import OrderedDict
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
 
@@ -13,34 +12,6 @@ class SimulationInit(uicls, basecls):
     """Dialog with methods for handling running simulations."""
 
     PROGRESS_COLUMN_IDX = 2
-    COST_TYPES = ["min", "avg", "max"]
-    MONTHS = OrderedDict(
-        (
-            ("january", "jan"),
-            ("february", "feb"),
-            ("march", "mar"),
-            ("april", "apr"),
-            ("may", "may"),
-            ("june", "jun"),
-            ("july", "jul"),
-            ("august", "aug"),
-            ("september", "sep"),
-            ("october", "oct"),
-            ("november", "nov"),
-            ("december", "dec"),
-        )
-    )
-
-    REPAIR_TIME = OrderedDict(
-        (
-            ("0 hours", 0),
-            ("6 hours", 6),
-            ("1 day", 24),
-            ("2 days", 48),
-            ("5 days", 120),
-            ("10 days", 240),
-        )
-    )
 
     def __init__(self, current_model, simulation_template, settings_overview, events, parent):
         super().__init__(parent)
@@ -53,12 +24,8 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions = None
         self.multiple_simulations_widget.setVisible(False)
         self.load_state_widget.setVisible(False)
-        self.damage_estimation_widget.setVisible(False)
-        self.postprocessing_widget.setVisible(False)
         self.cb_multiple_simulations.stateChanged.connect(self.multiple_simulations_changed)
         self.cb_conditions.stateChanged.connect(self.load_saved_state_changed)
-        self.cb_postprocess.stateChanged.connect(self.postprocessing_state_changed)
-        self.cb_damage_estimation.stateChanged.connect(self.damage_estimation_changed)
         self.cb_breaches.stateChanged.connect(self.toggle_breaches)
         self.cb_precipitation.stateChanged.connect(self.toggle_precipitation)
         self.pb_next.clicked.connect(self.start_wizard)
@@ -68,12 +35,6 @@ class SimulationInit(uicls, basecls):
 
     def setup_initial_options(self):
         """Setup initial options dialog."""
-        self.dd_cost_type.addItems(self.COST_TYPES)
-        self.dd_cost_type.setCurrentText("avg")
-        self.dd_flood_month.addItems(list(self.MONTHS.keys()))
-        self.dd_flood_month.setCurrentText("september")
-        self.dd_repair_infrastructure.addItems(list(self.REPAIR_TIME.keys()))
-        self.dd_repair_building.addItems(list(self.REPAIR_TIME.keys()))
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
         self.cb_boundary.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.cb_boundary.setFocusPolicy(Qt.NoFocus)
@@ -182,22 +143,6 @@ class SimulationInit(uicls, basecls):
         else:
             self.load_state_widget.hide()
 
-    def postprocessing_state_changed(self, i):
-        """Handle postprocessing checkboxes state changes."""
-        if i:
-            self.postprocessing_widget.show()
-            self.cb_basec_results.setChecked(True)
-        else:
-            self.postprocessing_widget.hide()
-            self.cb_basec_results.setChecked(False)
-
-    def damage_estimation_changed(self, i):
-        """Handle damage estimation checkboxes state changes."""
-        if i:
-            self.damage_estimation_widget.show()
-        else:
-            self.damage_estimation_widget.hide()
-
     def start_wizard(self):
         """Start new simulation wizard based on selected options."""
         self.initial_conditions = SimulationInitObject()
@@ -210,6 +155,7 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.include_breaches = self.cb_breaches.isChecked()
         self.initial_conditions.include_precipitations = self.cb_precipitation.isChecked()
         self.initial_conditions.include_wind = self.cb_wind.isChecked()
+        self.initial_conditions.include_lizard_post_processing = self.cb_postprocess.isChecked()
         self.initial_conditions.multiple_simulations = self.cb_multiple_simulations.isChecked()
         if self.initial_conditions.multiple_simulations:
             self.initial_conditions.number_of_simulations = int(self.dd_number_of_simulation.currentText())
@@ -217,17 +163,6 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.simulations_list = [f"Simulation{i}" for i in range(1, nos)]
         self.initial_conditions.simulations_difference = self.dd_simulation_difference.currentText()
         self.initial_conditions.generate_saved_state = self.cb_generate.isChecked()
-        self.initial_conditions.postprocessing = self.cb_postprocess.isChecked()
-        self.initial_conditions.basic_processed_results = self.cb_basec_results.isChecked()
-        self.initial_conditions.arrival_time_map = self.cb_arrival_time_map.isChecked()
-        self.initial_conditions.damage_estimation = self.cb_damage_estimation.isChecked()
-        self.initial_conditions.cost_type = self.dd_cost_type.currentText()
-        self.initial_conditions.flood_month = self.MONTHS[self.dd_flood_month.currentText()]
-        self.initial_conditions.period = self.sb_period.value()
-        self.initial_conditions.repair_time_infrastructure = self.REPAIR_TIME[
-            self.dd_repair_infrastructure.currentText()
-        ]
-        self.initial_conditions.repair_time_buildings = self.REPAIR_TIME[self.dd_repair_building.currentText()]
         self.open_wizard = True
         self.close()
 
@@ -245,18 +180,9 @@ class SimulationInitObject:
         self.include_breaches = False
         self.include_precipitations = False
         self.include_wind = False
+        self.include_lizard_post_processing = False
         self.multiple_simulations = False
         self.number_of_simulations = 1
         self.simulations_list = []
         self.simulations_difference = None
-
         self.generate_saved_state = False
-        self.postprocessing = False
-        self.basic_processed_results = False
-        self.arrival_time_map = False
-        self.damage_estimation = False
-        self.cost_type = None
-        self.flood_month = None
-        self.period = None
-        self.repair_time_infrastructure = None
-        self.repair_time_buildings = None

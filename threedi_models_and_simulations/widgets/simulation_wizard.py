@@ -75,51 +75,12 @@ uicls_wind_page, basecls_wind_page = uic.loadUiType(os.path.join(base_dir, "ui",
 uicls_settings_page, basecls_settings_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_settings.ui")
 )
+uicls_lizard_post_processing_page, basecls_lizard_post_processing_page = uic.loadUiType(
+    os.path.join(base_dir, "ui", "simulation_wizard", "page_lizard_post_processing.ui")
+)
 uicls_summary_page, basecls_summary_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_initiation.ui")
 )
-
-
-AREA_WIDE_RAIN = {
-    "0": [0.0],
-    "1": [0.0],
-    "2": [0.0],
-    "3": [0.30, 0.60, 0.90, 1.50, 2.10, 2.10, 1.50, 1.20, 1.05, 0.90, 0.75, 0.60, 0.45, 0.30, 0.15],
-    "4": [0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.05, 1.20, 1.50, 2.10, 2.10, 1.50, 0.90, 0.60, 0.30],
-    "5": [0.30, 0.60, 1.50, 2.70, 2.70, 2.10, 1.50, 1.20, 1.05, 0.90, 0.75, 0.60, 0.45, 0.30, 0.15],
-    "6": [0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.05, 1.20, 1.50, 2.10, 2.70, 2.70, 1.50, 0.60, 0.30],
-    "7": [0.6, 1.2, 2.1, 3.3, 3.3, 2.7, 2.1, 1.5, 1.2, 0.9, 0.6, 0.3],
-    "8": [0.3, 0.6, 0.9, 1.2, 1.5, 2.1, 2.7, 3.3, 3.3, 2.1, 1.2, 0.6],
-    "9": [1.5, 2.7, 4.8, 4.8, 4.2, 3.3, 2.7, 2.1, 1.5, 0.9, 0.6, 0.3],
-    "10": [1.8, 3.6, 6.3, 6.3, 5.7, 4.8, 3.6, 2.4, 1.2],
-    "11": [5.833333333] * 12,
-    "12": [7.5] * 12,
-    "13": [6.666666667] * 24,
-    # Last 3 designs should use 1 hour timestep.
-    "14": [0.208333333] * 48,
-    "15": [0.225694444] * 48,
-    "16": [0.277777778] * 48,
-}
-
-RAIN_LOOKUP = {
-    "0": ("", ""),
-    "1": ("0.25", "v"),
-    "2": ("0.25", "a"),
-    "3": ("0.50", "v"),
-    "4": ("0.50", "a"),
-    "5": ("1.00", "v"),
-    "6": ("1.00", "a"),
-    "7": ("2.00", "v"),
-    "8": ("2.00", "a"),
-    "9": ("5.00", "v"),
-    "10": ("10.00", "v"),
-    "11": ("100.00", "c"),
-    "12": ("250.00", "c"),
-    "13": ("1000.00", "c"),
-    "14": ("100.00", "c"),
-    "15": ("250.00", "c"),
-    "16": ("1000.00", "c"),
-}
 
 
 class NameWidget(uicls_name_page, basecls_name_page):
@@ -949,6 +910,45 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
     SECONDS_MULTIPLIERS = {"s": 1, "mins": 60, "hrs": 3600}
     DESIGN_5_MINUTES_TIMESTEP = 300
     DESIGN_HOUR_TIMESTEP = 3600
+    AREA_WIDE_RAIN = {
+        "0": [0.0],
+        "1": [0.0],
+        "2": [0.0],
+        "3": [0.30, 0.60, 0.90, 1.50, 2.10, 2.10, 1.50, 1.20, 1.05, 0.90, 0.75, 0.60, 0.45, 0.30, 0.15],
+        "4": [0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.05, 1.20, 1.50, 2.10, 2.10, 1.50, 0.90, 0.60, 0.30],
+        "5": [0.30, 0.60, 1.50, 2.70, 2.70, 2.10, 1.50, 1.20, 1.05, 0.90, 0.75, 0.60, 0.45, 0.30, 0.15],
+        "6": [0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.05, 1.20, 1.50, 2.10, 2.70, 2.70, 1.50, 0.60, 0.30],
+        "7": [0.6, 1.2, 2.1, 3.3, 3.3, 2.7, 2.1, 1.5, 1.2, 0.9, 0.6, 0.3],
+        "8": [0.3, 0.6, 0.9, 1.2, 1.5, 2.1, 2.7, 3.3, 3.3, 2.1, 1.2, 0.6],
+        "9": [1.5, 2.7, 4.8, 4.8, 4.2, 3.3, 2.7, 2.1, 1.5, 0.9, 0.6, 0.3],
+        "10": [1.8, 3.6, 6.3, 6.3, 5.7, 4.8, 3.6, 2.4, 1.2],
+        "11": [5.833333333] * 12,
+        "12": [7.5] * 12,
+        "13": [6.666666667] * 24,
+        # Last 3 designs should use 1 hour timestep.
+        "14": [0.208333333] * 48,
+        "15": [0.225694444] * 48,
+        "16": [0.277777778] * 48,
+    }
+    RAIN_LOOKUP = {
+        "0": ("", ""),
+        "1": ("0.25", "v"),
+        "2": ("0.25", "a"),
+        "3": ("0.50", "v"),
+        "4": ("0.50", "a"),
+        "5": ("1.00", "v"),
+        "6": ("1.00", "a"),
+        "7": ("2.00", "v"),
+        "8": ("2.00", "a"),
+        "9": ("5.00", "v"),
+        "10": ("10.00", "v"),
+        "11": ("100.00", "c"),
+        "12": ("250.00", "c"),
+        "13": ("1000.00", "c"),
+        "14": ("100.00", "c"),
+        "15": ("250.00", "c"),
+        "16": ("1000.00", "c"),
+    }
 
     def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
@@ -960,7 +960,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.total_precipitation = 0
         self.custom_time_series = defaultdict(list)
         self.design_time_series = defaultdict(list)
-        self.cbo_design.addItems([str(i) for i in range(len(RAIN_LOOKUP))])
+        self.cbo_design.addItems([str(i) for i in range(len(self.RAIN_LOOKUP))])
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground(None)
         self.plot_widget.setFixedHeight(80)
@@ -1239,9 +1239,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         simulation = self.dd_simulation.currentText()
         design_id = self.cbo_design.currentText()
         # Make copy of the values and add 0.0 value at the end of series
-        series = AREA_WIDE_RAIN[design_id][:]
+        series = self.AREA_WIDE_RAIN[design_id][:]
         series.append(0.0)
-        period_txt, type_txt = RAIN_LOOKUP[design_id]
+        period_txt, type_txt = self.RAIN_LOOKUP[design_id]
         if type_txt == "c":
             type_full_text = "Constant"
         elif type_txt == "v":
@@ -1745,6 +1745,91 @@ class SettingsWidget(uicls_settings_page, basecls_settings_page):
         return aggregation_settings_list
 
 
+class LizardPostprocessingWidget(uicls_lizard_post_processing_page, basecls_lizard_post_processing_page):
+    """Widget for the Post-processing in Lizard page."""
+
+    COST_TYPES = ["min", "avg", "max"]
+    MONTHS = OrderedDict(
+        (
+            ("january", "jan"),
+            ("february", "feb"),
+            ("march", "mar"),
+            ("april", "apr"),
+            ("may", "may"),
+            ("june", "jun"),
+            ("july", "jul"),
+            ("august", "aug"),
+            ("september", "sep"),
+            ("october", "oct"),
+            ("november", "nov"),
+            ("december", "dec"),
+        )
+    )
+
+    REPAIR_TIME = OrderedDict(
+        (
+            ("6 hours", 6),
+            ("1 day", 24),
+            ("2 days", 48),
+            ("5 days", 120),
+            ("10 days", 240),
+        )
+    )
+
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        set_widget_background_color(self)
+        self.template_file_structure_controls = None
+        self.template_memory_structure_controls = None
+        self.template_table_structure_controls = None
+        self.template_timed_structure_controls = None
+        self.setup_damage_estimation_widgets()
+        self.connect_signals()
+
+    def connect_signals(self):
+        """Connecting widgets signals."""
+        self.cb_damage_estimation.toggled.connect(self.toggle_damage_estimation)
+
+    def setup_damage_estimation_widgets(self):
+        """Setup damage estimation values."""
+        self.cbo_cost_type.addItems(self.COST_TYPES)
+        self.cbo_cost_type.setCurrentText("avg")
+        self.cbo_flood_month.addItems(list(self.MONTHS.keys()))
+        self.cbo_flood_month.setCurrentText("september")
+        self.cbo_repair_infrastructure.addItems(list(self.REPAIR_TIME.keys()))
+        self.cbo_repair_infrastructure.setCurrentText("1 day")
+        self.cbo_repair_building.addItems(list(self.REPAIR_TIME.keys()))
+        self.cbo_repair_building.setCurrentText("6 hours")
+
+    def toggle_damage_estimation(self, checked):
+        """Activate/deactivate damage estimation widgets."""
+        if checked:
+            self.damage_estimation_widget.setEnabled(True)
+        else:
+            self.damage_estimation_widget.setDisabled(True)
+
+    def get_lizard_postprocessing_data(self):
+        """Getting all needed data for setting post-processing in Lizard."""
+        arrival_time_map = self.cb_arrival_time_map.isChecked()
+        damage_estimation = self.cb_damage_estimation.isChecked()
+        cost_type = self.cbo_cost_type.currentText()
+        flood_month = self.MONTHS[self.cbo_flood_month.currentText()]
+        inundation_period = self.sb_period.value()
+        repair_time_infrastructure = self.REPAIR_TIME[self.cbo_repair_infrastructure.currentText()]
+        repair_time_buildings = self.REPAIR_TIME[self.cbo_repair_building.currentText()]
+        return (
+            arrival_time_map,
+            damage_estimation,
+            cost_type,
+            flood_month,
+            inundation_period,
+            repair_time_infrastructure,
+            repair_time_buildings,
+        )
+
+
 class SummaryWidget(uicls_summary_page, basecls_summary_page):
     """Widget for the Summary page."""
 
@@ -2033,6 +2118,22 @@ class SettingsPage(QWizardPage):
         self.adjustSize()
 
 
+class LizardPostProcessingPage(QWizardPage):
+    """Post-processing in Lizard definition page."""
+
+    STEP_NAME = "Post-processing in Lizard"
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = LizardPostprocessingWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+
 class SummaryPage(QWizardPage):
     """New simulation summary page."""
 
@@ -2092,6 +2193,9 @@ class SimulationWizard(QWizard):
             self.addPage(self.wind_page)
         self.settings_page = SettingsPage(self)
         self.addPage(self.settings_page)
+        if init_conditions.include_lizard_post_processing:
+            self.lizard_post_processing_page = LizardPostProcessingPage(self)
+            self.addPage(self.lizard_post_processing_page)
         self.summary_page = SummaryPage(self, initial_conditions=init_conditions)
         self.addPage(self.summary_page)
         self.currentIdChanged.connect(self.page_changed)
@@ -2419,17 +2523,6 @@ class SimulationWizard(QWizard):
         duration = self.duration_page.main_widget.calculate_simulation_duration()
         # Initialization options
         init_options = dm.InitOptions()
-        init_options.basic_processed_results = self.init_conditions.basic_processed_results
-        init_options.arrival_time_map = self.init_conditions.arrival_time_map
-        if self.init_conditions.damage_estimation:
-            damage_estimation = dm.DamageEstimation(
-                self.init_conditions.cost_type,
-                self.init_conditions.flood_month,
-                self.init_conditions.period,
-                self.init_conditions.repair_time_infrastructure,
-                self.init_conditions.repair_time_buildings,
-            )
-            init_options.damage_estimation = damage_estimation
         init_options.generate_saved_state = self.init_conditions.generate_saved_state
         # Boundary conditions page attributes
         boundary_conditions = dm.BoundaryConditions()
@@ -2541,6 +2634,29 @@ class SimulationWizard(QWizard):
         physical_settings, numerical_settings, time_step_settings = main_settings
         aggregation_settings_list = self.settings_page.main_widget.collect_aggregation_settings()
         settings = dm.Settings(physical_settings, numerical_settings, time_step_settings, aggregation_settings_list)
+        # Post-processing in Lizard
+        lizard_post_processing = dm.LizardPostProcessing()
+        if self.init_conditions.include_lizard_post_processing:
+            (
+                arrival_time_map_checked,
+                damage_estimation_checked,
+                cost_type,
+                flood_month,
+                inundation_period,
+                repair_time_infrastructure,
+                repair_time_buildings,
+            ) = self.lizard_post_processing_page.main_widget.get_lizard_postprocessing_data()
+            if arrival_time_map_checked:
+                lizard_post_processing.arrival_time_map = True
+            if damage_estimation_checked:
+                damage_estimation = dm.DamageEstimation(
+                    cost_type,
+                    flood_month,
+                    inundation_period,
+                    repair_time_infrastructure,
+                    repair_time_buildings,
+                )
+                lizard_post_processing.damage_estimation = damage_estimation
         simulation_template = self.init_conditions_dlg.simulation_template
         sim_temp_id = simulation_template.simulation.id
         simulation_difference = self.init_conditions.simulations_difference
@@ -2571,6 +2687,7 @@ class SimulationWizard(QWizard):
                     new_simulation.precipitation = dm.Precipitation()
             new_simulation.wind = wind
             new_simulation.settings = settings
+            new_simulation.lizard_post_processing = lizard_post_processing
             self.new_simulations.append(new_simulation)
 
     def cancel_wizard(self):
