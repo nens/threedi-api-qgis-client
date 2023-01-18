@@ -1799,8 +1799,8 @@ class LizardPostprocessingWidget(uicls_lizard_post_processing_page, basecls_liza
         self.cbo_flood_month.addItems(list(self.MONTHS.keys()))
         self.cbo_flood_month.setCurrentText("september")
         self.cbo_repair_infrastructure.addItems(list(self.REPAIR_TIME.keys()))
-        self.cbo_repair_building.addItems(list(self.REPAIR_TIME.keys()))
         self.cbo_repair_infrastructure.setCurrentText("1 day")
+        self.cbo_repair_building.addItems(list(self.REPAIR_TIME.keys()))
         self.cbo_repair_building.setCurrentText("6 hours")
 
     def toggle_damage_estimation(self, checked):
