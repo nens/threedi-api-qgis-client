@@ -41,6 +41,38 @@ class SimulationInit(uicls, basecls):
 
     def check_template_events(self):
         """Check events that are available for the simulation template."""
+        # Check raster edits
+        if self.events.rasteredits:
+            self.cb_raster_edits.setChecked(True)
+        else:
+            self.cb_raster_edits.setDisabled(True)
+        # Check leakage
+        leakage_events = []  # TODO: add "leakage", "filetimeseriesleakage", "filerasterleakage"
+        if any(getattr(self.events, event_name) for event_name in leakage_events):
+            self.cb_leakage.setChecked(True)
+        else:
+            self.cb_leakage.setDisabled(True)
+        # Check sources and sinks
+        sources_sinks_events = [
+            "lizardrastersourcessinks",
+            "lizardtimeseriessourcessinks",
+            "timeseriessourcessinks",
+        ]  # TODO: add "filerastersourcessinks", "filetimeseriessourcessinks"
+        if any(getattr(self.events, event_name) for event_name in sources_sinks_events):
+            self.cb_sources_sinks.setChecked(True)
+        else:
+            self.cb_sources_sinks.setDisabled(True)
+        # Check local/timeseries rain
+        local_ts_rain_events = ["lizardtimeseriesrain", "localrain"]  # TODO: add "filetimeseriesrain"
+        if any(getattr(self.events, event_name) for event_name in local_ts_rain_events):
+            self.cb_local_or_ts_rain.setChecked(True)
+        else:
+            self.cb_local_or_ts_rain.setDisabled(True)
+        # Check obstacle edits
+        if self.events.obstacleedits:
+            self.cb_obstacle_edits.setChecked(True)
+        else:
+            self.cb_obstacle_edits.setDisabled(True)
         # Check boundary conditions
         if self.events.fileboundaryconditions:
             self.cb_boundary.setChecked(True)
@@ -86,19 +118,12 @@ class SimulationInit(uicls, basecls):
             if dwf_events:
                 self.cb_dwf.setChecked(True)
         # Check breaches
-        if int(self.current_model.breach_count) == 0:
+        if int(self.current_model.breach_count or 0) == 0:
             self.cb_breaches.setDisabled(True)
         if self.events.breach:
             self.cb_breaches.setChecked(True)
         # Check precipitation
-        rain_events = [
-            "lizardrasterrain",
-            "lizardtimeseriesrain",
-            "localrain",
-            "timeseriesrain",
-            "filerasterrain",
-            "filetimeseriesrain",
-        ]
+        rain_events = ["lizardrasterrain", "timeseriesrain", "filerasterrain"]
         if any(getattr(self.events, rain_event_name) for rain_event_name in rain_events):
             self.cb_precipitation.setChecked(True)
         # Check wind
@@ -163,6 +188,11 @@ class SimulationInit(uicls, basecls):
         self.initial_conditions.simulations_list = [f"Simulation{i}" for i in range(1, nos)]
         self.initial_conditions.simulations_difference = self.dd_simulation_difference.currentText()
         self.initial_conditions.generate_saved_state = self.cb_generate.isChecked()
+        self.initial_conditions.include_raster_edits = self.cb_raster_edits.isChecked()
+        self.initial_conditions.include_leakage = self.cb_leakage.isChecked()
+        self.initial_conditions.include_sources_sinks = self.cb_sources_sinks.isChecked()
+        self.initial_conditions.include_local_ts_rain = self.cb_local_or_ts_rain.isChecked()
+        self.initial_conditions.include_obstacle_edits = self.cb_obstacle_edits.isChecked()
         self.open_wizard = True
         self.close()
 
@@ -186,3 +216,8 @@ class SimulationInitObject:
         self.simulations_list = []
         self.simulations_difference = None
         self.generate_saved_state = False
+        self.include_raster_edits = False
+        self.include_leakage = False
+        self.include_sources_sinks = False
+        self.include_local_ts_rain = False
+        self.include_obstacle_edits = False

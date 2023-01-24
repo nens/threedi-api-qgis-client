@@ -2515,6 +2515,7 @@ class SimulationWizard(QWizard):
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""
         self.settings.setValue("threedi/wizard_size", self.size())
+        events = self.init_conditions_dlg.events
         name = self.name_page.main_widget.le_sim_name.text()
         tags = self.name_page.main_widget.le_tags.text()
         threedimodel_id = self.model_selection_dlg.current_model.id
@@ -2524,6 +2525,41 @@ class SimulationWizard(QWizard):
         # Initialization options
         init_options = dm.InitOptions()
         init_options.generate_saved_state = self.init_conditions.generate_saved_state
+        if self.init_conditions.include_raster_edits:
+            init_options.raster_edits = events.raster_edits[0]
+        if self.init_conditions.include_leakage:
+            leakage = dm.Leakage()
+            if events.leakage:
+                leakage.timeseries_leakage_overview = events.leakage[0]
+            if events.filetimeseriesleakage:
+                leakage.file_timeseries_leakage = events.filetimeseriesleakage[0]
+            if events.filerasterleakage:
+                leakage.file_raster_leakage = events.filerasterleakage[0]
+            init_options.leakage = leakage
+        if self.init_conditions.include_sources_sinks:
+            sources_sinks = dm.SourcesSinks()
+            if events.lizardrastersourcessinks:
+                sources_sinks.lizard_raster_sources_sinks = events.lizardrastersourcessinks[0]
+            if events.lizardtimeseriessourcessinks:
+                sources_sinks.lizard_timeseries_sources_sinks = events.lizardtimeseriessourcessinks[0]
+            if events.filerastersourcessinks:
+                sources_sinks.file_raster_sources_sinks = events.filerastersourcessinks[0]
+            if events.filetimeseriessourcessinks:
+                sources_sinks.file_timeseries_sources_sinks = events.filetimeseriessourcessinks[0]
+            if events.timeseriessourcessinks:
+                sources_sinks.timeseries_sources_sinks = events.timeseriessourcessinks[0]
+            init_options.sources_sinks = sources_sinks
+        if self.init_conditions.include_local_ts_rain:
+            local_ts_rain = dm.LocalTimeseriesRain()
+            if events.lizardtimeseriesrain:
+                local_ts_rain.lizard_timeseries_rain = events.lizardtimeseriesrain[0]
+            if events.filetimeseriesrain:
+                local_ts_rain.file_timeseries_rain = events.filetimeseriesrain[0]
+            if events.localrain:
+                local_ts_rain.local_rain = events.localrain[0]
+            init_options.local_timeseries_rain = local_ts_rain
+        if self.init_conditions.include_obstacle_edits:
+            init_options.obstacle_edits = events.obstacle_edits[0]
         # Boundary conditions page attributes
         boundary_conditions = dm.BoundaryConditions()
         if self.init_conditions.include_boundary_conditions:

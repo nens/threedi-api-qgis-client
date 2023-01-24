@@ -10,6 +10,19 @@ from threedi_api_client.openapi import (
     TableStructureControl,
     TimedStructureControl,
     FileBoundaryCondition,
+    RasterEdit,
+    TimeseriesLeakageOverview,
+    FileTimeseriesLeakage,
+    FileRasterLeakage,
+    LizardRasterSourcesSinks,
+    LizardTimeseriesSourcesSinks,
+    FileRasterSourcesSinks,
+    FileTimeseriesSourcesSinks,
+    TimeseriesSourcesSinks,
+    LizardTimeseriesRain,
+    FileTimeseriesRain,
+    LocalRain,
+    ObstacleEdit,
 )
 
 
@@ -24,8 +37,36 @@ class SimulationElement:
 
 
 @dataclass
+class Leakage(SimulationElement):
+    timeseries_leakage_overview: TimeseriesLeakageOverview = None
+    file_timeseries_leakage: FileTimeseriesLeakage = None
+    file_raster_leakage: FileRasterLeakage = None
+
+
+@dataclass
+class SourcesSinks(SimulationElement):
+    lizard_raster_sources_sinks: LizardRasterSourcesSinks = None
+    lizard_timeseries_sources_sinks: LizardTimeseriesSourcesSinks = None
+    timeseries_sources_sinks: TimeseriesSourcesSinks = None
+    file_raster_sources_sinks: FileRasterSourcesSinks = None
+    file_timeseries_sources_sinks: FileTimeseriesSourcesSinks = None
+
+
+@dataclass
+class LocalTimeseriesRain(SimulationElement):
+    lizard_timeseries_rain: LizardTimeseriesRain = None
+    local_rain: LocalRain = None
+    file_timeseries_rain: FileTimeseriesRain = None
+
+
+@dataclass
 class InitOptions(SimulationElement):
     generate_saved_state: bool = None
+    raster_edits: RasterEdit = None
+    leakage: Leakage = None
+    sources_sinks: SourcesSinks = None
+    local_timeseries_rain: LocalTimeseriesRain = None
+    obstacle_edits: ObstacleEdit = None
 
 
 @dataclass
