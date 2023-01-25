@@ -2526,7 +2526,7 @@ class SimulationWizard(QWizard):
         init_options = dm.InitOptions()
         init_options.generate_saved_state = self.init_conditions.generate_saved_state
         if self.init_conditions.include_raster_edits:
-            init_options.raster_edits = events.raster_edits[0]
+            init_options.raster_edits = events.rasteredits[0]
         if self.init_conditions.include_leakage:
             leakage = dm.Leakage()
             if events.leakage:
@@ -2559,7 +2559,7 @@ class SimulationWizard(QWizard):
                 local_ts_rain.local_rain = events.localrain[0]
             init_options.local_timeseries_rain = local_ts_rain
         if self.init_conditions.include_obstacle_edits:
-            init_options.obstacle_edits = events.obstacle_edits[0]
+            init_options.obstacle_edits = events.obstacleedits[0]
         # Boundary conditions page attributes
         boundary_conditions = dm.BoundaryConditions()
         if self.init_conditions.include_boundary_conditions:
