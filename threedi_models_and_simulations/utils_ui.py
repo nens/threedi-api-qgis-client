@@ -67,7 +67,7 @@ def scan_widgets_parameters(main_widget, get_combobox_text=True):
         elif isinstance(widget, QTimeEdit):
             parameters[obj_name] = widget.time().toString("H:m")
         elif isinstance(widget, (QSpinBox, QDoubleSpinBox)):
-            parameters[obj_name] = widget.value()
+            parameters[obj_name] = widget.value() if widget.text() else None
         elif isinstance(widget, QgsProjectionSelectionWidget):
             parameters[obj_name] = widget.crs()
         elif isinstance(widget, QgsFileWidget):
@@ -103,7 +103,10 @@ def set_widgets_parameters(main_widget, find_combobox_text=True, **widget_parame
         elif isinstance(widget, QTimeEdit):
             widget.setTime(QTime.fromString(value, "H:m"))
         elif isinstance(widget, (QSpinBox, QDoubleSpinBox)):
-            widget.setValue(value)
+            if value is not None:
+                widget.setValue(value)
+            else:
+                widget.clear()
 
 
 def get_filepath(parent, extension_filter=None, extension=None, save=False, dialog_title=None):
