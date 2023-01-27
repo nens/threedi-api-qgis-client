@@ -99,6 +99,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
     def test_external_imports(self):
         """Check availability of an external checkers."""
         try:
+            import threedi_schema
             import threedi_modelchecker
             import ThreeDiToolbox
 
@@ -121,15 +122,14 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         """Run schematisation checker."""
         try:
             from sqlalchemy.exc import OperationalError
-            from threedi_modelchecker.threedi_database import ThreediDatabase
-            from threedi_modelchecker.model_checks import ThreediModelChecker
-            from threedi_modelchecker.schema import ModelSchema
-            from threedi_modelchecker import errors
+            from threedi_schema import ThreediDatabase
+            from threedi_schema import errors
+            from threedi_modelchecker import ThreediModelChecker
         except ImportError:
             raise
         db_settings = {"db_path": self.schematisation_sqlite}
         threedi_db = ThreediDatabase(db_settings)
-        schema = ModelSchema(threedi_db)
+        schema = threedi_db.schema
         try:
             schema.validate_schema()
             schema.set_spatial_indexes()
@@ -158,7 +158,6 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             error_msg = f"{e}"
             self.communication.show_error(error_msg, self)
             return
-        model_checker = None
         try:
             model_checker = ThreediModelChecker(threedi_db)
             model_checker.db.check_connection()
@@ -178,20 +177,6 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             )
             self.communication.show_error(error_msg, self)
             return
-        except errors.MigrationTooHighError:
-            error_msg = (
-                "The selected 3Di model has a higher migration than expected.\n"
-                "The 3Di model has a higher migration than expected, "
-                "do you have the latest version of ThreediToolbox?"
-            )
-            self.communication.show_error(error_msg, self)
-            return
-        except errors.MigrationNameError:
-            warn_msg = (
-                "Unexpected migration name, but migration id is matching.\n"
-                "We are gonna continue for now and hope for the best."
-            )
-            self.communication.bar_warn(warn_msg)
         session = model_checker.db.get_session()
         session.model_checker_context = model_checker.context
         total_checks = len(model_checker.config.checks)

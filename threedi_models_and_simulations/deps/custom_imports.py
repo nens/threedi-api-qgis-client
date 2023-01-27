@@ -7,12 +7,14 @@ from subprocess import check_call, CalledProcessError
 from ..utils import parse_version_number
 
 REQUIRED_API_CLIENT_VERSION = "4.1.1"
-REQUIRED_MODEL_CHECKER_VERSION = "1.0.0"
+REQUIRED_3DI_MODEL_CHECKER_VERSION = "1.0.0"
+REQUIRED_3DI_SCHEMA_VERSION = "0.214.3"
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 API_CLIENT_WHEEL = os.path.join(MAIN_DIR, f"threedi_api_client-{REQUIRED_API_CLIENT_VERSION}-py2.py3-none-any.whl")
 MODEL_CHECKER_WHEEL = os.path.join(
-    MAIN_DIR, f"threedi_modelchecker-{REQUIRED_MODEL_CHECKER_VERSION}-py2.py3-none-any.whl"
+    MAIN_DIR, f"threedi_modelchecker-{REQUIRED_3DI_MODEL_CHECKER_VERSION}-py3-none-any.whl"
 )
+SCHEMA_WHEEL = os.path.join(MAIN_DIR, f"threedi_schema-{REQUIRED_3DI_SCHEMA_VERSION}-py3-none-any.whl")
 
 
 def patch_wheel_imports():
@@ -63,6 +65,12 @@ def patch_wheel_imports():
         sys.path.append(deps_path)
 
     try:
+        import threedi_schema
+    except ImportError:
+        deps_path = SCHEMA_WHEEL
+        sys.path.append(deps_path)
+
+    try:
         import threedi_modelchecker
     except ImportError:
         deps_path = MODEL_CHECKER_WHEEL
@@ -98,7 +106,7 @@ def model_checker_version_matches(exact_match=False):
     import threedi_modelchecker
 
     available_threedi_modelchecker_version = parse_version_number(threedi_modelchecker.__version__)
-    minimum_required_version = parse_version_number(REQUIRED_MODEL_CHECKER_VERSION)
+    minimum_required_version = parse_version_number(REQUIRED_3DI_MODEL_CHECKER_VERSION)
     if exact_match:
         versions_matches = available_threedi_modelchecker_version == minimum_required_version
     else:
