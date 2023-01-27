@@ -127,8 +127,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             from threedi_modelchecker import ThreediModelChecker
         except ImportError:
             raise
-        db_settings = {"db_path": self.schematisation_sqlite}
-        threedi_db = ThreediDatabase(db_settings)
+        threedi_db = ThreediDatabase(self.schematisation_sqlite)
         schema = threedi_db.schema
         try:
             schema.validate_schema()
