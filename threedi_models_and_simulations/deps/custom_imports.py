@@ -114,6 +114,19 @@ def model_checker_version_matches(exact_match=False):
     return versions_matches, available_threedi_modelchecker_version
 
 
+def schema_version_matches(exact_match=False):
+    """Check if installed threedi_schema version matches minimum required version."""
+    import threedi_schema
+
+    available_threedi_schema_version = parse_version_number(threedi_schema.__version__)
+    minimum_required_version = parse_version_number(REQUIRED_3DI_MODEL_CHECKER_VERSION)
+    if exact_match:
+        versions_matches = available_threedi_schema_version == minimum_required_version
+    else:
+        versions_matches = available_threedi_schema_version >= minimum_required_version
+    return versions_matches, available_threedi_schema_version
+
+
 def reinstall_packages_from_wheels(*wheel_filepaths):
     """Reinstall wheel packages."""
     flags = ["--upgrade", "--no-deps", "--force-reinstall"]
