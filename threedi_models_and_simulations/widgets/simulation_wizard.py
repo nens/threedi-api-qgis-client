@@ -2443,11 +2443,7 @@ class SimulationWizard(QWizard):
             if events.breach:
                 breach = events.breach[0]
                 tc = ThreediCalls(self.plugin_dock.threedi_api)
-                threedimodel_id_str = str(self.model_selection_dlg.current_model.id)
-                potential_breach_url = breach.potential_breach.rstrip("/")
-                potential_breach_id = int(potential_breach_url.split("/")[-1])
-                potential_breach = tc.fetch_3di_model_potential_breach(threedimodel_id_str, potential_breach_id)
-                breaches_widget.dd_breach_id.setCurrentText(str(potential_breach.connected_pnt_id))
+                breaches_widget.dd_breach_id.setCurrentText(str(breach.line_id))
                 breaches_widget.sb_width.setValue(breach.initial_width)
                 breaches_widget.sb_duration.setValue(breach.duration_till_max_depth)
                 breaches_widget.dd_units.setCurrentText("s")
