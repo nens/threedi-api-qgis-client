@@ -63,6 +63,16 @@ from threedi_api_client.openapi import (
     User,
     Raster,
     Contract,
+    RasterEdit,
+    LizardRasterSourcesSinks,
+    LizardTimeseriesSourcesSinks,
+    FileRasterSourcesSinks,
+    FileTimeseriesSourcesSinks,
+    TimeseriesSourcesSinks,
+    ConstantLocalRain,
+    TimeseriesLocalRain,
+    LizardTimeseriesRain,
+    ObstacleEdit,
 )
 
 
@@ -357,6 +367,56 @@ class ThreediCalls:
         """Get the lateral file Download object."""
         lateral_download = self.threedi_api.simulations_events_lateral_file_download(lateral_pk, str(simulation_pk))
         return lateral_download
+
+    def create_raster_edits(self, simulation_pk: int, **data) -> RasterEdit:
+        """Add raster edit to the given simulation."""
+        raster_edit = self.threedi_api.simulations_events_raster_edits_create(str(simulation_pk), data)
+        return raster_edit
+
+    def create_lizard_raster_sources_sinks(self, simulation_pk: int, **data) -> LizardRasterSourcesSinks:
+        """Add Lizard raster sources sinks to the given simulation."""
+        lizard_raster_sources_sinks = self.threedi_api.simulations_events_sources_sinks_rasters_lizard_create(
+            str(simulation_pk), data
+        )
+        return lizard_raster_sources_sinks
+
+    def create_lizard_timeseries_sources_sinks(self, simulation_pk: int, **data) -> LizardTimeseriesSourcesSinks:
+        """Add Lizard timeseries sources sinks to the given simulation."""
+        lizard_timeseries_sources_sinks = self.threedi_api.simulations_events_sources_sinks_timeseries_lizard_create(
+            str(simulation_pk), data
+        )
+        return lizard_timeseries_sources_sinks
+
+    def create_timeseries_sources_sinks(self, simulation_pk: int, **data) -> TimeseriesSourcesSinks:
+        """Add timeseries sources sinks to the given simulation."""
+        timeseries_sources_sinks = self.threedi_api.simulations_events_sources_sinks_timeseries_create(
+            str(simulation_pk), data
+        )
+        return timeseries_sources_sinks
+
+    def create_lizard_timeseries_rain(self, simulation_pk: int, **data) -> LizardTimeseriesRain:
+        """Add Lizard timeseries rain to the given simulation."""
+        lizard_timeseries_rain = self.threedi_api.simulations_events_rain_timeseries_lizard_create(
+            str(simulation_pk), data
+        )
+        return lizard_timeseries_rain
+
+    def create_local_rain_constant(self, simulation_pk: int, **data) -> ConstantLocalRain:
+        """Add constant local rain to the given simulation."""
+        constant_local_rain = self.threedi_api.simulations_events_rain_local_constant_create(str(simulation_pk), data)
+        return constant_local_rain
+
+    def create_local_rain_timeseries(self, simulation_pk: int, **data) -> TimeseriesLocalRain:
+        """Add timeseries local rain to the given simulation."""
+        timeseries_local_rain = self.threedi_api.simulations_events_rain_local_timeseries_create(
+            str(simulation_pk), data
+        )
+        return timeseries_local_rain
+
+    def create_obstacle_edits(self, simulation_pk: int, **data) -> ObstacleEdit:
+        """Add obstacle edit to the given simulation."""
+        obstacle_edit = self.threedi_api.simulations_events_obstacle_edits_create(str(simulation_pk), data)
+        return obstacle_edit
 
     def fetch_structure_control_files(self, simulation_pk: int) -> List[FileStructureControl]:
         """Get list of the structure control files of the given simulation."""
@@ -680,7 +740,6 @@ class ThreediCalls:
         )
         return time_series_wind
 
-    # V3-beta API methods
     def fetch_schematisations(self, **data) -> List[Schematisation]:
         """Get list of the schematisations."""
         schematisations_list = self.paginated_fetch(self.threedi_api.schematisations_list, **data)

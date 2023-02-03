@@ -524,6 +524,97 @@ class SimulationRunner(QRunnable):
         init_options = self.current_simulation.init_options
         if init_options.generate_saved_state:
             self.tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
+        if init_options.raster_edits:
+            re = init_options.raster_edits
+            raster_edit_data = {
+                "raster": re.raster,
+                "offset": re.offset,
+                "value": re.value,
+                "polygon": re.polygon,
+                "relative": re.relative,
+            }
+            self.tc.create_raster_edits(sim_id, **raster_edit_data)
+        if init_options.leakage:
+            pass  # TODO: need implementation
+        if init_options.sources_sinks:
+            if init_options.sources_sinks.lizard_raster_sources_sinks:
+                lrss = init_options.sources_sinks.lizard_raster_sources_sinks
+                lizard_raster_sources_sinks_data = {
+                    "offset": lrss.offset,
+                    "duration": lrss.duration,
+                    "reference_uuid": lrss.reference_uuid,
+                    "start_datetime": lrss.start_datetime,
+                }
+                self.tc.create_lizard_raster_sources_sinks(sim_id, **lizard_raster_sources_sinks_data)
+            if init_options.sources_sinks.lizard_timeseries_sources_sinks:
+                ltss = init_options.sources_sinks.lizard_timeseries_sources_sinks
+                lizard_timeseries_sources_sinks_data = {
+                    "offset": ltss.offset,
+                    "duration": ltss.duration,
+                    "reference_uuid": ltss.reference_uuid,
+                    "start_datetime": ltss.start_datetime,
+                    "interpolate": ltss.interpolate,
+                }
+                self.tc.create_lizard_timeseries_sources_sinks(sim_id, **lizard_timeseries_sources_sinks_data)
+            if init_options.sources_sinks.timeseries_sources_sinks:
+                tss = init_options.sources_sinks.timeseries_sources_sinks
+                timeseries_sources_sinks_data = {
+                    "offset": tss.offset,
+                    "interpolate": tss.interpolate,
+                    "values": tss.values,
+                    "units": tss.units,
+                }
+                self.tc.create_timeseries_sources_sinks(sim_id, **timeseries_sources_sinks_data)
+            if init_options.sources_sinks.file_raster_sources_sinks:
+                pass  # TODO: needs implementation
+            if init_options.sources_sinks.file_timeseries_sources_sinks:
+                pass  # TODO: needs implementation
+        if init_options.local_timeseries_rain:
+            if init_options.local_timeseries_rain.lizard_timeseries_rain:
+                ltr = init_options.local_timeseries_rain.lizard_timeseries_rain
+                lizard_timeseries_rain_data = {
+                    "offset": ltr.offset,
+                    "duration": ltr.duration,
+                    "reference_uuid": ltr.reference_uuid,
+                    "start_datetime": ltr.start_datetime,
+                    "interpolate": ltr.interpolate,
+                    "units": ltr.units,
+                }
+                self.tc.create_lizard_timeseries_rain(sim_id, **lizard_timeseries_rain_data)
+            if init_options.local_rain:
+                lr = init_options.local_rain
+                if lr.constant:
+                    local_rain_data = {
+                        "offset": lr.offset,
+                        "value": lr.value,
+                        "units": lr.units,
+                        "duration": lr.duration,
+                        "interpolate": lr.interpolate,
+                        "diameter": lr.diameter,
+                        "point": lr.point,
+                    }
+                    self.tc.create_local_rain_constant(sim_id, **local_rain_data)
+                else:
+                    local_rain_data = {
+                        "offset": lr.offset,
+                        "values": lr.values,
+                        "interpolate": lr.interpolate,
+                        "units": lr.units,
+                        "diameter": lr.diameter,
+                        "point": lr.point,
+                    }
+                    self.tc.create_local_rain_timeseries(sim_id, **local_rain_data)
+            if init_options.file_timeseries_rain:
+                pass  # TODO: needs implementation
+        if init_options.obstacle_edits:
+            oe = init_options.obstacle_edits
+            obstacle_edit_data = {
+                "offset": oe.offset,
+                "value": oe.value,
+                "linestring": oe.linestring,
+                "relative": oe.relative,
+            }
+            self.tc.create_obstacle_edits(sim_id, **obstacle_edit_data)
 
     def include_boundary_conditions(self):
         """Apply boundary conditions to the new simulation."""
