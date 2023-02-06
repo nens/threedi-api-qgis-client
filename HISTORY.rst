@@ -1,7 +1,7 @@
 History
 =======
 
-3.4 (unreleased)
+3.4 (2023-02-06)
 ----------------
 
 - Simulation wizard runner refactoring (#407)
