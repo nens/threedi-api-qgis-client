@@ -4,7 +4,22 @@ History
 3.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Simulation wizard runner refactoring (#407)
+- Added handling of the models limits per organisation. (#410)
+- Fix for the issue #416.
+- Changed friction velocity default value.
+- Model deletion fixes.
+- Updated threedi-api-client version to 4.1.1
+- Structure controls handling (#427)
+- Changed the way of showing progress of the simulation wizard. (#424)
+- Increased default upload timeout to the 900 seconds.
+- Fix for the issue #428.
+- Added boundary conditions wizard page. (#430)
+- Refactoring new simulation init options dialog. (#431)
+- Moved post-processing in Lizard to the separate simulation wizard page. (#432)
+- Fix for the issue #418. (#436)
+- Updated schematisation checker to version 1.0.0 and removed raster checker section (#413)
+- Added handling (partial) additional forcing options from the simulation template.
 
 
 3.3 (2022-11-28)
