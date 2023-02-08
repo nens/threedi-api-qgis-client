@@ -1,8 +1,8 @@
 History
 =======
 
-3.5 (unreleased)
-----------------
+3.4.1 (2023-02-08)
+------------------
 
 - Fix for the running simulation with basic post-processing only.
 
