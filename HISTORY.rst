@@ -4,7 +4,7 @@ History
 3.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix for the running simulation with basic post-processing only.
 
 
 3.4 (2023-02-06)
