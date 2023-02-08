@@ -2673,6 +2673,7 @@ class SimulationWizard(QWizard):
         # Post-processing in Lizard
         lizard_post_processing = dm.LizardPostProcessing()
         if self.init_conditions.include_lizard_post_processing:
+            lizard_post_processing.basic_post_processing = True
             (
                 arrival_time_map_checked,
                 damage_estimation_checked,

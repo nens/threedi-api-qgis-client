@@ -167,6 +167,7 @@ class DamageEstimation(SimulationElement):
 
 @dataclass
 class LizardPostProcessing(SimulationElement):
+    basic_post_processing: bool = None
     arrival_time_map: bool = None
     damage_estimation: DamageEstimation = None
 
