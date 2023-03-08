@@ -446,7 +446,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 actions_sublayout.addWidget(invalid_ref_widget, 0, 1)
                 # Add all actions widget into the main widget layout
                 widget_layout.addWidget(all_actions_widget, current_main_layout_row, 2)
-                # Hide some of the widgets based on files states
+                # Hide some widgets based on files states
                 if status == UploadFileStatus.NO_CHANGES_DETECTED:
                     all_actions_widget.hide()
                 elif status == UploadFileStatus.INVALID_REFERENCE:

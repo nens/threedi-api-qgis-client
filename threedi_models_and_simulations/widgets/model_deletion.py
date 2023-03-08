@@ -59,6 +59,7 @@ class ModelDeletionDialog(uicls, basecls):
 
     def check_limits(self):
         """Check 3Di models creation limits."""
+        self.threedi_models_to_show.clear()
         try:
             tc = ThreediCalls(self.threedi_api)
             filters = {
@@ -68,7 +69,7 @@ class ModelDeletionDialog(uicls, basecls):
             }
             limit = self.parent_widget.MAX_SCHEMATISATION_MODELS
             threedi_models, models_count = tc.fetch_3di_models_with_count(**filters)
-            if models_count > limit:
+            if models_count >= limit:
                 self.label.setText(self.label_template.format("schematisation", limit, models_count))
                 self.setup_dialog(threedi_models)
                 return
@@ -77,9 +78,8 @@ class ModelDeletionDialog(uicls, basecls):
             contract = tc.fetch_contracts(organisation__unique_id=organisation_uuid)[0]
             limit = contract.threedimodel_limit
             threedi_models, models_count = tc.fetch_3di_models_with_count(**filters)
-            if models_count > limit:
+            if models_count >= limit:
                 self.label.setText(self.label_template.format("organisation", limit, models_count))
-                self.setup_dialog(threedi_models)
             else:
                 self.accept()
         except ApiException as e:
