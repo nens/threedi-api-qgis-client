@@ -80,6 +80,8 @@ class ModelDeletionDialog(uicls, basecls):
             threedi_models, models_count = tc.fetch_3di_models_with_count(**filters)
             if models_count >= limit:
                 self.label.setText(self.label_template.format("organisation", limit, models_count))
+                self.setup_dialog(threedi_models)
+                return
             else:
                 self.accept()
         except ApiException as e:
