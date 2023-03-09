@@ -106,8 +106,6 @@ class ModelDeletionDialog(uicls, basecls):
         header = ["ID", "Model", "Schematisation", "Revision", "Created By", "Created On"]
         self.models_model.setHorizontalHeaderLabels(header)
         for sim_model in sorted(threedi_models, key=attrgetter("revision_commit_date"), reverse=True):
-            if sim_model.schematisation_id != self.local_schematisation.id:
-                continue
             id_item = QStandardItem(str(sim_model.id))
             name_item = QStandardItem(sim_model.name)
             name_item.setData(sim_model, role=Qt.UserRole)
