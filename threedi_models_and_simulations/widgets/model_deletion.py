@@ -62,24 +62,28 @@ class ModelDeletionDialog(uicls, basecls):
         self.threedi_models_to_show.clear()
         try:
             tc = ThreediCalls(self.threedi_api)
-            filters = {
+            schematisation_limit_filters = {
                 "limit": tc.FETCH_LIMIT,
                 "show_invalid": True,
                 "schematisation_name": self.local_schematisation.name,
             }
-            limit = self.parent_widget.MAX_SCHEMATISATION_MODELS
-            threedi_models, models_count = tc.fetch_3di_models_with_count(**filters)
-            if models_count >= limit:
-                self.label.setText(self.label_template.format("schematisation", limit, models_count))
+            schematisation_limit = self.parent_widget.MAX_SCHEMATISATION_MODELS
+            threedi_models, models_count = tc.fetch_3di_models_with_count(**schematisation_limit_filters)
+            if models_count >= schematisation_limit:
+                self.label.setText(self.label_template.format("schematisation", schematisation_limit, models_count))
                 self.setup_dialog(threedi_models)
                 return
             organisation_uuid = self.organisation.unique_id
-            filters = {"limit": tc.FETCH_LIMIT, "show_invalid": True, "schematisation_owner": organisation_uuid}
             contract = tc.fetch_contracts(organisation__unique_id=organisation_uuid)[0]
-            limit = contract.threedimodel_limit
-            threedi_models, models_count = tc.fetch_3di_models_with_count(**filters)
-            if models_count >= limit:
-                self.label.setText(self.label_template.format("organisation", limit, models_count))
+            organisation_limit = contract.threedimodel_limit
+            organisation_limit_filters = {
+                "limit": tc.FETCH_LIMIT,
+                "show_invalid": True,
+                "schematisation_owner": organisation_uuid,
+            }
+            threedi_models, models_count = tc.fetch_3di_models_with_count(**organisation_limit_filters)
+            if models_count >= organisation_limit:
+                self.label.setText(self.label_template.format("organisation", organisation_limit, models_count))
                 self.setup_dialog(threedi_models)
                 return
             else:
