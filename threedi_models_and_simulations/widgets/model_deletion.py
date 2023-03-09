@@ -64,7 +64,6 @@ class ModelDeletionDialog(uicls, basecls):
             tc = ThreediCalls(self.threedi_api)
             schematisation_limit_filters = {
                 "limit": tc.FETCH_LIMIT,
-                "show_invalid": True,
                 "schematisation_name": self.local_schematisation.name,
             }
             schematisation_limit = self.parent_widget.MAX_SCHEMATISATION_MODELS
@@ -78,7 +77,6 @@ class ModelDeletionDialog(uicls, basecls):
             organisation_limit = contract.threedimodel_limit
             organisation_limit_filters = {
                 "limit": tc.FETCH_LIMIT,
-                "show_invalid": True,
                 "schematisation_owner": organisation_uuid,
             }
             threedi_models, models_count = tc.fetch_3di_models_with_count(**organisation_limit_filters)
