@@ -3,7 +3,8 @@
 import os
 import sys
 from collections import OrderedDict
-from subprocess import check_call, CalledProcessError
+from subprocess import CalledProcessError, check_call
+
 from ..utils import parse_version_number
 
 REQUIRED_API_CLIENT_VERSION = "4.1.1"
@@ -77,8 +78,8 @@ def patch_wheel_imports():
         sys.path.append(deps_path)
 
     try:
-        import threedi_api_client
         import openapi_client
+        import threedi_api_client
     except ImportError:
         deps_path = API_CLIENT_WHEEL
         sys.path.append(deps_path)
@@ -86,8 +87,8 @@ def patch_wheel_imports():
 
 def api_client_version_matches(exact_match=False):
     """Check if installed threedi_api_client version matches minimum required version."""
-    import threedi_api_client
     import openapi_client
+    import threedi_api_client
 
     try:
         available_api_client_version = parse_version_number(threedi_api_client.__version__)

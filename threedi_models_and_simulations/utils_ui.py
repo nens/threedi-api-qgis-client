@@ -1,21 +1,22 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os
-from qgis.PyQt.QtGui import QIcon, QColor
-from qgis.PyQt.QtCore import QDate, QTime, QSettings
-from qgis.gui import QgsProjectionSelectionWidget, QgsFileWidget
+
+from qgis.gui import QgsFileWidget, QgsProjectionSelectionWidget
+from qgis.PyQt.QtCore import QDate, QSettings, QTime
+from qgis.PyQt.QtGui import QColor, QIcon
 from qgis.PyQt.QtWidgets import (
-    QLineEdit,
-    QDateEdit,
-    QTimeEdit,
     QCheckBox,
-    QDoubleSpinBox,
-    QSpinBox,
     QComboBox,
-    QWidget,
-    QRadioButton,
+    QDateEdit,
+    QDoubleSpinBox,
     QFileDialog,
     QGroupBox,
+    QLineEdit,
+    QRadioButton,
+    QSpinBox,
+    QTimeEdit,
+    QWidget,
 )
 
 

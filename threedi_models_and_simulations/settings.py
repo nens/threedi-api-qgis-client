@@ -2,12 +2,14 @@
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os
 import webbrowser
-from uuid import uuid4
 from tempfile import gettempdir
+from uuid import uuid4
+
 from qgis.core import QgsApplication, QgsAuthMethodConfig
-from qgis.PyQt.QtWidgets import QDialog, QFileDialog, QInputDialog
-from qgis.PyQt.QtCore import QSettings, pyqtSignal
 from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QSettings, pyqtSignal
+from qgis.PyQt.QtWidgets import QDialog, QFileDialog, QInputDialog
+
 from .communication import UICommunication
 
 

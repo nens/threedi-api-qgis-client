@@ -2,22 +2,24 @@
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os
 import shutil
+
 from dateutil.relativedelta import relativedelta
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QThreadPool, QSettings
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from qgis.PyQt.QtCore import QSettings, Qt, QThreadPool
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QFileDialog
 from threedi_api_client.openapi import ApiException
-from .custom_items import DownloadProgressDelegate
+
 from ..api_calls.threedi_calls import ThreediCalls
-from ..workers import DownloadProgressWorker
 from ..utils import (
+    LocalRevision,
+    LocalSchematisation,
     bypass_max_path_limit,
     extract_error_message,
     list_local_schematisations,
-    LocalSchematisation,
-    LocalRevision,
 )
+from ..workers import DownloadProgressWorker
+from .custom_items import DownloadProgressDelegate
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_results.ui"))

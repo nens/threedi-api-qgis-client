@@ -1,18 +1,21 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os
+
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QSettings, QThreadPool
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
+from qgis.PyQt.QtCore import QSettings, Qt, QThreadPool
+from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QMessageBox
 from threedi_api_client.openapi import ApiException, Progress
+
 from threedi_models_and_simulations.widgets.simulation_init import SimulationInit
 from threedi_models_and_simulations.workers import SimulationRunner
-from .simulation_wizard import SimulationWizard
-from .model_selection import ModelSelectionDialog
-from .custom_items import SimulationProgressDelegate, PROGRESS_ROLE
+
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import extract_error_message
+from .custom_items import PROGRESS_ROLE, SimulationProgressDelegate
+from .model_selection import ModelSelectionDialog
+from .simulation_wizard import SimulationWizard
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_overview.ui"))

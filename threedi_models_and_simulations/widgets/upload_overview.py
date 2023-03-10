@@ -1,16 +1,18 @@
 import os
+from collections import OrderedDict, defaultdict
 from enum import Enum
-from collections import defaultdict, OrderedDict
+
 from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QItemSelectionModel, Qt, QThreadPool
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QMessageBox
-from qgis.PyQt.QtCore import Qt, QThreadPool, QItemSelectionModel
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from .upload_wizard import UploadWizard
-from .model_deletion import ModelDeletionDialog
-from ..workers import UploadProgressWorker
+
 from ..api_calls.threedi_calls import ThreediCalls
 from ..communication import ListViewLogger
 from ..utils_qgis import is_toolbox_spatialite_loaded
+from ..workers import UploadProgressWorker
+from .model_deletion import ModelDeletionDialog
+from .upload_wizard import UploadWizard
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_log, basecls_log = uic.loadUiType(os.path.join(base_dir, "ui", "upload_overview.ui"))

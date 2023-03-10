@@ -1,11 +1,13 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import logging
+
 from qgis.PyQt.QtCore import QSettings
-from .log_in import api_client_required
+
 from ..widgets.new_schematisation_wizard import NewSchematisationWizard
-from ..widgets.schematisation_load_local import SchematisationLoad
 from ..widgets.schematisation_download import SchematisationDownload
+from ..widgets.schematisation_load_local import SchematisationLoad
+from .log_in import api_client_required
 
 logger = logging.getLogger(__name__)
 

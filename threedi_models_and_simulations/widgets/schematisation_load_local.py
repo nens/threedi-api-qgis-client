@@ -2,10 +2,12 @@
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import logging
 import os
+
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QItemSelectionModel, QItemSelection
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from ..utils import list_local_schematisations, replace_revision_data, WIPRevision
+from qgis.PyQt.QtCore import QItemSelection, QItemSelectionModel, Qt
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
+
+from ..utils import WIPRevision, list_local_schematisations, replace_revision_data
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "schematisation_load.ui"))

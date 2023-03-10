@@ -1,18 +1,20 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
-from qgis.PyQt.QtWidgets import QApplication, QAction
+import os.path
+
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator
 from qgis.PyQt.QtGui import QIcon
-from .settings import SettingsDialog
+from qgis.PyQt.QtWidgets import QAction, QApplication
+
 from .communication import UICommunication
 from .deps.custom_imports import (
-    patch_wheel_imports,
-    api_client_version_matches,
-    reinstall_packages_from_wheels,
     API_CLIENT_WHEEL,
     MODEL_CHECKER_WHEEL,
+    api_client_version_matches,
+    patch_wheel_imports,
+    reinstall_packages_from_wheels,
 )
-import os.path
+from .settings import SettingsDialog
 
 
 class ThreediModelsAndSimulations:

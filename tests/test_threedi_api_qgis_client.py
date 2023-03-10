@@ -1,37 +1,37 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 from threedi_api_client.openapi import (
-    ApiException,
-    Repository,
-    Simulation,
-    Revision,
     Action,
-    Progress,
+    ApiException,
     ConstantRain,
-    TimeseriesRain,
-    ThreediModel,
     CurrentStatus,
+    Progress,
+    Repository,
+    Revision,
+    Simulation,
+    ThreediModel,
+    TimeseriesRain,
 )
 from threedi_api_client.openapi.api.v3_api import V3Api
-from threedi_models_and_simulations.api_calls.threedi_calls import (
-    get_api_client,
-    ThreediCalls,
-)
+
+from threedi_models_and_simulations.api_calls.threedi_calls import ThreediCalls, get_api_client
+
 from .conftest import (
-    TEST_API_PARAMETERS,
+    ACTION_DATA,
+    BAD_SIM_DATA,
+    CONSTANT_RAIN_DATA,
+    CURRENT_STATUSES_LIST,
+    MODEL_DATA_LIST,
+    PROGRESS_DATA,
     REPO_DATA_LIST,
+    REVISION_DATA_LIST,
     SIM_DATA_LIST,
     SINGLE_SIM_DATA,
-    BAD_SIM_DATA,
-    ACTION_DATA,
-    PROGRESS_DATA,
-    CONSTANT_RAIN_DATA,
+    TEST_API_PARAMETERS,
     TIME_SERIES_RAIN_DATA,
-    REVISION_DATA_LIST,
-    MODEL_DATA_LIST,
-    CURRENT_STATUSES_LIST,
 )
 
 

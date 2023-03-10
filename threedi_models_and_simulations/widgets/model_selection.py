@@ -4,14 +4,16 @@ import logging
 import os
 from math import ceil
 from operator import attrgetter
+
+from qgis.core import QgsMapLayer, QgsProject, QgsVectorLayer
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QDateTime, QItemSelectionModel
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from qgis.core import QgsVectorLayer, QgsProject, QgsMapLayer
+from qgis.PyQt.QtCore import QDateTime, QItemSelectionModel, Qt
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from threedi_api_client.openapi import ApiException
-from ..utils import extract_error_message, get_download_file, file_cached, CACHE_PATH
-from ..utils_ui import set_named_style
+
 from ..api_calls.threedi_calls import ThreediCalls
+from ..utils import CACHE_PATH, extract_error_message, file_cached, get_download_file
+from ..utils_ui import set_named_style
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "model_selection.ui"))

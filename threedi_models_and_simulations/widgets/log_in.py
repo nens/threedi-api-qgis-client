@@ -4,12 +4,13 @@ import logging
 import os
 from functools import wraps
 from time import sleep
+
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QTimer
 from threedi_api_client.openapi import ApiException
-from ..api_calls.threedi_calls import get_api_client_with_personal_api_token, ThreediCalls
-from ..utils import extract_error_message
 
+from ..api_calls.threedi_calls import ThreediCalls, get_api_client_with_personal_api_token
+from ..utils import extract_error_message
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "log_in.ui"))

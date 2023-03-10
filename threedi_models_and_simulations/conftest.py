@@ -1,6 +1,5 @@
 from typing_extensions import ParamSpecKwargs
 
-
 try:
     # Code that needs to be executed before running the pytest tests within docker.
     from threedi_models_and_simulations.deps import custom_imports

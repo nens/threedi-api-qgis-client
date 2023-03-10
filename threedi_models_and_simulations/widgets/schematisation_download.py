@@ -3,19 +3,21 @@
 import logging
 import os
 from math import ceil
-from time import sleep
 from operator import attrgetter
+from time import sleep
+
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
+from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
 from threedi_api_client.openapi import ApiException
+
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import (
-    extract_error_message,
-    list_local_schematisations,
-    get_download_file,
-    unzip_archive,
     LocalSchematisation,
+    extract_error_message,
+    get_download_file,
+    list_local_schematisations,
+    unzip_archive,
 )
 
 base_dir = os.path.dirname(os.path.dirname(__file__))

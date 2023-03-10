@@ -3,10 +3,12 @@
 import logging
 import os
 from operator import attrgetter
+
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt, QDateTime
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from qgis.PyQt.QtCore import QDateTime, Qt
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from threedi_api_client.openapi import ApiException
+
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import extract_error_message
 

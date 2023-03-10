@@ -2,16 +2,19 @@
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os
 import webbrowser
+
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QThread, QTimer, pyqtSignal
+
 from threedi_models_and_simulations.widgets.upload_overview import UploadOverview
-from .log_in import LogInDialog, api_client_required
+
+from ..communication import UICommunication
+from ..utils_ui import set_icon
+from ..workers import WSProgressesSentinel
 from .build_options import BuildOptions
+from .log_in import LogInDialog, api_client_required
 from .simulation_overview import SimulationOverview
 from .simulation_results import SimulationResults
-from ..utils_ui import set_icon
-from ..communication import UICommunication
-from ..workers import WSProgressesSentinel
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, "ui", "threedi_dockwidget.ui"))

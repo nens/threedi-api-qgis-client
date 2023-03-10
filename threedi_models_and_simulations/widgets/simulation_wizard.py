@@ -1,55 +1,56 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
-import os
 import csv
-import pyqtgraph as pg
-from dateutil.relativedelta import relativedelta
-from datetime import datetime
+import os
+from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from collections import defaultdict, OrderedDict
+from datetime import datetime
 from functools import partial
 from operator import attrgetter
+
+import pyqtgraph as pg
+from dateutil.relativedelta import relativedelta
+from qgis.core import NULL, QgsMapLayerProxyModel
 from qgis.PyQt import uic
-from qgis.PyQt.QtGui import QColor, QStandardItemModel, QStandardItem, QFont
-from qgis.PyQt.QtCore import QSettings, Qt, QSize
+from qgis.PyQt.QtCore import QSettings, QSize, Qt
+from qgis.PyQt.QtGui import QColor, QFont, QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import (
-    QWizardPage,
-    QWizard,
-    QGridLayout,
-    QSizePolicy,
-    QFileDialog,
     QComboBox,
     QDoubleSpinBox,
-    QLineEdit,
+    QFileDialog,
+    QGridLayout,
     QLabel,
+    QLineEdit,
+    QSizePolicy,
     QSpacerItem,
+    QWizard,
+    QWizardPage,
 )
-from qgis.core import QgsMapLayerProxyModel, NULL
 from threedi_api_client.openapi import ApiException
-from .custom_items import FilteredComboBox
+
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
 from ..utils import (
-    apply_24h_timeseries,
-    extract_error_message,
-    mmh_to_ms,
-    ms_to_mmh,
-    mmh_to_mmtimestep,
-    mmtimestep_to_mmh,
-    get_download_file,
-    read_json_data,
-    intervals_are_even,
     TEMPDIR,
     EventTypes,
+    apply_24h_timeseries,
+    extract_error_message,
+    get_download_file,
+    intervals_are_even,
+    mmh_to_mmtimestep,
+    mmh_to_ms,
+    mmtimestep_to_mmh,
+    ms_to_mmh,
+    read_json_data,
 )
 from ..utils_ui import (
     get_filepath,
     qgis_layers_cbo_get_layer_uri,
-    set_widget_background_color,
     scan_widgets_parameters,
+    set_widget_background_color,
     set_widgets_parameters,
 )
-
+from .custom_items import FilteredComboBox
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_name.ui"))

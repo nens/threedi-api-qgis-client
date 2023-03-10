@@ -1,14 +1,14 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
-from qgis.PyQt.QtCore import Qt, QSortFilterProxyModel
-from qgis.PyQt.QtGui import QPalette, QColor, QFont
+from qgis.PyQt.QtCore import QSortFilterProxyModel, Qt
+from qgis.PyQt.QtGui import QColor, QFont, QPalette
 from qgis.PyQt.QtWidgets import (
     QApplication,
-    QStyledItemDelegate,
-    QStyleOptionProgressBar,
-    QStyle,
     QComboBox,
     QCompleter,
+    QStyle,
+    QStyledItemDelegate,
+    QStyleOptionProgressBar,
 )
 
 PROGRESS_ROLE = Qt.UserRole + 1000

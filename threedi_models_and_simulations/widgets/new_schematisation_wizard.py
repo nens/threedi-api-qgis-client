@@ -5,22 +5,18 @@ import shutil
 import time
 from collections import defaultdict
 from operator import itemgetter
-from qgis.PyQt import uic
-from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtCore import QSettings, QSize, QDate, QTime, Qt
-from qgis.PyQt.QtWidgets import (
-    QWizardPage,
-    QWizard,
-    QGridLayout,
-    QSizePolicy,
-)
-from qgis.core import QgsFeature, QgsRasterLayer
-from threedi_api_client.openapi import ApiException
-from ..utils import LocalSchematisation, extract_error_message, SchematisationRasterReferences, EMPTY_DB_PATH
-from ..utils_ui import get_filepath, scan_widgets_parameters
-from ..utils_qgis import sqlite_layer, execute_sqlite_queries
-from ..api_calls.threedi_calls import ThreediCalls
 
+from qgis.core import QgsFeature, QgsRasterLayer
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QDate, QSettings, QSize, Qt, QTime
+from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import QGridLayout, QSizePolicy, QWizard, QWizardPage
+from threedi_api_client.openapi import ApiException
+
+from ..api_calls.threedi_calls import ThreediCalls
+from ..utils import EMPTY_DB_PATH, LocalSchematisation, SchematisationRasterReferences, extract_error_message
+from ..utils_qgis import execute_sqlite_queries, sqlite_layer
+from ..utils_ui import get_filepath, scan_widgets_parameters
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_schema_name_page, basecls_schema_name_page = uic.loadUiType(

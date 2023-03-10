@@ -3,34 +3,26 @@
 import csv
 import os
 import shutil
-from operator import attrgetter
 from collections import OrderedDict, defaultdict
 from functools import partial
+from operator import attrgetter
+
 from qgis.PyQt import uic
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.PyQt.QtCore import QSettings, QSize
-from qgis.PyQt.QtWidgets import (
-    QWizardPage,
-    QWizard,
-    QWidget,
-    QGridLayout,
-    QSizePolicy,
-    QLabel,
-    QPushButton,
-    QLineEdit,
-)
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import QGridLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QWidget, QWizard, QWizardPage
 from threedi_api_client.openapi import ApiException, SchematisationRevision
+
+from ..communication import LogLevels, TreeViewLogger
 from ..utils import (
-    is_file_checksum_equal,
     SchematisationRasterReferences,
-    UploadFileType,
     UploadFileStatus,
+    UploadFileType,
+    is_file_checksum_equal,
     zip_into_archive,
 )
-from ..utils_ui import get_filepath
 from ..utils_qgis import sqlite_layer
-from ..communication import TreeViewLogger, LogLevels
-
+from ..utils_ui import get_filepath
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_start_page, basecls_start_page = uic.loadUiType(os.path.join(base_dir, "ui", "upload_wizard", "page_start.ui"))
@@ -99,8 +91,8 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
     def test_external_imports(self):
         """Check availability of an external checkers."""
         try:
-            import threedi_schema
             import threedi_modelchecker
+            import threedi_schema
             import ThreeDiToolbox
 
             self.lbl_on_import_error.hide()
@@ -122,9 +114,8 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         """Run schematisation checker."""
         try:
             from sqlalchemy.exc import OperationalError
-            from threedi_schema import ThreediDatabase
-            from threedi_schema import errors
             from threedi_modelchecker import ThreediModelChecker
+            from threedi_schema import ThreediDatabase, errors
         except ImportError:
             raise
         threedi_db = ThreediDatabase(self.schematisation_sqlite)

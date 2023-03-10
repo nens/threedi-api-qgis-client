@@ -5,6 +5,7 @@ History
 ----------------
 
 - Fixed issue #409
+- Sorted imports
 
 
 3.4.2 (2023-02-08)

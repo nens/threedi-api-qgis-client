@@ -1,36 +1,38 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
-import logging
-import os
 import base64
 import json
+import logging
+import os
 import time
-import requests
 from functools import partial
+
+import requests
 from PyQt5 import QtWebSockets
 from PyQt5.QtNetwork import QNetworkRequest
-from qgis.PyQt.QtCore import QObject, QRunnable, QUrl, QByteArray, pyqtSignal, pyqtSlot
-from threedi_api_client.openapi import ApiException, Progress
+from qgis.PyQt.QtCore import QByteArray, QObject, QRunnable, QUrl, pyqtSignal, pyqtSlot
 from threedi_api_client.files import upload_file
+from threedi_api_client.openapi import ApiException, Progress
+
 from .api_calls.threedi_calls import ThreediCalls
 from .data_models import simulation_data_models as dm
 from .utils import (
-    extract_error_message,
-    zip_into_archive,
-    unzip_archive,
-    bypass_max_path_limit,
-    UploadFileStatus,
-    CHUNK_SIZE,
-    write_json_data,
-    get_download_file,
-    upload_local_file,
-    split_to_even_chunks,
-    TEMPDIR,
     BOUNDARY_CONDITIONS_TEMPLATE,
-    LATERALS_FILE_TEMPLATE,
+    CHUNK_SIZE,
     DWF_FILE_TEMPLATE,
-    EventTypes,
+    LATERALS_FILE_TEMPLATE,
     RADAR_ID,
+    TEMPDIR,
+    EventTypes,
+    UploadFileStatus,
+    bypass_max_path_limit,
+    extract_error_message,
+    get_download_file,
+    split_to_even_chunks,
+    unzip_archive,
+    upload_local_file,
+    write_json_data,
+    zip_into_archive,
 )
 
 logger = logging.getLogger(__name__)

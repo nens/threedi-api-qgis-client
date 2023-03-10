@@ -2,27 +2,28 @@
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 from dataclasses import dataclass
 from datetime import datetime
+
 from threedi_api_client.openapi import (
-    Simulation,
-    InitialWaterlevel,
+    FileBoundaryCondition,
+    FileRasterLeakage,
+    FileRasterSourcesSinks,
     FileStructureControl,
+    FileTimeseriesLeakage,
+    FileTimeseriesRain,
+    FileTimeseriesSourcesSinks,
+    InitialWaterlevel,
+    LizardRasterSourcesSinks,
+    LizardTimeseriesRain,
+    LizardTimeseriesSourcesSinks,
+    LocalRain,
     MemoryStructureControl,
+    ObstacleEdit,
+    RasterEdit,
+    Simulation,
     TableStructureControl,
     TimedStructureControl,
-    FileBoundaryCondition,
-    RasterEdit,
     TimeseriesLeakageOverview,
-    FileTimeseriesLeakage,
-    FileRasterLeakage,
-    LizardRasterSourcesSinks,
-    LizardTimeseriesSourcesSinks,
-    FileRasterSourcesSinks,
-    FileTimeseriesSourcesSinks,
     TimeseriesSourcesSinks,
-    LizardTimeseriesRain,
-    FileTimeseriesRain,
-    LocalRain,
-    ObstacleEdit,
 )
 
 

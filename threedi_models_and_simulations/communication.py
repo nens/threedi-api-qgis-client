@@ -1,10 +1,11 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 from enum import Enum
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QMessageBox, QInputDialog, QPushButton, QProgressBar
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
+
 from qgis.core import Qgis
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QBrush, QColor, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import QInputDialog, QMessageBox, QProgressBar, QPushButton
 
 
 class UICommunication(object):

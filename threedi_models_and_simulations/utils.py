@@ -1,9 +1,8 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
-import os
-import json
 import hashlib
-import requests
+import json
+import os
 import shutil
 import tempfile
 from collections import OrderedDict, defaultdict
@@ -11,8 +10,9 @@ from datetime import datetime
 from enum import Enum
 from itertools import chain
 from uuid import uuid4
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZIP_DEFLATED, ZipFile
 
+import requests
 
 TEMPDIR = tempfile.gettempdir()
 PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))

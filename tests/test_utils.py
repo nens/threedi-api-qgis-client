@@ -1,19 +1,22 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
-import pytest
 from datetime import datetime
+
+import pytest
+
 from threedi_models_and_simulations.utils import (
-    mmh_to_ms,
-    ms_to_mmh,
-    mmtimestep_to_mmh,
-    mmh_to_mmtimestep,
-    extract_error_message,
     apply_24h_timeseries,
+    extract_error_message,
+    mmh_to_mmtimestep,
+    mmh_to_ms,
+    mmtimestep_to_mmh,
+    ms_to_mmh,
 )
+
 from .conftest import (
+    DETAILED_EXCEPTION_BODY,
     RELATED_OBJECTS_EXCEPTION_BODY,
     SIM_EXCEPTION_BODY,
-    DETAILED_EXCEPTION_BODY,
     TIMESERIES24,
     SimpleApiException,
 )
