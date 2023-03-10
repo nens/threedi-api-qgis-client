@@ -1,8 +1,8 @@
 History
 =======
 
-3.5 (unreleased)
-----------------
+3.4.3 (2023-03-10)
+------------------
 
 - Fixed issue #409
 - Sorted imports
