@@ -4,7 +4,7 @@ History
 3.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fixed issue #409
 
 
 3.4.2 (2023-02-08)
