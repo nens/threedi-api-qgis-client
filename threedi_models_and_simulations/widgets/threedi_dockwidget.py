@@ -18,7 +18,6 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(base_dir, "ui", "threedi_dockwidget.
 
 
 class ThreediDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
-
     closingPlugin = pyqtSignal()
 
     def __init__(self, iface, plugin_settings, parent=None):
