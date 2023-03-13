@@ -279,7 +279,7 @@ class SchematisationDownload(uicls, basecls):
             number_of_steps = len(rasters_downloads) + 1
 
             gridadmin_file, gridadmin_download = (None, None)
-            ignore_error_message = "Gridadmin file not found"
+            ignore_gridadmin_error_message = "Gridadmin file not found"
             for revision_model in sorted(revision_models, key=attrgetter("id"), reverse=True):
                 try:
                     gridadmin_file, gridadmin_download = tc.fetch_3di_model_gridadmin_download(revision_model.id)
@@ -288,7 +288,20 @@ class SchematisationDownload(uicls, basecls):
                         break
                 except ApiException as e:
                     error_msg = extract_error_message(e)
-                    if ignore_error_message not in error_msg:
+                    if ignore_gridadmin_error_message not in error_msg:
+                        raise
+
+            gpkg_file, gpkg_download = (None, None)
+            ignore_gpkg_error_message = "Geopackage file not found"
+            for revision_model in sorted(revision_models, key=attrgetter("id"), reverse=True):
+                try:
+                    gpkg_file, gpkg_download = tc.fetch_3di_model_geopackage_download(revision_model.id)
+                    if gpkg_download is not None:
+                        number_of_steps += 1
+                        break
+                except ApiException as e:
+                    error_msg = extract_error_message(e)
+                    if ignore_gpkg_error_message not in error_msg:
                         raise
 
             if revision_pk in local_schematisation.revisions:
@@ -306,6 +319,11 @@ class SchematisationDownload(uicls, basecls):
             if gridadmin_download is not None:
                 grid_filepath = os.path.join(os.path.dirname(schematisation_db_dir), "grid", gridadmin_file.filename)
                 get_download_file(gridadmin_download, grid_filepath)
+                current_progress += 1
+                self.pbar_download.setValue(current_progress)
+            if gpkg_download is not None:
+                gpkg_filepath = os.path.join(os.path.dirname(schematisation_db_dir), "grid", gpkg_file.filename)
+                get_download_file(gpkg_download, gpkg_filepath)
                 current_progress += 1
                 self.pbar_download.setValue(current_progress)
             for raster_filename, raster_download in rasters_downloads:

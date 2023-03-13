@@ -300,6 +300,13 @@ class ThreediCalls:
         download = self.threedi_api.threedimodels_gridadmin_download(threedimodel_id)
         return result_file, download
 
+    def fetch_3di_model_geopackage_download(self, threedimodel_id: int) -> Tuple[ResultFile, Download]:
+        """Fetch simulation model gridadmin file in GeoPackage format."""
+        logger.debug("Fetching gridadmin GeoPackage for model %s", threedimodel_id)
+        result_file = ResultFile(filename="gridadmin.gpkg", created=datetime.utcnow())
+        download = self.threedi_api.threedimodels_geopackage_download(threedimodel_id)
+        return result_file, download
+
     def fetch_3di_model_potential_breaches(self, threedimodel_id: str) -> List[PotentialBreach]:
         """Fetch breaches list."""
         breaches = self.paginated_fetch(self.threedi_api.threedimodels_potentialbreaches_list, threedimodel_id)
