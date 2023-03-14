@@ -12,13 +12,13 @@ History
 
 - Fixed issue #447
 - Fixed issue #454
+- Added downloading gridadmin file in the GeoPackage format #438
 
 3.4.3 (2023-03-10)
 ------------------
 
 - Fixed issue #409
 - Sorted imports
-- Added downloading gridadmin file in the GeoPackage format #438
 
 
 3.4.2 (2023-02-08)
