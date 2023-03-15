@@ -2726,6 +2726,9 @@ class SimulationWizard(QWizard):
             new_simulation.wind = wind
             new_simulation.settings = settings
             new_simulation.lizard_post_processing = lizard_post_processing
+            if self.summary_page.main_widget.cb_save_template.isChecked():
+                template_name = self.summary_page.main_widget.template_name.text()
+                new_simulation.template_name = template_name
             self.new_simulations.append(new_simulation)
 
     def cancel_wizard(self):
