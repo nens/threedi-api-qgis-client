@@ -98,12 +98,14 @@ class SimulationResults(uicls, basecls):
     def on_download_finished_success(self, msg, results_dir):
         """Reporting finish successfully status and closing download thread."""
         self.plugin_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
-        grid_file = os.path.join(results_dir, "gridadmin.h5")
-        if os.path.exists(grid_file):
-            grid_dir = os.path.join(os.path.dirname(os.path.dirname(results_dir)), "grid")
-            if os.path.exists(grid_dir):
-                grid_file_copy = os.path.join(grid_dir, "gridadmin.h5")
-                shutil.copyfile(grid_file, bypass_max_path_limit(grid_file_copy, is_file=True))
+        grid_file_names = ["gridadmin.h5", "gridadmin.gpkg"]
+        grid_dir = os.path.join(os.path.dirname(os.path.dirname(results_dir)), "grid")
+        if os.path.exists(grid_dir):
+            for grid_file_name in grid_file_names:
+                grid_file = os.path.join(results_dir, grid_file_name)
+                if os.path.exists(grid_file):
+                    grid_file_copy = os.path.join(grid_dir, grid_file_name)
+                    shutil.copyfile(grid_file, bypass_max_path_limit(grid_file_copy, is_file=True))
         self.toggle_download_results()
 
     def on_download_finished_failed(self, msg):
