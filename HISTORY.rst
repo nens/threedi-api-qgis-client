@@ -5,6 +5,7 @@ History
 ------------------
 
 - Fixed issue #447
+- Fixed issue #454
 
 
 3.4.3 (2023-03-10)
