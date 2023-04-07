@@ -8,8 +8,8 @@ from subprocess import CalledProcessError, check_call
 from ..utils import parse_version_number
 
 REQUIRED_API_CLIENT_VERSION = "4.1.1"
-REQUIRED_3DI_MODEL_CHECKER_VERSION = "1.0.0"
-REQUIRED_3DI_SCHEMA_VERSION = "0.214.3"
+REQUIRED_3DI_MODEL_CHECKER_VERSION = "2.1.0"
+REQUIRED_3DI_SCHEMA_VERSION = "0.216.2"
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 API_CLIENT_WHEEL = os.path.join(MAIN_DIR, f"threedi_api_client-{REQUIRED_API_CLIENT_VERSION}-py2.py3-none-any.whl")
 MODEL_CHECKER_WHEEL = os.path.join(

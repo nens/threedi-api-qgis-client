@@ -91,9 +91,9 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
     def test_external_imports(self):
         """Check availability of an external checkers."""
         try:
-            import threedi_modelchecker
-            import threedi_schema
-            import ThreeDiToolbox
+            from sqlalchemy.exc import OperationalError
+            from threedi_modelchecker import ThreediModelChecker
+            from threedi_schema import ThreediDatabase, errors
 
             self.lbl_on_import_error.hide()
             self.pb_check_model.setEnabled(True)
