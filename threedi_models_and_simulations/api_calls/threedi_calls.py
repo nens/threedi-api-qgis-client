@@ -54,6 +54,7 @@ from threedi_api_client.openapi import (
     SchematisationRevision,
     Simulation,
     SimulationSettingsOverview,
+    SimulationStatus,
     SqliteFileUpload,
     TableStructureControl,
     Template,
@@ -208,6 +209,14 @@ class ThreediCalls:
         current_status = self.threedi_api.simulations_status_list(str(simulation_pk), limit=self.FETCH_LIMIT)
         return current_status
 
+    def fetch_simulation_statuses(self, name: str = None) -> List[SimulationStatus]:
+        """Fetch simulations statuses."""
+        params = {}
+        if name:
+            params["name"] = name
+        statuses = self.paginated_fetch(self.threedi_api.statuses_list, **params)
+        return statuses
+
     def fetch_simulation_progress(self, simulation_pk: int) -> Progress:
         """Get a given simulation progress. Available only if simulation was already started."""
         logger.debug("Fetching simulation progress for sim id %s...", str(simulation_pk))
@@ -232,7 +241,7 @@ class ThreediCalls:
             status_time = current_status.time
             if status_time is None:
                 status_time = 0
-            if status_name == "initialized":
+            if status_name == "initialized" and status_time:
                 sim_progress = self.threedi_api.simulations_progress_list(spk_str, limit=self.FETCH_LIMIT)
             elif status_name == "postprocessing" or status_name == "finished":
                 sim_progress = Progress(percentage=100, time=status_time)
