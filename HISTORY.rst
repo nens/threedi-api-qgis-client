@@ -1,7 +1,13 @@
 History
 =======
 
-3.4.4 (unreleased)
+3.4.5 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+3.4.4 (2023-04-11)
 ------------------
 
 - Fixed issue #447
