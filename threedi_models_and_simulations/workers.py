@@ -64,7 +64,7 @@ class WSProgressesSentinel(QObject):
         """Checking running simulations progresses."""
         try:
             self.tc = ThreediCalls(self.threedi_api)
-            statuses = self.tc.fetch_simulation_statuses(name="initialized")
+            statuses = self.tc.fetch_simulation_statuses(name__in="initialized,finished,postprocessing")
             if self.model_id:
                 logger.debug(f"Fetching simulations list and filtering it on model id {self.model_id}")
                 logger.debug(f"Starting out with {len(statuses)} simulations")

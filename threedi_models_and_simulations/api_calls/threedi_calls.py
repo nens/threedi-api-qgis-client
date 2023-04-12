@@ -126,6 +126,11 @@ class ThreediCalls:
     def __init__(self, threedi_api: ThreediApi) -> None:
         self.threedi_api = threedi_api
 
+    @property
+    def expiration_date(self):
+        created__date__gt = self.EXPIRATION_TIME.strftime("%Y-%m-%d")
+        return created__date__gt
+
     def paginated_fetch(self, api_method: Callable, *args, **kwargs) -> List[Any]:
         """Method for iterative fetching of the data via given API endpoint."""
         limit = self.FETCH_LIMIT
@@ -152,8 +157,9 @@ class ThreediCalls:
 
     def fetch_simulations(self) -> List[Simulation]:
         """Fetch all simulations available for current user."""
-        created__date__gt = self.EXPIRATION_TIME.strftime("%Y-%m-%d")
-        simulations_list = self.paginated_fetch(self.threedi_api.simulations_list, created__date__gt=created__date__gt)
+        simulations_list = self.paginated_fetch(
+            self.threedi_api.simulations_list, created__date__gt=self.expiration_date
+        )
         return simulations_list
 
     def fetch_simulation(self, simulation_pk: int) -> Simulation:
@@ -209,11 +215,9 @@ class ThreediCalls:
         current_status = self.threedi_api.simulations_status_list(str(simulation_pk), limit=self.FETCH_LIMIT)
         return current_status
 
-    def fetch_simulation_statuses(self, name: str = None) -> List[SimulationStatus]:
+    def fetch_simulation_statuses(self, **params) -> List[SimulationStatus]:
         """Fetch simulations statuses."""
-        params = {}
-        if name:
-            params["name"] = name
+        params["created__date__gt"] = self.expiration_date
         statuses = self.paginated_fetch(self.threedi_api.statuses_list, **params)
         return statuses
 
