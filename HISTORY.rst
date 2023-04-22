@@ -5,6 +5,7 @@ History
 ------------------
 
 - Compatibility with schema 216 (#451).
+- Improved simulation progress tracking to avoid request throttling (#408).
 
 3.4.4 (2023-04-11)
 ------------------
