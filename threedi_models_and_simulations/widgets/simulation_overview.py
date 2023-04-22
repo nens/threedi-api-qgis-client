@@ -6,7 +6,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QSettings, Qt, QThreadPool
 from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QMessageBox
-from threedi_api_client.openapi import ApiException, Progress
+from threedi_api_client.openapi import ApiException
 
 from threedi_models_and_simulations.widgets.simulation_init import SimulationInit
 from threedi_models_and_simulations.workers import SimulationRunner
@@ -39,7 +39,7 @@ class SimulationOverview(uicls, basecls):
         self.simulation_runner_pool.setMaxThreadCount(self.MAX_THREAD_COUNT)
         self.simulation_init_wizard = None
         self.simulation_wizard = None
-        self.simulations_keys = {}
+        self.running_simulations = {}
         self.last_progresses = {}
         self.simulations_without_progress = set()
         self.tv_model = None
@@ -56,45 +56,50 @@ class SimulationOverview(uicls, basecls):
         self.tv_model.setHorizontalHeaderLabels(["Simulation name", "User", "Progress"])
         self.tv_sim_tree.setModel(self.tv_model)
 
-    def add_simulation_to_model(self, simulation, status, progress):
+    def add_simulation_to_model(self, sim_id, sim_data):
         """Method for adding simulation to the model."""
-        sim_id = simulation.id
-        sim_name_item = QStandardItem(f"{simulation.name} ({sim_id})")
+        sim_name = sim_data["name"]
+        sim_name_item = QStandardItem(f"{sim_name} ({sim_id})")
         sim_name_item.setData(sim_id, Qt.UserRole)
-        user_item = QStandardItem(simulation.user)
+        user_name = sim_data["user_name"]
+        user_item = QStandardItem(user_name)
+        status_name = sim_data["status"]
+        progress_percentage = sim_data["progress"]
         progress_item = QStandardItem()
-        progress_item.setData((status, progress), PROGRESS_ROLE)
+        progress_item.setData((status_name, progress_percentage), PROGRESS_ROLE)
         self.tv_model.appendRow([sim_name_item, user_item, progress_item])
-        self.simulations_keys[sim_id] = simulation
+        self.running_simulations[sim_id] = sim_data
         for i in range(self.PROGRESS_COLUMN_IDX):
             self.tv_sim_tree.resizeColumnToContents(i)
 
-    def update_progress(self, progresses):
+    def update_progress(self, running_simulations_data):
         """Updating progress bars in the running simulations list."""
-        for sim_id, (sim, status, progress) in progresses.items():
-            status_name = status.name
+        for sim_id, sim_data in running_simulations_data.items():
+            status_name = sim_data.get("status")
             if status_name not in ["queued", "starting", "initialized", "postprocessing"]:
                 continue
-            if sim_id not in self.simulations_keys:
-                self.add_simulation_to_model(sim, status, progress)
+            if sim_id not in self.running_simulations:
+                self.add_simulation_to_model(sim_id, sim_data)
         row_count = self.tv_model.rowCount()
         for row_idx in range(row_count):
             name_item = self.tv_model.item(row_idx, 0)
             sim_id = name_item.data(Qt.UserRole)
-            if sim_id in self.simulations_without_progress or sim_id not in progresses:
+            if sim_id in self.simulations_without_progress or sim_id not in running_simulations_data:
                 continue
             progress_item = self.tv_model.item(row_idx, self.PROGRESS_COLUMN_IDX)
-            sim, new_status, new_progress = progresses[sim_id]
-            status_name = new_status.name
-            if status_name == "stopped" or status_name == "crashed":
+            sim_data = running_simulations_data[sim_id]
+            new_status_name = sim_data["status"]
+            new_progress = sim_data["progress"]
+            if new_status_name == "stopped" or new_status_name == "crashed":
                 old_status, old_progress = progress_item.data(PROGRESS_ROLE)
-                progress_item.setData((new_status, old_progress), PROGRESS_ROLE)
+                progress_item.setData((new_status_name, old_progress), PROGRESS_ROLE)
                 self.simulations_without_progress.add(sim_id)
             else:
-                progress_item.setData((new_status, new_progress), PROGRESS_ROLE)
-            if status_name == "finished":
+                progress_item.setData((new_status_name, new_progress), PROGRESS_ROLE)
+            if new_status_name == "finished":
                 self.simulations_without_progress.add(sim_id)
-                msg = f"Simulation {sim.name} finished!"
+                sim_name = sim_data["name"]
+                msg = f"Simulation {sim_name} finished!"
                 self.plugin_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
 
     def new_wizard_init(self):
@@ -178,8 +183,8 @@ class SimulationOverview(uicls, basecls):
         if new_simulation_initialized:
             sim = new_simulation.simulation
             initial_status = new_simulation.initial_status
-            initial_progress = Progress(percentage=0, time=sim.duration)
-            self.add_simulation_to_model(sim, initial_status, initial_progress)
+            sim_data = {"name": sim.name, "status": initial_status, "progress": 0.0, "user_name": sim.user}
+            self.add_simulation_to_model(sim.id, sim_data)
             info_msg = f"Simulation {new_simulation.name} added to queue!"
             self.plugin_dock.communication.bar_info(info_msg)
 

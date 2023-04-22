@@ -12,11 +12,12 @@ from PyQt5 import QtWebSockets
 from PyQt5.QtNetwork import QNetworkRequest
 from qgis.PyQt.QtCore import QByteArray, QObject, QRunnable, QUrl, pyqtSignal, pyqtSlot
 from threedi_api_client.files import upload_file
-from threedi_api_client.openapi import ApiException, Progress
+from threedi_api_client.openapi import ApiException
 
 from .api_calls.threedi_calls import ThreediCalls
 from .data_models import simulation_data_models as dm
 from .utils import (
+    API_DATETIME_FORMAT,
     BOUNDARY_CONDITIONS_TEMPLATE,
     CHUNK_SIZE,
     DWF_FILE_TEMPLATE,
@@ -47,6 +48,7 @@ class WSProgressesSentinel(QObject):
     thread_finished = pyqtSignal(str)
     thread_failed = pyqtSignal(str)
     progresses_fetched = pyqtSignal(dict)
+    simulation_finished = pyqtSignal(dict)
 
     def __init__(self, threedi_api, wss_url, personal_api_key, model_id=None):
         super().__init__()
@@ -55,8 +57,7 @@ class WSProgressesSentinel(QObject):
         self.personal_api_key = personal_api_key
         self.tc = None
         self.ws_client = None
-        self.progresses = {}
-        self.simulations_list = []
+        self.running_simulations = {}
         self.model_id = model_id
 
     @pyqtSlot()
@@ -64,15 +65,23 @@ class WSProgressesSentinel(QObject):
         """Checking running simulations progresses."""
         try:
             self.tc = ThreediCalls(self.threedi_api)
-            statuses = self.tc.fetch_simulation_statuses(name__in="initialized,finished,postprocessing")
+            logger.debug("Fetching finished simulations statuses")
+            finished_simulations_statuses = self.tc.fetch_simulation_statuses(name="finished")
             if self.model_id:
-                logger.debug(f"Fetching simulations list and filtering it on model id {self.model_id}")
-                logger.debug(f"Starting out with {len(statuses)} simulations")
-                statuses = [status for status in statuses if status.threedimodel_id == self.model_id]
-            self.simulations_list = [self.tc.fetch_simulation(status.simulation_id) for status in statuses]
-            logger.debug(f"We have {len(self.simulations_list)} simulations left")
-            result = self.tc.fetch_simulations_progresses(self.simulations_list) if self.simulations_list else {}
-            self.progresses_fetched.emit(result)
+                logger.debug(f"Filtering simulation statuses on model id {self.model_id}")
+                finished_simulations_statuses = (
+                    status for status in finished_simulations_statuses if status.threedimodel_id == self.model_id
+                )
+            finished_simulations_data = {
+                status.simulation_id: {
+                    "name": status.simulation_name,
+                    "status": status.name,
+                    "progress": 100.0,
+                    "date_created": status.created.strftime(API_DATETIME_FORMAT),
+                }
+                for status in finished_simulations_statuses
+            }
+            self.simulation_finished.emit(finished_simulations_data)
         except ApiException as e:
             error_msg = extract_error_message(e)
             self.thread_failed.emit(error_msg)
@@ -114,39 +123,23 @@ class WSProgressesSentinel(QObject):
         logger.debug(f"Got simulation progress (type {data_type}) from the websocket")
         if data_type == "active-simulations" or data_type == "active-simulation":
             simulations = data.get("data")
-            # Note: commented-out 2021-05-21 by Reinout as this code can lead to
-            # throttling, see https://github.com/nens/threedi-api-qgis-client/issues/151
-            #
-            logger.info(f"Fetching fresh simulation for simulation(s): {simulations.keys()}")
-            for sim_id_str, sim_data in simulations.items():
+            for sim_id_str, sim_data_str in simulations.items():
                 sim_id = int(sim_id_str)
-                sim = json.loads(sim_data)
-                simulation = self.tc.fetch_simulation(sim_id)
-                current_status = self.tc.fetch_simulation_status(sim_id)
-                status_name = current_status.name
-                status_time = current_status.time
-                if status_time is None:
-                    status_time = 0
-                if status_name == "initialized":
-                    sim_progress = Progress(0, sim.get("progress"))
-                else:
-                    sim_progress = Progress(percentage=0, time=status_time)
-                self.progresses[sim_id] = {
-                    "simulation": simulation,
-                    "current_status": current_status,
-                    "progress": sim_progress,
-                }
+                sim_data = json.loads(sim_data_str)
+                self.running_simulations[sim_id] = sim_data
         elif data_type == "progress":
             sim_id = int(data["data"]["simulation_id"])
-            self.progresses[sim_id]["progress"] = Progress(0, data["data"]["progress"])
+            progress_percentage = data["data"]["progress"]
+            sim_data = self.running_simulations[sim_id]
+            sim_data["progress"] = progress_percentage
         elif data_type == "status":
             sim_id = int(data["data"]["simulation_id"])
-            self.progresses[sim_id]["current_status"].name = data["data"]["status"]
-
-        result = dict()
-        for sim_id, item in self.progresses.items():
-            result[sim_id] = (item.get("simulation"), item.get("current_status"), item.get("progress"))
-        self.progresses_fetched.emit(result)
+            status_name = data["data"]["status"]
+            sim_data = self.running_simulations[sim_id]
+            sim_data["status"] = status_name
+            if status_name == "finished":
+                self.simulation_finished.emit({sim_id: sim_data})
+        self.progresses_fetched.emit(self.running_simulations)
 
 
 class DownloadWorkerSignals(QObject):
@@ -514,7 +507,8 @@ class SimulationRunner(QRunnable):
             duration=self.current_simulation.duration,
         )
         self.current_simulation.simulation = simulation
-        self.current_simulation.initial_status = self.tc.fetch_simulation_status(simulation.id)
+        current_status = self.tc.fetch_simulation_status(simulation.id)
+        self.current_simulation.initial_status = current_status.name
 
     def include_init_options(self):
         """Apply initialization options to the new simulation."""

@@ -18,9 +18,8 @@ class SimulationProgressDelegate(QStyledItemDelegate):
     """Class with definition of the custom simulation progress bar item that can be inserted into the model."""
 
     def paint(self, painter, option, index):
-        status, progress = index.data(PROGRESS_ROLE)
-        status_name = status.name
-        new_percentage = progress.percentage
+        status_name, progress_percentage = index.data(PROGRESS_ROLE)
+        new_percentage = progress_percentage
         pbar = QStyleOptionProgressBar()
         pbar.rect = option.rect
         pbar.minimum = 0

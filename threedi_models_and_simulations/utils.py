@@ -28,6 +28,7 @@ DIR_MAX_PATH = 248
 FILE_MAX_PATH = 260
 UNC_PREFIX = "\\\\?\\"
 RADAR_ID = "d6c2347d-7bd1-4d9d-a1f6-b342c865516f"
+API_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
 
 
 class EventTypes(Enum):
