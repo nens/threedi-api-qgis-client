@@ -74,10 +74,11 @@ class WSProgressesSentinel(QObject):
                 )
             finished_simulations_data = {
                 status.simulation_id: {
-                    "name": status.simulation_name,
-                    "status": status.name,
-                    "progress": 100.0,
                     "date_created": status.created.strftime(API_DATETIME_FORMAT),
+                    "name": status.simulation_name,
+                    "progress": 100.0,
+                    "status": status.name,
+                    "user_name": None,  # SimulationStatus does not contain information about the user
                 }
                 for status in finished_simulations_statuses
             }
@@ -508,7 +509,7 @@ class SimulationRunner(QRunnable):
         )
         self.current_simulation.simulation = simulation
         current_status = self.tc.fetch_simulation_status(simulation.id)
-        self.current_simulation.initial_status = current_status.name
+        self.current_simulation.initial_status = current_status
 
     def include_init_options(self):
         """Apply initialization options to the new simulation."""

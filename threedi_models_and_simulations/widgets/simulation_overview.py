@@ -12,7 +12,7 @@ from threedi_models_and_simulations.widgets.simulation_init import SimulationIni
 from threedi_models_and_simulations.workers import SimulationRunner
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import extract_error_message
+from ..utils import API_DATETIME_FORMAT, extract_error_message
 from .custom_items import PROGRESS_ROLE, SimulationProgressDelegate
 from .model_selection import ModelSelectionDialog
 from .simulation_wizard import SimulationWizard
@@ -75,7 +75,7 @@ class SimulationOverview(uicls, basecls):
     def update_progress(self, running_simulations_data):
         """Updating progress bars in the running simulations list."""
         for sim_id, sim_data in running_simulations_data.items():
-            status_name = sim_data.get("status")
+            status_name = sim_data["status"]
             if status_name not in ["queued", "starting", "initialized", "postprocessing"]:
                 continue
             if sim_id not in self.running_simulations:
@@ -183,7 +183,15 @@ class SimulationOverview(uicls, basecls):
         if new_simulation_initialized:
             sim = new_simulation.simulation
             initial_status = new_simulation.initial_status
-            sim_data = {"name": sim.name, "status": initial_status, "progress": 0.0, "user_name": sim.user}
+            status_name = initial_status.name
+            date_created = initial_status.created.strftime(API_DATETIME_FORMAT)
+            sim_data = {
+                "date_created": date_created,
+                "name": sim.name,
+                "progress": 0.0,
+                "status": status_name,
+                "user_name": sim.user,
+            }
             self.add_simulation_to_model(sim.id, sim_data)
             info_msg = f"Simulation {new_simulation.name} added to queue!"
             self.plugin_dock.communication.bar_info(info_msg)
