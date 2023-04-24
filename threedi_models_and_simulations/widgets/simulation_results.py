@@ -82,7 +82,7 @@ class SimulationResults(uicls, basecls):
 
     def update_finished_list(self, finished_simulations_data):
         """Update finished simulations list."""
-        for sim_id, sim_data in finished_simulations_data.items():
+        for sim_id, sim_data in sorted(finished_simulations_data.items()):
             if sim_id not in self.finished_simulations:
                 self.add_finished_simulation_to_model(sim_id, sim_data)
 
