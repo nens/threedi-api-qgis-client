@@ -16,6 +16,7 @@ from threedi_api_client.openapi import ApiException
 
 from .api_calls.threedi_calls import ThreediCalls
 from .data_models import simulation_data_models as dm
+from .data_models.enumerators import SimulationStatusName
 from .utils import (
     API_DATETIME_FORMAT,
     BOUNDARY_CONDITIONS_TEMPLATE,
@@ -66,7 +67,7 @@ class WSProgressesSentinel(QObject):
         try:
             self.tc = ThreediCalls(self.threedi_api)
             logger.debug("Fetching finished simulations statuses")
-            finished_simulations_statuses = self.tc.fetch_simulation_statuses(name="finished")
+            finished_simulations_statuses = self.tc.fetch_simulation_statuses(name=SimulationStatusName.FINISHED.value)
             if self.model_id:
                 logger.debug(f"Filtering simulation statuses on model id {self.model_id}")
                 finished_simulations_statuses = (
@@ -76,7 +77,7 @@ class WSProgressesSentinel(QObject):
                 status.simulation_id: {
                     "date_created": status.created.strftime(API_DATETIME_FORMAT),
                     "name": status.simulation_name,
-                    "progress": 100.0,
+                    "progress": 100,
                     "status": status.name,
                     "user_name": None,  # SimulationStatus does not contain information about the user
                 }
@@ -138,8 +139,11 @@ class WSProgressesSentinel(QObject):
             status_name = data["data"]["status"]
             sim_data = self.running_simulations[sim_id]
             sim_data["status"] = status_name
-            if status_name == "finished":
-                self.simulation_finished.emit({sim_id: sim_data})
+            if status_name == SimulationStatusName.FINISHED.value:
+                if sim_data["progress"] == 100:
+                    self.simulation_finished.emit({sim_id: sim_data})
+                else:
+                    sim_data["status"] = SimulationStatusName.STOPPED.value
         self.progresses_fetched.emit(self.running_simulations)
 
 

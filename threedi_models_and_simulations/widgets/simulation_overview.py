@@ -12,6 +12,7 @@ from threedi_models_and_simulations.widgets.simulation_init import SimulationIni
 from threedi_models_and_simulations.workers import SimulationRunner
 
 from ..api_calls.threedi_calls import ThreediCalls
+from ..data_models.enumerators import SimulationStatusName
 from ..utils import API_DATETIME_FORMAT, extract_error_message
 from .custom_items import PROGRESS_ROLE, SimulationProgressDelegate
 from .model_selection import ModelSelectionDialog
@@ -76,7 +77,12 @@ class SimulationOverview(uicls, basecls):
         """Updating progress bars in the running simulations list."""
         for sim_id, sim_data in running_simulations_data.items():
             status_name = sim_data["status"]
-            if status_name not in ["queued", "starting", "initialized", "postprocessing"]:
+            if status_name not in {
+                SimulationStatusName.INITIALIZED.value,
+                SimulationStatusName.POSTPROCESSING.value,
+                SimulationStatusName.QUEUED.value,
+                SimulationStatusName.STARTING.value,
+            }:
                 continue
             if sim_id not in self.running_simulations:
                 self.add_simulation_to_model(sim_id, sim_data)
@@ -90,13 +96,13 @@ class SimulationOverview(uicls, basecls):
             sim_data = running_simulations_data[sim_id]
             new_status_name = sim_data["status"]
             new_progress = sim_data["progress"]
-            if new_status_name == "stopped" or new_status_name == "crashed":
+            if new_status_name in {SimulationStatusName.CRASHED.value, SimulationStatusName.STOPPED.value}:
                 old_status, old_progress = progress_item.data(PROGRESS_ROLE)
                 progress_item.setData((new_status_name, old_progress), PROGRESS_ROLE)
                 self.simulations_without_progress.add(sim_id)
             else:
                 progress_item.setData((new_status_name, new_progress), PROGRESS_ROLE)
-            if new_status_name == "finished":
+            if new_status_name == SimulationStatusName.FINISHED.value:
                 self.simulations_without_progress.add(sim_id)
                 sim_name = sim_data["name"]
                 msg = f"Simulation {sim_name} finished!"
@@ -188,7 +194,7 @@ class SimulationOverview(uicls, basecls):
             sim_data = {
                 "date_created": date_created,
                 "name": sim.name,
-                "progress": 0.0,
+                "progress": 0,
                 "status": status_name,
                 "user_name": sim.user,
             }
