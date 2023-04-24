@@ -75,7 +75,7 @@ class SimulationOverview(uicls, basecls):
 
     def update_progress(self, running_simulations_data):
         """Updating progress bars in the running simulations list."""
-        for sim_id, sim_data in running_simulations_data.items():
+        for sim_id, sim_data in sorted(running_simulations_data.items()):
             status_name = sim_data["status"]
             if status_name not in {
                 SimulationStatusName.INITIALIZED.value,
