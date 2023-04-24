@@ -11,6 +11,8 @@ from qgis.PyQt.QtWidgets import (
     QStyleOptionProgressBar,
 )
 
+from ..data_models.enumerators import SimulationStatusName
+
 PROGRESS_ROLE = Qt.UserRole + 1000
 
 
@@ -18,28 +20,27 @@ class SimulationProgressDelegate(QStyledItemDelegate):
     """Class with definition of the custom simulation progress bar item that can be inserted into the model."""
 
     def paint(self, painter, option, index):
-        status, progress = index.data(PROGRESS_ROLE)
-        status_name = status.name
-        new_percentage = progress.percentage
+        status_name, progress_percentage = index.data(PROGRESS_ROLE)
+        new_percentage = int(progress_percentage)
         pbar = QStyleOptionProgressBar()
         pbar.rect = option.rect
         pbar.minimum = 0
         pbar.maximum = 100
         default_color = QColor(0, 140, 255)
 
-        if status_name == "created" or status_name == "starting":
+        if status_name in {SimulationStatusName.CREATED.value, SimulationStatusName.STARTING.value}:
             pbar_color = default_color
             ptext = "Starting up simulation .."
-        elif status_name == "initialized" or status_name == "postprocessing":
+        elif status_name in {SimulationStatusName.INITIALIZED.value, SimulationStatusName.POSTPROCESSING.value}:
             pbar_color = default_color
             ptext = f"{new_percentage}%"
-        elif status_name == "finished":
+        elif status_name == SimulationStatusName.FINISHED.value:
             pbar_color = QColor(10, 180, 40)
             ptext = f"{new_percentage}%"
-        elif status_name == "ended":
+        elif status_name in {SimulationStatusName.ENDED.value, SimulationStatusName.STOPPED.value}:
             pbar_color = Qt.gray
             ptext = f"{new_percentage}% (stopped)"
-        elif status_name == "crashed":
+        elif status_name == SimulationStatusName.CRASHED.value:
             pbar_color = Qt.red
             ptext = f"{new_percentage}% (crashed)"
         else:

@@ -2,6 +2,7 @@
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os
 import shutil
+from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from qgis.PyQt import uic
@@ -12,6 +13,7 @@ from threedi_api_client.openapi import ApiException
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import (
+    API_DATETIME_FORMAT,
     LocalRevision,
     LocalSchematisation,
     bypass_max_path_limit,
@@ -28,7 +30,7 @@ uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_results.ui"))
 class SimulationResults(uicls, basecls):
     """Dialog with methods for handling simulations results."""
 
-    PROGRESS_COLUMN_IDX = 3
+    PROGRESS_COLUMN_IDX = 2
     MAX_THREAD_COUNT = 1
 
     def __init__(self, plugin_dock, parent=None):
@@ -42,17 +44,17 @@ class SimulationResults(uicls, basecls):
         self.tv_model = None
         self.last_progress_item = None
         self.setup_view_model()
-        self.plugin_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_finished_list)
+        self.plugin_dock.simulations_progresses_sentinel.simulation_finished.connect(self.update_finished_list)
         self.pb_cancel.clicked.connect(self.close)
         self.pb_download.clicked.connect(self.download_results)
         self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_download_results)
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
-        self.tv_model = QStandardItemModel(0, 4)
+        self.tv_model = QStandardItemModel(0, 3)
         delegate = DownloadProgressDelegate(self.tv_finished_sim_tree)
         self.tv_finished_sim_tree.setItemDelegateForColumn(self.PROGRESS_COLUMN_IDX, delegate)
-        self.tv_model.setHorizontalHeaderLabels(["Simulation name", "User", "Expires", "Download progress"])
+        self.tv_model.setHorizontalHeaderLabels(["Simulation name", "Expires", "Download progress"])
         self.tv_finished_sim_tree.setModel(self.tv_model)
 
     def toggle_download_results(self):
@@ -64,27 +66,25 @@ class SimulationResults(uicls, basecls):
             else:
                 self.pb_download.setDisabled(True)
 
-    def add_finished_simulation_to_model(self, simulation, status):
-        """Method for adding simulation to the model."""
-        sim_id = simulation.id
-        sim_name_item = QStandardItem(f"{simulation.name} ({sim_id})")
+    def add_finished_simulation_to_model(self, sim_id, sim_data):
+        """Method for adding information about finished simulation to the model."""
+        sim_name = sim_data["name"]
+        sim_name_item = QStandardItem(f"{sim_name} ({sim_id})")
         sim_name_item.setData(sim_id, Qt.UserRole)
-        user_item = QStandardItem(simulation.user)
-        delta = relativedelta(status.created, ThreediCalls.EXPIRATION_TIME)
+        create_str = sim_data["date_created"]
+        create_datetime = datetime.strptime(create_str, API_DATETIME_FORMAT)
+        delta = relativedelta(create_datetime, ThreediCalls.EXPIRATION_TIME)
         expires_item = QStandardItem(f"{delta.days} day(s)")
         progress_item = QStandardItem()
         progress_item.setData(-1, Qt.UserRole)
-        self.tv_model.insertRow(0, [sim_name_item, user_item, expires_item, progress_item])
-        self.finished_simulations[sim_id] = simulation
+        self.tv_model.insertRow(0, [sim_name_item, expires_item, progress_item])
+        self.finished_simulations[sim_id] = sim_data
 
-    def update_finished_list(self, progresses):
+    def update_finished_list(self, finished_simulations_data):
         """Update finished simulations list."""
-        for sim_id, (sim, status, progress) in progresses.items():
-            status_name = status.name
-            if status_name != "finished":
-                continue
+        for sim_id, sim_data in sorted(finished_simulations_data.items()):
             if sim_id not in self.finished_simulations:
-                self.add_finished_simulation_to_model(sim, status)
+                self.add_finished_simulation_to_model(sim_id, sim_data)
 
     def on_download_progress_update(self, percentage):
         """Update download progress bar."""
@@ -129,13 +129,13 @@ class SimulationResults(uicls, basecls):
         working_dir = self.plugin_dock.plugin_settings.working_dir
         local_schematisations = list_local_schematisations(working_dir)
         try:
+            tc = ThreediCalls(self.plugin_dock.threedi_api)
             current_row = current_index.row()
             name_item = self.tv_model.item(current_row, 0)
             sim_id = name_item.data(Qt.UserRole)
-            simulation = self.finished_simulations[sim_id]
+            simulation = tc.fetch_simulation(sim_id)
             simulation_name = simulation.name.replace(" ", "_")
             simulation_model_id = int(simulation.threedimodel_id)
-            tc = ThreediCalls(self.plugin_dock.threedi_api)
             try:
                 model_3di = tc.fetch_3di_model(simulation_model_id)
                 gridadmin_downloads = tc.fetch_3di_model_gridadmin_download(simulation_model_id)

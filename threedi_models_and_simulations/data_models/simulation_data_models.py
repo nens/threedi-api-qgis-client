@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from threedi_api_client.openapi import (
+    CurrentStatus,
     FileBoundaryCondition,
     FileRasterLeakage,
     FileRasterSourcesSinks,
@@ -197,4 +198,4 @@ class NewSimulation:
     template_name: str = None
     # Last two attributes will be added after new simulation initialization
     simulation: Simulation = None
-    initial_status: str = None
+    initial_status: CurrentStatus = None
