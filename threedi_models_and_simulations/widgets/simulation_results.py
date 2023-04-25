@@ -98,12 +98,14 @@ class SimulationResults(uicls, basecls):
     def on_download_finished_success(self, msg, results_dir):
         """Reporting finish successfully status and closing download thread."""
         self.plugin_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
-        grid_file = os.path.join(results_dir, "gridadmin.h5")
-        if os.path.exists(grid_file):
-            grid_dir = os.path.join(os.path.dirname(os.path.dirname(results_dir)), "grid")
-            if os.path.exists(grid_dir):
-                grid_file_copy = os.path.join(grid_dir, "gridadmin.h5")
-                shutil.copyfile(grid_file, bypass_max_path_limit(grid_file_copy, is_file=True))
+        grid_file_names = ["gridadmin.h5", "gridadmin.gpkg"]
+        grid_dir = os.path.join(os.path.dirname(os.path.dirname(results_dir)), "grid")
+        if os.path.exists(grid_dir):
+            for grid_file_name in grid_file_names:
+                grid_file = os.path.join(results_dir, grid_file_name)
+                if os.path.exists(grid_file):
+                    grid_file_copy = os.path.join(grid_dir, grid_file_name)
+                    shutil.copyfile(grid_file, bypass_max_path_limit(grid_file_copy, is_file=True))
         self.toggle_download_results()
 
     def on_download_finished_failed(self, msg):
@@ -136,6 +138,7 @@ class SimulationResults(uicls, basecls):
             simulation = tc.fetch_simulation(sim_id)
             simulation_name = simulation.name.replace(" ", "_")
             simulation_model_id = int(simulation.threedimodel_id)
+            results_dir, gridadmin_downloads, gridadmin_downloads_gpkg = None, None, None
             try:
                 model_3di = tc.fetch_3di_model(simulation_model_id)
                 gridadmin_downloads = tc.fetch_3di_model_gridadmin_download(simulation_model_id)
@@ -167,7 +170,9 @@ class SimulationResults(uicls, basecls):
                     if not results_dir:
                         self.plugin_dock.communication.show_warn(warn_msg)
                         return
+                gridadmin_downloads_gpkg = tc.fetch_3di_model_geopackage_download(simulation_model_id)
             except ApiException as e:
+                error_msg = extract_error_message(e)
                 if e.status == 404:
                     warn_msg = (
                         "The 3Di model to which these results belong is owned by an organisation for which "
@@ -179,15 +184,18 @@ class SimulationResults(uicls, basecls):
                     )
                     self.plugin_dock.communication.show_warn(warn_msg)
                     results_dir = self.pick_results_destination_dir()
-                    if not results_dir:
-                        return
-                    gridadmin_downloads = None
+                elif "Geopackage file not found" in error_msg:
+                    pass
                 else:
                     raise e
+            if not results_dir:
+                return
             simulation_subdirectory = os.path.join(results_dir, f"sim_{sim_id}_{simulation_name}")
             downloads = tc.fetch_simulation_downloads(sim_id)
             if gridadmin_downloads is not None:
                 downloads.append(gridadmin_downloads)
+            if gridadmin_downloads_gpkg is not None:
+                downloads.append(gridadmin_downloads_gpkg)
             downloads.sort(key=lambda x: x[-1].size)
             self.last_progress_item = self.tv_model.item(current_row, self.PROGRESS_COLUMN_IDX)
         except ApiException as e:

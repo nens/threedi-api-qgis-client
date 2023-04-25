@@ -12,6 +12,7 @@ History
 
 - Fixed issue #447
 - Fixed issue #454
+- Added downloading gridadmin file in the GeoPackage format #438
 
 3.4.3 (2023-03-10)
 ------------------
