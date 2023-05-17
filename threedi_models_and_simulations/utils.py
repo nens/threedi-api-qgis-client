@@ -679,7 +679,7 @@ class SchematisationRasterReferences:
                 ("v2_simple_infiltration", cls.simple_infiltration_rasters()),
                 ("v2_groundwater", cls.groundwater_rasters()),
                 ("v2_interflow", cls.interflow_rasters()),
-                ("v2_vegetation_drag", cls.vegetation_drag_rasters())
+                ("v2_vegetation_drag", cls.vegetation_drag_rasters()),
             )
         )
         return reference_tables
