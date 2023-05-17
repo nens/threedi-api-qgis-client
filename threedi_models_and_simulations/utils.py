@@ -657,6 +657,19 @@ class SchematisationRasterReferences:
         )
         return raster_info
 
+    @staticmethod
+    def vegetation_drag_rasters():
+        """Rasters mapping for the Vegetation drag settings."""
+        raster_info = OrderedDict(
+            (
+                ("vegetation_height_file", "Vegetation height"),
+                ("vegetation_stem_count_file", "Vegetation stem count"),
+                ("vegetation_stem_diameter_file", "Vegetation stem diameter"),
+                ("vegetation_drag_coefficient_file", "Vegetation drag coefficient"),
+            )
+        )
+        return raster_info
+
     @classmethod
     def raster_reference_tables(cls):
         """Spatialite tables mapping with references to the rasters."""
@@ -666,6 +679,7 @@ class SchematisationRasterReferences:
                 ("v2_simple_infiltration", cls.simple_infiltration_rasters()),
                 ("v2_groundwater", cls.groundwater_rasters()),
                 ("v2_interflow", cls.interflow_rasters()),
+                ("v2_vegetation_drag", cls.vegetation_drag_rasters())
             )
         )
         return reference_tables

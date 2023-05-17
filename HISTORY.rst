@@ -4,7 +4,9 @@ History
 3.4.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Compatibility with schema 217 (#462).
+- Added handling of the Vegetation drag settings rasters. (#460)
+
 
 
 3.4.5 (2023-04-26)
