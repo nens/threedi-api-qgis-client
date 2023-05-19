@@ -149,16 +149,16 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>694</width>
-        <height>197</height>
+        <width>677</width>
+        <height>234</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
-       <item row="3" column="0">
-        <widget class="QWidget" name="widget_groundwater" native="true">
-         <layout class="QGridLayout" name="gridLayout_9">
+       <item row="2" column="0">
+        <widget class="QWidget" name="widget_simple_infiltration" native="true">
+         <layout class="QGridLayout" name="gridLayout_8">
           <item row="0" column="0">
-           <widget class="QLabel" name="label_18">
+           <widget class="QLabel" name="label_17">
             <property name="font">
              <font>
               <family>Segoe UI</family>
@@ -167,27 +167,7 @@
              </font>
             </property>
             <property name="text">
-             <string>Groundwater </string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QWidget" name="widget_general" native="true">
-         <layout class="QGridLayout" name="gridLayout_6">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_13">
-            <property name="font">
-             <font>
-              <family>Segoe UI</family>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>General</string>
+             <string>Simple infiltration</string>
             </property>
            </widget>
           </item>
@@ -214,11 +194,11 @@
          </layout>
         </widget>
        </item>
-       <item row="2" column="0">
-        <widget class="QWidget" name="widget_simple_infiltration" native="true">
-         <layout class="QGridLayout" name="gridLayout_8">
+       <item row="3" column="0">
+        <widget class="QWidget" name="widget_groundwater" native="true">
+         <layout class="QGridLayout" name="gridLayout_9">
           <item row="0" column="0">
-           <widget class="QLabel" name="label_17">
+           <widget class="QLabel" name="label_18">
             <property name="font">
              <font>
               <family>Segoe UI</family>
@@ -227,14 +207,14 @@
              </font>
             </property>
             <property name="text">
-             <string>Simple infiltration</string>
+             <string>Groundwater </string>
             </property>
            </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="5" column="0">
         <widget class="QWidget" name="widget_vegetation_drag" native="true">
          <layout class="QGridLayout" name="gridLayout_10">
           <item row="0" column="0">
@@ -248,6 +228,46 @@
             </property>
             <property name="text">
              <string>Vegetation drag</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QWidget" name="widget_general" native="true">
+         <layout class="QGridLayout" name="gridLayout_6">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="font">
+             <font>
+              <family>Segoe UI</family>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>General</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QWidget" name="widget_interflow" native="true">
+         <layout class="QGridLayout" name="gridLayout_11">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_20">
+            <property name="font">
+             <font>
+              <family>Segoe UI</family>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Interflow</string>
             </property>
            </widget>
           </item>
