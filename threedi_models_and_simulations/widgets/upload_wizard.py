@@ -264,6 +264,11 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         return SchematisationRasterReferences.interflow_rasters()
 
     @property
+    def vegetation_drag_files(self):
+        """Files mapping for the Vegetation drag settings group widget."""
+        return SchematisationRasterReferences.vegetation_drag_rasters()
+
+    @property
     def files_reference_tables(self):
         """Spatialite tables mapping with references to the files."""
         return SchematisationRasterReferences.raster_reference_tables()
@@ -356,6 +361,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
             self.widget_simple_infiltration,
             self.widget_groundwater,
             self.widget_interflow,
+            self.widget_vegetation_drag,
         ]
         files_info_collection = [
             self.general_files,
@@ -363,6 +369,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
             self.simple_infiltration_files,
             self.groundwater_files,
             self.interflow_files,
+            self.vegetation_drag_files,
         ]
         for widget in files_widgets:
             widget.hide()
