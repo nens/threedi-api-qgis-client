@@ -641,8 +641,7 @@ class SimulationRunner(QRunnable):
             upload_file_boundary_conditions(bc_file_name, bc_temp_filepath)
             os.remove(bc_temp_filepath)
         if boundary_conditions.data:
-            boundary_conditions_values = list(boundary_conditions.data.values())
-            write_json_data(boundary_conditions_values, BOUNDARY_CONDITIONS_TEMPLATE)
+            write_json_data(boundary_conditions.data, BOUNDARY_CONDITIONS_TEMPLATE)
             bc_file_name = f"{sim_name}_boundary_conditions.json"
             upload_file_boundary_conditions(bc_file_name, BOUNDARY_CONDITIONS_TEMPLATE)
 
