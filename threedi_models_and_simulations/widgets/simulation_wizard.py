@@ -410,13 +410,15 @@ class StructureControlsWidget(uicls_structure_controls, basecls_structure_contro
 class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
     """Widget for the Initial Conditions page."""
 
-    def __init__(self, parent_page, load_conditions=False):
+    def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         set_widget_background_color(self)
+        self.initial_saved_state = initial_conditions.initial_saved_state
         self.initial_waterlevels = {}
         self.saved_states = {}
+        self.gb_saved_state.setChecked(False)
         self.gb_1d.setChecked(False)
         self.gb_2d.setChecked(False)
         self.gb_groundwater.setChecked(False)
@@ -424,20 +426,44 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.cbo_gw_local_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.btn_browse_2d_local_raster.clicked.connect(partial(self.browse_for_local_raster, self.cbo_2d_local_raster))
         self.btn_browse_gw_local_raster.clicked.connect(partial(self.browse_for_local_raster, self.cbo_gw_local_raster))
-
         self.setup_initial_conditions()
-        if load_conditions:
-            self.load_conditions_widget.show()
-            self.default_init_widget.hide()
-        else:
-            self.load_conditions_widget.hide()
-            self.default_init_widget.show()
+        self.connect_signals()
+
+    def connect_signals(self):
+        """Connecting widgets signals."""
+        self.gb_saved_state.toggled.connect(self.on_saved_state_change)
+        self.gb_1d.toggled.connect(self.on_initial_waterlevel_change)
+        self.gb_2d.toggled.connect(self.on_initial_waterlevel_change)
+        self.gb_groundwater.toggled.connect(self.on_initial_waterlevel_change)
+
+    def on_saved_state_change(self, checked):
+        """Handle saved state group checkbox."""
+        if checked:
+            if self.gb_1d.isChecked():
+                self.gb_1d.setChecked(False)
+            if self.gb_2d.isChecked():
+                self.gb_2d.setChecked(False)
+            if self.gb_groundwater.isChecked():
+                self.gb_groundwater.setChecked(False)
+
+    def on_initial_waterlevel_change(self, checked):
+        """Handle initial waterlevel group checkbox."""
+        if checked and self.gb_saved_state.isChecked():
+            self.gb_saved_state.setChecked(False)
 
     def setup_initial_conditions(self):
         """Setup initial conditions widget."""
         try:
             tc = ThreediCalls(self.parent_page.parent_wizard.plugin_dock.threedi_api)
             model_id = self.parent_page.parent_wizard.model_selection_dlg.current_model.id
+            states = tc.fetch_3di_model_saved_states(model_id)
+            if not states:
+                self.gb_saved_state.setDisabled(True)
+            else:
+                for state in states:
+                    state_name = state.name
+                    self.saved_states[state_name] = state
+                    self.cb_saved_states.addItem(state_name)
             initial_waterlevels = tc.fetch_3di_model_initial_waterlevels(model_id) or []
             if initial_waterlevels:
                 self.rb_2d_online_raster.setChecked(True)
@@ -450,14 +476,6 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                 self.initial_waterlevels[raster_filename] = iw
                 self.cbo_2d_online_raster.addItem(raster_filename)
                 self.cbo_gw_online_raster.addItem(raster_filename)
-
-            states = tc.fetch_3di_model_saved_states(
-                self.parent_page.parent_wizard.model_selection_dlg.current_model.id
-            )
-            for state in states or []:
-                state_name = state.name
-                self.saved_states[state_name] = state
-                self.cb_saved_states.addItem(state_name)
         except ApiException as e:
             error_msg = extract_error_message(e)
             self.parent_page.parent_wizard.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
@@ -2010,10 +2028,10 @@ class InitialConditionsPage(QWizardPage):
 
     STEP_NAME = "Initial conditions"
 
-    def __init__(self, parent=None, load_conditions=False):
+    def __init__(self, parent=None, initial_conditions=None):
         super().__init__(parent)
         self.parent_wizard = parent
-        self.main_widget = InitialConditionsWidget(self, load_conditions=load_conditions)
+        self.main_widget = InitialConditionsWidget(self, initial_conditions=initial_conditions)
         layout = QGridLayout()
         layout.addWidget(self.main_widget)
         self.setLayout(layout)
@@ -2173,9 +2191,7 @@ class SimulationWizard(QWizard):
             self.structure_controls_page = StructureControlsPage(self)
             self.addPage(self.structure_controls_page)
         if init_conditions.include_initial_conditions:
-            self.init_conditions_page = InitialConditionsPage(
-                self, load_conditions=init_conditions.load_from_saved_state
-            )
+            self.init_conditions_page = InitialConditionsPage(self, initial_conditions=init_conditions)
             self.addPage(self.init_conditions_page)
         if init_conditions.include_laterals:
             self.laterals_page = LateralsPage(self)
