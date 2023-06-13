@@ -464,6 +464,10 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                     state_name = state.name
                     self.saved_states[state_name] = state
                     self.cb_saved_states.addItem(state_name)
+            if self.initial_saved_state:
+                initial_saved_state_idx = self.cb_saved_states.findText(self.initial_saved_state.saved_state.name)
+                if initial_saved_state_idx >= 0:
+                    self.cb_saved_states.setCurrentIndex(initial_saved_state_idx)
             initial_waterlevels = tc.fetch_3di_model_initial_waterlevels(model_id) or []
             if initial_waterlevels:
                 self.rb_2d_online_raster.setChecked(True)
