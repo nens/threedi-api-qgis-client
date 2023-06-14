@@ -135,6 +135,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             wip_revision = self.current_local_schematisation.wip_revision
             backup_filepath = wip_revision.backup_sqlite()
             schema.upgrade(backup=False, upgrade_spatialite_version=True)
+            schema.set_views()
             schema.set_spatial_indexes()
             shutil.rmtree(os.path.dirname(backup_filepath))
         except errors.UpgradeFailedError:
