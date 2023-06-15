@@ -6,7 +6,7 @@ History
 
 - Compatibility with schema 217 (#462).
 - Added handling of the Vegetation drag settings rasters. (#460)
-
+- Fixed issue #461
 
 
 3.4.5 (2023-04-26)

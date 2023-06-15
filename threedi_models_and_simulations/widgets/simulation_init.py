@@ -24,9 +24,7 @@ class SimulationInit(uicls, basecls):
         self.open_wizard = False
         self.initial_conditions = None
         self.multiple_simulations_widget.setVisible(False)
-        self.load_state_widget.setVisible(False)
         self.cb_multiple_simulations.stateChanged.connect(self.multiple_simulations_changed)
-        self.cb_conditions.stateChanged.connect(self.load_saved_state_changed)
         self.cb_breaches.stateChanged.connect(self.toggle_breaches)
         self.cb_precipitation.stateChanged.connect(self.toggle_precipitation)
         self.pb_next.clicked.connect(self.start_wizard)
@@ -104,9 +102,6 @@ class SimulationInit(uicls, basecls):
         ]
         if any(getattr(self.events, event_name) for event_name in initial_events):
             self.cb_conditions.setChecked(True)
-            if self.events.initial_savedstate:
-                self.cb_load_saved_state.setEnabled(True)
-                self.cb_load_saved_state.setChecked(True)
         # Check laterals and DWF
         if self.current_model.extent_one_d is None:
             self.cb_dwf.setDisabled(True)
@@ -162,20 +157,13 @@ class SimulationInit(uicls, basecls):
         else:
             self.multiple_simulations_widget.hide()
 
-    def load_saved_state_changed(self, i):
-        """Handle saved states checkboxes state changes."""
-        if i:
-            self.load_state_widget.show()
-        else:
-            self.load_state_widget.hide()
-
     def start_wizard(self):
         """Start new simulation wizard based on selected options."""
         self.initial_conditions = SimulationInitObject()
         self.initial_conditions.include_boundary_conditions = self.cb_boundary.isChecked()
         self.initial_conditions.include_structure_controls = self.cb_structure_controls.isChecked()
         self.initial_conditions.include_initial_conditions = self.cb_conditions.isChecked()
-        self.initial_conditions.load_from_saved_state = self.cb_load_saved_state.isChecked()
+        self.initial_conditions.initial_saved_state = self.events.initial_savedstate
         self.initial_conditions.include_laterals = self.cb_laterals.isChecked()
         self.initial_conditions.include_dwf = self.cb_dwf.isChecked()
         self.initial_conditions.include_breaches = self.cb_breaches.isChecked()
@@ -205,7 +193,7 @@ class SimulationInitObject:
         self.include_boundary_conditions = False
         self.include_structure_controls = False
         self.include_initial_conditions = False
-        self.load_from_saved_state = False
+        self.initial_saved_state = False
         self.include_laterals = False
         self.include_dwf = False
         self.include_breaches = False
