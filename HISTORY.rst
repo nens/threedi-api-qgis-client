@@ -4,6 +4,7 @@ History
 3.4.6 (unreleased)
 ------------------
 
+- Added handling of multiple boundary conditions with the same ID. (#468)
 - Compatibility with schema 217 (#462).
 - Added handling of the Vegetation drag settings rasters. (#460)
 - Fixed issue #461

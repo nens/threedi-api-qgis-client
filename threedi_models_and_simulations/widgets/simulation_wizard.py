@@ -156,8 +156,8 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         self.parent_page = parent_page
         set_widget_background_color(self)
         self.template_boundary_conditions = None
-        self.boundary_conditions_1d_timeseries = {}
-        self.boundary_conditions_2d_timeseries = {}
+        self.boundary_conditions_1d_timeseries = []
+        self.boundary_conditions_2d_timeseries = []
         self.connect_signals()
 
     def connect_signals(self):
@@ -237,7 +237,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         if len(filename) == 0:
             return None, None
         QSettings().setValue("threedi/last_boundary_conditions_folder", os.path.dirname(filename))
-        values = {}
+        values = []
         boundary_conditions_list = []
         with open(filename, encoding="utf-8-sig") as boundary_conditions_file:
             boundary_conditions_reader = csv.reader(boundary_conditions_file)
@@ -259,7 +259,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                     "interpolate": interpolate,
                     "values": vals,
                 }
-                values[bc_id] = boundary_condition
+                values.append(boundary_condition)
             except ValueError:
                 continue
         return values, filename
@@ -276,7 +276,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             if boundary_conditions_type == self.TYPE_1D
             else self.cb_interpolate_bc_2d.isChecked()
         )
-        for val in boundary_conditions_timeseries.values():
+        for val in boundary_conditions_timeseries:
             val["interpolate"] = interpolate
 
     def recalculate_boundary_conditions_timeseries(self, boundary_conditions_type, timesteps_in_seconds=False):
@@ -300,16 +300,14 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             seconds_per_unit = 60
         else:
             seconds_per_unit = 1
-        for val in boundary_conditions_data.values():
+        for val in boundary_conditions_data:
             val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
         return boundary_conditions_data
 
     def get_boundary_conditions_data(self, timesteps_in_seconds=False):
         """Get boundary conditions data."""
         boundary_conditions_data = self.recalculate_boundary_conditions_timeseries(self.TYPE_1D, timesteps_in_seconds)
-        boundary_conditions_data.update(
-            self.recalculate_boundary_conditions_timeseries(self.TYPE_2D, timesteps_in_seconds)
-        )
+        boundary_conditions_data += self.recalculate_boundary_conditions_timeseries(self.TYPE_2D, timesteps_in_seconds)
         return self.template_boundary_conditions, boundary_conditions_data
 
 

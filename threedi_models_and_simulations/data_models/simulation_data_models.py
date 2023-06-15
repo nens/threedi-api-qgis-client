@@ -74,7 +74,7 @@ class InitOptions(SimulationElement):
 @dataclass
 class BoundaryConditions(SimulationElement):
     file_boundary_conditions: FileBoundaryCondition = None
-    data: dict = None
+    data: list = None
 
 
 @dataclass
