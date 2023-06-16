@@ -1,7 +1,7 @@
 History
 =======
 
-3.4.6 (unreleased)
+3.5.0 (2023-06-16)
 ------------------
 
 - Added handling of multiple boundary conditions with the same ID. (#468)
