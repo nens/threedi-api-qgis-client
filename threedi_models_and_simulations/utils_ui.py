@@ -1,6 +1,8 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os
+import shutil
+from uuid import uuid4
 
 from qgis.gui import QgsFileWidget, QgsProjectionSelectionWidget
 from qgis.PyQt.QtCore import QDate, QSettings, QTime
@@ -18,6 +20,8 @@ from qgis.PyQt.QtWidgets import (
     QTimeEdit,
     QWidget,
 )
+
+from .utils import bypass_max_path_limit
 
 
 def style_path(qml_filename):
@@ -147,3 +151,46 @@ def qgis_layers_cbo_get_layer_uri(qgis_map_layers_cbo):
         lyr_path = qgis_map_layers_cbo.currentText()
         if os.path.exists(lyr_path):
             return lyr_path
+
+
+def ensure_valid_schema(schematisation_sqlite, communication):
+    """Check if schema version is up-to-date and migrate it if needed."""
+    try:
+        from threedi_schema import ThreediDatabase, errors
+    except ImportError:
+        return
+    schematisation_dirname = os.path.dirname(schematisation_sqlite)
+    schematisation_filename = os.path.basename(schematisation_sqlite)
+    backup_folder = os.path.join(schematisation_dirname, "_backup")
+    os.makedirs(bypass_max_path_limit(backup_folder), exist_ok=True)
+    prefix = str(uuid4())[:8]
+    backup_sqlite_path = os.path.join(backup_folder, f"{prefix}_{schematisation_filename}")
+    shutil.copyfile(schematisation_sqlite, bypass_max_path_limit(backup_sqlite_path, is_file=True))
+    threedi_db = ThreediDatabase(schematisation_sqlite)
+    schema = threedi_db.schema
+    try:
+        schema.validate_schema()
+        schema.set_spatial_indexes()
+    except errors.MigrationMissingError:
+        warn_and_ask_msg = (
+            "The selected spatialite cannot be used because its database schema version is out of date. "
+            "Would you like to migrate your spatialite to the current schema version?"
+        )
+        do_migration = communication.ask(None, "Missing migration", warn_and_ask_msg)
+        if not do_migration:
+            return False
+        schema.upgrade(backup=False, upgrade_spatialite_version=True)
+        schema.set_spatial_indexes()
+        shutil.rmtree(backup_folder)
+    except errors.UpgradeFailedError:
+        error_msg = (
+            "There are errors in the spatialite. Please re-open this file in QGIS 3.16, run the model checker and "
+            "fix error messages. Then attempt to upgrade again. For questions please contact the servicedesk."
+        )
+        communication.show_error(error_msg)
+        return False
+    except Exception as e:
+        error_msg = f"{e}"
+        communication.show_error(error_msg)
+        return False
+    return True
