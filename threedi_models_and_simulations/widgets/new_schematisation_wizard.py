@@ -16,7 +16,7 @@ from threedi_api_client.openapi import ApiException
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import EMPTY_DB_PATH, LocalSchematisation, SchematisationRasterReferences, extract_error_message
 from ..utils_qgis import execute_sqlite_queries, sqlite_layer
-from ..utils_ui import get_filepath, scan_widgets_parameters
+from ..utils_ui import ensure_valid_schema, get_filepath, scan_widgets_parameters
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_schema_name_page, basecls_schema_name_page = uic.loadUiType(
@@ -66,7 +66,11 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
         """Show dialog for choosing an existing Spatialite file path."""
         spatialite_path = get_filepath(self, dialog_title="Select Spatialite file")
         if spatialite_path is not None:
-            self.le_spatialite_path.setText(spatialite_path)
+            schema_is_valid = ensure_valid_schema(
+                spatialite_path, self.parent_page.parent_wizard.plugin_dock.communication
+            )
+            if schema_is_valid is True:
+                self.le_spatialite_path.setText(spatialite_path)
 
 
 class SchematisationExplainWidget(uicls_schema_explain_page, basecls_schema_explain_page):
