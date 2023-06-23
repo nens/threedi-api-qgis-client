@@ -1,7 +1,7 @@
 History
 =======
 
-3.5.1 (unreleased)
+3.5.1 (2023-06-23)
 ------------------
 
 - Fix for the issue #470.
