@@ -66,7 +66,7 @@ class WSProgressesSentinel(QObject):
         """Checking running simulations progresses."""
         try:
             self.tc = ThreediCalls(self.threedi_api)
-            logger.debug("Fetching finished simulations statuses")
+            logger.debug("Fetching finished simulation statuses")
             finished_simulations_statuses = self.tc.fetch_simulation_statuses(name=SimulationStatusName.FINISHED.value)
             if self.model_id:
                 logger.debug(f"Filtering simulation statuses on model id {self.model_id}")
@@ -83,6 +83,8 @@ class WSProgressesSentinel(QObject):
                 }
                 for status in finished_simulations_statuses
             }
+            logger.debug(f"Fetched {len(finished_simulations_data)} finished simulation statuses")
+            time.sleep(1)
             self.simulation_finished.emit(finished_simulations_data)
         except ApiException as e:
             error_msg = extract_error_message(e)
