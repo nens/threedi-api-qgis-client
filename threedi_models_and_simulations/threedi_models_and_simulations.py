@@ -2,7 +2,7 @@
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os.path
 
-from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QApplication
 

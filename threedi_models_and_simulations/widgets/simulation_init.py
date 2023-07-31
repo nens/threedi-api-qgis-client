@@ -14,13 +14,16 @@ class SimulationInit(uicls, basecls):
 
     PROGRESS_COLUMN_IDX = 2
 
-    def __init__(self, current_model, simulation_template, settings_overview, events, parent):
+    def __init__(
+        self, current_model, simulation_template, settings_overview, events, lizard_post_processing_overview, parent
+    ):
         super().__init__(parent)
         self.setupUi(self)
         self.current_model = current_model
         self.simulation_template = simulation_template
         self.settings_overview = settings_overview
         self.events = events
+        self.lizard_post_processing_overview = lizard_post_processing_overview
         self.open_wizard = False
         self.initial_conditions = None
         self.multiple_simulations_widget.setVisible(False)
@@ -125,6 +128,9 @@ class SimulationInit(uicls, basecls):
         # Check wind
         if self.events.initial_winddragcoefficient or self.events.wind:
             self.cb_wind.setChecked(True)
+        # Check post-processing options
+        if self.lizard_post_processing_overview and self.lizard_post_processing_overview.results.basic:
+            self.cb_postprocess.setChecked(True)
 
     def toggle_breaches(self):
         """Handle breaches checkboxes state changes."""
