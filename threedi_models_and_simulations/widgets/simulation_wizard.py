@@ -2539,7 +2539,7 @@ class SimulationWizard(QWizard):
                 post_processing_widget.cb_arrival_time_map.setChecked(True)
             if damage_estimation:
                 damage_estimation_settings = post_processing_settings.damage_estimation
-                repair_time_seconds_map = {int(v // 3600): k for k, v in post_processing_widget.REPAIR_TIME.items()}
+                repair_time_seconds_map = {int(v * 3600): k for k, v in post_processing_widget.REPAIR_TIME.items()}
                 post_processing_widget.cb_damage_estimation.setChecked(True)
                 cost_type = damage_estimation_settings.cost_type
                 flood_month = damage_estimation_settings.flood_month
