@@ -2731,9 +2731,10 @@ class SimulationWizard(QWizard):
                 )
 
             # Saved state
-            initial_conditions.saved_state = self.init_conditions_page.main_widget.saved_states.get(
-                self.init_conditions_page.main_widget.cbo_saved_states.currentText()
-            )
+            if self.init_conditions_page.main_widget.gb_saved_state.isChecked():
+                initial_conditions.saved_state = self.init_conditions_page.main_widget.saved_states.get(
+                    self.init_conditions_page.main_widget.cbo_saved_states.currentText()
+                )
 
         # Laterals
         if self.init_conditions.include_laterals:
