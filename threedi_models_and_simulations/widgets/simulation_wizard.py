@@ -467,12 +467,11 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                 if initial_saved_state_idx >= 0:
                     self.cb_saved_states.setCurrentIndex(initial_saved_state_idx)
             initial_waterlevels = tc.fetch_3di_model_initial_waterlevels(model_id) or []
-            if initial_waterlevels:
+            initial_waterlevels_2d = {iw for iw in initial_waterlevels if iw.dimension == "two_d"}
+            if initial_waterlevels_2d:
                 self.rb_2d_online_raster.setChecked(True)
                 self.rb_gw_online_raster.setChecked(True)
-            for iw in sorted(initial_waterlevels, key=attrgetter("id")):
-                if iw.dimension != "two_d":
-                    continue
+            for iw in sorted(initial_waterlevels_2d, key=attrgetter("id")):
                 raster = tc.fetch_3di_model_raster(model_id, iw.source_raster_id)
                 raster_filename = raster.file.filename
                 self.initial_waterlevels[raster_filename] = iw
