@@ -2321,7 +2321,7 @@ class SimulationWizard(QWizard):
             self.summary_page.main_widget.breach_id.setText(breach_id)
             self.summary_page.main_widget.duration_breach.setText(str(duration_of_breach))
 
-    def load_template_parameters(self, simulation, settings_overview, events):
+    def load_template_parameters(self, simulation, settings_overview, events, lizard_post_processing_overview):
         """Loading simulation parameters from the simulation template data."""
         # Simulation attributes
         from_template_placeholder = "<FROM TEMPLATE>"
@@ -2529,6 +2529,37 @@ class SimulationWizard(QWizard):
                     wind_widget.custom_wind = wind_timeseries_minutes
                     if initial_winddragcoefficient:
                         wind_widget.sp_dc_custom.setValue(initial_winddragcoefficient.value)
+        if init_conditions.include_lizard_post_processing and lizard_post_processing_overview:
+            post_processing_widget = self.lizard_post_processing_page.main_widget
+            post_processing_results = lizard_post_processing_overview.results
+            post_processing_settings = lizard_post_processing_overview.settings
+            arrival_time = post_processing_results.arrival_time
+            damage_estimation = post_processing_results.damage_estimation
+            if arrival_time:
+                post_processing_widget.cb_arrival_time_map.setChecked(True)
+            if damage_estimation:
+                damage_estimation_settings = post_processing_settings.damage_estimation
+                repair_time_seconds_map = {int(v * 3600): k for k, v in post_processing_widget.REPAIR_TIME.items()}
+                post_processing_widget.cb_damage_estimation.setChecked(True)
+                cost_type = damage_estimation_settings.cost_type
+                flood_month = damage_estimation_settings.flood_month
+                inundation_period = damage_estimation_settings.inundation_period
+                repair_time_infrastructure = damage_estimation_settings.repair_time_infrastructure
+                repair_time_buildings = damage_estimation_settings.repair_time_buildings
+                if cost_type:
+                    post_processing_widget.cbo_cost_type.setCurrentIndex(cost_type - 1)
+                if flood_month:
+                    post_processing_widget.cbo_flood_month.setCurrentIndex(flood_month - 1)
+                if inundation_period:
+                    post_processing_widget.sb_period.setValue(inundation_period / 3600)
+                if repair_time_infrastructure in repair_time_seconds_map:
+                    post_processing_widget.cbo_repair_infrastructure.setCurrentText(
+                        repair_time_seconds_map[repair_time_infrastructure]
+                    )
+                if repair_time_buildings in repair_time_seconds_map:
+                    post_processing_widget.cbo_repair_building.setCurrentText(
+                        repair_time_seconds_map[repair_time_buildings]
+                    )
 
     def run_new_simulation(self):
         """Getting data from the wizard and running new simulation."""

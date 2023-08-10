@@ -40,6 +40,7 @@ from threedi_api_client.openapi import (
     OneDWaterLevelPredefined,
     Organisation,
     PhysicalSettings,
+    PostProcessingOverview,
     PotentialBreach,
     Progress,
     Raster,
@@ -988,6 +989,13 @@ class ThreediCalls:
         """Get a simulation events collection."""
         simulation_events = self.threedi_api.simulations_events(id=simulation_pk)
         return simulation_events
+
+    def fetch_simulation_lizard_postprocessing_overview(self, simulation_pk: int) -> PostProcessingOverview:
+        """Get a simulation lizard postprocessing overview."""
+        lizard_postprocessing_overview = self.threedi_api.simulations_results_post_processing_lizard_overview_list(
+            str(simulation_pk)
+        )
+        return lizard_postprocessing_overview
 
     def create_simulation_settings_physical(self, simulation_pk: int, **data) -> PhysicalSettings:
         """Create a simulation physical settings."""

@@ -117,37 +117,55 @@ class SimulationOverview(uicls, basecls):
         self.model_selection_dlg.exec_()
         if self.model_selection_dlg.model_is_loaded:
             simulation_template = self.model_selection_dlg.current_simulation_template
-            simulation, settings_overview, events = self.get_simulation_data_from_template(simulation_template)
+            (
+                simulation,
+                settings_overview,
+                events,
+                lizard_post_processing_overview,
+            ) = self.get_simulation_data_from_template(simulation_template)
             self.simulation_init_wizard = SimulationInit(
-                self.model_selection_dlg.current_model, simulation_template, settings_overview, events, parent=self
+                self.model_selection_dlg.current_model,
+                simulation_template,
+                settings_overview,
+                events,
+                lizard_post_processing_overview,
+                parent=self,
             )
             self.simulation_init_wizard.exec_()
             if self.simulation_init_wizard.open_wizard:
-                self.new_simulation(simulation, settings_overview, events)
+                self.new_simulation(simulation, settings_overview, events, lizard_post_processing_overview)
 
     def get_simulation_data_from_template(self, template):
         """Fetching simulation, settings and events data from the simulation template."""
-        simulation, settings_overview, events = None, None, None
+        simulation, settings_overview, events, lizard_post_processing_overview = None, None, None, None
         try:
             tc = ThreediCalls(self.threedi_api)
             simulation = template.simulation
-            settings_overview = tc.fetch_simulation_settings_overview(str(simulation.id))
-            events = tc.fetch_simulation_events(simulation.id)
+            sim_id = simulation.id
+            settings_overview = tc.fetch_simulation_settings_overview(str(sim_id))
+            events = tc.fetch_simulation_events(sim_id)
+            cloned_from_url = simulation.cloned_from
+            if cloned_from_url:
+                source_sim_id = cloned_from_url.strip("/").split("/")[-1]
+                lizard_post_processing_overview = tc.fetch_simulation_lizard_postprocessing_overview(source_sim_id)
         except ApiException as e:
             error_msg = extract_error_message(e)
-            self.plugin_dock.communication.bar_error(error_msg)
+            if "No basic post-processing resource found" not in error_msg:
+                self.plugin_dock.communication.bar_error(error_msg)
         except Exception as e:
             error_msg = f"Error: {e}"
             self.plugin_dock.communication.bar_error(error_msg)
-        return simulation, settings_overview, events
+        return simulation, settings_overview, events, lizard_post_processing_overview
 
-    def new_simulation(self, simulation, settings_overview, events):
+    def new_simulation(self, simulation, settings_overview, events, lizard_post_processing_overview):
         """Opening a wizard which allows defining and running new simulations."""
         self.simulation_wizard = SimulationWizard(
             self.plugin_dock, self.model_selection_dlg, self.simulation_init_wizard
         )
         if simulation:
-            self.simulation_wizard.load_template_parameters(simulation, settings_overview, events)
+            self.simulation_wizard.load_template_parameters(
+                simulation, settings_overview, events, lizard_post_processing_overview
+            )
         self.close()
         self.simulation_wizard.exec_()
         simulations_to_run = self.simulation_wizard.new_simulations
