@@ -327,9 +327,6 @@
            <property name="filter">
             <string>GeoTIFF (*.tif *.TIF *.tiff *.TIFF)</string>
            </property>
-           <property name="options">
-            <set>QFileDialog::ReadOnly</set>
-           </property>
           </widget>
          </item>
          <item row="2" column="0">
@@ -803,9 +800,6 @@
            </property>
            <property name="filter">
             <string>GeoTIFF (*.tif *.TIF *.tiff *.TIFF)</string>
-           </property>
-           <property name="options">
-            <set>QFileDialog::ReadOnly</set>
            </property>
           </widget>
          </item>
