@@ -2529,7 +2529,7 @@ class SimulationWizard(QWizard):
                     wind_widget.custom_wind = wind_timeseries_minutes
                     if initial_winddragcoefficient:
                         wind_widget.sp_dc_custom.setValue(initial_winddragcoefficient.value)
-        if init_conditions.include_lizard_post_processing:
+        if init_conditions.include_lizard_post_processing and lizard_post_processing_overview:
             post_processing_widget = self.lizard_post_processing_page.main_widget
             post_processing_results = lizard_post_processing_overview.results
             post_processing_settings = lizard_post_processing_overview.settings
