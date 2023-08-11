@@ -12,7 +12,7 @@ import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from qgis.core import NULL, QgsMapLayerProxyModel
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QSettings, QSize, Qt
+from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
 from qgis.PyQt.QtGui import QColor, QFont, QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import (
     QComboBox,
@@ -97,24 +97,61 @@ class NameWidget(uicls_name_page, basecls_name_page):
 class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
     """Widget for the Simulation Duration page."""
 
+    UTC_DISPLAY_NAME = "UTC"
+
     def __init__(self, parent_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
         set_widget_background_color(self)
+        self.settings = QSettings()
         self.date_from.dateTimeChanged.connect(self.update_time_difference)
         self.date_to.dateTimeChanged.connect(self.update_time_difference)
         self.time_from.dateTimeChanged.connect(self.update_time_difference)
         self.time_to.dateTimeChanged.connect(self.update_time_difference)
+        self.timezone_template = self.label_utc_info.text()
+        self.setup_timezones()
+        self.cbo_timezone.currentTextChanged.connect(self.on_timezone_change)
+
+    def setup_timezones(self):
+        """Populate timezones."""
+        default_timezone = self.settings.value("threedi/timezone", self.UTC_DISPLAY_NAME)
+        for timezone_id in QTimeZone.availableTimeZoneIds():
+            timezone_text = timezone_id.data().decode()
+            timezone = QTimeZone(timezone_id)
+            self.cbo_timezone.addItem(timezone_text, timezone)
+        self.cbo_timezone.setCurrentText(default_timezone)
+        self.on_timezone_change(default_timezone)
+
+    def on_timezone_change(self, timezone_id_str):
+        """Method for handling timezone change."""
+        self.update_time_difference()
+        if timezone_id_str == self.UTC_DISPLAY_NAME:
+            self.label_utc_info.hide()
+        else:
+            self.label_utc_info.show()
+        self.settings.setValue("threedi/timezone", timezone_id_str)
 
     def to_datetime(self):
         """Method for QDateTime ==> datetime conversion."""
-        date_from = self.date_from.dateTime().toString("yyyy-MM-dd")
-        time_from = self.time_from.time().toString("H:m")
-        date_to = self.date_to.dateTime().toString("yyyy-MM-dd")
-        time_to = self.time_to.time().toString("H:m")
-        start = datetime.strptime(f"{date_from} {time_from}", "%Y-%m-%d %H:%M")
-        end = datetime.strptime(f"{date_to} {time_to}", "%Y-%m-%d %H:%M")
+        date_from = self.date_from.date()
+        time_from = self.time_from.time()
+        date_to = self.date_to.date()
+        time_to = self.time_to.time()
+        if self.cbo_timezone.currentText() != self.UTC_DISPLAY_NAME:
+            current_timezone = self.cbo_timezone.currentData()
+            datetime_from = QDateTime(date_from, time_from, current_timezone)
+            datetime_to = QDateTime(date_to, time_to, current_timezone)
+            datetime_from_utc = datetime_from.toUTC()
+            datetime_to_utc = datetime_to.toUTC()
+            date_from, time_from = datetime_from_utc.date(), datetime_from_utc.time()
+            date_to, time_to = datetime_to_utc.date(), datetime_to_utc.time()
+        date_from_str = date_from.toString("yyyy-MM-dd")
+        time_from_str = time_from.toString("H:m")
+        date_to_str = date_to.toString("yyyy-MM-dd")
+        time_to_str = time_to.toString("H:m")
+        start = datetime.strptime(f"{date_from_str} {time_from_str}", "%Y-%m-%d %H:%M")
+        end = datetime.strptime(f"{date_to_str} {time_to_str}", "%Y-%m-%d %H:%M")
         return start, end
 
     def calculate_simulation_duration(self):
@@ -140,6 +177,7 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
             rel_delta = relativedelta(end, start)
             duration = (rel_delta.years, rel_delta.months, rel_delta.days, rel_delta.hours, rel_delta.minutes)
             self.label_total_time.setText("{} years, {} months, {} days, {} hours, {} minutes".format(*duration))
+            self.label_utc_info.setText(self.timezone_template.format(start))
         except ValueError:
             self.label_total_time.setText("Invalid datetime format!")
 
@@ -461,11 +499,11 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                 for state in states:
                     state_name = state.name
                     self.saved_states[state_name] = state
-                    self.cb_saved_states.addItem(state_name)
+                    self.cbo_saved_states.addItem(state_name)
             if self.initial_saved_state:
-                initial_saved_state_idx = self.cb_saved_states.findText(self.initial_saved_state.saved_state.name)
+                initial_saved_state_idx = self.cbo_saved_states.findText(self.initial_saved_state.saved_state.name)
                 if initial_saved_state_idx >= 0:
-                    self.cb_saved_states.setCurrentIndex(initial_saved_state_idx)
+                    self.cbo_saved_states.setCurrentIndex(initial_saved_state_idx)
             initial_waterlevels = tc.fetch_3di_model_initial_waterlevels(model_id) or []
             initial_waterlevels_2d = {iw for iw in initial_waterlevels if iw.dimension == "two_d"}
             if initial_waterlevels_2d:
@@ -1415,6 +1453,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.plot_widget.show()
         self.plot_bar_graph = None
         self.plot_ticks = None
+        self.label_cet_info.hide()
         current_text = self.cbo_prec_type.currentText()
         if current_text == EventTypes.CONSTANT.value:
             x_values, y_values = self.constant_values()
@@ -1426,6 +1465,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             x_values, y_values = [], []
             self.plot_widget.hide()
             self.plot_label.hide()
+            self.label_cet_info.show()
         else:
             self.plot_widget.hide()
             self.plot_label.hide()
@@ -2692,7 +2732,7 @@ class SimulationWizard(QWizard):
 
             # Saved state
             initial_conditions.saved_state = self.init_conditions_page.main_widget.saved_states.get(
-                self.init_conditions_page.main_widget.cb_saved_states.currentText()
+                self.init_conditions_page.main_widget.cbo_saved_states.currentText()
             )
 
         # Laterals

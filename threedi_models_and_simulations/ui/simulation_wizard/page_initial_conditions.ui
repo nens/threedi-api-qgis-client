@@ -719,7 +719,7 @@
         </property>
         <layout class="QGridLayout" name="gridLayout_8">
          <item row="0" column="0">
-          <widget class="QComboBox" name="cb_saved_states">
+          <widget class="QComboBox" name="cbo_saved_states">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
