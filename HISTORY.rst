@@ -4,7 +4,7 @@ History
 3.5.3 (unreleased)
 ------------------
 
-- Fixed issues #474, #481, #484.
+- Fixed issues #474, #481, #483, #484.
 - Implemented #263, #452, #473.
 
 
