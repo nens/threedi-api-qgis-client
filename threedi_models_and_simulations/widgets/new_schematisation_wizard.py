@@ -440,10 +440,11 @@ class SchematisationSettingsPage(QWizardPage):
             )
             warning_messages.append(warn)
         # Check the validity of the raster paths
-        valid_path_required_widgets = [
-            ("DEM", self.main_widget.dem_file),
-            ("friction", self.main_widget.frict_coef_file),
-        ]
+        valid_path_required_widgets = []
+        if self.main_widget.use_2d_flow_group.isChecked():
+            valid_path_required_widgets.append(("DEM", self.main_widget.dem_file))
+            if self.main_widget.frict_coef.value() == 0.0:
+                valid_path_required_widgets.append(("friction", self.main_widget.frict_coef_file))
         invalid_path_settings = []
         for setting_name, setting_widget in valid_path_required_widgets:
             raster_filepath = Path(setting_widget.filePath())
