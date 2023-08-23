@@ -57,6 +57,7 @@ from threedi_api_client.openapi import (
     SimulationSettingsOverview,
     SimulationStatus,
     SqliteFileUpload,
+    StableThresholdSavedState,
     TableStructureControl,
     Template,
     ThreediModel,
@@ -556,9 +557,14 @@ class ThreediCalls:
         )
         return dmg_post_processing
 
-    def create_simulation_saved_state_after_simulation(self, simulation_pk: int, **data) -> TimedSavedStateUpdate:
-        """Add add_saved_state_after_simulation to the given simulation."""
+    def create_simulation_saved_state_timed(self, simulation_pk: int, **data) -> TimedSavedStateUpdate:
+        """Add timed saved state to the given simulation."""
         saved_state = self.threedi_api.simulations_create_saved_states_timed_create(str(simulation_pk), data)
+        return saved_state
+
+    def create_simulation_saved_state_stable_threshold(self, simulation_pk: int, **data) -> StableThresholdSavedState:
+        """Add stable threshold saved state to the given simulation."""
+        saved_state = self.threedi_api.simulations_create_saved_states_stable_threshold_create(str(simulation_pk), data)
         return saved_state
 
     def create_simulation_initial_1d_water_level_constant(self, simulation_pk: int, **data) -> OneDWaterLevel:
