@@ -1051,7 +1051,6 @@ class SimulationRunner(QRunnable):
                 self.report_progress(simulation_initialized=True)
             self.report_finished("Simulations successfully initialized!")
         except ApiException as e:
-            raise e
             error_msg = extract_error_message(e)
             self.report_failure(error_msg)
         except Exception as e:
