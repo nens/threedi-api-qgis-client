@@ -505,7 +505,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                 if initial_saved_state_idx >= 0:
                     self.cbo_saved_states.setCurrentIndex(initial_saved_state_idx)
             initial_waterlevels = tc.fetch_3di_model_initial_waterlevels(model_id) or []
-            initial_waterlevels_2d = {iw for iw in initial_waterlevels if iw.dimension == "two_d"}
+            initial_waterlevels_2d = [iw for iw in initial_waterlevels if iw.dimension == "two_d"]
             if initial_waterlevels_2d:
                 self.rb_2d_online_raster.setChecked(True)
                 self.rb_gw_online_raster.setChecked(True)
@@ -2731,9 +2731,10 @@ class SimulationWizard(QWizard):
                 )
 
             # Saved state
-            initial_conditions.saved_state = self.init_conditions_page.main_widget.saved_states.get(
-                self.init_conditions_page.main_widget.cbo_saved_states.currentText()
-            )
+            if self.init_conditions_page.main_widget.gb_saved_state.isChecked():
+                initial_conditions.saved_state = self.init_conditions_page.main_widget.saved_states.get(
+                    self.init_conditions_page.main_widget.cbo_saved_states.currentText()
+                )
 
         # Laterals
         if self.init_conditions.include_laterals:
