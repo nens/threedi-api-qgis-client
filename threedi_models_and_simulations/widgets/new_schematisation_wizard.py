@@ -5,6 +5,7 @@ import shutil
 import time
 from collections import defaultdict
 from operator import itemgetter
+from pathlib import Path
 
 from qgis.core import QgsFeature, QgsRasterLayer
 from qgis.PyQt import uic
@@ -418,25 +419,48 @@ class SchematisationSettingsPage(QWizardPage):
 
     def validatePage(self):
         """Overriding page validation logic."""
-        non_zero_widgets = [
+        warning_messages = []
+        self.settings_are_valid = True
+        # Check non-zero settings
+        non_zero_required_widgets = [
             ("Simulation timestep", self.main_widget.sim_time_step),
         ]
         if self.main_widget.use_2d_flow_group.isChecked():
-            non_zero_widgets.append(("Computational Cell Size", self.main_widget.grid_space))
+            non_zero_required_widgets.append(("Computational Cell Size", self.main_widget.grid_space))
             if not self.main_widget.frict_coef_file.filePath():
-                non_zero_widgets.append(("Global 2D friction coefficient", self.main_widget.frict_coef))
-        non_zero_settings = []
-        for setting_name, setting_widget in non_zero_widgets:
+                non_zero_required_widgets.append(("Global 2D friction coefficient", self.main_widget.frict_coef))
+        invalid_zero_settings = []
+        for setting_name, setting_widget in non_zero_required_widgets:
             if not setting_widget.value() > 0:
-                non_zero_settings.append(setting_name)
-        if non_zero_settings:
+                invalid_zero_settings.append(setting_name)
+        if invalid_zero_settings:
             self.settings_are_valid = False
-            warn = "\n".join(f"'{setting_name}' value have to be greater than 0" for setting_name in non_zero_settings)
-            self.parent_wizard.plugin_dock.communication.show_warn(warn)
-            return False
-        else:
-            self.settings_are_valid = True
-            return True
+            warn = "\n".join(
+                f"'{setting_name}' value have to be greater than 0" for setting_name in invalid_zero_settings
+            )
+            warning_messages.append(warn)
+        # Check the validity of the raster paths
+        valid_path_required_widgets = []
+        if self.main_widget.use_2d_flow_group.isChecked():
+            if self.main_widget.dem_file.filePath():
+                valid_path_required_widgets.append(("DEM", self.main_widget.dem_file))
+            if self.main_widget.frict_coef.value() == 0.0:
+                valid_path_required_widgets.append(("friction", self.main_widget.frict_coef_file))
+        invalid_path_settings = []
+        for setting_name, setting_widget in valid_path_required_widgets:
+            raster_filepath = Path(setting_widget.filePath())
+            if not os.path.exists(raster_filepath) or raster_filepath.suffix.lower() not in {".tif", ".tiff"}:
+                invalid_path_settings.append(setting_name)
+        if invalid_path_settings:
+            self.settings_are_valid = False
+            warn = "\n".join(
+                f"Chosen {setting_name} file does not exist or is not a GeoTIFF (.tif or .tiff)"
+                for setting_name in invalid_path_settings
+            )
+            warning_messages.append(warn)
+        if warning_messages:
+            self.parent_wizard.plugin_dock.communication.show_warn("\n".join(warning_messages))
+        return self.settings_are_valid
 
 
 class NewSchematisationWizard(QWizard):
