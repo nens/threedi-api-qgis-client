@@ -63,7 +63,6 @@ class LocalTimeseriesRain(SimulationElement):
 
 @dataclass
 class InitOptions(SimulationElement):
-    generate_saved_state: bool = None
     raster_edits: RasterEdit = None
     leakage: Leakage = None
     sources_sinks: SourcesSinks = None
@@ -175,6 +174,14 @@ class LizardPostProcessing(SimulationElement):
 
 
 @dataclass
+class SavedState(SimulationElement):
+    name: str = None
+    tags: str = None
+    time: int = None
+    thresholds: list = None
+
+
+@dataclass
 class NewSimulation:
     simulation_template_id: str
     name: str
@@ -195,6 +202,7 @@ class NewSimulation:
     wind: Wind = None
     settings: Settings = None
     lizard_post_processing: LizardPostProcessing = None
+    new_saved_state: SavedState = None
     template_name: str = None
     # Last two attributes will be added after new simulation initialization
     simulation: Simulation = None

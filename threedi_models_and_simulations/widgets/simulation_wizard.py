@@ -26,7 +26,7 @@ from qgis.PyQt.QtWidgets import (
     QWizard,
     QWizardPage,
 )
-from threedi_api_client.openapi import ApiException
+from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
@@ -79,6 +79,11 @@ uicls_settings_page, basecls_settings_page = uic.loadUiType(
 uicls_lizard_post_processing_page, basecls_lizard_post_processing_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_lizard_post_processing.ui")
 )
+
+uicls_saved_state_page, basecls_saved_state_page = uic.loadUiType(
+    os.path.join(base_dir, "ui", "simulation_wizard", "page_saved_state.ui")
+)
+
 uicls_summary_page, basecls_summary_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_initiation.ui")
 )
@@ -1805,6 +1810,59 @@ class SettingsWidget(uicls_settings_page, basecls_settings_page):
         return aggregation_settings_list
 
 
+class SavedStateWidget(uicls_saved_state_page, basecls_saved_state_page):
+    """Widget for the new saved state page."""
+
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        set_widget_background_color(self)
+        self.connect_signals()
+
+    def connect_signals(self):
+        """Connecting widgets signals."""
+        self.rb_end_of_sim.toggled.connect(self.on_creation_options_changed)
+        self.rb_after_time.toggled.connect(self.on_creation_options_changed)
+        self.rb_stable_flow.toggled.connect(self.on_creation_options_changed)
+        self.rb_water_level.toggled.connect(self.on_creation_options_changed)
+        self.rb_flow_velocity.toggled.connect(self.on_creation_options_changed)
+
+    def on_creation_options_changed(self):
+        """On saved state creation option change"""
+        if self.rb_stable_flow.isChecked():
+            self.gb_stable_flow.setEnabled(True)
+            if self.rb_water_level.isChecked():
+                self.sp_threshold.setSuffix(" m")
+            if self.rb_flow_velocity.isChecked():
+                self.sp_threshold.setSuffix(" m/s")
+        else:
+            self.gb_stable_flow.setDisabled(True)
+
+    def get_saved_state_data(self):
+        """Get saved state data."""
+        name = self.le_saved_state_name.text()
+        tags_str = self.le_saved_state_tags.text().strip()
+        tags = [text.strip() for text in tags_str.split(",")] if tags_str else []
+        after_time = -1
+        thresholds = []
+        if self.rb_after_time.isChecked():
+            units = self.cbo_units.currentText()
+            if units == "hrs":
+                seconds_per_unit = 3600
+            elif units == "mins":
+                seconds_per_unit = 60
+            else:
+                seconds_per_unit = 1
+            after_time = self.sp_time.value() * seconds_per_unit
+        elif self.rb_stable_flow.isChecked():
+            threshold = Threshold(
+                variable="s1" if self.rb_water_level.isChecked() else "u1", value=self.sp_threshold.value()
+            )
+            thresholds.append(threshold)
+        return name, tags, after_time, thresholds
+
+
 class LizardPostprocessingWidget(uicls_lizard_post_processing_page, basecls_lizard_post_processing_page):
     """Widget for the Post-processing in Lizard page."""
 
@@ -2178,6 +2236,23 @@ class SettingsPage(QWizardPage):
         self.adjustSize()
 
 
+class SavedStatePage(QWizardPage):
+    """New saved state definition page."""
+
+    STEP_NAME = "Generate saved state"
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = SavedStateWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.registerField("saved_state_name*", self.main_widget.le_saved_state_name)
+        self.adjustSize()
+
+
 class LizardPostProcessingPage(QWizardPage):
     """Post-processing in Lizard definition page."""
 
@@ -2251,6 +2326,9 @@ class SimulationWizard(QWizard):
             self.addPage(self.wind_page)
         self.settings_page = SettingsPage(self)
         self.addPage(self.settings_page)
+        if init_conditions.generate_saved_state:
+            self.generate_saved_state_page = SavedStatePage(self)
+            self.addPage(self.generate_saved_state_page)
         if init_conditions.include_lizard_post_processing:
             self.lizard_post_processing_page = LizardPostProcessingPage(self)
             self.addPage(self.lizard_post_processing_page)
@@ -2784,6 +2862,12 @@ class SimulationWizard(QWizard):
                     repair_time_buildings,
                 )
                 lizard_post_processing.damage_estimation = damage_estimation
+        # Generate saved state
+        if self.init_conditions.generate_saved_state:
+            new_saved_state_data = self.generate_saved_state_page.main_widget.get_saved_state_data()
+            new_saved_state = dm.SavedState(*new_saved_state_data)
+        else:
+            new_saved_state = dm.SavedState()
         simulation_template = self.init_conditions_dlg.simulation_template
         sim_temp_id = simulation_template.simulation.id
         simulation_difference = self.init_conditions.simulations_difference
@@ -2815,6 +2899,7 @@ class SimulationWizard(QWizard):
             new_simulation.wind = wind
             new_simulation.settings = settings
             new_simulation.lizard_post_processing = lizard_post_processing
+            new_simulation.new_saved_state = new_saved_state
             if self.summary_page.main_widget.cb_save_template.isChecked():
                 template_name = self.summary_page.main_widget.template_name.text()
                 new_simulation.template_name = template_name

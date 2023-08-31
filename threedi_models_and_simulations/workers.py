@@ -520,11 +520,7 @@ class SimulationRunner(QRunnable):
     def include_init_options(self):
         """Apply initialization options to the new simulation."""
         sim_id = self.current_simulation.simulation.id
-        sim_name = self.current_simulation.name
-        duration = self.current_simulation.duration
         init_options = self.current_simulation.init_options
-        if init_options.generate_saved_state:
-            self.tc.create_simulation_saved_state_after_simulation(sim_id, time=duration, name=sim_name)
         if init_options.raster_edits:
             re = init_options.raster_edits
             raster_edit_data = {
@@ -986,6 +982,24 @@ class SimulationRunner(QRunnable):
                     repair_time_buildings=de.repair_time_buildings,
                 )
 
+    def include_new_saved_state(self):
+        """Generate a new saved state along the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        duration = self.current_simulation.duration
+        new_saved_state = self.current_simulation.new_saved_state
+        if new_saved_state:
+            if new_saved_state.thresholds:
+                self.tc.create_simulation_saved_state_stable_threshold(
+                    sim_id, name=new_saved_state.name, tags=new_saved_state.tags, thresholds=new_saved_state.thresholds
+                )
+            else:
+                self.tc.create_simulation_saved_state_timed(
+                    sim_id,
+                    name=new_saved_state.name,
+                    tags=new_saved_state.tags,
+                    time=new_saved_state.time if new_saved_state.time >= 0 else duration,
+                )
+
     def start_simulation(self):
         """Start (or add to queue) given simulation."""
         sim_id = self.current_simulation.simulation.id
@@ -1028,6 +1042,8 @@ class SimulationRunner(QRunnable):
                 self.include_wind()
                 self.report_progress()
                 self.include_settings()
+                self.report_progress()
+                self.include_new_saved_state()
                 self.report_progress()
                 self.include_lizard_post_processing()
                 self.report_progress()
