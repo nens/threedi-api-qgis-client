@@ -1833,7 +1833,7 @@ class SavedStateWidget(uicls_saved_state_page, basecls_saved_state_page):
         if self.rb_stable_flow.isChecked():
             self.gb_stable_flow.setEnabled(True)
             if self.rb_water_level.isChecked():
-                self.sp_threshold.setSuffix(" m MSL")
+                self.sp_threshold.setSuffix(" m")
             if self.rb_flow_velocity.isChecked():
                 self.sp_threshold.setSuffix(" m/s")
         else:
