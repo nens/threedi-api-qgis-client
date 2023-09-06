@@ -116,6 +116,7 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
         self.time_to.dateTimeChanged.connect(self.update_time_difference)
         self.timezone_template = self.label_utc_info.text()
         self.setup_timezones()
+        self.grp_timezone.toggled.connect(self.on_timezone_applied)
         self.cbo_timezone.currentTextChanged.connect(self.on_timezone_change)
 
     def setup_timezones(self):
@@ -128,13 +129,20 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
         self.cbo_timezone.setCurrentText(default_timezone)
         self.on_timezone_change(default_timezone)
 
+    def on_timezone_applied(self):
+        """Method for handling timezone group toggling."""
+        self.on_timezone_change(self.cbo_timezone.currentText())
+
     def on_timezone_change(self, timezone_id_str):
         """Method for handling timezone change."""
         self.update_time_difference()
-        if timezone_id_str == self.UTC_DISPLAY_NAME:
-            self.label_utc_info.hide()
+        if self.grp_timezone.isChecked():
+            if timezone_id_str == self.UTC_DISPLAY_NAME:
+                self.label_utc_info.hide()
+            else:
+                self.label_utc_info.show()
         else:
-            self.label_utc_info.show()
+            self.label_utc_info.hide()
         self.settings.setValue("threedi/timezone", timezone_id_str)
 
     def to_datetime(self):
@@ -143,7 +151,7 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
         time_from = self.time_from.time()
         date_to = self.date_to.date()
         time_to = self.time_to.time()
-        if self.cbo_timezone.currentText() != self.UTC_DISPLAY_NAME:
+        if self.grp_timezone.isChecked() and self.cbo_timezone.currentText() != self.UTC_DISPLAY_NAME:
             current_timezone = self.cbo_timezone.currentData()
             datetime_from = QDateTime(date_from, time_from, current_timezone)
             datetime_to = QDateTime(date_to, time_to, current_timezone)
@@ -182,7 +190,7 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
             rel_delta = relativedelta(end, start)
             duration = (rel_delta.years, rel_delta.months, rel_delta.days, rel_delta.hours, rel_delta.minutes)
             self.label_total_time.setText("{} years, {} months, {} days, {} hours, {} minutes".format(*duration))
-            self.label_utc_info.setText(self.timezone_template.format(start))
+            self.label_utc_info.setText(self.timezone_template.format(start, end))
         except ValueError:
             self.label_total_time.setText("Invalid datetime format!")
 
