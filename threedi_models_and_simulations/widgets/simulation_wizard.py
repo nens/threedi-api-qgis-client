@@ -1827,6 +1827,9 @@ class SavedStateWidget(uicls_saved_state_page, basecls_saved_state_page):
         self.parent_page = parent_page
         set_widget_background_color(self)
         self.connect_signals()
+        # Hide stable flow widgets until backend will be able to handle it
+        self.rb_stable_flow.hide()
+        self.gb_stable_flow.hide()
 
     def connect_signals(self):
         """Connecting widgets signals."""
