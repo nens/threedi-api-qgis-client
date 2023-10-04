@@ -43,6 +43,7 @@ class SchematisationDownload(uicls, basecls):
         self.revisions = None
         self.local_schematisations = list_local_schematisations(self.working_dir)
         self.downloaded_local_schematisation = None
+        self.downloaded_sqlite_filepath = None
         self.tv_schematisations_model = QStandardItemModel()
         self.schematisations_tv.setModel(self.tv_schematisations_model)
         self.tv_revisions_model = QStandardItemModel()
@@ -227,14 +228,15 @@ class SchematisationDownload(uicls, basecls):
                 local_schematisation_present = False
 
             def decision_tree():
+                replace, store, cancel = "Replace", "Store", "Cancel"
                 title = "Pick action"
                 question = f"Replace local WIP or store as a revision {revision_number}?"
-                picked_action_name = self.communication.custom_ask(self, title, question, "Replace", "Store")
-                if picked_action_name == "Replace":
+                picked_action_name = self.communication.custom_ask(self, title, question, replace, store, cancel)
+                if picked_action_name == replace:
                     # Replace
                     local_schematisation.set_wip_revision(revision_number)
                     schema_db_dir = local_schematisation.wip_revision.schematisation_dir
-                else:
+                elif picked_action_name == store:
                     # Store as a separate revision
                     if revision_number in local_schematisation.revisions:
                         question = f"Replace local revision {revision_number} or Cancel?"
@@ -247,6 +249,8 @@ class SchematisationDownload(uicls, basecls):
                     else:
                         local_revision = local_schematisation.add_revision(revision_number)
                         schema_db_dir = local_revision.schematisation_dir
+                else:
+                    schema_db_dir = None
                 return schema_db_dir
 
             if local_schematisation_present:
@@ -325,6 +329,7 @@ class SchematisationDownload(uicls, basecls):
                 self.pbar_download.setValue(current_progress)
             local_schematisation.wip_revision.sqlite_filename = sqlite_file
             self.downloaded_local_schematisation = local_schematisation
+            self.downloaded_sqlite_filepath = os.path.join(schematisation_db_dir, sqlite_file)
             sleep(1)
             msg = f"Schematisation '{schematisation_name} (revision {revision_number})' downloaded!"
             self.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
