@@ -4,10 +4,10 @@ History
 3.6.1 (unreleased)
 ------------------
 
-- Overviews GUI improvements
-- Updated threedi-api-client version to 4.1.4
-- Updated threedi-modelchecker version to 2.4.0
-- Updated threedi-schema version to 0.217.11
+- Overviews GUI improvements.
+- Updated threedi-api-client version to 4.1.4.
+- Updated threedi-modelchecker version to 2.4.0.
+- Updated threedi-schema version to 0.217.11.
 
 
 3.6.0 (2023-09-21)
