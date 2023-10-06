@@ -8,7 +8,7 @@ History
 - Updated threedi-api-client version to 4.1.4.
 - Updated threedi-modelchecker version to 2.4.0.
 - Updated threedi-schema version to 0.217.11.
-- Fixed issues #439.
+- Fixed issues: #439, #498.
 
 
 3.6.0 (2023-09-21)

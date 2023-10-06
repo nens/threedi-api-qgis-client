@@ -2607,16 +2607,19 @@ class SimulationWizard(QWizard):
             if events.timeseriesrain:
                 rain = events.timeseriesrain[0]
                 if rain.constant:
-                    precipitation_widget.cbo_prec_type.setCurrentText("Constant")
-                    precipitation_widget.sp_start_after_constant.setValue(rain.offset // 3600)
+                    precipitation_widget.cbo_prec_type.setCurrentText(EventTypes.CONSTANT.value)
+                    rain_constant_start_after = rain.offset // 3600
+                    rain_constant_duration = rain.duration // 3600
+                    rain_constant_stop_after = rain_constant_start_after + rain_constant_duration
+                    precipitation_widget.sp_start_after_constant.setValue(rain_constant_start_after)
                     if rain.duration < simulation_duration:
-                        precipitation_widget.sp_stop_after_constant.setValue(rain.duration // 3600)
+                        precipitation_widget.sp_stop_after_constant.setValue(rain_constant_stop_after)
                     intensity_ms = rain.values[0][-1]
                     intensity_mmh = ms_to_mmh(intensity_ms)
                     precipitation_widget.sp_intensity.setValue(intensity_mmh)
                 else:
                     simulation = precipitation_widget.dd_simulation.currentText()
-                    precipitation_widget.cbo_prec_type.setCurrentText("Custom")
+                    precipitation_widget.cbo_prec_type.setCurrentText(EventTypes.CUSTOM.value)
                     precipitation_widget.le_upload_rain.setText(from_template_placeholder)
                     precipitation_widget.sp_start_after_custom.setValue(rain.offset // 3600)
                     precipitation_widget.cb_interpolate_rain.setChecked(rain.interpolate)
@@ -2627,17 +2630,20 @@ class SimulationWizard(QWizard):
                     precipitation_widget.plot_precipitation()
             if events.lizardrasterrain:
                 rain = events.lizardrasterrain[0]
-                precipitation_widget.cbo_prec_type.setCurrentText("Radar - NL Only")
-                precipitation_widget.sp_start_after_radar.setValue(rain.offset // 3600)
+                precipitation_widget.cbo_prec_type.setCurrentText(EventTypes.RADAR.value)
+                rain_radar_start_after = rain.offset // 3600
+                rain_radar_duration = rain.duration // 3600
+                rain_radar_stop_after = rain_radar_start_after + rain_radar_duration
+                precipitation_widget.sp_start_after_radar.setValue(rain_radar_start_after)
                 if rain.duration < simulation_duration:
-                    precipitation_widget.sp_stop_after_radar.setValue(rain.duration // 3600)
+                    precipitation_widget.sp_stop_after_radar.setValue(rain_radar_stop_after)
         if init_conditions.include_wind:
             wind_widget = self.wind_page.main_widget
             if events.wind:
                 wind = events.wind[0]
                 initial_winddragcoefficient = events.initial_winddragcoefficient
                 if wind.speed_constant and wind.direction_constant:
-                    wind_widget.cbo_wind_type.setCurrentText("Constant")
+                    wind_widget.cbo_wind_type.setCurrentText(EventTypes.CONSTANT.value)
                     wind_widget.sp_start_wind_constant.setValue(wind.offset // 3600)
                     wind_widget.cbo_windspeed_u.setCurrentText(wind.units)
                     timestep, speed, direction = wind.values[0]
@@ -2646,7 +2652,7 @@ class SimulationWizard(QWizard):
                     if initial_winddragcoefficient:
                         wind_widget.sp_dc_constant.setValue(initial_winddragcoefficient.value)
                 else:
-                    wind_widget.cbo_wind_type.setCurrentText("Custom")
+                    wind_widget.cbo_wind_type.setCurrentText(EventTypes.CUSTOM.value)
                     wind_widget.le_upload_wind.setText(from_template_placeholder)
                     wind_widget.sp_start_wind_custom.setValue(wind.offset // 3600)
                     wind_widget.cb_interpolate_speed.setChecked(wind.speed_interpolate)
