@@ -90,7 +90,7 @@ class WSProgressesSentinel(QObject):
             error_msg = extract_error_message(e)
             self.thread_failed.emit(error_msg)
             return
-        self.ws_client = QtWebSockets.QWebSocket("", QtWebSockets.QWebSocketProtocol.Version13, None)
+        self.ws_client = QtWebSockets.QWebSocket(version=QtWebSockets.QWebSocketProtocol.VersionLatest)
         self.ws_client.textMessageReceived.connect(self.all_simulations_progress_web_socket)
         self.ws_client.error.connect(self.websocket_error)
         self.start_listening()
