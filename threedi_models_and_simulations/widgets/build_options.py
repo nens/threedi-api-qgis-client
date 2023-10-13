@@ -50,7 +50,7 @@ class BuildOptions:
                 self.plugin_dock.update_schematisation_view()
                 sqlite_filepath = local_schematisation.sqlite if not custom_sqlite_filepath else custom_sqlite_filepath
                 msg = f"Schematisation '{local_schematisation.name}' {action.value}!\n"
-                msg += f"Please use the 3Di Toolbox to load it to your project from the Spatialite:\n{sqlite_filepath}"
+                msg += f"Please use the 3Di Schematisation Editor to load it to your project from the Spatialite:\n{sqlite_filepath}"
                 self.plugin_dock.communication.show_info(msg)
             except (TypeError, ValueError):
                 error_msg = "Invalid schematisation directory structure. Loading schematisation canceled."
