@@ -19,7 +19,7 @@ from .model_selection import ModelSelectionDialog
 from .simulation_wizard import SimulationWizard
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_overview.ui"))
+uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_overview.ui"))
 
 
 class SimulationOverview(uicls, basecls):
@@ -48,6 +48,7 @@ class SimulationOverview(uicls, basecls):
         self.plugin_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_progress)
         self.pb_new_sim.clicked.connect(self.new_wizard_init)
         self.pb_stop_sim.clicked.connect(self.stop_simulation)
+        self.pb_hide.clicked.connect(self.close)
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""

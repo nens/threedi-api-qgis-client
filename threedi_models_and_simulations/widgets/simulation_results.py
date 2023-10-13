@@ -24,7 +24,7 @@ from ..workers import DownloadProgressWorker
 from .custom_items import DownloadProgressDelegate
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
-uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "sim_results.ui"))
+uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_results.ui"))
 
 
 class SimulationResults(uicls, basecls):
