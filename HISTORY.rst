@@ -1,7 +1,7 @@
 History
 =======
 
-3.6.1 (unreleased)
+3.6.1 (2023-10-16)
 ------------------
 
 - Overviews GUI improvements.
