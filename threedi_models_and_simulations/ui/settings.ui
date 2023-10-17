@@ -29,12 +29,12 @@
    <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Base API URL:</string>
+      <string>Base URL:</string>
      </property>
     </widget>
    </item>
    <item row="0" column="1" colspan="4">
-    <widget class="QLineEdit" name="api_url_le">
+    <widget class="QLineEdit" name="base_url_le">
      <property name="text">
       <string/>
      </property>
@@ -202,7 +202,7 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>api_url_le</tabstop>
+  <tabstop>base_url_le</tabstop>
   <tabstop>save_pb</tabstop>
   <tabstop>cancel_pb</tabstop>
   <tabstop>defaults_pb</tabstop>

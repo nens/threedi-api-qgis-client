@@ -4,7 +4,7 @@ History
 3.6.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixes/enhancements: #505
 
 
 3.6.1 (2023-10-16)
