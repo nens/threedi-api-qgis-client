@@ -13,9 +13,10 @@ from qgis.PyQt.QtCore import QDate, QSettings, QSize, Qt, QTime
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QGridLayout, QSizePolicy, QWizard, QWizardPage
 from threedi_api_client.openapi import ApiException
+from threedi_mi_utils import LocalSchematisation
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import EMPTY_DB_PATH, LocalSchematisation, SchematisationRasterReferences, extract_error_message
+from ..utils import EMPTY_DB_PATH, SchematisationRasterReferences, extract_error_message
 from ..utils_qgis import execute_sqlite_queries, sqlite_layer
 from ..utils_ui import ensure_valid_schema, get_filepath, scan_widgets_parameters
 

@@ -10,15 +10,10 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
 from threedi_api_client.openapi import ApiException
+from threedi_mi_utils import LocalSchematisation, list_local_schematisations
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import (
-    LocalSchematisation,
-    extract_error_message,
-    get_download_file,
-    list_local_schematisations,
-    unzip_archive,
-)
+from ..utils import extract_error_message, get_download_file, unzip_archive
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "schematisation_download.ui"))

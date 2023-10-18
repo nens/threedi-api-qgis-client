@@ -13,6 +13,7 @@ from PyQt5.QtNetwork import QNetworkRequest
 from qgis.PyQt.QtCore import QByteArray, QObject, QRunnable, QUrl, pyqtSignal, pyqtSlot
 from threedi_api_client.files import upload_file
 from threedi_api_client.openapi import ApiException
+from threedi_mi_utils import bypass_max_path_limit
 
 from .api_calls.threedi_calls import ThreediCalls
 from .data_models import simulation_data_models as dm
@@ -27,7 +28,6 @@ from .utils import (
     TEMPDIR,
     EventTypes,
     UploadFileStatus,
-    bypass_max_path_limit,
     extract_error_message,
     get_download_file,
     split_to_even_chunks,

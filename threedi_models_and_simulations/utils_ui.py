@@ -20,8 +20,7 @@ from qgis.PyQt.QtWidgets import (
     QTimeEdit,
     QWidget,
 )
-
-from .utils import bypass_max_path_limit
+from threedi_mi_utils import bypass_max_path_limit
 
 
 def style_path(qml_filename):
