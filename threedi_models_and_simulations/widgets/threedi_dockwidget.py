@@ -219,7 +219,6 @@ class ThreediDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.upload_dlg.raise_()
         self.upload_dlg.activateWindow()
 
-    @staticmethod
-    def on_manage():
+    def on_manage(self):
         """Open 3Di management webpage."""
-        webbrowser.open("https://management.3di.live/")
+        webbrowser.open(self.plugin_settings.management_url)
