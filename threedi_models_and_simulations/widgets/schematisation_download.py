@@ -322,7 +322,6 @@ class SchematisationDownload(uicls, basecls):
                 get_download_file(raster_download, raster_filepath)
                 current_progress += 1
                 self.pbar_download.setValue(current_progress)
-            local_schematisation.wip_revision.sqlite_filename = sqlite_file
             self.downloaded_local_schematisation = local_schematisation
             self.downloaded_sqlite_filepath = os.path.join(schematisation_db_dir, sqlite_file)
             sleep(1)

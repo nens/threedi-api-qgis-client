@@ -515,7 +515,6 @@ class NewSchematisationWizard(QWizard):
             sqlite_filename = f"{name}.sqlite"
             sqlite_filepath = os.path.join(wip_revision.schematisation_dir, sqlite_filename)
             shutil.copyfile(EMPTY_DB_PATH, sqlite_filepath)
-            wip_revision.sqlite_filename = sqlite_filename
             for raster_filepath in raster_filepaths:
                 if raster_filepath:
                     new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_filepath))
@@ -587,7 +586,6 @@ class NewSchematisationWizard(QWizard):
             raster_paths = self.get_paths_from_sqlite(src_db)
             src_dir = os.path.dirname(src_db)
             shutil.copyfile(src_db, sqlite_filepath)
-            wip_revision.sqlite_filename = sqlite_filename
             new_paths = defaultdict(dict)
             missing_rasters = []
             for table_name, raster_paths_info in raster_paths.items():
