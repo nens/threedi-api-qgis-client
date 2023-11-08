@@ -13,9 +13,10 @@ from qgis.PyQt.QtCore import QDate, QSettings, QSize, Qt, QTime
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QGridLayout, QSizePolicy, QWizard, QWizardPage
 from threedi_api_client.openapi import ApiException
+from threedi_mi_utils import LocalSchematisation
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import EMPTY_DB_PATH, LocalSchematisation, SchematisationRasterReferences, extract_error_message
+from ..utils import EMPTY_DB_PATH, SchematisationRasterReferences, extract_error_message
 from ..utils_qgis import execute_sqlite_queries, sqlite_layer
 from ..utils_ui import ensure_valid_schema, get_filepath, scan_widgets_parameters
 
@@ -514,7 +515,6 @@ class NewSchematisationWizard(QWizard):
             sqlite_filename = f"{name}.sqlite"
             sqlite_filepath = os.path.join(wip_revision.schematisation_dir, sqlite_filename)
             shutil.copyfile(EMPTY_DB_PATH, sqlite_filepath)
-            wip_revision.sqlite_filename = sqlite_filename
             for raster_filepath in raster_filepaths:
                 if raster_filepath:
                     new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_filepath))
@@ -586,7 +586,6 @@ class NewSchematisationWizard(QWizard):
             raster_paths = self.get_paths_from_sqlite(src_db)
             src_dir = os.path.dirname(src_db)
             shutil.copyfile(src_db, sqlite_filepath)
-            wip_revision.sqlite_filename = sqlite_filename
             new_paths = defaultdict(dict)
             missing_rasters = []
             for table_name, raster_paths_info in raster_paths.items():

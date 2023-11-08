@@ -10,16 +10,10 @@ from qgis.PyQt.QtCore import QSettings, Qt, QThreadPool
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QFileDialog
 from threedi_api_client.openapi import ApiException
+from threedi_mi_utils import LocalRevision, LocalSchematisation, bypass_max_path_limit, list_local_schematisations
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import (
-    API_DATETIME_FORMAT,
-    LocalRevision,
-    LocalSchematisation,
-    bypass_max_path_limit,
-    extract_error_message,
-    list_local_schematisations,
-)
+from ..utils import API_DATETIME_FORMAT, extract_error_message
 from ..workers import DownloadProgressWorker
 from .custom_items import DownloadProgressDelegate
 

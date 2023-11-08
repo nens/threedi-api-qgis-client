@@ -4,7 +4,7 @@ History
 3.6.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Moved handling of the 3Di working directory structure to threedi_mi_utils module.
 
 
 3.6.2 (2023-10-24)

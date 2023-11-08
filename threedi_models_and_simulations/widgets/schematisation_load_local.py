@@ -4,10 +4,9 @@ import logging
 import os
 
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QItemSelection, QItemSelectionModel, Qt
+from qgis.PyQt.QtCore import QItemSelectionModel, Qt
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
-
-from ..utils import WIPRevision, list_local_schematisations, replace_revision_data
+from threedi_mi_utils import WIPRevision, list_local_schematisations, replace_revision_data
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "schematisation_load.ui"))
