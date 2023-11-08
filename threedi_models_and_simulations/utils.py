@@ -49,7 +49,7 @@ class UploadFileType(Enum):
     RASTER = "RASTER"
 
 
-class ThreediFileStates(Enum):
+class ThreediFileState(Enum):
     """Possible 3Di file states."""
 
     PROCESSING = "processing"
@@ -57,7 +57,7 @@ class ThreediFileStates(Enum):
     INVALID = "invalid"
 
 
-class ThreediModelTaskStatuses(Enum):
+class ThreediModelTaskStatus(Enum):
     """Possible 3Di Model Task statuses."""
 
     PENDING = "pending"
