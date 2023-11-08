@@ -32,6 +32,43 @@ class EventTypes(Enum):
     RADAR = "Radar - NL Only"
 
 
+class UploadFileStatus(Enum):
+    """Possible actions on files upload."""
+
+    NO_CHANGES_DETECTED = "NO CHANGES DETECTED"
+    CHANGES_DETECTED = "CHANGES DETECTED"
+    NEW = "NEW"
+    DELETED_LOCALLY = "DELETED LOCALLY"
+    INVALID_REFERENCE = "INVALID REFERENCE!"
+
+
+class UploadFileType(Enum):
+    """File types of the uploaded files."""
+
+    DB = "DB"
+    RASTER = "RASTER"
+
+
+class ThreediFileStates(Enum):
+    """Possible 3Di file states."""
+
+    PROCESSING = "processing"
+    VALID = "valid"
+    INVALID = "invalid"
+
+
+class ThreediModelTaskStatuses(Enum):
+    """Possible 3Di Model Task statuses."""
+
+    PENDING = "pending"
+    SENT = "sent"
+    RECEIVED = "received"
+    STARTED = "started"
+    SUCCESS = "success"
+    FAILURE = "failure"
+    REVOKED = "revoked"
+
+
 def mmh_to_ms(mmh_value):
     """Converting values from 'mm/h' to the 'm/s'."""
     ms_value = mmh_value / 3600 * 0.001
@@ -232,23 +269,6 @@ def intervals_are_even(time_series):
         if end_time_step - start_time_step != expected_interval:
             return False
     return True
-
-
-class UploadFileStatus(Enum):
-    """Possible actions on files upload."""
-
-    NO_CHANGES_DETECTED = "NO CHANGES DETECTED"
-    CHANGES_DETECTED = "CHANGES DETECTED"
-    NEW = "NEW"
-    DELETED_LOCALLY = "DELETED LOCALLY"
-    INVALID_REFERENCE = "INVALID REFERENCE!"
-
-
-class UploadFileType(Enum):
-    """File types of the uploaded files."""
-
-    DB = "DB"
-    RASTER = "RASTER"
 
 
 def parse_version_number(version_str):
