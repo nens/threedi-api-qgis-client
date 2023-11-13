@@ -49,6 +49,16 @@ class UploadFileType(Enum):
     RASTER = "RASTER"
 
 
+class FileState(Enum):
+    """Possible uploaded file states."""
+
+    CREATED = "created"
+    UPLOADED = "uploaded"
+    PROCESSED = "processed"
+    ERROR = "error"
+    REMOVED = "removed"
+
+
 class ThreediFileState(Enum):
     """Possible 3Di file states."""
 

@@ -27,6 +27,7 @@ from .utils import (
     RADAR_ID,
     TEMPDIR,
     EventTypes,
+    FileState,
     ThreediFileState,
     ThreediModelTaskStatus,
     UploadFileStatus,
@@ -231,6 +232,8 @@ class RevisionUploadError(Exception):
 class UploadProgressWorker(QRunnable):
     """Worker object responsible for uploading models."""
 
+    UPLOAD_CHECK_INTERVAL = 10
+    UPLOAD_CHECK_RETRIES = 15
     TASK_CHECK_INTERVAL = 2.5
     TASK_CHECK_RETRIES = 4
 
@@ -381,6 +384,18 @@ class UploadProgressWorker(QRunnable):
         self.current_task = "COMMIT REVISION"
         self.current_task_progress = 0.0
         self.report_upload_progress()
+        commit_ready_file_states = {FileState.UPLOADED, FileState.PROCESSED}
+        for i in range(self.UPLOAD_CHECK_RETRIES):
+            before_commit_revision = self.tc.fetch_schematisation_revision(self.schematisation.id, self.revision.id)
+            revision_files = [before_commit_revision.sqlite.file] + [r.file for r in before_commit_revision.rasters]
+            revision_file_states = {FileState(file.state) for file in revision_files}
+            if all(file_state in commit_ready_file_states for file_state in revision_file_states):
+                break
+            elif FileState.ERROR in revision_file_states:
+                err = RevisionUploadError("Processing of the uploaded files failed!")
+                raise err
+            else:
+                time.sleep(self.UPLOAD_CHECK_INTERVAL)
         commit_message = self.upload_specification["commit_message"]
         self.tc.commit_schematisation_revision(self.schematisation.id, self.revision.id, commit_message=commit_message)
         self.revision = self.tc.fetch_schematisation_revision(self.schematisation.id, self.revision.id)
