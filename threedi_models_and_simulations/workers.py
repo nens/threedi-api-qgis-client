@@ -510,7 +510,6 @@ class SimulationRunner(QRunnable):
         self.threedi_api = threedi_api
         self.simulations_to_run = simulations_to_run
         self.current_simulation = None
-        self.valid_states = ["processed", "valid", "success"]
         self.upload_timeout = upload_timeout
         self.tc = None
         self.signals = SimulationRunnerSignals()
