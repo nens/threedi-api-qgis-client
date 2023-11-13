@@ -27,6 +27,8 @@ from .utils import (
     RADAR_ID,
     TEMPDIR,
     EventTypes,
+    ThreediFileState,
+    ThreediModelTaskStatus,
     UploadFileStatus,
     extract_error_message,
     get_download_file,
@@ -409,14 +411,14 @@ class UploadProgressWorker(QRunnable):
                 time.sleep(self.TASK_CHECK_INTERVAL)
         if model_checker_task:
             status = model_checker_task.status
-            while status != "success":
+            while status != ThreediModelTaskStatus.SUCCESS.value:
                 model_checker_task = self.tc.fetch_schematisation_revision_task(
                     model_checker_task.id, self.schematisation.id, self.revision.id
                 )
                 status = model_checker_task.status
-                if status == "success":
+                if status == ThreediModelTaskStatus.SUCCESS.value:
                     break
-                elif status == "failure":
+                elif status == ThreediModelTaskStatus.FAILURE.value:
                     err = RevisionUploadError(model_checker_task.detail["message"])
                     raise err
                 else:
@@ -442,9 +444,9 @@ class UploadProgressWorker(QRunnable):
             model_tasks = self.tc.fetch_3di_model_tasks(model_id)
             for task in model_tasks:
                 task_status = task.status
-                if task_status == "success":
+                if task_status == ThreediModelTaskStatus.SUCCESS.value:
                     finished_tasks[task.name] = True
-                elif task_status == "failure":
+                elif task_status == ThreediModelTaskStatus.FAILURE.value:
                     err = RevisionUploadError(task.detail["message"])
                     raise err
             model = self.tc.fetch_3di_model(model_id)
@@ -624,8 +626,10 @@ class SimulationRunner(QRunnable):
             upload_local_file(bc_upload, filepath)
             for ti in range(int(self.upload_timeout // 2)):
                 uploaded_bc = self.tc.fetch_boundarycondition_files(sim_id)[0]
-                if uploaded_bc.state in self.valid_states:
+                if uploaded_bc.state == ThreediFileState.VALID.value:
                     break
+                elif uploaded_bc.state == ThreediFileState.INVALID.value:
+                    raise SimulationRunnerError(f"Failed to upload boundary conditions file: {filename}")
                 else:
                     time.sleep(2)
 
@@ -656,8 +660,10 @@ class SimulationRunner(QRunnable):
             for ti in range(int(self.upload_timeout // 2)):
                 uploaded_files = {scf.file.filename: scf for scf in self.tc.fetch_structure_control_files(sim_id)}
                 uploaded_sc = uploaded_files[sc_upload.filename]
-                if uploaded_sc.state in self.valid_states:
+                if uploaded_sc.state == ThreediFileState.VALID.value:
                     break
+                elif uploaded_sc.state == ThreediFileState.INVALID.value:
+                    raise SimulationRunnerError(f"Failed to upload structure controls file: {filename}")
                 else:
                     time.sleep(2)
 
@@ -729,8 +735,10 @@ class SimulationRunner(QRunnable):
                             continue
                 else:
                     raster_task_2d = self.tc.fetch_3di_model_task(threedimodel_id, raster_task_2d.id)
-                if raster_task_2d and raster_task_2d.status in self.valid_states:
+                if raster_task_2d and raster_task_2d.status == ThreediModelTaskStatus.SUCCESS.value:
                     break
+                elif raster_task_2d and raster_task_2d.status == ThreediModelTaskStatus.FAILURE.value:
+                    raise SimulationRunnerError(f"Failed to process 2D raster: {local_raster_2d_name}")
                 else:
                     time.sleep(2)
             initial_waterlevels = self.tc.fetch_3di_model_initial_waterlevels(threedimodel_id)
@@ -757,17 +765,17 @@ class SimulationRunner(QRunnable):
             initial_conditions.online_raster_groundwater is None
             and initial_conditions.local_raster_groundwater is not None
         ):
-            local_raster_groundwater_name = os.path.basename(initial_conditions.local_raster_groundwater)
+            local_raster_gw_name = os.path.basename(initial_conditions.local_raster_groundwater)
             initial_water_level_raster_gw = self.tc.create_3di_model_raster(
                 threedimodel_id,
-                name=local_raster_groundwater_name,
+                name=local_raster_gw_name,
                 type="initial_groundwater_level_file",
             )
             initial_wl_raster_gw_id = initial_water_level_raster_gw.id
             init_water_level_upload_gw = self.tc.upload_3di_model_raster(
                 threedimodel_id,
                 initial_wl_raster_gw_id,
-                filename=local_raster_groundwater_name,
+                filename=local_raster_gw_name,
             )
             upload_local_file(init_water_level_upload_gw, initial_conditions.local_raster_groundwater)
             raster_task_gw = None
@@ -783,8 +791,10 @@ class SimulationRunner(QRunnable):
                             continue
                 else:
                     raster_task_gw = self.tc.fetch_3di_model_task(threedimodel_id, raster_task_gw.id)
-                if raster_task_gw and raster_task_gw.status in self.valid_states:
+                if raster_task_gw and raster_task_gw.status == ThreediModelTaskStatus.SUCCESS.value:
                     break
+                elif raster_task_gw and raster_task_gw.status == ThreediModelTaskStatus.FAILURE.value:
+                    raise SimulationRunnerError(f"Failed to process Groundwater raster: {local_raster_gw_name}")
                 else:
                     time.sleep(2)
             initial_waterlevels = self.tc.fetch_3di_model_initial_waterlevels(threedimodel_id)
@@ -814,14 +824,15 @@ class SimulationRunner(QRunnable):
         if self.current_simulation.laterals:
             lateral_values = list(self.current_simulation.laterals.data.values())
             write_json_data(lateral_values, LATERALS_FILE_TEMPLATE)
-            upload_event_file = self.tc.create_simulation_lateral_file(
-                sim_id, filename=f"{sim_name}_laterals.json", offset=0
-            )
+            filename = f"{sim_name}_laterals.json"
+            upload_event_file = self.tc.create_simulation_lateral_file(sim_id, filename=filename, offset=0)
             upload_local_file(upload_event_file, LATERALS_FILE_TEMPLATE)
             for ti in range(int(self.upload_timeout // 2)):
                 uploaded_lateral = self.tc.fetch_lateral_files(sim_id)[0]
-                if uploaded_lateral.state in self.valid_states:
+                if uploaded_lateral.state == ThreediFileState.VALID.value:
                     break
+                elif uploaded_lateral.state == ThreediFileState.INVALID.value:
+                    raise SimulationRunnerError(f"Failed to upload laterals file: {filename}")
                 else:
                     time.sleep(2)
 
@@ -832,17 +843,20 @@ class SimulationRunner(QRunnable):
         if self.current_simulation.dwf:
             dwf_values = list(self.current_simulation.dwf.data.values())
             write_json_data(dwf_values, DWF_FILE_TEMPLATE)
+            filename = f"{sim_name}_dwf.json"
             upload_event_file = self.tc.create_simulation_lateral_file(
                 sim_id,
-                filename=f"{sim_name}_dwf.json",
+                filename=filename,
                 offset=0,
                 periodic="daily",
             )
             upload_local_file(upload_event_file, DWF_FILE_TEMPLATE)
             for ti in range(int(self.upload_timeout // 2)):
                 uploaded_dwf = self.tc.fetch_lateral_files(sim_id)[0]
-                if uploaded_dwf.state in self.valid_states:
+                if uploaded_dwf.state == ThreediFileState.VALID.value:
                     break
+                elif uploaded_dwf.state == ThreediFileState.INVALID.value:
+                    raise SimulationRunnerError(f"Failed to upload DWF file: {filename}")
                 else:
                     time.sleep(2)
 
