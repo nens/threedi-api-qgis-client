@@ -5,7 +5,7 @@ History
 ------------------
 
 - Moved handling of the 3Di working directory structure to threedi_mi_utils module.
-- Fixes/enhancements: #504
+- Fixes/enhancements: #504, #512
 
 
 3.6.2 (2023-10-24)
