@@ -1,7 +1,7 @@
 History
 =======
 
-3.7.0 (unreleased)
+3.7.0 (2023-11-14)
 ------------------
 
 - Moved handling of the 3Di working directory structure to threedi_mi_utils module.
