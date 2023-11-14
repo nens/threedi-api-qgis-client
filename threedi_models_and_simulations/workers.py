@@ -643,7 +643,9 @@ class SimulationRunner(QRunnable):
                 if uploaded_bc.state == ThreediFileState.VALID.value:
                     break
                 elif uploaded_bc.state == ThreediFileState.INVALID.value:
-                    raise SimulationRunnerError(f"Failed to upload boundary conditions file: {filename}")
+                    state_detail = str(uploaded_bc.state_detail).strip("{}").strip()
+                    err_msg = f"Failed to upload Boundary Conditions file due to the following reasons: {state_detail}"
+                    raise SimulationRunnerError(err_msg)
                 else:
                     time.sleep(2)
 
@@ -677,7 +679,9 @@ class SimulationRunner(QRunnable):
                 if uploaded_sc.state == ThreediFileState.VALID.value:
                     break
                 elif uploaded_sc.state == ThreediFileState.INVALID.value:
-                    raise SimulationRunnerError(f"Failed to upload structure controls file: {filename}")
+                    state_detail = str(uploaded_sc.state_detail).strip("{}").strip()
+                    err_msg = f"Failed to upload Structure Controls file due to the following reasons: {state_detail}"
+                    raise SimulationRunnerError(err_msg)
                 else:
                     time.sleep(2)
 
@@ -846,7 +850,9 @@ class SimulationRunner(QRunnable):
                 if uploaded_lateral.state == ThreediFileState.VALID.value:
                     break
                 elif uploaded_lateral.state == ThreediFileState.INVALID.value:
-                    raise SimulationRunnerError(f"Failed to upload laterals file: {filename}")
+                    state_detail = str(uploaded_lateral.state_detail).strip("{}").strip()
+                    err_msg = f"Failed to upload Laterals file due to the following reasons: {state_detail}"
+                    raise SimulationRunnerError(err_msg)
                 else:
                     time.sleep(2)
 
@@ -870,7 +876,9 @@ class SimulationRunner(QRunnable):
                 if uploaded_dwf.state == ThreediFileState.VALID.value:
                     break
                 elif uploaded_dwf.state == ThreediFileState.INVALID.value:
-                    raise SimulationRunnerError(f"Failed to upload DWF file: {filename}")
+                    state_detail = str(uploaded_dwf.state_detail).strip("{}").strip()
+                    err_msg = f"Failed to upload Dry Weather Flow file due to the following reasons: {state_detail}"
+                    raise SimulationRunnerError(err_msg)
                 else:
                     time.sleep(2)
 
