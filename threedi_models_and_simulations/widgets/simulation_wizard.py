@@ -1294,13 +1294,13 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                         time_series.append([float(rtime) * units_multiplier, float(rain)])
                     except ValueError:
                         continue
-            if not intervals_are_even(time_series):
-                warn_message = (
-                    "Time steps in the selected CSV file are not even. "
-                    "Please adjust your data to fulfill even time steps requirement."
-                )
-                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(warn_message)
-                return
+        if not intervals_are_even(time_series):
+            warn_message = (
+                "Time steps in the selected CSV file are not even. "
+                "Please adjust your data to fulfill even time steps requirement."
+            )
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(warn_message)
+            return
         self.le_upload_rain.setText(filename)
         self.custom_time_series[simulation] = time_series
         self.plot_precipitation()
