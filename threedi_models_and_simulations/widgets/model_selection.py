@@ -2,6 +2,7 @@
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import logging
 import os
+from functools import partial
 from math import ceil
 from operator import attrgetter
 
@@ -13,7 +14,7 @@ from threedi_api_client.openapi import ApiException
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import CACHE_PATH, extract_error_message, file_cached, get_download_file
-from ..utils_ui import set_named_style
+from ..utils_ui import read_3di_settings, save_3di_settings, set_named_style
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "model_selection.ui"))
@@ -58,6 +59,7 @@ class ModelSelectionDialog(uicls, basecls):
         self.templates_tv.selectionModel().selectionChanged.connect(self.toggle_load_model)
         self.populate_organisations()
         self.fetch_3di_models()
+        self.organisations_box.currentTextChanged.connect(partial(save_3di_settings, "threedi/last_used_organisation"))
 
     def refresh_templates_list(self):
         """Refresh simulation templates list if any model is selected."""
@@ -100,6 +102,9 @@ class ModelSelectionDialog(uicls, basecls):
         """Populating organisations list inside combo box."""
         for org in self.organisations.values():
             self.organisations_box.addItem(org.name, org)
+        last_organisation = read_3di_settings("threedi/last_used_organisation")
+        if last_organisation:
+            self.organisations_box.setCurrentText(last_organisation)
 
     def fetch_3di_models(self):
         """Fetching 3Di models list."""

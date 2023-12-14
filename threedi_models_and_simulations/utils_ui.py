@@ -193,3 +193,16 @@ def ensure_valid_schema(schematisation_sqlite, communication):
         communication.show_error(error_msg)
         return False
     return True
+
+
+def save_3di_settings(entry_name, value):
+    """Save the 3Di settings entry."""
+    settings = QSettings()
+    settings.setValue(f"threedi/{entry_name}", value)
+
+
+def read_3di_settings(entry_name, default_value=""):
+    """Read the 3Di settings entry."""
+    settings = QSettings()
+    value_from_settings = settings.value(f"threedi/{entry_name}", default_value)
+    return value_from_settings

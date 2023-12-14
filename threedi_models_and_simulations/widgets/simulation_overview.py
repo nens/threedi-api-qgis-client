@@ -34,10 +34,10 @@ class SimulationOverview(uicls, basecls):
         self.plugin_dock = plugin_dock
         self.threedi_api = self.plugin_dock.threedi_api
         self.user = self.plugin_dock.current_user
-        self.model_selection_dlg = ModelSelectionDialog(self.plugin_dock, parent=self)
         self.settings = QSettings()
         self.simulation_runner_pool = QThreadPool()
         self.simulation_runner_pool.setMaxThreadCount(self.MAX_THREAD_COUNT)
+        self.model_selection_dlg = None
         self.simulation_init_wizard = None
         self.simulation_wizard = None
         self.running_simulations = {}
@@ -111,6 +111,7 @@ class SimulationOverview(uicls, basecls):
 
     def new_wizard_init(self):
         """Open new simulation initiation options dialog."""
+        self.model_selection_dlg = ModelSelectionDialog(self.plugin_dock, parent=self)
         if self.plugin_dock.current_local_schematisation is not None:
             self.model_selection_dlg.search_le.setText(self.plugin_dock.current_local_schematisation.name)
             self.model_selection_dlg.fetch_3di_models()
