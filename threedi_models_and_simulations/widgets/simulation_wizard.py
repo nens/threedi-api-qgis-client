@@ -2454,7 +2454,14 @@ class SimulationWizard(QWizard):
         """Loading simulation parameters from the simulation template data."""
         # Simulation attributes
         from_template_placeholder = "<FROM TEMPLATE>"
-        name_params = {"le_sim_name": simulation.name, "le_tags": ", ".join(simulation.tags)}
+        project_name, tags_list = "", []
+        for tag in simulation.tags:
+            if tag.startswith("project:"):
+                project_name = tag.split(":", 1)[-1].strip()
+            else:
+                tags_list.append(tag)
+        tags = ", ".join(tags_list)
+        name_params = {"le_sim_name": simulation.name, "le_tags": tags, "le_project": project_name}
         set_widgets_parameters(self.name_page.main_widget, **name_params)
         temp_simulation_id = simulation.id
         start_datetime = simulation.start_datetime.strftime("%Y-%m-%dT%H:%M")
@@ -2701,7 +2708,12 @@ class SimulationWizard(QWizard):
         self.settings.setValue("threedi/wizard_size", self.size())
         events = self.init_conditions_dlg.events
         name = self.name_page.main_widget.le_sim_name.text()
+        project_name = self.name_page.main_widget.le_project_name.text()
         tags = self.name_page.main_widget.le_tags.text()
+        if project_name:
+            if tags:
+                tags += ", "
+            tags += f"project name: {project_name}"
         threedimodel_id = self.model_selection_dlg.current_model.id
         organisation_uuid = self.model_selection_dlg.organisation.unique_id
         start_datetime, end_datetime = self.duration_page.main_widget.to_datetime()
