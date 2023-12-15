@@ -135,7 +135,7 @@ class UploadOverview(uicls_log, basecls_log):
             self.plugin_dock.build_options.load_local_schematisation()
             return
         self.schematisation_sqlite = self.current_local_schematisation.sqlite
-        schema_sqlite_loaded = is_loaded_in_schematisation_editor(self.current_local_schematisation)
+        schema_sqlite_loaded = is_loaded_in_schematisation_editor(self.schematisation_sqlite)
         if schema_sqlite_loaded is False:
             title = "Warning"
             question = (
