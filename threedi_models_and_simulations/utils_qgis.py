@@ -42,3 +42,27 @@ def is_toolbox_spatialite_loaded(local_schematisation_sqlite):
             return None
     except KeyError:
         return None
+
+
+def is_loaded_in_schematisation_editor(local_schematisation_sqlite):
+    """Check if local schematisation revision is loaded in the Schematisation Editor."""
+    if local_schematisation_sqlite is None:
+        return None
+    try:
+        schematisation_editor = plugins["threedi_schematisation_editor"]
+        schematisation_editor_gpkg = schematisation_editor.model_gpkg
+        if not schematisation_editor_gpkg:
+            return False
+        schematisation_editor_sqlite = schematisation_editor_gpkg.replace(".gpkg", ".sqlite")
+        if not os.path.isfile(schematisation_editor_sqlite):
+            return False
+
+        if schematisation_editor_sqlite and local_schematisation_sqlite:
+            if os.path.normpath(schematisation_editor_sqlite) == os.path.normpath(local_schematisation_sqlite):
+                return True
+            else:
+                return False
+        else:
+            return None
+    except KeyError:
+        return None
