@@ -2708,7 +2708,7 @@ class SimulationWizard(QWizard):
         self.settings.setValue("threedi/wizard_size", self.size())
         events = self.init_conditions_dlg.events
         name = self.name_page.main_widget.le_sim_name.text()
-        project_name = self.name_page.main_widget.le_project_name.text()
+        project_name = self.name_page.main_widget.le_project.text()
         tags = self.name_page.main_widget.le_tags.text()
         if project_name:
             if tags:
