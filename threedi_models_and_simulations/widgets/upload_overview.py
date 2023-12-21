@@ -9,7 +9,7 @@ from qgis.PyQt.QtWidgets import QMessageBox
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..communication import ListViewLogger
-from ..utils_qgis import is_toolbox_spatialite_loaded
+from ..utils_qgis import is_loaded_in_schematisation_editor
 from ..workers import UploadProgressWorker
 from .model_deletion import ModelDeletionDialog
 from .upload_wizard import UploadWizard
@@ -135,12 +135,12 @@ class UploadOverview(uicls_log, basecls_log):
             self.plugin_dock.build_options.load_local_schematisation()
             return
         self.schematisation_sqlite = self.current_local_schematisation.sqlite
-        schema_sqlite_loaded = is_toolbox_spatialite_loaded(self.schematisation_sqlite)
+        schema_sqlite_loaded = is_loaded_in_schematisation_editor(self.schematisation_sqlite)
         if schema_sqlite_loaded is False:
             title = "Warning"
             question = (
-                "Warning: the Spatialite that you loaded with the 3Di Toolbox is not in the revision you are "
-                "about to upload. Do you want to continue?"
+                "Warning: the Spatialite that you loaded with the 3Di Schematisation Editor is not in the revision you "
+                "are about to upload. Do you want to continue?"
             )
             on_continue_answer = self.communication.ask(self, title, question, QMessageBox.Warning)
             if on_continue_answer is not True:

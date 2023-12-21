@@ -7,7 +7,7 @@ from operator import attrgetter
 from time import sleep
 
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
 from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import LocalSchematisation, list_local_schematisations
@@ -325,6 +325,8 @@ class SchematisationDownload(uicls, basecls):
             self.downloaded_local_schematisation = local_schematisation
             self.downloaded_sqlite_filepath = os.path.join(schematisation_db_dir, sqlite_file)
             sleep(1)
+            settings = QSettings()
+            settings.setValue("threedi/last_schematisation_folder", schematisation_db_dir)
             msg = f"Schematisation '{schematisation_name} (revision {revision_number})' downloaded!"
             self.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
         except ApiException as e:
