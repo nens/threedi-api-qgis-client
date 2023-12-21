@@ -28,6 +28,7 @@ class ModelSelectionDialog(uicls, basecls):
 
     TABLE_LIMIT = 10
     NAME_COLUMN_IDX = 1
+    SCHEMATISATION_COLUMN_IDX = 2
 
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
@@ -73,6 +74,7 @@ class ModelSelectionDialog(uicls, basecls):
                 row_idx = self.templates_model.index(0, 0)
                 self.templates_tv.selectionModel().setCurrentIndex(row_idx, QItemSelectionModel.ClearAndSelect)
         self.toggle_load_model()
+        self.switch_to_model_organisation()
 
     def toggle_load_model(self):
         """Toggle load button if any model is selected."""
@@ -106,6 +108,28 @@ class ModelSelectionDialog(uicls, basecls):
         if last_organisation:
             self.organisations_box.setCurrentText(last_organisation)
 
+    def switch_to_model_organisation(self):
+        """Switch to model organisation."""
+        selection_model = self.models_tv.selectionModel()
+        if not selection_model.hasSelection():
+            return
+        schematisation_id = self.get_selected_model_schematisation()
+        try:
+            tc = ThreediCalls(self.threedi_api)
+            model_schematisation = tc.fetch_schematisation(schematisation_id)
+            model_schematisation_owner = model_schematisation.owner
+            organisation = self.organisations.get(model_schematisation_owner)
+            if organisation is not None:
+                self.organisations_box.setCurrentText(organisation.name)
+        except ApiException as e:
+            self.close()
+            error_msg = extract_error_message(e)
+            self.communication.show_error(error_msg)
+        except Exception as e:
+            self.close()
+            error_msg = f"Error: {e}"
+            self.communication.show_error(error_msg)
+
     def fetch_3di_models(self):
         """Fetching 3Di models list."""
         try:
@@ -126,6 +150,7 @@ class ModelSelectionDialog(uicls, basecls):
                 name_item = QStandardItem(sim_model.name)
                 name_item.setData(sim_model, role=Qt.UserRole)
                 schema_item = QStandardItem(sim_model.schematisation_name)
+                schema_item.setData(sim_model.schematisation_id, role=Qt.UserRole)
                 rev_item = QStandardItem(sim_model.revision_number)
                 last_updated_day = sim_model.revision_commit_date.split("T")[0]
                 lu_datetime = QDateTime.fromString(last_updated_day, "yyyy-MM-dd")
@@ -232,6 +257,17 @@ class ModelSelectionDialog(uicls, basecls):
         else:
             selected_model = None
         return selected_model
+
+    def get_selected_model_schematisation(self):
+        """Get currently selected model schematisation."""
+        index = self.models_tv.currentIndex()
+        if index.isValid():
+            current_row = index.row()
+            schematisation_name_item = self.models_model.item(current_row, self.SCHEMATISATION_COLUMN_IDX)
+            selected_model_schematisation_id = schematisation_name_item.data(Qt.UserRole)
+        else:
+            selected_model_schematisation_id = None
+        return selected_model_schematisation_id
 
     def get_selected_template(self):
         """Get currently selected simulation template."""
