@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 from collections import defaultdict
+from functools import partial
 from operator import itemgetter
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from threedi_mi_utils import LocalSchematisation
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import EMPTY_DB_PATH, SchematisationRasterReferences, extract_error_message
 from ..utils_qgis import execute_sqlite_queries, sqlite_layer
-from ..utils_ui import ensure_valid_schema, get_filepath, scan_widgets_parameters
+from ..utils_ui import ensure_valid_schema, get_filepath, read_3di_settings, save_3di_settings, scan_widgets_parameters
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_schema_name_page, basecls_schema_name_page = uic.loadUiType(
@@ -50,11 +51,15 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
         self.organisations = self.parent_page.organisations
         self.populate_organisations()
         self.btn_browse_spatialite.clicked.connect(self.browse_existing_spatialite)
+        self.cbo_organisations.currentTextChanged.connect(partial(save_3di_settings, "threedi/last_used_organisation"))
 
     def populate_organisations(self):
         """Populating organisations."""
         for org in self.organisations.values():
             self.cbo_organisations.addItem(org.name, org)
+        last_organisation = read_3di_settings("threedi/last_used_organisation")
+        if last_organisation:
+            self.cbo_organisations.setCurrentText(last_organisation)
 
     def get_new_schematisation_name_data(self):
         """Return new schematisation name, tags and owner."""
