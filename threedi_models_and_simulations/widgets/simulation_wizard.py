@@ -2707,13 +2707,12 @@ class SimulationWizard(QWizard):
         """Getting data from the wizard and running new simulation."""
         self.settings.setValue("threedi/wizard_size", self.size())
         events = self.init_conditions_dlg.events
-        name = self.name_page.main_widget.le_sim_name.text()
-        project_name = self.name_page.main_widget.le_project.text()
-        tags = self.name_page.main_widget.le_tags.text()
+        name = self.name_page.main_widget.le_sim_name.text().strip()
+        project_name = self.name_page.main_widget.le_project.text().strip()
+        tags = [tag.strip() for tag in self.name_page.main_widget.le_tags.text().split(",")]
         if project_name:
-            if tags:
-                tags += ", "
-            tags += f"project name: {project_name}"
+            project_name_tag = f"project: {project_name}"
+            tags.append(project_name_tag)
         threedimodel_id = self.model_selection_dlg.current_model.id
         organisation_uuid = self.model_selection_dlg.organisation.unique_id
         start_datetime, end_datetime = self.duration_page.main_widget.to_datetime()
