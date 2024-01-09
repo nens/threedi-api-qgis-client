@@ -14,6 +14,7 @@ from threedi_mi_utils import LocalSchematisation, list_local_schematisations
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import extract_error_message, get_download_file, unzip_archive
+from ..utils_ui import set_icon
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "schematisation_download.ui"))
@@ -49,21 +50,25 @@ class SchematisationDownload(uicls, basecls):
         self.pb_revisions_prev_page.clicked.connect(self.move_revisions_backward)
         self.pb_revisions_next_page.clicked.connect(self.move_revisions_forward)
         self.revisions_page_sbox.valueChanged.connect(self.fetch_revisions)
-        self.pb_revisions_fetch.clicked.connect(self.fetch_revisions)
         self.pb_download.clicked.connect(self.download_schematisation_revision)
         self.pb_cancel.clicked.connect(self.cancel_download_schematisation_revision)
         self.schematisations_search_le.returnPressed.connect(self.search_schematisations)
         self.schematisations_tv.selectionModel().selectionChanged.connect(self.toggle_fetch_revisions)
+        self.schematisations_tv.selectionModel().selectionChanged.connect(self.fetch_revisions)
         self.revisions_tv.selectionModel().selectionChanged.connect(self.toggle_download_schematisation_revision)
+        set_icon(self.refresh_btn, "refresh.svg")
+        self.refresh_btn.clicked.connect(self.fetch_revisions)
         self.fetch_schematisations()
 
     def toggle_fetch_revisions(self):
         """Toggle fetch revisions button if any schematisation is selected."""
         selection_model = self.schematisations_tv.selectionModel()
         if selection_model.hasSelection():
-            self.pb_revisions_fetch.setEnabled(True)
+            # self.pb_revisions_fetch.setEnabled(True)
+            self.refresh_btn.setEnabled(True)
         else:
-            self.pb_revisions_fetch.setDisabled(True)
+            # self.pb_revisions_fetch.setDisabled(True)
+            self.refresh_btn.setDisabled(True)
         self.tv_revisions_model.clear()
         self.revisions_page_sbox.setMaximum(1)
         self.revisions_page_sbox.setSuffix(" / 1")
@@ -91,6 +96,7 @@ class SchematisationDownload(uicls, basecls):
         self.schematisations_page_sbox.setValue(1)
         self.schematisations_page_sbox.valueChanged.connect(self.fetch_schematisations)
         self.fetch_schematisations()
+        self.toggle_fetch_revisions()
 
     def move_revisions_backward(self):
         """Moving to the previous revisions results page."""
@@ -106,7 +112,6 @@ class SchematisationDownload(uicls, basecls):
             tc = ThreediCalls(self.threedi_api)
             offset = (self.schematisations_page_sbox.value() - 1) * self.TABLE_LIMIT
             text = self.schematisations_search_le.text()
-
             schematisations, schematisations_count = tc.fetch_schematisations_with_count(
                 limit=self.TABLE_LIMIT, offset=offset, name_contains=text
             )

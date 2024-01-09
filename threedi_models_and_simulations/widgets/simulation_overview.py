@@ -14,6 +14,7 @@ from threedi_models_and_simulations.workers import SimulationRunner
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models.enumerators import SimulationStatusName
 from ..utils import API_DATETIME_FORMAT, extract_error_message
+from ..utils_ui import set_icon
 from .custom_items import PROGRESS_ROLE, SimulationProgressDelegate
 from .model_selection import ModelSelectionDialog
 from .simulation_wizard import SimulationWizard
@@ -49,6 +50,8 @@ class SimulationOverview(uicls, basecls):
         self.pb_new_sim.clicked.connect(self.new_wizard_init)
         self.pb_stop_sim.clicked.connect(self.stop_simulation)
         self.pb_hide.clicked.connect(self.close)
+        set_icon(self.refresh_btn, "refresh.svg")
+        self.refresh_btn.clicked.connect(self.refresh_running_simulations_list)
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
@@ -57,6 +60,18 @@ class SimulationOverview(uicls, basecls):
         self.tv_model = QStandardItemModel(0, 3)
         self.tv_model.setHorizontalHeaderLabels(["Simulation name", "User", "Progress"])
         self.tv_sim_tree.setModel(self.tv_model)
+
+    def refresh_running_simulations_list(self):
+        """Refresh running simulations list."""
+        self.plugin_dock.simulations_progresses_sentinel.progresses_fetched.disconnect(self.update_progress)
+        self.plugin_dock.simulations_progresses_sentinel.stop_listening(be_quite=True)
+        self.tv_model.clear()
+        self.running_simulations.clear()
+        self.last_progresses.clear()
+        self.simulations_without_progress.clear()
+        self.setup_view_model()
+        self.plugin_dock.simulations_progresses_sentinel.progresses_fetched.connect(self.update_progress)
+        self.plugin_dock.simulations_progresses_sentinel.start_listening()
 
     def add_simulation_to_model(self, sim_id, sim_data):
         """Method for adding simulation to the model."""
