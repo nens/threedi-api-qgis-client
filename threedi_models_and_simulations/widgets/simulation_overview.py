@@ -1,6 +1,7 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os
+from datetime import datetime
 
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QSettings, Qt, QThreadPool
@@ -13,7 +14,7 @@ from threedi_models_and_simulations.workers import SimulationRunner
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models.enumerators import SimulationStatusName
-from ..utils import API_DATETIME_FORMAT, extract_error_message
+from ..utils import API_DATETIME_FORMAT, USER_DATETIME_FORMAT, extract_error_message
 from ..utils_ui import set_icon
 from .custom_items import PROGRESS_ROLE, SimulationProgressDelegate
 from .model_selection import ModelSelectionDialog
@@ -60,6 +61,10 @@ class SimulationOverview(uicls, basecls):
         self.tv_model = QStandardItemModel(0, 3)
         self.tv_model.setHorizontalHeaderLabels(["Simulation name", "User", "Progress"])
         self.tv_sim_tree.setModel(self.tv_model)
+
+    def refresh_last_updated_label(self):
+        """Refresh last update datetime label."""
+        self.label_last_updated.setText(f"Last updated: {datetime.now().strftime(USER_DATETIME_FORMAT)}")
 
     def refresh_running_simulations_list(self):
         """Refresh running simulations list."""
@@ -123,6 +128,7 @@ class SimulationOverview(uicls, basecls):
                 sim_name = sim_data["name"]
                 msg = f"Simulation {sim_name} finished!"
                 self.plugin_dock.communication.bar_info(msg, log_text_color=QColor(Qt.darkGreen))
+        self.refresh_last_updated_label()
 
     def new_wizard_init(self):
         """Open new simulation initiation options dialog."""

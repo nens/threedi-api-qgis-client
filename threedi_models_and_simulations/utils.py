@@ -23,6 +23,7 @@ EMPTY_DB_PATH = os.path.join(DATA_PATH, "empty.sqlite")
 CHUNK_SIZE = 1024**2
 RADAR_ID = "d6c2347d-7bd1-4d9d-a1f6-b342c865516f"
 API_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
+USER_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 class EventTypes(Enum):
