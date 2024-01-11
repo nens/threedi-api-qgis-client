@@ -8,14 +8,10 @@ from subprocess import CalledProcessError, check_call
 from ..utils import parse_version_number
 
 REQUIRED_API_CLIENT_VERSION = "4.1.4"
-REQUIRED_3DI_MODEL_CHECKER_VERSION = "2.4.0"
 REQUIRED_3DI_SCHEMA_VERSION = "0.217.11"
 REQUIRED_3DI_MI_UTILS_VERSION = "0.1.2"
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 API_CLIENT_WHEEL = os.path.join(MAIN_DIR, f"threedi_api_client-{REQUIRED_API_CLIENT_VERSION}-py2.py3-none-any.whl")
-MODEL_CHECKER_WHEEL = os.path.join(
-    MAIN_DIR, f"threedi_modelchecker-{REQUIRED_3DI_MODEL_CHECKER_VERSION}-py3-none-any.whl"
-)
 SCHEMA_WHEEL = os.path.join(MAIN_DIR, f"threedi_schema-{REQUIRED_3DI_SCHEMA_VERSION}-py3-none-any.whl")
 MI_UTILS_WHEEL = os.path.join(MAIN_DIR, f"threedi_mi_utils-{REQUIRED_3DI_MI_UTILS_VERSION}-py3-none-any.whl")
 
@@ -74,12 +70,6 @@ def patch_wheel_imports():
         sys.path.append(deps_path)
 
     try:
-        import threedi_modelchecker
-    except ImportError:
-        deps_path = MODEL_CHECKER_WHEEL
-        sys.path.append(deps_path)
-
-    try:
         import openapi_client
         import threedi_api_client
     except ImportError:
@@ -110,25 +100,12 @@ def api_client_version_matches(exact_match=False):
     return versions_matches, available_api_client_version
 
 
-def model_checker_version_matches(exact_match=False):
-    """Check if installed threedi_modelchecker version matches minimum required version."""
-    import threedi_modelchecker
-
-    available_threedi_modelchecker_version = parse_version_number(threedi_modelchecker.__version__)
-    minimum_required_version = parse_version_number(REQUIRED_3DI_MODEL_CHECKER_VERSION)
-    if exact_match:
-        versions_matches = available_threedi_modelchecker_version == minimum_required_version
-    else:
-        versions_matches = available_threedi_modelchecker_version >= minimum_required_version
-    return versions_matches, available_threedi_modelchecker_version
-
-
 def schema_version_matches(exact_match=False):
     """Check if installed threedi_schema version matches minimum required version."""
     import threedi_schema
 
     available_threedi_schema_version = parse_version_number(threedi_schema.__version__)
-    minimum_required_version = parse_version_number(REQUIRED_3DI_MODEL_CHECKER_VERSION)
+    minimum_required_version = parse_version_number(REQUIRED_3DI_SCHEMA_VERSION)
     if exact_match:
         versions_matches = available_threedi_schema_version == minimum_required_version
     else:
