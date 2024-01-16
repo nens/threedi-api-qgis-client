@@ -29,7 +29,7 @@
    <string>Results</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="2" column="0" colspan="5">
+   <item row="3" column="0" colspan="5">
     <layout class="QGridLayout" name="gridLayout_2">
      <property name="bottomMargin">
       <number>0</number>
@@ -102,16 +102,6 @@
      </item>
     </layout>
    </item>
-   <item row="1" column="0" colspan="5">
-    <widget class="QTreeView" name="tv_finished_sim_tree">
-     <property name="editTriggers">
-      <set>QAbstractItemView::NoEditTriggers</set>
-     </property>
-     <property name="sortingEnabled">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="font">
@@ -126,6 +116,60 @@
       <string>Finished simulations</string>
      </property>
     </widget>
+   </item>
+   <item row="1" column="0" colspan="5">
+    <widget class="QTreeView" name="tv_finished_sim_tree">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="5">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_last_updated">
+       <property name="text">
+        <string>Last updated: never</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="refresh_btn">
+       <property name="toolTip">
+        <string>Refresh</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../icons/refresh.svg</normaloff>../icons/refresh.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>18</width>
+         <height>18</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

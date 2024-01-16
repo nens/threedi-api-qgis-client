@@ -67,6 +67,11 @@ class WSProgressesSentinel(QObject):
     @pyqtSlot()
     def run(self):
         """Checking running simulations progresses."""
+        self.fetch_finished_simulations()
+        self.start_listening()
+
+    def fetch_finished_simulations(self):
+        """Fetches finished simulations data."""
         try:
             self.tc = ThreediCalls(self.threedi_api)
             logger.debug("Fetching finished simulation statuses")
@@ -92,11 +97,6 @@ class WSProgressesSentinel(QObject):
         except ApiException as e:
             error_msg = extract_error_message(e)
             self.thread_failed.emit(error_msg)
-            return
-        self.ws_client = QtWebSockets.QWebSocket(version=QtWebSockets.QWebSocketProtocol.VersionLatest)
-        self.ws_client.textMessageReceived.connect(self.all_simulations_progress_web_socket)
-        self.ws_client.error.connect(self.websocket_error)
-        self.start_listening()
 
     def start_listening(self):
         """Start listening of active simulations websocket."""
@@ -106,16 +106,20 @@ class WSProgressesSentinel(QObject):
         api_version = self.tc.threedi_api.version
         ws_request = QNetworkRequest(QUrl(f"{self.wss_url}/{api_version}/active-simulations/"))
         ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(basic_auth_token))
+        self.ws_client = QtWebSockets.QWebSocket(version=QtWebSockets.QWebSocketProtocol.VersionLatest)
+        self.ws_client.textMessageReceived.connect(self.all_simulations_progress_web_socket)
+        self.ws_client.error.connect(self.websocket_error)
         self.ws_client.open(ws_request)
 
-    def stop_listening(self):
+    def stop_listening(self, be_quite=False):
         """Close websocket client."""
         if self.ws_client is not None:
             self.ws_client.textMessageReceived.disconnect(self.all_simulations_progress_web_socket)
             self.ws_client.error.disconnect(self.websocket_error)
             self.ws_client.close()
-            stop_message = "Checking running simulation stopped."
-            self.thread_finished.emit(stop_message)
+            if be_quite is False:
+                stop_message = "Checking running simulation stopped."
+                self.thread_finished.emit(stop_message)
 
     def websocket_error(self, error_code):
         """Report errors from websocket."""

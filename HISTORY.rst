@@ -4,8 +4,7 @@ History
 3.9 (unreleased)
 ----------------
 
-- Nothing changed yet.
-
+- Fixes/enhancements: #465, #491
 
 3.8 (2024-01-11)
 ----------------

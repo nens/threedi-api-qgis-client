@@ -118,14 +118,14 @@ class UploadOverview(uicls_log, basecls_log):
         upload_row_number = self.tv_model.rowCount()
         upload_row_idx = self.tv_model.index(upload_row_number - 1, 0)
         self.tv_uploads.selectionModel().setCurrentIndex(upload_row_idx, QItemSelectionModel.ClearAndSelect)
-        worker = UploadProgressWorker(
+        upload_worker = UploadProgressWorker(
             self.threedi_api, self.current_local_schematisation, upload_specification, upload_row_number
         )
-        worker.signals.upload_progress.connect(self.on_update_upload_progress)
-        worker.signals.thread_finished.connect(self.on_upload_finished_success)
-        worker.signals.upload_failed.connect(self.on_upload_failed)
-        worker.signals.revision_committed.connect(self.on_revision_committed)
-        self.upload_thread_pool.start(worker)
+        upload_worker.signals.upload_progress.connect(self.on_update_upload_progress)
+        upload_worker.signals.thread_finished.connect(self.on_upload_finished_success)
+        upload_worker.signals.upload_failed.connect(self.on_upload_failed)
+        upload_worker.signals.revision_committed.connect(self.on_revision_committed)
+        self.upload_thread_pool.start(upload_worker)
 
     def upload_new_model(self):
         """Initializing new upload wizard."""
