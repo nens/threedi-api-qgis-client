@@ -4,7 +4,7 @@ History
 3.10 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fix logout error: #533
 
 
 3.9 (2024-01-16)
