@@ -93,7 +93,10 @@ class ThreediDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Handle logging-out."""
         if self.simulations_progresses_thread is not None:
             self.stop_fetching_simulations_progresses()
-            if self.simulation_overview_dlg is not None and self.simulation_overview_dlg.model_selection_dlg is not None:
+            if (
+                self.simulation_overview_dlg is not None
+                and self.simulation_overview_dlg.model_selection_dlg is not None
+            ):
                 self.simulation_overview_dlg.model_selection_dlg.unload_cached_layers()
                 self.simulation_overview_dlg = None
         if self.simulation_results_dlg is not None:
