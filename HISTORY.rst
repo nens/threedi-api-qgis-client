@@ -1,7 +1,7 @@
 History
 =======
 
-3.10 (unreleased)
+3.9.1 (unreleased)
 -----------------
 
 - Fix logout error: #533
