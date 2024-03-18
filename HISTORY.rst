@@ -1,8 +1,14 @@
 History
 =======
 
-3.10 (unreleased)
------------------
+3.9.2 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+3.9.1 (2024-03-14)
+------------------
 
 - Fix logout error: #533
 
