@@ -130,9 +130,10 @@ class Precipitation(SimulationElement):
     values: list = None
     start: datetime = None
     interpolate: bool = None
-    filepath: str = None
-    from_csv: bool = None
-    from_netcdf: bool = None
+    csv_filepath: str = None
+    netcdf_filepath: str = None
+    netcdf_global: bool = None
+    netcdf_raster: bool = None
 
 
 @dataclass
