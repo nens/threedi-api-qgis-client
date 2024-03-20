@@ -28,7 +28,8 @@ USER_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class EventTypes(Enum):
     CONSTANT = "Constant"
-    CUSTOM = "Custom"
+    FROM_CSV = "From CSV"
+    FROM_NETCDF = "From NetCDF"
     DESIGN = "Design"
     RADAR = "Radar - NL Only"
 

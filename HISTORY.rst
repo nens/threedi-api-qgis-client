@@ -4,7 +4,7 @@ History
 3.9.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixes/enhancements: #527
 
 
 3.9.1 (2024-03-14)

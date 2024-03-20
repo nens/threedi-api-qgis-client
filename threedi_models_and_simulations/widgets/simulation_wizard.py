@@ -1039,7 +1039,8 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.plot_ticks = None
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
         self.widget_constant.hide()
-        self.widget_custom.hide()
+        self.widget_from_csv.hide()
+        self.widget_from_netcdf.hide()
         self.widget_design.hide()
         self.widget_radar.hide()
         self.connect_signals()
@@ -1059,9 +1060,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.stop_after_constant_u.currentIndexChanged.connect(self.sync_units)
         self.sp_start_after_constant.valueChanged.connect(self.plot_precipitation)
         self.sp_stop_after_constant.valueChanged.connect(self.plot_precipitation)
-        self.pb_upload_rain.clicked.connect(self.set_custom_time_series)
-        self.start_after_custom_u.currentIndexChanged.connect(self.sync_units)
-        self.sp_start_after_custom.valueChanged.connect(self.plot_precipitation)
+        self.pb_upload_csv.clicked.connect(self.set_csv_time_series)
+        self.pb_upload_netcdf.clicked.connect(self.set_netcdf_time_series)
+        self.start_after_csv_u.currentIndexChanged.connect(self.sync_units)
+        self.sp_start_after_csv.valueChanged.connect(self.plot_precipitation)
         self.cbo_design.currentIndexChanged.connect(self.set_design_time_series)
         self.start_after_design_u.currentIndexChanged.connect(self.sync_units)
         self.sp_start_after_design.valueChanged.connect(self.plot_precipitation)
@@ -1070,14 +1072,12 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.sp_start_after_radar.valueChanged.connect(self.plot_precipitation)
         self.sp_stop_after_radar.valueChanged.connect(self.plot_precipitation)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
-        self.rb_from_csv.toggled.connect(self.change_time_series_source)
-        self.rb_from_netcdf.toggled.connect(self.change_time_series_source)
         self.cb_interpolate_rain.stateChanged.connect(self.plot_precipitation)
 
     def change_time_series_source(self, is_checked):
         """Handling rain time series source change."""
         if is_checked is True:
-            self.le_upload_rain.clear()
+            self.le_upload_csv.clear()
             self.plot_precipitation()
 
     def write_values_into_dict(self):
@@ -1098,25 +1098,31 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "stop_after_units": stop_after_units,
                 "intensity": intensity,
             }
-        elif precipitation_type == EventTypes.CUSTOM.value:
-            start_after = self.sp_start_after_custom.value()
-            start_after_units = self.start_after_custom_u.currentText()
-            units = self.cbo_units.currentText()
+        elif precipitation_type == EventTypes.FROM_CSV.value:
+            start_after = self.sp_start_after_csv.value()
+            start_after_units = self.start_after_csv_u.currentText()
+            units = self.cbo_units_csv.currentText()
             time_series = self.custom_time_series[simulation]
-            time_series_path = self.le_upload_rain.text()
+            csv_path = self.le_upload_csv.text()
             interpolate = self.cb_interpolate_rain.isChecked()
-            from_csv = self.rb_from_csv.isChecked()
-            from_netcdf = self.rb_from_netcdf.isChecked()
             self.values[simulation] = {
                 "precipitation_type": precipitation_type,
                 "start_after": start_after,
                 "start_after_units": start_after_units,
                 "units": units,
                 "time_series": time_series,
-                "time_series_path": time_series_path,
+                "csv_path": csv_path,
                 "interpolate": interpolate,
-                "from_csv": from_csv,
-                "from_netcdf": from_netcdf,
+            }
+        elif precipitation_type == EventTypes.FROM_NETCDF.value:
+            netcdf_path = self.le_upload_netcdf.text()
+            netcdf_global = self.rb_global_netcdf.isChecked()
+            netcdf_raster = self.rb_raster_netcdf.isChecked()
+            self.values[simulation] = {
+                "precipitation_type": precipitation_type,
+                "netcdf_path": netcdf_path,
+                "netcdf_global": netcdf_global,
+                "netcdf_raster": netcdf_raster,
             }
         elif precipitation_type == EventTypes.DESIGN.value:
             start_after = self.sp_start_after_design.value()
@@ -1149,11 +1155,12 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         vals = self.values.get(simulation)
         if not vals:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText("None"))
-            self.le_upload_rain.clear()
+            self.le_upload_csv.clear()
             self.cbo_design.setCurrentIndex(0)
             self.plot_precipitation()
             return
-        if vals.get("precipitation_type") == EventTypes.CONSTANT.value:
+        precipitation_type = vals.get("precipitation_type")
+        if precipitation_type == EventTypes.CONSTANT.value:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_constant.setValue(vals.get("start_after"))
             self.start_after_constant_u.setCurrentIndex(
@@ -1164,31 +1171,27 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 self.stop_after_constant_u.findText(vals.get("stop_after_units"))
             )
             self.sp_intensity.setValue(vals.get("intensity"))
-        elif vals.get("precipitation_type") == EventTypes.CUSTOM.value:
-            # Temporary disconnect radio buttons signals
-            self.rb_from_csv.toggled.disconnect(self.change_time_series_source)
-            self.rb_from_netcdf.toggled.disconnect(self.change_time_series_source)
+        elif precipitation_type == EventTypes.FROM_CSV.value:
             # Get simulation values
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
-            self.sp_start_after_custom.setValue(vals.get("start_after"))
-            self.start_after_custom_u.setCurrentIndex(self.start_after_custom_u.findText(vals.get("start_after_units")))
-            self.cbo_units.setCurrentIndex(self.cbo_units.findText(vals.get("units")))
-            self.rb_from_csv.setChecked(vals.get("from_csv", True))
-            self.rb_from_netcdf.setChecked(vals.get("from_netcdf", False))
-            self.le_upload_rain.setText(vals.get("time_series_path", ""))
+            self.sp_start_after_csv.setValue(vals.get("start_after"))
+            self.start_after_csv_u.setCurrentIndex(self.start_after_csv_u.findText(vals.get("start_after_units")))
+            self.cbo_units_csv.setCurrentIndex(self.cbo_units_csv.findText(vals.get("units")))
+            self.le_upload_csv.setText(vals.get("csv_path", ""))
             self.custom_time_series[simulation] = vals.get("time_series", [])
             self.cb_interpolate_rain.setChecked(vals.get("interpolate", False))
-            # Connect radio buttons signals again
-            self.rb_from_csv.toggled.connect(self.change_time_series_source)
-            self.rb_from_netcdf.toggled.connect(self.change_time_series_source)
-        elif vals.get("precipitation_type") == EventTypes.DESIGN.value:
+        elif precipitation_type == EventTypes.FROM_NETCDF.value:
+            self.rb_global_netcdf.setChecked(vals.get("global_netcdf", True))
+            self.rb_raster_netcdf.setChecked(vals.get("raster_netcdf", False))
+            self.le_upload_netcdf.setText(vals.get("netcdf_path", ""))
+        elif precipitation_type == EventTypes.DESIGN.value:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_design.setValue(vals.get("start_after"))
             self.start_after_design_u.setCurrentIndex(self.start_after_design_u.findText(vals.get("start_after_units")))
             design_number = vals.get("design_number")
             self.cbo_design.setCurrentIndex(self.cbo_design.findText(design_number))
             self.design_time_series[simulation] = vals.get("time_series", [])
-        elif vals.get("precipitation_type") == EventTypes.RADAR.value:
+        elif precipitation_type == EventTypes.RADAR.value:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
             self.sp_start_after_radar.setValue(vals.get("start_after"))
             self.start_after_radar_u.setCurrentIndex(self.start_after_radar_u.findText(vals.get("start_after_units")))
@@ -1196,34 +1199,49 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.stop_after_radar_u.setCurrentIndex(self.stop_after_radar_u.findText(vals.get("stop_after_units")))
         self.plot_precipitation()
 
-    def precipitation_changed(self, idx):
+    def precipitation_changed(self):
         """Changing widgets looks based on currently selected precipitation type."""
-        if idx == 1:
+        precipitation_type_str = self.cbo_prec_type.currentText()
+        try:
+            precipitation_type = EventTypes(precipitation_type_str)
+        except ValueError:
+            precipitation_type = None
+        if precipitation_type == EventTypes.CONSTANT:
             self.widget_constant.show()
-            self.widget_custom.hide()
+            self.widget_from_csv.hide()
+            self.widget_from_netcdf.hide()
             self.widget_design.hide()
             self.widget_radar.hide()
-        elif idx == 2:
+        elif precipitation_type == EventTypes.FROM_CSV:
             self.widget_constant.hide()
-            self.widget_custom.show()
+            self.widget_from_csv.show()
+            self.widget_from_netcdf.hide()
             self.widget_design.hide()
             self.widget_radar.hide()
-        elif idx == 3:
+        elif precipitation_type == EventTypes.FROM_NETCDF:
             self.widget_constant.hide()
-            self.widget_custom.hide()
+            self.widget_from_csv.hide()
+            self.widget_from_netcdf.show()
+            self.widget_design.hide()
+            self.widget_radar.hide()
+        elif precipitation_type == EventTypes.DESIGN:
+            self.widget_constant.hide()
+            self.widget_from_csv.hide()
+            self.widget_from_netcdf.hide()
             self.widget_design.show()
             self.widget_radar.hide()
-        elif idx == 4:
+        elif precipitation_type == EventTypes.RADAR:
             self.widget_constant.hide()
-            self.widget_custom.hide()
+            self.widget_from_csv.hide()
+            self.widget_from_netcdf.hide()
             self.widget_design.hide()
             self.widget_radar.show()
         else:
             self.widget_constant.hide()
-            self.widget_custom.hide()
+            self.widget_from_csv.hide()
+            self.widget_from_netcdf.hide()
             self.widget_design.hide()
             self.widget_radar.hide()
-
         self.refresh_current_units()
         self.plot_precipitation()
 
@@ -1236,8 +1254,8 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             if self.stop_after_constant_u.currentIndex != idx:
                 self.stop_after_constant_u.setCurrentIndex(idx)
             self.current_units = self.start_after_constant_u.currentText()
-        elif current_text == EventTypes.CUSTOM.value:
-            self.current_units = self.start_after_custom_u.currentText()
+        elif current_text == EventTypes.FROM_CSV.value:
+            self.current_units = self.start_after_csv_u.currentText()
         elif current_text == EventTypes.DESIGN.value:
             self.current_units = self.start_after_design_u.currentText()
         elif current_text == EventTypes.RADAR.value:
@@ -1253,12 +1271,14 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         current_text = self.cbo_prec_type.currentText()
         if current_text == EventTypes.CONSTANT.value:
             self.current_units = self.start_after_constant_u.currentText()
-        elif current_text == EventTypes.CUSTOM.value:
-            self.current_units = self.start_after_custom_u.currentText()
+        elif current_text == EventTypes.FROM_CSV.value:
+            self.current_units = self.start_after_csv_u.currentText()
         elif current_text == EventTypes.DESIGN.value:
             self.current_units = self.start_after_design_u.currentText()
         elif current_text == EventTypes.RADAR.value:
             self.current_units = self.start_after_radar_u.currentText()
+        else:
+            pass
 
     def refresh_duration(self):
         """Refreshing precipitation duration in seconds."""
@@ -1270,13 +1290,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         duration_in_units = int(self.precipitation_duration / unit_divider)
         return duration_in_units
 
-    def set_custom_time_series(self):
-        """Selecting and setting up rain time series from CSV/NetCDF format."""
-        from_csv = self.rb_from_csv.isChecked()
-        if from_csv:
-            file_filter = "CSV (*.csv);;All Files (*)"
-        else:
-            file_filter = "NetCDF (*.nc);;All Files (*)"
+    def set_csv_time_series(self):
+        """Selecting and setting up rain time series from CSV format."""
+        file_filter = "CSV (*.csv);;All Files (*)"
         last_folder = QSettings().value("threedi/last_precipitation_folder", os.path.expanduser("~"), type=str)
         filename, __ = QFileDialog.getOpenFileName(self, "Precipitation Time Series", last_folder, file_filter)
         if len(filename) == 0:
@@ -1284,25 +1300,37 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
         time_series = []
         simulation = self.dd_simulation.currentText()
-        if from_csv:
-            with open(filename, encoding="utf-8-sig") as rain_file:
-                rain_reader = csv.reader(rain_file)
-                units_multiplier = self.SECONDS_MULTIPLIERS["mins"]
-                for rtime, rain in rain_reader:
-                    # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
-                    try:
-                        time_series.append([float(rtime) * units_multiplier, float(rain)])
-                    except ValueError:
-                        continue
-            if not intervals_are_even(time_series):
-                warn_message = (
-                    "Time steps in the selected CSV file are not even. "
-                    "Please adjust your data to fulfill even time steps requirement."
-                )
-                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(warn_message)
-                return
-        self.le_upload_rain.setText(filename)
+        with open(filename, encoding="utf-8-sig") as rain_file:
+            rain_reader = csv.reader(rain_file)
+            units_multiplier = self.SECONDS_MULTIPLIERS["mins"]
+            for rtime, rain in rain_reader:
+                # We are assuming that timestep is in minutes, so we are converting it to seconds on the fly.
+                try:
+                    time_series.append([float(rtime) * units_multiplier, float(rain)])
+                except ValueError:
+                    continue
+        if not intervals_are_even(time_series):
+            warn_message = (
+                "Time steps in the selected CSV file are not even. "
+                "Please adjust your data to fulfill even time steps requirement."
+            )
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(warn_message)
+            return
+        self.le_upload_csv.setText(filename)
         self.custom_time_series[simulation] = time_series
+        self.plot_precipitation()
+
+    def set_netcdf_time_series(self):
+        """Selecting and setting up rain time series from NetCDF format."""
+        file_filter = "NetCDF (*.nc);;All Files (*)"
+        last_folder = QSettings().value("threedi/last_precipitation_folder", os.path.expanduser("~"), type=str)
+        filename, __ = QFileDialog.getOpenFileName(self, "Precipitation Time Series", last_folder, file_filter)
+        if len(filename) == 0:
+            return
+        QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
+        simulation = self.dd_simulation.currentText()
+        self.le_upload_netcdf.setText(filename)
+        self.custom_time_series[simulation] = []
         self.plot_precipitation()
 
     def set_design_time_series(self):
@@ -1341,8 +1369,8 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
         if current_text == EventTypes.CONSTANT.value:
             start = self.sp_start_after_constant.value()
-        elif current_text == EventTypes.CUSTOM.value:
-            start = self.sp_start_after_custom.value()
+        elif current_text == EventTypes.FROM_CSV.value:
+            start = self.sp_start_after_csv.value()
         elif current_text == EventTypes.DESIGN.value:
             start = self.sp_start_after_design.value()
         elif current_text == EventTypes.RADAR.value:
@@ -1376,7 +1404,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             precipitation_duration = end_in_seconds - start_in_seconds
             if precipitation_duration < 0:
                 precipitation_duration = 0
-        elif current_text == EventTypes.CUSTOM.value:
+        elif current_text == EventTypes.FROM_CSV.value:
             end_in_seconds = self.custom_time_series[simulation][-1][0] if self.custom_time_series[simulation] else 0
             precipitation_duration = end_in_seconds
         elif current_text == EventTypes.DESIGN.value:
@@ -1392,9 +1420,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         current_text = self.cbo_prec_type.currentText()
         if current_text == EventTypes.CONSTANT.value:
             values = mmh_to_ms(self.get_intensity())
-        elif current_text == EventTypes.CUSTOM.value:
+        elif current_text == EventTypes.FROM_CSV.value:
             ts = self.custom_time_series[simulation]
-            if self.cbo_units.currentText() == "mm/h":
+            if self.cbo_units_csv.currentText() == "mm/h":
                 values = [[t, mmh_to_ms(v)] for t, v in ts]
             else:
                 timestep = ts[1][0] - ts[0][0] if len(ts) > 1 else 1
@@ -1417,10 +1445,23 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         values = self.get_precipitation_values()
         start, end = self.parent_page.parent_wizard.duration_page.main_widget.to_datetime()
         interpolate = self.cb_interpolate_rain.isChecked()
-        filepath = self.le_upload_rain.text()
-        from_csv = self.rb_from_csv.isChecked()
-        from_netcdf = self.rb_from_netcdf.isChecked()
-        return precipitation_type, offset, duration, units, values, start, interpolate, filepath, from_csv, from_netcdf
+        csv_filepath = self.le_upload_csv.text()
+        netcdf_filepath = self.le_upload_netcdf.text()
+        netcdf_global = self.rb_global_netcdf.isChecked()
+        netcdf_raster = self.rb_raster_netcdf.isChecked()
+        return (
+            precipitation_type,
+            offset,
+            duration,
+            units,
+            values,
+            start,
+            interpolate,
+            csv_filepath,
+            netcdf_filepath,
+            netcdf_global,
+            netcdf_raster,
+        )
 
     def constant_values(self):
         """Getting plot values for the Constant precipitation."""
@@ -1433,18 +1474,15 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         y_values += [intensity] * len(x_values)
         return x_values, y_values
 
-    def custom_values(self):
-        """Getting plot values for the Custom precipitation."""
+    def from_csv_values(self):
+        """Getting plot values for the CSV derived precipitation."""
         simulation = self.dd_simulation.currentText()
         x_values, y_values = [], []
-        if self.rb_from_netcdf.isChecked():
-            del self.custom_time_series[simulation][:]
-        else:
-            units_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
-            for x, y in self.custom_time_series[simulation]:
-                x_in_units = x / units_multiplier
-                x_values.append(x_in_units)
-                y_values.append(y)
+        units_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
+        for x, y in self.custom_time_series[simulation]:
+            x_in_units = x / units_multiplier
+            x_values.append(x_in_units)
+            y_values.append(y)
         return x_values, y_values
 
     def design_values(self):
@@ -1470,15 +1508,16 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         current_text = self.cbo_prec_type.currentText()
         if current_text == EventTypes.CONSTANT.value:
             x_values, y_values = self.constant_values()
-        elif current_text == EventTypes.CUSTOM.value:
-            x_values, y_values = self.custom_values()
+        elif current_text == EventTypes.FROM_CSV.value:
+            x_values, y_values = self.from_csv_values()
         elif current_text == EventTypes.DESIGN.value:
             x_values, y_values = self.design_values()
-        elif current_text == EventTypes.RADAR.value:
+        elif current_text in {EventTypes.FROM_NETCDF.value, EventTypes.RADAR.value}:
             x_values, y_values = [], []
             self.plot_widget.hide()
             self.plot_label.hide()
-            self.label_cet_info.show()
+            if current_text == EventTypes.RADAR.value:
+                self.label_cet_info.show()
         else:
             self.plot_widget.hide()
             self.plot_label.hide()
@@ -1504,7 +1543,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             precipitation_values = y_values
         if current_text == EventTypes.CONSTANT.value:
             self.total_precipitation = sum(mmh_to_mmtimestep(v, 1, self.current_units) for v in precipitation_values)
-        elif current_text == EventTypes.CUSTOM.value and self.cbo_units.currentText() == "mm/h":
+        elif current_text == EventTypes.FROM_CSV.value and self.cbo_units_csv.currentText() == "mm/h":
             self.total_precipitation = sum(
                 mmh_to_mmtimestep(v, timestep, self.current_units) for v in precipitation_values
             )
@@ -1615,7 +1654,7 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
         to_seconds_multiplier = self.SECONDS_MULTIPLIERS[self.current_units]
         if current_text == EventTypes.CONSTANT.value:
             start = self.sp_start_wind_constant.value()
-        elif current_text == EventTypes.CUSTOM.value:
+        elif current_text == EventTypes.FROM_CSV.value:
             start = self.sp_start_wind_custom.value()
         else:
             return 0.0
@@ -1641,7 +1680,7 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
             wind_duration = end_in_seconds - start_in_seconds
             if wind_duration < 0:
                 wind_duration = 0
-        elif current_text == EventTypes.CUSTOM.value:
+        elif current_text == EventTypes.FROM_CSV.value:
             end_in_seconds = self.custom_wind[-1][0] if self.custom_wind else 0
             wind_duration = end_in_seconds
         else:
@@ -2619,9 +2658,9 @@ class SimulationWizard(QWizard):
                     precipitation_widget.sp_intensity.setValue(intensity_mmh)
                 else:
                     simulation = precipitation_widget.dd_simulation.currentText()
-                    precipitation_widget.cbo_prec_type.setCurrentText(EventTypes.CUSTOM.value)
-                    precipitation_widget.le_upload_rain.setText(from_template_placeholder)
-                    precipitation_widget.sp_start_after_custom.setValue(rain.offset // 3600)
+                    precipitation_widget.cbo_prec_type.setCurrentText(EventTypes.FROM_CSV.value)
+                    precipitation_widget.le_upload_csv.setText(from_template_placeholder)
+                    precipitation_widget.sp_start_after_csv.setValue(rain.offset // 3600)
                     precipitation_widget.cb_interpolate_rain.setChecked(rain.interpolate)
                     rain_values = rain.values
                     timestep = rain_values[1][0] - rain_values[0][0]
@@ -2652,7 +2691,7 @@ class SimulationWizard(QWizard):
                     if initial_winddragcoefficient:
                         wind_widget.sp_dc_constant.setValue(initial_winddragcoefficient.value)
                 else:
-                    wind_widget.cbo_wind_type.setCurrentText(EventTypes.CUSTOM.value)
+                    wind_widget.cbo_wind_type.setCurrentText(EventTypes.FROM_CSV.value)
                     wind_widget.le_upload_wind.setText(from_template_placeholder)
                     wind_widget.sp_start_wind_custom.setValue(wind.offset // 3600)
                     wind_widget.cb_interpolate_speed.setChecked(wind.speed_interpolate)
