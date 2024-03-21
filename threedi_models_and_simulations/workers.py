@@ -312,11 +312,7 @@ class UploadProgressWorker(QRunnable):
                 continue
         tasks.append(self.commit_revision_task)
         if make_3di_model:
-            if inherit_templates:
-                print("todo: include templates")
-                # tasks.append(self.include_templates_task)
-            else:
-                tasks.append(self.create_3di_model_task)
+            tasks.append(partial(self.create_3di_model_task, inherit_templates))
         return tasks
 
     def create_revision_task(self):
@@ -416,7 +412,7 @@ class UploadProgressWorker(QRunnable):
         self.local_schematisation.update_wip_revision(self.revision.number)
         self.signals.revision_committed.emit()
 
-    def create_3di_model_task(self):
+    def create_3di_model_task(self, inherit_templates=False):
         """Run creation of the new model out of revision data."""
         self.current_task = "MAKE 3DI MODEL"
         self.current_task_progress = 0.0
@@ -453,7 +449,7 @@ class UploadProgressWorker(QRunnable):
                 err = RevisionUploadError(error_msg)
                 raise err
         # Create 3Di model
-        model = self.tc.create_schematisation_revision_3di_model(self.schematisation.id, self.revision.id)
+        model = self.tc.create_schematisation_revision_3di_model(self.schematisation.id, self.revision.id, inherit_templates)
         model_id = model.id
         finished_tasks = {
             "make_gridadmin": False,

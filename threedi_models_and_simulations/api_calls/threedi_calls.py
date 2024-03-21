@@ -914,9 +914,16 @@ class ThreediCalls:
         threedi_models = self.threedi_api.schematisations_revisions_threedimodels(revision_pk, schematisation_pk)
         return threedi_models
 
-    def create_schematisation_revision_3di_model(self, schematisation_pk: int, revision_pk: int) -> ThreediModel:
+    def create_schematisation_revision_3di_model(self, schematisation_pk: int, revision_pk: int, inherit_templates: bool) -> ThreediModel:
         """Create a new 3Di model out of committed revision."""
-        threedi_model = self.threedi_api.schematisations_revisions_create_threedimodel(revision_pk, schematisation_pk)
+        if inherit_templates:
+            data = {
+                "inherit_from_previous_threedimodel": True,
+                "inherit_from_previous_revision": inherit_templates,
+            }
+            threedi_model = self.threedi_api.schematisations_revisions_create_threedimodel(revision_pk, schematisation_pk, data)
+        else:
+            threedi_model = self.threedi_api.schematisations_revisions_create_threedimodel(revision_pk, schematisation_pk)
         return threedi_model
 
     def fetch_schematisation_revision_tasks(self, schematisation_pk: int, revision_pk: int) -> List[RevisionTask]:
