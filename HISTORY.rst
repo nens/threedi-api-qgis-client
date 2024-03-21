@@ -4,7 +4,7 @@ History
 3.9.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixed widget focus for the simulation model selection window.
 
 
 3.9.1 (2024-03-14)
