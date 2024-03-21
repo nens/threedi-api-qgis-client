@@ -285,7 +285,8 @@ class UploadProgressWorker(QRunnable):
         """Build upload tasks list."""
         tasks = list()
         create_revision = self.upload_specification["create_revision"]
-        upload_only = self.upload_specification["upload_only"]
+        make_3di_model = self.upload_specification["make_3di_model"]
+        inherit_templates = self.upload_specification["cb_inherit_templates"]
         if create_revision:
             tasks.append(self.create_revision_task)
         for file_name, file_state in self.upload_specification["selected_files"].items():
@@ -310,8 +311,12 @@ class UploadProgressWorker(QRunnable):
             else:
                 continue
         tasks.append(self.commit_revision_task)
-        if not upload_only:
-            tasks.append(self.create_3di_model_task)
+        if make_3di_model:
+            if inherit_templates:
+                print("todo: include templates")
+                # tasks.append(self.include_templates_task)
+            else:
+                tasks.append(self.create_3di_model_task)
         return tasks
 
     def create_revision_task(self):

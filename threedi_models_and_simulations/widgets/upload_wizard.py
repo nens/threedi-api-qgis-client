@@ -653,7 +653,8 @@ class UploadWizard(QWizard):
         self.new_upload["selected_files"] = self.select_files_page.main_widget.detected_files
         self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
         self.new_upload["create_revision"] = True
-        self.new_upload["upload_only"] = self.select_files_page.main_widget.pb_upload_only.isChecked()
+        self.new_upload["make_3di_model"] = self.select_files_page.main_widget.cb_make_3di_model.isChecked()
+        self.new_upload["cb_inherit_templates"] = self.select_files_page.main_widget.cb_inherit_templates.isChecked()
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""
