@@ -4,7 +4,8 @@ History
 3.9.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Improvements for Upload wizard (#541).
+- Updated threedi-api-client version to 4.1.5.
 
 
 3.9.1 (2024-03-14)
