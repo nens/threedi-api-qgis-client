@@ -241,6 +241,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         self.schematisation = self.parent_page.parent_wizard.schematisation
         self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
         self.tc = self.parent_page.parent_wizard.tc
+        self.cb_make_3di_model.stateChanged.connect(self.toggle_make_3di_model)
         self.detected_files = self.check_files_states()
         self.widgets_per_file = {}
         self.initialize_widgets()
@@ -285,6 +286,15 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
     def file_table_mapping(self):
         """Files to spatialite tables mapping."""
         return SchematisationRasterReferences.raster_table_mapping()
+
+    def toggle_make_3di_model(self):
+        """Handle Make 3Di model checkbox state changes."""
+        if self.cb_make_3di_model.isChecked():
+            self.cb_inherit_templates.setChecked(True)
+            self.cb_inherit_templates.setEnabled(True)
+        else:
+            self.cb_inherit_templates.setChecked(False)
+            self.cb_inherit_templates.setEnabled(False)
 
     def check_files_states(self):
         """Check raster (and spatialite) files presence and compare local and remote data."""
@@ -651,7 +661,8 @@ class UploadWizard(QWizard):
         self.new_upload["selected_files"] = self.select_files_page.main_widget.detected_files
         self.new_upload["commit_message"] = self.select_files_page.main_widget.te_upload_description.toPlainText()
         self.new_upload["create_revision"] = True
-        self.new_upload["upload_only"] = self.select_files_page.main_widget.pb_upload_only.isChecked()
+        self.new_upload["make_3di_model"] = self.select_files_page.main_widget.cb_make_3di_model.isChecked()
+        self.new_upload["cb_inherit_templates"] = self.select_files_page.main_widget.cb_inherit_templates.isChecked()
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""

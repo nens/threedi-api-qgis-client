@@ -164,7 +164,7 @@ class UploadOverview(uicls_log, basecls_log):
         new_upload = upload_wizard_dialog.new_upload
         if not new_upload:
             return
-        if not new_upload["upload_only"]:
+        if new_upload["make_3di_model"]:
             deletion_dlg = ModelDeletionDialog(self.plugin_dock, self)
             if deletion_dlg.threedi_models_to_show:
                 deletion_dlg.exec_()

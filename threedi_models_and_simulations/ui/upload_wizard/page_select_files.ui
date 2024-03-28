@@ -52,60 +52,53 @@
     </widget>
    </item>
    <item row="6" column="0">
-    <layout class="QGridLayout" name="gridLayout_2">
-     <property name="bottomMargin">
-      <number>0</number>
+    <widget class="QCheckBox" name="cb_upload_schematisation_revision">
+     <property name="font">
+      <font>
+        <family>Segoe UI</family>
+      </font>
      </property>
-     <item row="0" column="0">
-      <widget class="QPushButton" name="pb_upload_only">
-       <property name="font">
-        <font>
-         <family>Segoe UI</family>
-         <pointsize>12</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>UPLOAD ONLY</string>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-       <property name="autoExclusive">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QPushButton" name="pb_upload_and_process">
-       <property name="font">
-        <font>
-         <family>Segoe UI</family>
-         <pointsize>12</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>UPLOAD AND PROCESS</string>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-       <property name="autoExclusive">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
+     <property name="text">
+      <string>Upload schematisation revision</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+    </widget>
    </item>
+    <item row="7" column="0">
+        <widget class="QCheckBox" name="cb_make_3di_model">
+            <property name="font">
+                <font>
+                    <family>Segoe UI</family>
+                </font>
+            </property>
+            <property name="text">
+                <string>Make 3Di model</string>
+            </property>
+            <property name="checked">
+                <bool>true</bool>
+            </property>
+        </widget>
+    </item>
+    <item row="8" column="0">
+        <widget class="QCheckBox" name="cb_inherit_templates">
+            <property name="font">
+                <font>
+                    <family>Segoe UI</family>
+                </font>
+            </property>
+            <property name="text">
+                <string>Inherit simulation templates from previous revision</string>
+            </property>
+            <property name="checked">
+                <bool>true</bool>
+            </property>
+        </widget>
+    </item>
    <item row="3" column="0">
     <widget class="QLabel" name="label_3">
      <property name="font">
@@ -119,19 +112,6 @@
       <string>DESCRIBE THE CHANGES YOU UPLOAD:</string>
      </property>
     </widget>
-   </item>
-   <item row="7" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
    </item>
    <item row="0" column="0" colspan="2">
     <layout class="QVBoxLayout" name="svg_lout"/>
