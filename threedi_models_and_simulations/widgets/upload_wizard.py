@@ -74,6 +74,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
     """Widget for the Check Model page."""
 
     SCHEMA_CHECKS_HEADER = ("Level", "Error code", "ID", "Table", "Column", "Value", "Description")
+    CHECKS_PER_CODE_LIMIT = 100
 
     def __init__(self, parent_page):
         super().__init__()
@@ -86,6 +87,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.pb_check_model.clicked.connect(self.run_model_checks)
         self.btn_export_check_results.clicked.connect(self.export_schematisation_checker_results)
         self.lbl_check_spatialite.hide()
+        self.lbl_on_limited_display.hide()
         self.test_external_imports()
 
     def test_external_imports(self):
@@ -112,6 +114,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
 
     def check_schematisation(self):
         """Run schematisation checker."""
+        self.lbl_on_limited_display.hide()
         try:
             from sqlalchemy.exc import OperationalError
             from threedi_modelchecker import ThreediModelChecker
@@ -172,10 +175,10 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         total_checks = len(model_checker.config.checks)
         self.pbar_check_spatialite.setMaximum(total_checks)
         self.pbar_check_spatialite.setValue(0)
-        results_rows = []
+        results_rows = defaultdict(list)
         for i, check in enumerate(model_checker.checks(level=LogLevels.INFO.value), start=1):
             for result_row in check.get_invalid(session):
-                results_rows.append(
+                results_rows[check.error_code].append(
                     [
                         check.level.name,
                         check.error_code,
@@ -188,9 +191,14 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                 )
             self.pbar_check_spatialite.setValue(i)
         if results_rows:
-            for result_row in results_rows:
-                level = result_row[0].upper()
-                self.schematisation_checker_logger.log_result_row(result_row, level)
+            for error_code, results_per_code in results_rows.items():
+                if len(results_per_code) > self.CHECKS_PER_CODE_LIMIT:
+                    results_per_code = results_per_code[: self.CHECKS_PER_CODE_LIMIT]
+                    if self.lbl_on_limited_display.isHidden():
+                        self.lbl_on_limited_display.show()
+                for result_row in results_per_code:
+                    level = result_row[0].upper()
+                    self.schematisation_checker_logger.log_result_row(result_row, level)
             self.btn_export_check_results.setEnabled(True)
         self.communication.bar_info("Finished schematisation checks.")
         self.pbar_check_spatialite.setValue(total_checks)

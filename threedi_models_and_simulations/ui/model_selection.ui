@@ -15,6 +15,9 @@
     <family>Segoe UI</family>
    </font>
   </property>
+  <property name="focusPolicy">
+   <enum>Qt::StrongFocus</enum>
+  </property>
   <property name="windowTitle">
    <string>Choose model and simulation template</string>
   </property>
@@ -533,14 +536,14 @@
   <tabstop>pb_prev_page</tabstop>
   <tabstop>page_sbox</tabstop>
   <tabstop>pb_next_page</tabstop>
-  <tabstop>templates_tv</tabstop>
   <tabstop>refresh_btn</tabstop>
+  <tabstop>templates_tv</tabstop>
   <tabstop>pb_templates_prev_page</tabstop>
   <tabstop>templates_page_sbox</tabstop>
   <tabstop>pb_templates_next_page</tabstop>
   <tabstop>organisations_box</tabstop>
-  <tabstop>pb_load</tabstop>
   <tabstop>pb_cancel_load</tabstop>
+  <tabstop>pb_load</tabstop>
  </tabstops>
  <resources/>
  <connections/>

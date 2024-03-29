@@ -6,13 +6,13 @@ History
 
 - Improvements for Upload wizard (#541).
 - Updated threedi-api-client version to 4.1.5.
+- Fixed widget focus for the simulation model selection window.
 
 
 3.9.1 (2024-03-14)
 ------------------
 
-- Fix logout error: #533
-
+- Fixes/enhancements: #528, #533
 
 3.9 (2024-01-16)
 ----------------
