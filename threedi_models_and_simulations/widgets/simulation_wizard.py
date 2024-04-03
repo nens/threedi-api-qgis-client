@@ -564,22 +564,13 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def setup_laterals(self):
         """Setup laterals widget."""
-        self.overrule_widget.setVisible(False)
         self.cb_type.addItems(["1D", "2D"])
 
     def connect_signals(self):
         """Connect signals."""
-        self.cb_overrule.stateChanged.connect(self.overrule_value_changed)
         self.pb_upload_laterals.clicked.connect(self.load_csv)
-        self.pb_use_csv.clicked.connect(self.overrule_with_csv)
         self.cb_type.currentIndexChanged.connect(self.selection_changed)
-        self.cb_laterals.currentIndexChanged.connect(self.laterals_change)
         self.cb_interpolate_laterals.stateChanged.connect(self.interpolate_changed)
-
-    def laterals_change(self):
-        """Handle dropdown menus selection changes."""
-        lat_id = self.cb_laterals.currentText()
-        self.il_location.setText(lat_id)
 
     def interpolate_changed(self):
         """Handle interpolate checkbox."""
@@ -595,8 +586,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.laterals_layout.setText("Upload laterals for 2D:")
         self.il_upload.setText("")
         self.laterals_timeseries.clear()
-        self.cb_laterals.clear()
-        self.cb_overrule.setChecked(False)
 
     def load_csv(self):
         """Load laterals from CSV file."""
@@ -606,25 +595,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.il_upload.setText(filename)
         self.last_upload_filepath = filename
         self.laterals_timeseries = values
-        for lat in self.laterals_timeseries.keys():
-            self.cb_laterals.addItem(lat)
-
-    def overrule_with_csv(self):
-        """Overrule laterals with values from CSV file."""
-        values, filename = self.open_upload_dialog()
-        if not filename:
-            return
-        laterals = self.laterals_timeseries.get(self.cb_laterals.currentText())
-        for lat in values.values():
-            laterals.values = lat.values
-            return
-
-    def overrule_value_changed(self, value):
-        """Handling checkbox state changes."""
-        if value == 0:
-            self.overrule_widget.setVisible(False)
-        if value == 2:
-            self.overrule_widget.setVisible(True)
 
     def get_laterals_data(self, timesteps_in_seconds=False):
         """Get laterals data (timesteps in seconds)."""
@@ -2561,8 +2531,6 @@ class SimulationWizard(QWizard):
                 except KeyError:
                     laterals_widget.laterals_timeseries = {str(i): lat for i, lat in enumerate(laterals_timeseries, 1)}
                 laterals_widget.last_uploaded_laterals = laterals_timeseries[-1]
-                for lat_id in laterals_widget.laterals_timeseries.keys():
-                    laterals_widget.cb_laterals.addItem(lat_id)
                 os.remove(lateral_temp_filepath)
         if init_conditions.include_dwf:
             dwf_events = [filelateral for filelateral in events.filelaterals if filelateral.periodic == "daily"]
