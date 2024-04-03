@@ -559,17 +559,11 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         set_widget_background_color(self)
         self.laterals_timeseries = {}
         self.last_upload_filepath = ""
-        self.setup_laterals()
         self.connect_signals()
-
-    def setup_laterals(self):
-        """Setup laterals widget."""
-        self.cb_type.addItems(["1D", "2D"])
 
     def connect_signals(self):
         """Connect signals."""
         self.pb_upload_laterals.clicked.connect(self.load_csv)
-        self.cb_type.currentIndexChanged.connect(self.selection_changed)
         self.cb_interpolate_laterals.stateChanged.connect(self.interpolate_changed)
 
     def interpolate_changed(self):
@@ -577,15 +571,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         interpolate = self.cb_interpolate_laterals.isChecked()
         for val in self.laterals_timeseries.values():
             val["interpolate"] = interpolate
-
-    def selection_changed(self, index):
-        """Handle dropdown menus selection changes."""
-        if index == 0:
-            self.laterals_layout.setText("Upload laterals for 1D:")
-        if index == 1:
-            self.laterals_layout.setText("Upload laterals for 2D:")
-        self.il_upload.setText("")
-        self.laterals_timeseries.clear()
 
     def load_csv(self):
         """Load laterals from CSV file."""
@@ -650,7 +635,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             return None, None
         QSettings().setValue("threedi/last_laterals_folder", os.path.dirname(filename))
         values = {}
-        laterals_type = self.cb_type.currentText()
+        laterals_type = "1D"
         interpolate = self.cb_interpolate_laterals.isChecked()
         laterals_list = []
         with open(filename, encoding="utf-8-sig") as lateral_file:
@@ -2518,10 +2503,6 @@ class SimulationWizard(QWizard):
                 get_download_file(lateral_file_download, lateral_temp_filepath)
                 laterals_timeseries = read_json_data(lateral_temp_filepath)
                 last_lateral = laterals_timeseries[-1]
-                if "point" in last_lateral:
-                    laterals_widget.cb_type.setCurrentText("2D")
-                else:
-                    laterals_widget.cb_type.setCurrentText("1D")
                 laterals_widget.il_upload.setText(from_template_placeholder)
                 laterals_widget.last_upload_filepath = from_template_placeholder
                 laterals_widget.cbo_lateral_units.setCurrentText("s")
