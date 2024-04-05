@@ -563,12 +563,12 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def connect_signals(self):
         """Connect signals."""
-        self.pb_upload_laterals.clicked.connect(self.load_csv)
-        self.cb_interpolate_laterals.stateChanged.connect(self.interpolate_changed)
+        self.pb_upload_1d_laterals.clicked.connect(self.load_csv)
+        self.cb_1d_interpolate.stateChanged.connect(self.interpolate_changed)
 
     def interpolate_changed(self):
         """Handle interpolate checkbox."""
-        interpolate = self.cb_interpolate_laterals.isChecked()
+        interpolate = self.cb_1d_interpolate.isChecked()
         for val in self.laterals_timeseries.values():
             val["interpolate"] = interpolate
 
@@ -577,7 +577,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         values, filename = self.open_upload_dialog()
         if not filename:
             return
-        self.il_upload.setText(filename)
+        self.il_1d_upload.setText(filename)
         self.last_upload_filepath = filename
         self.laterals_timeseries = values
 
@@ -586,7 +586,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if timesteps_in_seconds is False:
             return self.laterals_timeseries
         laterals_data = deepcopy(self.laterals_timeseries)
-        units = self.cbo_lateral_units.currentText()
+        units = self.cbo_1d_units.currentText()
         if units == "hrs":
             seconds_per_unit = 3600
         elif units == "mins":
@@ -636,7 +636,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         QSettings().setValue("threedi/last_laterals_folder", os.path.dirname(filename))
         values = {}
         laterals_type = "1D"
-        interpolate = self.cb_interpolate_laterals.isChecked()
+        interpolate = self.cb_1d_interpolate.isChecked()
         laterals_list = []
         with open(filename, encoding="utf-8-sig") as lateral_file:
             laterals_reader = csv.reader(lateral_file)
@@ -2117,7 +2117,7 @@ class LateralsPage(QWizardPage):
         layout.addWidget(self.main_widget)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.registerField("laterals_upload*", self.main_widget.il_upload)
+        self.registerField("laterals_upload*", self.main_widget.il_1d_upload)
         self.adjustSize()
 
 
@@ -2360,7 +2360,7 @@ class SimulationWizard(QWizard):
                 self.set_overview_breaches()
         elif isinstance(current_page, LateralsPage):
             laterals_widget = self.laterals_page.main_widget
-            laterals_widget.il_upload.setText(laterals_widget.last_upload_filepath)
+            laterals_widget.il_1d_upload.setText(laterals_widget.last_upload_filepath)
         elif isinstance(current_page, DWFPage):
             dwf_widget = self.dwf_page.main_widget
             dwf_widget.dwf_upload.setText(dwf_widget.last_upload_filepath)
@@ -2503,10 +2503,10 @@ class SimulationWizard(QWizard):
                 get_download_file(lateral_file_download, lateral_temp_filepath)
                 laterals_timeseries = read_json_data(lateral_temp_filepath)
                 last_lateral = laterals_timeseries[-1]
-                laterals_widget.il_upload.setText(from_template_placeholder)
+                laterals_widget.il_1d_upload.setText(from_template_placeholder)
                 laterals_widget.last_upload_filepath = from_template_placeholder
-                laterals_widget.cbo_lateral_units.setCurrentText("s")
-                laterals_widget.cb_interpolate_laterals.setChecked(last_lateral["interpolate"])
+                laterals_widget.cbo_1d_units.setCurrentText("s")
+                laterals_widget.cb_1d_interpolate.setChecked(last_lateral["interpolate"])
                 try:
                     laterals_widget.laterals_timeseries = {str(lat["id"]): lat for lat in laterals_timeseries}
                 except KeyError:

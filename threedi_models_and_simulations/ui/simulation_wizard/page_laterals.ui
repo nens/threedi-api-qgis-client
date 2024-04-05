@@ -214,7 +214,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QLabel" name="lb_2D_laterals_file">
+           <widget class="QLabel" name="lb_2d_laterals_file">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -317,7 +317,7 @@
            <enum>QLayout::SetMinimumSize</enum>
           </property>
           <item>
-           <widget class="QLabel" name="lb_2D_units">
+           <widget class="QLabel" name="lb_2d_units">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -490,7 +490,7 @@
            <enum>QLayout::SetMinimumSize</enum>
           </property>
           <item>
-           <widget class="QLabel" name="lb_1D_units">
+           <widget class="QLabel" name="lb_1d_units">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -515,7 +515,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="cbo_lateral_units">
+           <widget class="QComboBox" name="cbo_1d_units">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
               <horstretch>0</horstretch>
@@ -584,7 +584,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QLabel" name="lb_1D_laterals_file">
+           <widget class="QLabel" name="lb_1d_laterals_file">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -609,7 +609,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="il_upload">
+           <widget class="QLineEdit" name="il_1d_upload">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -649,7 +649,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pb_upload_laterals">
+           <widget class="QPushButton" name="pb_upload_1d_laterals">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
               <horstretch>0</horstretch>
@@ -682,7 +682,7 @@
          </layout>
         </item>
         <item row="2" column="0">
-         <widget class="QCheckBox" name="cb_interpolate_laterals">
+         <widget class="QCheckBox" name="cb_1d_interpolate">
           <property name="minimumSize">
            <size>
             <width>14</width>
