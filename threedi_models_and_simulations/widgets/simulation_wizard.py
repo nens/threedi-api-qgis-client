@@ -561,7 +561,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.last_upload_filepath = ""
         self.setup_laterals()
         self.connect_signals()
-   
+
     def setup_laterals(self):
         self.rb_use_1d_laterals.setChecked(True)
         self.rb_use_2d_laterals.setChecked(True)
