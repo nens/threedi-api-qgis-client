@@ -559,12 +559,35 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         set_widget_background_color(self)
         self.laterals_timeseries = {}
         self.last_upload_filepath = ""
+        self.setup_laterals()
         self.connect_signals()
+   
+    def setup_laterals(self):
+        self.rb_use_1d_laterals.setChecked(True)
+        self.rb_use_2d_laterals.setChecked(True)
+        self.uploadgroup_1d.setEnabled(False)
+        self.uploadgroup_2d.setEnabled(False)
 
     def connect_signals(self):
         """Connect signals."""
+        self.rb_upload_1d_laterals.toggled.connect(self.toggle_1d_laterals_upload)
+        self.rb_upload_2d_laterals.toggled.connect(self.toggle_2d_laterals_upload)
         self.pb_upload_1d_laterals.clicked.connect(self.load_csv)
         self.cb_1d_interpolate.stateChanged.connect(self.interpolate_changed)
+
+    def toggle_1d_laterals_upload(self, checked):
+        """Handle 1D laterals toggle."""
+        if checked:
+            self.uploadgroup_1d.setEnabled(True)
+        else:
+            self.uploadgroup_1d.setEnabled(False)
+
+    def toggle_2d_laterals_upload(self, checked):
+        """Handle 2D laterals toggle."""
+        if checked:
+            self.uploadgroup_2d.setEnabled(True)
+        else:
+            self.uploadgroup_2d.setEnabled(False)
 
     def interpolate_changed(self):
         """Handle interpolate checkbox."""
