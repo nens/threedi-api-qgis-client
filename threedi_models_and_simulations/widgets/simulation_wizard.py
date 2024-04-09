@@ -576,10 +576,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         else:
             self.groupbox_2d_laterals.setEnabled(False)
             self.groupbox_2d_laterals.setChecked(False)
-        self.rb_use_1d_laterals.setChecked(True)
-        self.rb_use_2d_laterals.setChecked(True)
-        self.uploadgroup_1d.setEnabled(False)
-        self.uploadgroup_2d.setEnabled(False)
 
     def connect_signals(self):
         """Connect signals."""
@@ -2528,9 +2524,24 @@ class SimulationWizard(QWizard):
                             )
                             break
         if init_conditions.include_laterals:
+            laterals_widget = self.laterals_page.main_widget
+            # Check if 1D or 2D laterals are already available in the simulation template
+            if events.laterals:
+                laterals = events.laterals[0]
+                laterals_point = laterals.point
+                if laterals_point:
+                    # 2D laterals if point is present
+                    laterals_widget.rb_use_2d_laterals.setChecked(True)
+                else:
+                    # 1D laterals if point is not present
+                    laterals_widget.rb_use_1d_laterals.setChecked(True)
+            else:
+                laterals_widget.rb_use_1d_laterals.setEnabled(False)
+                laterals_widget.rb_use_2d_laterals.setEnabled(False)
+
+            # Laterals file
             laterals_events = [filelateral for filelateral in events.filelaterals if filelateral.periodic != "daily"]
             if laterals_events:
-                laterals_widget = self.laterals_page.main_widget
                 tc = ThreediCalls(self.plugin_dock.threedi_api)
                 lateral_file = laterals_events[0]
                 lateral_file_name = lateral_file.file.filename
