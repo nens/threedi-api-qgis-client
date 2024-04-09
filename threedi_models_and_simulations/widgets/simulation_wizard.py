@@ -2527,9 +2527,9 @@ class SimulationWizard(QWizard):
             laterals_widget = self.laterals_page.main_widget
             # Check if 1D or 2D laterals are already available in the simulation template
             if events.laterals:
-                laterals = events.laterals[0]
-                laterals_point = laterals.point
-                if laterals_point:
+                lateral_event = events.laterals[0]
+                lateral_event_point = lateral_event.point
+                if lateral_event_point:
                     # 2D laterals if point is present
                     laterals_widget.rb_use_2d_laterals.setChecked(True)
                 else:
