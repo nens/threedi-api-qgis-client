@@ -142,7 +142,7 @@
     </spacer>
    </item>
    <item row="8" column="2">
-    <widget class="QGroupBox" name="groupbox_2d">
+    <widget class="QGroupBox" name="groupbox_2d_laterals">
      <property name="font">
       <font>
        <family>Segoe UI</family>
@@ -426,7 +426,7 @@
     </widget>
    </item>
    <item row="7" column="2">
-    <widget class="QGroupBox" name="groupbox_1d">
+    <widget class="QGroupBox" name="groupbox_1d_laterals">
      <property name="title">
       <string>1D Laterals</string>
      </property>

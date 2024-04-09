@@ -556,6 +556,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
         set_widget_background_color(self)
         self.laterals_timeseries = {}
         self.last_upload_filepath = ""
@@ -563,6 +564,18 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.connect_signals()
 
     def setup_laterals(self):
+        if self.current_model.extent_one_d is not None:
+            self.groupbox_1d_laterals.setEnabled(True)
+            self.groupbox_1d_laterals.setChecked(True)
+        else:
+            self.groupbox_1d_laterals.setEnabled(False)
+            self.groupbox_1d_laterals.setChecked(False)
+        if self.current_model.extent_two_d is not None:
+            self.groupbox_2d_laterals.setEnabled(True)
+            self.groupbox_2d_laterals.setChecked(True)
+        else:
+            self.groupbox_2d_laterals.setEnabled(False)
+            self.groupbox_2d_laterals.setChecked(False)
         self.rb_use_1d_laterals.setChecked(True)
         self.rb_use_2d_laterals.setChecked(True)
         self.uploadgroup_1d.setEnabled(False)
