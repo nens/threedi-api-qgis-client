@@ -63,6 +63,7 @@ class ModelSelectionDialog(uicls, basecls):
         self.organisations_box.currentTextChanged.connect(partial(save_3di_settings, "threedi/last_used_organisation"))
         set_icon(self.refresh_btn, "refresh.svg")
         self.refresh_btn.clicked.connect(self.refresh_templates_list)
+        self.search_le.setFocus()
 
     def refresh_templates_list(self):
         """Refresh simulation templates list if any model is selected."""
