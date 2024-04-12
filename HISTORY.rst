@@ -4,6 +4,7 @@ History
 3.9.2 (unreleased)
 ------------------
 
+- Fixes/enhancements: #107, #503, #510, #517
 - Fixes/enhancements: #527
 - Fixed widget focus for the simulation model selection window.
 

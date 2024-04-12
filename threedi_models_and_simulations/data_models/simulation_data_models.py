@@ -186,7 +186,7 @@ class SavedState(SimulationElement):
 class NewSimulation:
     simulation_template_id: str
     name: str
-    tags: str
+    tags: list
     threedimodel_id: str
     organisation_uuid: str
     start_datetime: datetime
