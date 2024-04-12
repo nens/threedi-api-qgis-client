@@ -1,10 +1,27 @@
 History
 =======
 
-3.7.1 (unreleased)
+3.9.2 (unreleased)
 ------------------
 
 - Fixes/enhancements: #107, #503, #510, #517
+- Fixes/enhancements: #527
+- Fixed widget focus for the simulation model selection window.
+
+3.9.1 (2024-03-14)
+------------------
+
+- Fixes/enhancements: #528, #533
+
+3.9 (2024-01-16)
+----------------
+
+- Fixes/enhancements: #465, #491
+
+3.8 (2024-01-11)
+----------------
+
+- Fixes/enhancements: #107, #503, #510, #523
 
 
 3.7.0 (2023-11-14)

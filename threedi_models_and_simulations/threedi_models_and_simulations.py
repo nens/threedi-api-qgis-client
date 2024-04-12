@@ -9,7 +9,6 @@ from qgis.PyQt.QtWidgets import QAction, QApplication
 from .communication import UICommunication
 from .deps.custom_imports import (
     API_CLIENT_WHEEL,
-    MODEL_CHECKER_WHEEL,
     api_client_version_matches,
     patch_wheel_imports,
     reinstall_packages_from_wheels,
@@ -129,34 +128,6 @@ class ThreediModelsAndSimulations:
             else:
                 feedback_message = reinstall_results[API_CLIENT_WHEEL]["error"]
                 error = f"Upgrading of the 'threedi-api-client' failed due to following error:\n{feedback_message}"
-                uc.show_error(error)
-
-    def ensure_required_modelchecker_version(self, available_threedi_modelchecker_version):
-        """Ensure availability of the required 'threedi_modelchecker' version."""
-        uc = UICommunication(self.iface, "3Di Models and Simulations")
-        available_threedi_modelchecker_version_str = ".".join([str(i) for i in available_threedi_modelchecker_version])
-        title = f"Old 'threedi-modelchecker' version ({available_threedi_modelchecker_version_str})"
-        msg = (
-            "Old version of the python package 'threedi-modelchecker' has been installed in your python "
-            "environment. It needs to be upgraded to be able to run the latest schematisation checks and migrations. "
-            "This will now be attempted."
-        )
-        cancel, ok = "Cancel", "OK"
-        clicked_button = uc.custom_ask(None, title, msg, cancel, ok)
-        if clicked_button == ok:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            reinstall_results = reinstall_packages_from_wheels(MODEL_CHECKER_WHEEL)
-            package_reinstalled = reinstall_results[MODEL_CHECKER_WHEEL]["success"]
-            QApplication.restoreOverrideCursor()
-            if package_reinstalled:
-                info = (
-                    "Python package 'threedi-modelchecker' has been upgraded successfully. "
-                    "Please restart QGIS to be able to use the 3Di Models & Simulations plugin."
-                )
-                uc.show_info(info)
-            else:
-                feedback_message = reinstall_results[MODEL_CHECKER_WHEEL]["error"]
-                error = f"Upgrading of the 'threedi-modelchecker' failed due to following error:\n{feedback_message}"
                 uc.show_error(error)
 
     def run(self):

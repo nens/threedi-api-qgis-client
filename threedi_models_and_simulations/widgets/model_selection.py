@@ -14,7 +14,7 @@ from threedi_api_client.openapi import ApiException
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import CACHE_PATH, extract_error_message, file_cached, get_download_file
-from ..utils_ui import read_3di_settings, save_3di_settings, set_named_style
+from ..utils_ui import read_3di_settings, save_3di_settings, set_icon, set_named_style
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "model_selection.ui"))
@@ -61,6 +61,9 @@ class ModelSelectionDialog(uicls, basecls):
         self.populate_organisations()
         self.fetch_3di_models()
         self.organisations_box.currentTextChanged.connect(partial(save_3di_settings, "threedi/last_used_organisation"))
+        set_icon(self.refresh_btn, "refresh.svg")
+        self.refresh_btn.clicked.connect(self.refresh_templates_list)
+        self.search_le.setFocus()
 
     def refresh_templates_list(self):
         """Refresh simulation templates list if any model is selected."""

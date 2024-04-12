@@ -29,8 +29,8 @@ https://artifacts.lizard.net/admin/ Afterwards run it like this::
 Local development notes
 -----------------------
 
-Reinout added a Dockerfile and docker-compose.yml for local development on his macbook.
-Install xquartz and it should work::
+On Linux, local development happens with docker to make sure we're working in a nicely
+isolated environment. To start the development environment, run the following commands::
 
     $ docker compose build
     $ xhost +localhost
@@ -40,6 +40,5 @@ and::
 
     $ docker compose run --rm qgis make test
 
-On linux, you probably have a proper setup already and don't need this. If you want to use the
-docker setup, look at ThreeDiToolbox's setup (so: add /tmp/x-something mount; and adjust the DISPLAY
-env variable).
+On Mac, you might need to install xquartz, adjust the DISPLAY env variable in the docker-compose.yml
+to `host.docker.internal:0` and remove the //tmp/x-something mount from volumes.

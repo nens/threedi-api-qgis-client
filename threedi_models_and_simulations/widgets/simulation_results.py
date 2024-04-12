@@ -13,7 +13,8 @@ from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import LocalRevision, LocalSchematisation, bypass_max_path_limit, list_local_schematisations
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import API_DATETIME_FORMAT, extract_error_message
+from ..utils import API_DATETIME_FORMAT, USER_DATETIME_FORMAT, extract_error_message
+from ..utils_ui import set_icon
 from ..workers import DownloadProgressWorker
 from .custom_items import DownloadProgressDelegate
 
@@ -42,6 +43,12 @@ class SimulationResults(uicls, basecls):
         self.pb_cancel.clicked.connect(self.close)
         self.pb_download.clicked.connect(self.download_results)
         self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_download_results)
+        set_icon(self.refresh_btn, "refresh.svg")
+        self.refresh_btn.clicked.connect(self.refresh_finished_simulations_list)
+
+    def refresh_last_updated_label(self):
+        """Refresh last update datetime label."""
+        self.label_last_updated.setText(f"Last updated: {datetime.now().strftime(USER_DATETIME_FORMAT)}")
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
@@ -51,6 +58,18 @@ class SimulationResults(uicls, basecls):
         self.tv_model.setHorizontalHeaderLabels(["Simulation name", "Expires", "Download progress"])
         self.tv_finished_sim_tree.setModel(self.tv_model)
 
+    def refresh_finished_simulations_list(self):
+        """Refresh finished simulation results list."""
+        self.tv_finished_sim_tree.selectionModel().selectionChanged.disconnect(self.toggle_download_results)
+        self.plugin_dock.simulations_progresses_sentinel.simulation_finished.disconnect(self.update_finished_list)
+        self.tv_model.clear()
+        self.finished_simulations.clear()
+        self.setup_view_model()
+        self.plugin_dock.simulations_progresses_sentinel.simulation_finished.connect(self.update_finished_list)
+        self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_download_results)
+        self.plugin_dock.simulations_progresses_sentinel.fetch_finished_simulations()
+        self.plugin_dock.communication.bar_info("Finished simulation results reloaded!")
+
     def toggle_download_results(self):
         """Toggle download if any simulation is selected."""
         if self.download_results_pool.activeThreadCount() == 0:
@@ -59,6 +78,9 @@ class SimulationResults(uicls, basecls):
                 self.pb_download.setEnabled(True)
             else:
                 self.pb_download.setDisabled(True)
+            self.refresh_btn.setEnabled(True)
+        else:
+            self.refresh_btn.setDisabled(True)
 
     def add_finished_simulation_to_model(self, sim_id, sim_data):
         """Method for adding information about finished simulation to the model."""
@@ -79,6 +101,7 @@ class SimulationResults(uicls, basecls):
         for sim_id, sim_data in sorted(finished_simulations_data.items()):
             if sim_id not in self.finished_simulations:
                 self.add_finished_simulation_to_model(sim_id, sim_data)
+        self.refresh_last_updated_label()
 
     def on_download_progress_update(self, percentage):
         """Update download progress bar."""
@@ -201,6 +224,7 @@ class SimulationResults(uicls, basecls):
             self.plugin_dock.communication.show_error(error_msg)
             return
         self.pb_download.setDisabled(True)
+        self.refresh_btn.setDisabled(True)
         download_worker = DownloadProgressWorker(simulation, downloads, simulation_subdirectory)
         download_worker.signals.thread_finished.connect(self.on_download_finished_success)
         download_worker.signals.download_failed.connect(self.on_download_finished_failed)
