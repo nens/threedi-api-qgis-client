@@ -1,8 +1,8 @@
 History
 =======
 
-3.9.2 (unreleased)
-------------------
+3.10 (2024-04-12)
+-----------------
 
 - Fixes/enhancements: #107, #503, #510, #517
 - Fixes/enhancements: #527
