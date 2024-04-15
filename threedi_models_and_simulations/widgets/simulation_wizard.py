@@ -560,6 +560,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.parent_page = parent_page
         self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
         set_widget_background_color(self)
+        self.template_laterals_1d = []
+        self.template_laterals_2d = []
         self.laterals_1d_timeseries = {}
         self.laterals_2d_timeseries = {}
         self.last_upload_1d_filepath = ""
@@ -2579,10 +2581,27 @@ class SimulationWizard(QWizard):
                             break
         if init_conditions.include_laterals:
             laterals_widget = self.laterals_page.main_widget
-            laterals_events = [filelateral for filelateral in events.filelaterals if filelateral.periodic != "daily"]
-            if laterals_events:
+            laterals = events.laterals
+            file_laterals = [filelateral for filelateral in events.filelaterals if filelateral.periodic != "daily"]
+            if laterals:
+                template_laterals_1d = []
+                template_laterals_2d = []
+                for lateral in laterals:
+                    if hasattr(lateral, "point"):
+                        template_laterals_2d.append(lateral)
+                    else:
+                        template_laterals_1d.append(lateral)
+                if template_laterals_1d:
+                    laterals_widget.cb_use_1d_laterals.setChecked(True)
+                    laterals_widget.cb_upload_1d_laterals.setChecked(False)
+                    laterals_widget.template_laterals_1d = template_laterals_1d
+                if template_laterals_2d:
+                    laterals_widget.cb_use_2d_laterals.setChecked(True)
+                    laterals_widget.cb_upload_2d_laterals.setChecked(False)
+                    laterals_widget.template_laterals_2d = template_laterals_2d
+            if file_laterals:
                 tc = ThreediCalls(self.plugin_dock.threedi_api)
-                lateral_file = laterals_events[0]
+                lateral_file = file_laterals[0]
                 lateral_file_name = lateral_file.file.filename
                 lateral_file_download = tc.fetch_lateral_file_download(temp_simulation_id, lateral_file.id)
                 lateral_temp_filepath = os.path.join(TEMPDIR, lateral_file_name)
@@ -2597,14 +2616,14 @@ class SimulationWizard(QWizard):
                     else:
                         # 1D laterals if point is not present
                         laterals_1d_timeseries.append(ts)
-                if len(laterals_1d_timeseries):
+                if laterals_1d_timeseries:
                     laterals_widget.cb_use_1d_laterals.setChecked(True)
                     laterals_widget.cb_upload_1d_laterals.setChecked(False)
                     try:
                         laterals_widget.laterals_1d_timeseries = {str(lat["id"]): lat for lat in laterals_1d_timeseries}
                     except KeyError:
                         laterals_widget.laterals_1d_timeseries = {str(i): lat for i, lat in enumerate(laterals_1d_timeseries, 1)}
-                if len(laterals_2d_timeseries) > 0:
+                if laterals_2d_timeseries:
                     laterals_widget.cb_use_2d_laterals.setChecked(True)
                     laterals_widget.cb_upload_2d_laterals.setChecked(False)
                     try:
@@ -2612,7 +2631,7 @@ class SimulationWizard(QWizard):
                     except KeyError:
                         laterals_widget.laterals_2d_timeseries = {str(i): lat for i, lat in enumerate(laterals_2d_timeseries, 1)}
                 os.remove(lateral_temp_filepath)
-            else:
+            if not laterals and not file_laterals:
                 laterals_widget.cb_use_1d_laterals.setEnabled(False)
                 laterals_widget.cb_use_2d_laterals.setEnabled(False)
         if init_conditions.include_dwf:
