@@ -88,7 +88,6 @@ uicls_summary_page, basecls_summary_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_initiation.ui")
 )
 
-
 class NameWidget(uicls_name_page, basecls_name_page):
     """Widget for the Name page."""
 
@@ -2600,12 +2599,14 @@ class SimulationWizard(QWizard):
                         laterals_1d_timeseries.append(ts)
                 if len(laterals_1d_timeseries):
                     laterals_widget.cb_use_1d_laterals.setChecked(True)
+                    laterals_widget.cb_upload_1d_laterals.setChecked(False)
                     try:
                         laterals_widget.laterals_1d_timeseries = {str(lat["id"]): lat for lat in laterals_1d_timeseries}
                     except KeyError:
                         laterals_widget.laterals_1d_timeseries = {str(i): lat for i, lat in enumerate(laterals_1d_timeseries, 1)}
                 if len(laterals_2d_timeseries) > 0:
                     laterals_widget.cb_use_2d_laterals.setChecked(True)
+                    laterals_widget.cb_upload_2d_laterals.setChecked(False)
                     try:
                         laterals_widget.laterals_2d_timeseries = {str(lat["id"]): lat for lat in laterals_2d_timeseries}
                     except KeyError:
