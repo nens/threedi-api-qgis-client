@@ -169,7 +169,7 @@
        <number>9</number>
       </property>
       <item row="1" column="0">
-       <widget class="QRadioButton" name="rb_upload_2d_laterals">
+       <widget class="QCheckBox" name="cb_upload_2d_laterals">
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -182,7 +182,7 @@
        </widget>
       </item>
       <item row="0" column="0">
-       <widget class="QRadioButton" name="rb_use_2d_laterals">
+       <widget class="QCheckBox" name="cb_use_2d_laterals">
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -447,7 +447,7 @@
        <number>9</number>
       </property>
       <item row="1" column="0">
-       <widget class="QRadioButton" name="rb_upload_1d_laterals">
+       <widget class="QCheckBox" name="cb_upload_1d_laterals">
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -460,7 +460,7 @@
        </widget>
       </item>
       <item row="0" column="0">
-       <widget class="QRadioButton" name="rb_use_1d_laterals">
+       <widget class="QCheckBox" name="cb_use_1d_laterals">
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -713,50 +713,6 @@
            <property name="checked">
             <bool>false</bool>
            </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QWidget" name="additional_1d" native="true">
-           <layout class="QHBoxLayout" name="horizontalLayout_5">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QRadioButton" name="rb_add_to_existing">
-              <property name="font">
-               <font>
-                <family>Segoe UI</family>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Add to existing (1)</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="rb_replace_existing">
-              <property name="font">
-               <font>
-                <family>Segoe UI</family>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Replace existing (2)</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
           </widget>
          </item>
         </layout>

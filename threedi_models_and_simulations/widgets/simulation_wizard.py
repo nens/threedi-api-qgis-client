@@ -573,9 +573,9 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if self.current_model.extent_one_d is not None:
             self.groupbox_1d_laterals.setEnabled(True)
             self.groupbox_1d_laterals.setChecked(True)
-            if not self.rb_use_1d_laterals.isChecked():
-                self.rb_upload_1d_laterals.setChecked(True)
-            if not self.rb_upload_1d_laterals.isChecked():
+            if not self.cb_use_1d_laterals.isChecked():
+                self.cb_upload_1d_laterals.setChecked(True)
+            if not self.cb_upload_1d_laterals.isChecked():
                 self.uploadgroup_1d.setEnabled(False)
         else:
             self.groupbox_1d_laterals.setEnabled(False)
@@ -585,9 +585,9 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if self.current_model.extent_two_d is not None:
             self.groupbox_2d_laterals.setEnabled(True)
             self.groupbox_2d_laterals.setChecked(True)
-            if not self.rb_use_2d_laterals.isChecked():
-                self.rb_upload_2d_laterals.setChecked(True)
-            if not self.rb_upload_2d_laterals.isChecked():
+            if not self.cb_use_2d_laterals.isChecked():
+                self.cb_upload_2d_laterals.setChecked(True)
+            if not self.cb_upload_2d_laterals.isChecked():
                 self.uploadgroup_2d.setEnabled(False)
         else:
             self.groupbox_2d_laterals.setEnabled(False)
@@ -596,12 +596,12 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
     def connect_signals(self):
         """Connect signals."""
         # 1D laterals
-        self.rb_upload_1d_laterals.toggled.connect(self.toggle_1d_laterals_upload)
+        self.cb_upload_1d_laterals.toggled.connect(self.toggle_1d_laterals_upload)
         self.pb_upload_1d_laterals.clicked.connect(partial(self.load_csv, self.TYPE_1D))
         self.cb_1d_interpolate.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_1D))
 
         # 2D laterals
-        self.rb_upload_2d_laterals.toggled.connect(self.toggle_2d_laterals_upload)
+        self.cb_upload_2d_laterals.toggled.connect(self.toggle_2d_laterals_upload)
         self.pb_upload_2d_laterals.clicked.connect(partial(self.load_csv, self.TYPE_2D))
         self.cb_2d_interpolate.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_2D))
 
@@ -2599,21 +2599,21 @@ class SimulationWizard(QWizard):
                         # 1D laterals if point is not present
                         laterals_1d_timeseries.append(ts)
                 if len(laterals_1d_timeseries):
-                    laterals_widget.rb_use_1d_laterals.setChecked(True)
+                    laterals_widget.cb_use_1d_laterals.setChecked(True)
                     try:
                         laterals_widget.laterals_1d_timeseries = {str(lat["id"]): lat for lat in laterals_1d_timeseries}
                     except KeyError:
                         laterals_widget.laterals_1d_timeseries = {str(i): lat for i, lat in enumerate(laterals_1d_timeseries, 1)}
                 if len(laterals_2d_timeseries) > 0:
-                    laterals_widget.rb_use_2d_laterals.setChecked(True)
+                    laterals_widget.cb_use_2d_laterals.setChecked(True)
                     try:
                         laterals_widget.laterals_2d_timeseries = {str(lat["id"]): lat for lat in laterals_2d_timeseries}
                     except KeyError:
                         laterals_widget.laterals_2d_timeseries = {str(i): lat for i, lat in enumerate(laterals_2d_timeseries, 1)}
                 os.remove(lateral_temp_filepath)
             else:
-                laterals_widget.rb_use_1d_laterals.setEnabled(False)
-                laterals_widget.rb_use_2d_laterals.setEnabled(False)
+                laterals_widget.cb_use_1d_laterals.setEnabled(False)
+                laterals_widget.cb_use_2d_laterals.setEnabled(False)
         if init_conditions.include_dwf:
             dwf_events = [filelateral for filelateral in events.filelaterals if filelateral.periodic == "daily"]
             if dwf_events:
