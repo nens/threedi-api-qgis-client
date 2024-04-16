@@ -4,8 +4,7 @@ History
 3.11 (unreleased)
 -----------------
 
-- Nothing changed yet.
-
+- Simulation wizard: Improve laterals page.
 
 3.10 (2024-04-12)
 -----------------
