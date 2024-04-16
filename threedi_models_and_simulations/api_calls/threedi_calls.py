@@ -12,6 +12,7 @@ from threedi_api_client.openapi import (
     BasicPostProcessing,
     Breach,
     Commit,
+    ConstantLateral,
     ConstantLocalRain,
     ConstantRain,
     ConstantWind,
@@ -29,7 +30,6 @@ from threedi_api_client.openapi import (
     GroundWaterRaster,
     InitialSavedState,
     InitialWaterlevel,
-    LateralConstant,
     LizardRasterRain,
     LizardRasterSourcesSinks,
     LizardTimeseriesRain,
@@ -525,10 +525,10 @@ class ThreediCalls:
         breach = self.threedi_api.simulations_events_breaches_create(str(simulation_pk), data)
         return breach
 
-    def create_simulation_lateral_constant(self, simulation_pk: int, **data) -> LateralConstant:
+    def create_simulation_lateral_constant(self, simulation_pk: int, **data) -> ConstantLateral:
         """Add lateral constant to the given simulation."""
         lateral_constant = self.threedi_api.simulations_events_lateral_constant_create(str(simulation_pk), data)
-        return lateral_constant
+        return ConstantLateral
 
     def create_simulation_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
         """Add lateral timeseries to the given simulation."""
