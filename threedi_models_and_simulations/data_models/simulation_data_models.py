@@ -102,7 +102,8 @@ class InitialConditions(SimulationElement):
 
 @dataclass
 class Laterals(SimulationElement):
-    data: dict = None
+    laterals: list = None
+    file_laterals: dict = None
 
 
 @dataclass

@@ -560,8 +560,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.parent_page = parent_page
         self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
         set_widget_background_color(self)
-        self.template_laterals_1d = []
-        self.template_laterals_2d = []
+        self.laterals_1d = []
+        self.laterals_2d = []
         self.laterals_1d_timeseries = {}
         self.laterals_2d_timeseries = {}
         self.last_upload_1d_filepath = ""
@@ -678,12 +678,17 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def get_laterals_data(self, timesteps_in_seconds=False):
         """Get laterals data."""
-        laterals_data = {}
+        constant_laterals = []
+        file_laterals = {}
         if self.groupbox_1d_laterals.isChecked():
-            laterals_data.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
+            if self.cb_use_1d_laterals:
+                constant_laterals.extend(self.laterals_1d)
+            file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
         if self.groupbox_2d_laterals.isChecked():
-            laterals_data.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
-        return laterals_data
+            if self.cb_use_2d_laterals:
+                constant_laterals.extend(self.laterals_2d)
+            file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
+        return constant_laterals, file_laterals
 
     def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
         """
@@ -2584,21 +2589,21 @@ class SimulationWizard(QWizard):
             laterals = events.laterals
             file_laterals = [filelateral for filelateral in events.filelaterals if filelateral.periodic != "daily"]
             if laterals:
-                template_laterals_1d = []
-                template_laterals_2d = []
+                laterals_1d = []
+                laterals_2d = []
                 for lateral in laterals:
                     if hasattr(lateral, "point"):
-                        template_laterals_2d.append(lateral)
+                        laterals_2d.append(lateral)
                     else:
-                        template_laterals_1d.append(lateral)
-                if template_laterals_1d:
+                        laterals_1d.append(lateral)
+                if laterals_1d:
                     laterals_widget.cb_use_1d_laterals.setChecked(True)
                     laterals_widget.cb_upload_1d_laterals.setChecked(False)
-                    laterals_widget.template_laterals_1d = template_laterals_1d
-                if template_laterals_2d:
+                    laterals_widget.laterals_1d = laterals_1d
+                if laterals_2d:
                     laterals_widget.cb_use_2d_laterals.setChecked(True)
                     laterals_widget.cb_upload_2d_laterals.setChecked(False)
-                    laterals_widget.template_laterals_2d = template_laterals_2d
+                    laterals_widget.laterals_2d = laterals_2d
             if file_laterals:
                 tc = ThreediCalls(self.plugin_dock.threedi_api)
                 lateral_file = file_laterals[0]
@@ -2903,8 +2908,8 @@ class SimulationWizard(QWizard):
 
         # Laterals
         if self.init_conditions.include_laterals:
-            laterals_data = self.laterals_page.main_widget.get_laterals_data(timesteps_in_seconds=True)
-            laterals = dm.Laterals(laterals_data)
+            constant_laterals, file_laterals = self.laterals_page.main_widget.get_laterals_data(timesteps_in_seconds=True)
+            laterals = dm.Laterals(constant_laterals, file_laterals)
         else:
             laterals = dm.Laterals()
         # DWF
