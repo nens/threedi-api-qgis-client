@@ -510,9 +510,14 @@ class ThreediCalls:
         time_series_rain = self.threedi_api.simulations_events_rain_timeseries_create(str(simulation_pk), rain_data)
         return time_series_rain
 
-    def create_simulation_custom_netcdf_precipitation(self, simulation_pk: int, **rain_data) -> Upload:
-        """Add rain time series from NetCDF file to the given simulation."""
+    def create_simulation_raster_netcdf_precipitation(self, simulation_pk: int, **rain_data) -> Upload:
+        """Add raster rain time series from NetCDF file to the given simulation."""
         netcdf_upload = self.threedi_api.simulations_events_rain_rasters_netcdf_create(str(simulation_pk), rain_data)
+        return netcdf_upload
+
+    def create_simulation_global_netcdf_precipitation(self, simulation_pk: int, **rain_data) -> Upload:
+        """Add global time series from NetCDF file to the given simulation."""
+        netcdf_upload = self.threedi_api.simulations_events_rain_timeseries_netcdf_create(str(simulation_pk), rain_data)
         return netcdf_upload
 
     def create_simulation_radar_precipitation(self, simulation_pk: int, **rain_data) -> LizardRasterRain:
