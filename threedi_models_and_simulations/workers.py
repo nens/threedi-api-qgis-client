@@ -918,30 +918,37 @@ class SimulationRunner(QRunnable):
             offset = self.current_simulation.precipitation.offset
             start = self.current_simulation.precipitation.start
             interpolate = self.current_simulation.precipitation.interpolate
-            filepath = self.current_simulation.precipitation.filepath
-            from_csv = self.current_simulation.precipitation.from_csv
-
+            csv_filepath, netcdf_filepath = (
+                self.current_simulation.precipitation.csv_filepath,
+                self.current_simulation.precipitation.netcdf_filepath,
+            )
+            netcdf_global, netcdf_raster = (
+                self.current_simulation.precipitation.netcdf_global,
+                self.current_simulation.precipitation.netcdf_raster,
+            )
             if precipitation_type == EventTypes.CONSTANT.value:
                 self.tc.create_simulation_constant_precipitation(
                     sim_id, value=values, units=units, duration=duration, offset=offset
                 )
-            elif precipitation_type == EventTypes.CUSTOM.value:
-                if from_csv:
-                    for values_chunk in split_to_even_chunks(values, 300):
-                        chunk_offset = values_chunk[0][0]
-                        values_chunk = [[t - chunk_offset, v] for t, v in values_chunk]
-                        self.tc.create_simulation_custom_precipitation(
-                            sim_id,
-                            values=values_chunk,
-                            units=units,
-                            duration=duration,
-                            offset=offset + chunk_offset,
-                            interpolate=interpolate,
-                        )
+            elif precipitation_type == EventTypes.FROM_CSV.value:
+                for values_chunk in split_to_even_chunks(values, 300):
+                    chunk_offset = values_chunk[0][0]
+                    values_chunk = [[t - chunk_offset, v] for t, v in values_chunk]
+                    self.tc.create_simulation_custom_precipitation(
+                        sim_id,
+                        values=values_chunk,
+                        units=units,
+                        duration=duration,
+                        offset=offset + chunk_offset,
+                        interpolate=interpolate,
+                    )
+            elif precipitation_type == EventTypes.FROM_NETCDF.value:
+                filename = os.path.basename(netcdf_filepath)
+                if netcdf_global:
+                    upload = self.tc.create_simulation_global_netcdf_precipitation(sim_id, filename=filename)
                 else:
-                    filename = os.path.basename(filepath)
-                    upload = self.tc.create_simulation_custom_netcdf_precipitation(sim_id, filename=filename)
-                    upload_local_file(upload, filepath)
+                    upload = self.tc.create_simulation_raster_netcdf_precipitation(sim_id, filename=filename)
+                upload_local_file(upload, netcdf_filepath)
             elif precipitation_type == EventTypes.DESIGN.value:
                 self.tc.create_simulation_custom_precipitation(
                     sim_id, values=values, units=units, duration=duration, offset=offset
@@ -980,7 +987,7 @@ class SimulationRunner(QRunnable):
                     speed_value=speed,
                     direction_value=direction,
                 )
-            elif wind_type == EventTypes.CUSTOM.value:
+            elif wind_type == EventTypes.FROM_CSV.value:
                 self.tc.create_simulation_custom_wind(
                     sim_id,
                     offset=offset,

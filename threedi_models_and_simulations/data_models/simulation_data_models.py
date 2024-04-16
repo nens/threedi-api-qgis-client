@@ -130,9 +130,10 @@ class Precipitation(SimulationElement):
     values: list = None
     start: datetime = None
     interpolate: bool = None
-    filepath: str = None
-    from_csv: bool = None
-    from_netcdf: bool = None
+    csv_filepath: str = None
+    netcdf_filepath: str = None
+    netcdf_global: bool = None
+    netcdf_raster: bool = None
 
 
 @dataclass
@@ -185,7 +186,7 @@ class SavedState(SimulationElement):
 class NewSimulation:
     simulation_template_id: str
     name: str
-    tags: str
+    tags: list
     threedimodel_id: str
     organisation_uuid: str
     start_datetime: datetime
