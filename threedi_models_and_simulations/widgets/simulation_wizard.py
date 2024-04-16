@@ -564,6 +564,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.laterals_2d = []
         self.laterals_1d_timeseries = {}
         self.laterals_2d_timeseries = {}
+        self.laterals_1d_timeseries_template = {}
+        self.laterals_2d_timeseries_template = {}
         self.last_upload_1d_filepath = ""
         self.last_upload_2d_filepath = ""
         self.setup_laterals()
@@ -653,11 +655,19 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def recalculate_laterals_timeseries(self, laterals_type, timesteps_in_seconds=False):
         """Recalculate laterals timeseries (timesteps in seconds)."""
-        laterals_timeseries = (
-            self.laterals_1d_timeseries
-            if laterals_type == self.TYPE_1D
-            else self.laterals_2d_timeseries
-        )
+        laterals_timeseries = {}
+        if laterals_type == self.TYPE_1D:
+            if self.cb_use_1d_laterals:
+                laterals_timeseries.update(self.laterals_1d_timeseries_template)
+            if self.cb_upload_1d_laterals:
+                laterals_timeseries.update(self.laterals_1d_timeseries)
+        if laterals_type == self.TYPE_2D:
+            if self.cb_use_2d_laterals:
+                laterals_timeseries.update(self.laterals_2d_timeseries_template)
+            if self.cb_upload_2d_laterals:
+                laterals_timeseries.update(self.laterals_2d_timeseries)
+        else:
+            raise NotImplementedError
         if timesteps_in_seconds is False:
             return laterals_timeseries
         laterals_data = deepcopy(laterals_timeseries)
@@ -2625,16 +2635,16 @@ class SimulationWizard(QWizard):
                     laterals_widget.cb_use_1d_laterals.setChecked(True)
                     laterals_widget.cb_upload_1d_laterals.setChecked(False)
                     try:
-                        laterals_widget.laterals_1d_timeseries = {str(lat["id"]): lat for lat in laterals_1d_timeseries}
+                        laterals_widget.laterals_1d_timeseries_template = {str(lat["id"]): lat for lat in laterals_1d_timeseries}
                     except KeyError:
-                        laterals_widget.laterals_1d_timeseries = {str(i): lat for i, lat in enumerate(laterals_1d_timeseries, 1)}
+                        laterals_widget.laterals_1d_timeseries_template = {str(i): lat for i, lat in enumerate(laterals_1d_timeseries, 1)}
                 if laterals_2d_timeseries:
                     laterals_widget.cb_use_2d_laterals.setChecked(True)
                     laterals_widget.cb_upload_2d_laterals.setChecked(False)
                     try:
-                        laterals_widget.laterals_2d_timeseries = {str(lat["id"]): lat for lat in laterals_2d_timeseries}
+                        laterals_widget.laterals_2d_timeseries_template = {str(lat["id"]): lat for lat in laterals_2d_timeseries}
                     except KeyError:
-                        laterals_widget.laterals_2d_timeseries = {str(i): lat for i, lat in enumerate(laterals_2d_timeseries, 1)}
+                        laterals_widget.laterals_2d_timeseries_template = {str(i): lat for i, lat in enumerate(laterals_2d_timeseries, 1)}
                 os.remove(lateral_temp_filepath)
             if not laterals and not file_laterals:
                 laterals_widget.cb_use_1d_laterals.setEnabled(False)
