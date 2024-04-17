@@ -88,6 +88,7 @@ uicls_summary_page, basecls_summary_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_initiation.ui")
 )
 
+
 class NameWidget(uicls_name_page, basecls_name_page):
     """Widget for the Name page."""
 
@@ -625,14 +626,10 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
     def interpolate_changed(self, laterals_type):
         """Handle interpolate checkbox."""
         laterals_timeseries = (
-            self.laterals_1d_timeseries
-            if laterals_type == self.TYPE_1D
-            else self.laterals_2d_timeseries
+            self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
         )
         interpolate = (
-            self.cb_1d_interpolate.isChecked()
-            if laterals_type == self.TYPE_1D
-            else self.cb_2d_interpolate.isChecked()
+            self.cb_1d_interpolate.isChecked() if laterals_type == self.TYPE_1D else self.cb_2d_interpolate.isChecked()
         )
         for val in laterals_timeseries:
             val["interpolate"] = interpolate
@@ -671,11 +668,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if timesteps_in_seconds is False:
             return laterals_timeseries
         laterals_data = deepcopy(laterals_timeseries)
-        units = (
-            self.cbo_1d_units.currentText()
-            if laterals_type == self.TYPE_1D
-            else self.cbo_2d_units.currentText()
-        )
+        units = self.cbo_1d_units.currentText() if laterals_type == self.TYPE_1D else self.cbo_2d_units.currentText()
         if units == "hrs":
             seconds_per_unit = 3600
         elif units == "mins":
@@ -2681,16 +2674,24 @@ class SimulationWizard(QWizard):
                     laterals_widget.cb_use_1d_laterals.setChecked(True)
                     laterals_widget.cb_upload_1d_laterals.setChecked(False)
                     try:
-                        laterals_widget.laterals_1d_timeseries_template = {str(lat["id"]): lat for lat in laterals_1d_timeseries}
+                        laterals_widget.laterals_1d_timeseries_template = {
+                            str(lat["id"]): lat for lat in laterals_1d_timeseries
+                        }
                     except KeyError:
-                        laterals_widget.laterals_1d_timeseries_template = {str(i): lat for i, lat in enumerate(laterals_1d_timeseries, 1)}
+                        laterals_widget.laterals_1d_timeseries_template = {
+                            str(i): lat for i, lat in enumerate(laterals_1d_timeseries, 1)
+                        }
                 if laterals_2d_timeseries:
                     laterals_widget.cb_use_2d_laterals.setChecked(True)
                     laterals_widget.cb_upload_2d_laterals.setChecked(False)
                     try:
-                        laterals_widget.laterals_2d_timeseries_template = {str(lat["id"]): lat for lat in laterals_2d_timeseries}
+                        laterals_widget.laterals_2d_timeseries_template = {
+                            str(lat["id"]): lat for lat in laterals_2d_timeseries
+                        }
                     except KeyError:
-                        laterals_widget.laterals_2d_timeseries_template = {str(i): lat for i, lat in enumerate(laterals_2d_timeseries, 1)}
+                        laterals_widget.laterals_2d_timeseries_template = {
+                            str(i): lat for i, lat in enumerate(laterals_2d_timeseries, 1)
+                        }
                 os.remove(lateral_temp_filepath)
             if not laterals and not file_laterals:
                 laterals_widget.cb_use_1d_laterals.setEnabled(False)
@@ -2968,7 +2969,9 @@ class SimulationWizard(QWizard):
 
         # Laterals
         if self.init_conditions.include_laterals:
-            constant_laterals, file_laterals = self.laterals_page.main_widget.get_laterals_data(timesteps_in_seconds=True)
+            constant_laterals, file_laterals = self.laterals_page.main_widget.get_laterals_data(
+                timesteps_in_seconds=True
+            )
             laterals = dm.Laterals(constant_laterals, file_laterals)
         else:
             laterals = dm.Laterals()
