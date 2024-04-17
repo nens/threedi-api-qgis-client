@@ -5,7 +5,7 @@ History
 -----------------
 
 - Improvements for Upload wizard (#541).
-- Updated threedi-api-client version to 4.1.5.
+- Updated threedi-api-client version to 4.1.6.
 
 3.10 (2024-04-12)
 -----------------
