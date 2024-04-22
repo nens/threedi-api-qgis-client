@@ -569,7 +569,12 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.laterals_2d_timeseries_template = {}
         self.last_upload_1d_filepath = ""
         self.last_upload_2d_filepath = ""
+        self.substance_1d = {}
+        self.substance_2d = {}
+        self.last_upload_substance_1d_filepath = ""
+        self.last_upload_substance_2d_filepath = ""
         self.setup_laterals()
+        self.setup_substance()
         self.connect_signals()
 
     def setup_laterals(self):
@@ -584,7 +589,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         else:
             self.groupbox_1d_laterals.setEnabled(False)
             self.groupbox_1d_laterals.setChecked(False)
-
         # 2D laterals
         if self.current_model.extent_two_d is not None:
             self.groupbox_2d_laterals.setEnabled(True)
@@ -597,17 +601,38 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.groupbox_2d_laterals.setEnabled(False)
             self.groupbox_2d_laterals.setChecked(False)
 
+    def setup_substance(self):
+        # 1D substance
+        if self.current_model.extent_one_d is not None:
+            self.groupbox_1d_substance.setEnabled(True)
+            self.groupbox_1d_substance.setChecked(True)
+        else:
+            self.groupbox_1d_substance.setEnabled(False)
+            self.groupbox_1d_substance.setChecked(False)
+        # 2D substance
+        if self.current_model.extent_two_d is not None:
+            self.groupbox_2d_substance.setEnabled(True)
+            self.groupbox_2d_substance.setChecked(True)
+        else:
+            self.groupbox_2d_substance.setEnabled(False)
+            self.groupbox_2d_substance.setChecked(False)
+
     def connect_signals(self):
         """Connect signals."""
         # 1D laterals
         self.cb_upload_1d_laterals.toggled.connect(self.toggle_1d_laterals_upload)
         self.pb_upload_1d_laterals.clicked.connect(partial(self.load_csv, self.TYPE_1D))
         self.cb_1d_interpolate.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_1D))
-
         # 2D laterals
         self.cb_upload_2d_laterals.toggled.connect(self.toggle_2d_laterals_upload)
         self.pb_upload_2d_laterals.clicked.connect(partial(self.load_csv, self.TYPE_2D))
         self.cb_2d_interpolate.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_2D))
+        # 1D substance
+        self.pb_upload_1d_substance.clicked.connect(partial(self.load_csv_substance, self.TYPE_1D))
+        self.cb_1d_substance_interpolate.stateChanged.connect(partial(self.interpolate_changed_substance, self.TYPE_1D))
+        # 2D substance
+        self.pb_upload_2d_substance.clicked.connect(partial(self.load_csv_substance, self.TYPE_2D))
+        self.cb_2d_substance_interpolate.stateChanged.connect(partial(self.interpolate_changed_substance, self.TYPE_2D))
 
     def toggle_1d_laterals_upload(self, checked):
         """Handle 1D laterals toggle."""
@@ -647,6 +672,33 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.il_2d_upload.setText(filename)
             self.last_upload_2d_filepath = filename
             self.laterals_2d_timeseries = values
+        else:
+            raise NotImplementedError
+
+    def interpolate_changed_substance(self, laterals_type):
+        """Handle interpolate checkbox."""
+        substance = (
+            self.substance_1d if laterals_type == self.TYPE_1D else self.substance_2d
+        )
+        interpolate = (
+            self.cb_1d_substance_interpolate.isChecked() if laterals_type == self.TYPE_1D else self.cb_2d_substance_interpolate.isChecked()
+        )
+        for val in substance:
+            val["interpolate"] = interpolate
+
+    def load_csv_substance(self, laterals_type):
+        """Load substance concentrations from CSV file."""
+        values, filename = self.open_substance_upload_dialog(laterals_type)
+        if not filename:
+            return
+        if laterals_type == self.TYPE_1D:
+            self.il_1d_upload_substance.setText(filename)
+            self.last_upload_substance_1d_filepath = filename
+            self.substance_1d = values
+        elif laterals_type == self.TYPE_2D:
+            self.il_2d_upload_substance.setText(filename)
+            self.last_upload_substance_2d_filepath = filename
+            self.substance_2d = values
         else:
             raise NotImplementedError
 
@@ -727,6 +779,60 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         last_folder = QSettings().value("threedi/last_laterals_folder", os.path.expanduser("~"), type=str)
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Laterals Time Series", last_folder, file_filter)
+        if len(filename) == 0:
+            return None, None
+        QSettings().setValue("threedi/last_laterals_folder", os.path.dirname(filename))
+        values = {}
+        laterals_list = []
+        with open(filename, encoding="utf-8-sig") as lateral_file:
+            laterals_reader = csv.reader(lateral_file)
+            laterals_list += list(laterals_reader)
+        error_msg = self.handle_laterals_header(laterals_list, laterals_type)
+        if error_msg is not None:
+            return None, None
+        if laterals_type == "1D":
+            interpolate = self.cb_1d_interpolate.isChecked()
+            for lat_id, connection_node_id, timeseries in laterals_list:
+                try:
+                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                    lateral = {
+                        "values": vals,
+                        "units": "m3/s",
+                        "point": None,
+                        "connection_node": int(connection_node_id),
+                        "id": int(lat_id),
+                        "offset": 0,
+                        "interpolate": interpolate,
+                    }
+                    values[lat_id] = lateral
+                    self.last_uploaded_1d_laterals = lateral
+                except ValueError:
+                    continue
+        else:
+            interpolate = self.cb_2d_interpolate.isChecked()
+            for x, y, ltype, lat_id, timeseries in laterals_list:
+                try:
+                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                    point = {"type": "Point", "coordinates": [float(x), float(y)]}
+                    lateral = {
+                        "values": vals,
+                        "units": "m3/s",
+                        "point": point,
+                        "id": int(lat_id),
+                        "offset": 0,
+                        "interpolate": interpolate,
+                    }
+                    values[lat_id] = lateral
+                    self.last_uploaded_2d_laterals = lateral
+                except ValueError:
+                    continue
+        return values, filename
+
+    def open_substance_upload_dialog(self, laterals_type):
+        """Open dialog for selecting CSV file with substance concentrations."""
+        last_folder = QSettings().value("threedi/last_laterals_folder", os.path.expanduser("~"), type=str)
+        file_filter = "CSV (*.csv );;All Files (*)"
+        filename, __ = QFileDialog.getOpenFileName(self, "Substance concentrations", last_folder, file_filter)
         if len(filename) == 0:
             return None, None
         QSettings().setValue("threedi/last_laterals_folder", os.path.dirname(filename))
