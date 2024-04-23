@@ -602,20 +602,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.groupbox_2d_laterals.setChecked(False)
 
     def setup_substance(self):
-        # 1D substance
-        if self.current_model.extent_one_d is not None:
-            self.groupbox_1d_substance.setEnabled(True)
-            self.groupbox_1d_substance.setChecked(True)
-        else:
-            self.groupbox_1d_substance.setEnabled(False)
-            self.groupbox_1d_substance.setChecked(False)
-        # 2D substance
-        if self.current_model.extent_two_d is not None:
-            self.groupbox_2d_substance.setEnabled(True)
-            self.groupbox_2d_substance.setChecked(True)
-        else:
-            self.groupbox_2d_substance.setEnabled(False)
-            self.groupbox_2d_substance.setChecked(False)
+        self.groupbox_1d_substance.setEnabled(True if self.current_model.extent_one_d else False)
+        self.groupbox_2d_substance.setEnabled(True if self.current_model.extent_two_d else False)
 
     def connect_signals(self):
         """Connect signals."""
@@ -638,15 +626,19 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         """Handle 1D laterals toggle."""
         if checked:
             self.uploadgroup_1d.setEnabled(True)
+            self.groupbox_1d_substance.setEnabled(True)
         else:
             self.uploadgroup_1d.setEnabled(False)
+            self.groupbox_1d_substance.setEnabled(False)
 
     def toggle_2d_laterals_upload(self, checked):
         """Handle 2D laterals toggle."""
         if checked:
             self.uploadgroup_2d.setEnabled(True)
+            self.groupbox_2d_substance.setEnabled(True)
         else:
             self.uploadgroup_2d.setEnabled(False)
+            self.groupbox_2d_substance.setEnabled(False)
 
     def interpolate_changed(self, laterals_type):
         """Handle interpolate checkbox."""
