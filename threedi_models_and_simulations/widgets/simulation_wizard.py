@@ -571,8 +571,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.last_upload_2d_filepath = ""
         self.substance_1d = {}
         self.substance_2d = {}
-        self.last_upload_substance_1d_filepath = ""
-        self.last_upload_substance_2d_filepath = ""
         self.setup_laterals()
         self.setup_substance()
         self.connect_signals()
@@ -685,14 +683,18 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             return
         if laterals_type == self.TYPE_1D:
             self.il_1d_upload_substance.setText(filename)
-            self.last_upload_substance_1d_filepath = filename
             self.substance_1d = values
         elif laterals_type == self.TYPE_2D:
             self.il_2d_upload_substance.setText(filename)
-            self.last_upload_substance_2d_filepath = filename
             self.substance_2d = values
         else:
             raise NotImplementedError
+
+    def update_laterals_substances(self, file_laterals, laterals_type):
+        for lat_id, lat_data in file_laterals.items():
+            substances = self.substance_1d.get(lat_id) if laterals_type == self.TYPE_1D else self.substance_2d.get(lat_id)
+            if substances:
+                lat_data["substances"] = substances
 
     def recalculate_laterals_timeseries(self, laterals_type, timesteps_in_seconds=False):
         """Recalculate laterals timeseries (timesteps in seconds)."""
@@ -731,10 +733,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             if self.cb_use_1d_laterals:
                 constant_laterals.extend(self.laterals_1d)
             file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
+            if self.groupbox_1d_substance.isChecked() and self.substance_1d:
+                self.update_laterals_substances(file_laterals, self.TYPE_1D)
         if self.groupbox_2d_laterals.isChecked():
             if self.cb_use_2d_laterals:
                 constant_laterals.extend(self.laterals_2d)
             file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
+            if self.groupbox_2d_substance.isChecked() and self.substance_2d:
+                self.update_laterals_substances(file_laterals, self.TYPE_2D)
         return constant_laterals, file_laterals
 
     def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
@@ -820,58 +826,62 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     continue
         return values, filename
 
+    def handle_substance_timesteps(self, substance_list, laterals_type):
+        """
+        First, check if lateral values are uploaded.
+        Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
+        Return None if they match or error message if not.
+        """
+        error_message = None
+        if laterals_type == "1D" and not self.laterals_1d_timeseries:
+            error_message = "1D laterals are not uploaded yet!"
+        if laterals_type == "2D" and not self.laterals_2d_timeseries:
+            error_message = "2D laterals are not uploaded yet!"
+        if not substance_list:
+            error_message = "Substance concentrations list is empty!"
+        if error_message is None:
+            for lat_id, substance_id, concentrations in substance_list:
+                lateral = self.laterals_1d_timeseries.get(lat_id) if laterals_type == "1D" else self.laterals_2d_timeseries.get(lat_id)
+                if lateral is None:
+                    error_message = f"Lateral with id {lat_id} not found!"
+                    break
+                lateralValues = lateral["values"]
+                if len(lateralValues) != len(concentrations) or any(len(list1) != len(list2) for list1, list2 in zip(lateralValues, concentrations)):
+                    error_message = "Substance concentrations timesteps do not match lateral values timesteps!"
+                    break
+        else:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        return error_message
+
     def open_substance_upload_dialog(self, laterals_type):
         """Open dialog for selecting CSV file with substance concentrations."""
-        last_folder = QSettings().value("threedi/last_laterals_folder", os.path.expanduser("~"), type=str)
+        last_folder = QSettings().value("threedi/last_laterals_substance_folder", os.path.expanduser("~"), type=str)
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Substance concentrations", last_folder, file_filter)
         if len(filename) == 0:
-            return None, None
-        QSettings().setValue("threedi/last_laterals_folder", os.path.dirname(filename))
+            return None
+        QSettings().setValue("threedi/last_laterals_substance_folder", os.path.dirname(filename))
         values = {}
-        laterals_list = []
-        with open(filename, encoding="utf-8-sig") as lateral_file:
-            laterals_reader = csv.reader(lateral_file)
-            laterals_list += list(laterals_reader)
-        error_msg = self.handle_laterals_header(laterals_list, laterals_type)
+        substance_list = []
+        with open(filename, encoding="utf-8-sig") as substance_file:
+            substance_reader = csv.reader(substance_file)
+            substance_list += list(substance_reader)
+        error_msg = self.handle_laterals_header(substance_list, laterals_type)
+        error_msg = self.handle_substance_timesteps(substance_list, laterals_type)
         if error_msg is not None:
             return None, None
-        if laterals_type == "1D":
-            interpolate = self.cb_1d_interpolate.isChecked()
-            for lat_id, connection_node_id, timeseries in laterals_list:
-                try:
-                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                    lateral = {
-                        "values": vals,
-                        "units": "m3/s",
-                        "point": None,
-                        "connection_node": int(connection_node_id),
-                        "id": int(lat_id),
-                        "offset": 0,
-                        "interpolate": interpolate,
-                    }
-                    values[lat_id] = lateral
-                    self.last_uploaded_1d_laterals = lateral
-                except ValueError:
-                    continue
-        else:
-            interpolate = self.cb_2d_interpolate.isChecked()
-            for x, y, ltype, lat_id, timeseries in laterals_list:
-                try:
-                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                    point = {"type": "Point", "coordinates": [float(x), float(y)]}
-                    lateral = {
-                        "values": vals,
-                        "units": "m3/s",
-                        "point": point,
-                        "id": int(lat_id),
-                        "offset": 0,
-                        "interpolate": interpolate,
-                    }
-                    values[lat_id] = lateral
-                    self.last_uploaded_2d_laterals = lateral
-                except ValueError:
-                    continue
+        for lat_id, substance_id, concentrations in substance_list:
+            try:
+                vals = [[float(f) for f in line.split(",")] for line in concentrations.split("\n")]
+                substance = {
+                    "substance": substance_id,
+                    "concentrations": vals,
+                }
+                if lat_id not in values:
+                    values[lat_id] = []
+                values[lat_id].append(substance)
+            except ValueError:
+                continue
         return values, filename
 
 
