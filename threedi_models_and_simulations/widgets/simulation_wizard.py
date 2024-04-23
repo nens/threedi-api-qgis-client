@@ -228,6 +228,21 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         if row_count > 0:
             self.tw_substances.removeRow(row_count - 1)
 
+    def get_substances_data(self):
+        substances = []
+        row_count = self.tw_substances.rowCount()
+        for row in range(row_count):
+            name_item = self.tw_substances.item(row, 0)
+            units_item = self.tw_substances.item(row, 1)
+            if name_item and units_item:
+                name = name_item.text()
+                units = units_item.text()
+                if units:
+                    substances.append({ "name": name, "units": units })
+                else:
+                    substances.append({ "name": name })
+        return substances
+
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
     """Widget for the Boundary Conditions page."""
@@ -2952,6 +2967,12 @@ class SimulationWizard(QWizard):
             wind = dm.Wind(*wind_data)
         else:
             wind = dm.Wind()
+        # Substances
+        if self.init_conditions.include_substances:
+            substances_data = self.substances_page.main_widget.get_substances_data()
+            substances = dm.Substances(substances_data)
+        else:
+            substances = dm.Substances()
 
         # Settings page attributes
         main_settings = self.settings_page.main_widget.collect_single_settings()
@@ -2997,6 +3018,7 @@ class SimulationWizard(QWizard):
                 sim_temp_id, sim_name, tags, threedimodel_id, organisation_uuid, start_datetime, end_datetime, duration
             )
             new_simulation.init_options = init_options
+            new_simulation.substances = substances
             new_simulation.boundary_conditions = boundary_conditions
             new_simulation.structure_controls = structure_controls
             new_simulation.initial_conditions = initial_conditions

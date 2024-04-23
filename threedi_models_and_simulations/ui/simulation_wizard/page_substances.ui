@@ -265,6 +265,13 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>le_name</tabstop>
+  <tabstop>le_units</tabstop>
+  <tabstop>pb_add_to_table</tabstop>
+  <tabstop>pb_remove</tabstop>
+  <tabstop>tw_substances</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
