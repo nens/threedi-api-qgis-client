@@ -122,9 +122,6 @@
         </item>
         <item>
          <widget class="QLineEdit" name="il_1d_upload_substance">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -188,68 +185,6 @@
           </property>
           <property name="text">
            <string>Browse</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="cbo_1d_substance_units">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>55</width>
-            <height>25</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>100</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Segoe UI</family>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-          </property>
-          <property name="frame">
-           <bool>false</bool>
-          </property>
-          <item>
-           <property name="text">
-            <string>mins</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>hrs</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>s</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cb_1d_substance_interpolate">
-          <property name="font">
-           <font>
-            <family>Segoe UI</family>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Interpolate</string>
           </property>
          </widget>
         </item>
@@ -984,9 +919,6 @@
         </item>
         <item>
          <widget class="QLineEdit" name="il_2d_upload_substance">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -1050,68 +982,6 @@
           </property>
           <property name="text">
            <string>Browse</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="cbo_2d_substance_units">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>55</width>
-            <height>25</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>100</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Segoe UI</family>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
-          </property>
-          <property name="frame">
-           <bool>false</bool>
-          </property>
-          <item>
-           <property name="text">
-            <string>mins</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>hrs</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>s</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="cb_2d_substance_interpolate">
-          <property name="font">
-           <font>
-            <family>Segoe UI</family>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Interpolate</string>
           </property>
          </widget>
         </item>
