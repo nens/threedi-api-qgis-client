@@ -220,6 +220,8 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             self.tw_substances.insertRow(row_count)
             self.tw_substances.setItem(row_count, 0, QTableWidgetItem(name))
             self.tw_substances.setItem(row_count, 1, QTableWidgetItem(units))
+            self.le_name.clear()
+            self.le_units.clear()
 
     def remove_last_substance(self):
         row_count = self.tw_substances.rowCount()
