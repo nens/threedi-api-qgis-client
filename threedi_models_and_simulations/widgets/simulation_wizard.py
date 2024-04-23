@@ -23,6 +23,7 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit,
     QSizePolicy,
     QSpacerItem,
+    QTableWidgetItem,
     QWizard,
     QWizardPage,
 )
@@ -204,6 +205,26 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.setupUi(self)
         self.parent_page = parent_page
         set_widget_background_color(self)
+        self.connect_signals()
+
+    def connect_signals(self):
+        """Connecting widgets signals."""
+        self.pb_add_to_table.clicked.connect(self.add_to_table)
+        self.pb_remove.clicked.connect(self.remove_last_substance)
+
+    def add_to_table(self):
+        name = self.le_name.text()
+        unit = self.le_unit.text()
+        if name:
+            row_count = self.tw_substances.rowCount()
+            self.tw_substances.insertRow(row_count)
+            self.tw_substances.setItem(row_count, 0, QTableWidgetItem(name))
+            self.tw_substances.setItem(row_count, 1, QTableWidgetItem(unit))
+
+    def remove_last_substance(self):
+        row_count = self.tw_substances.rowCount()
+        if row_count > 0:
+            self.tw_substances.removeRow(row_count - 1)
 
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
