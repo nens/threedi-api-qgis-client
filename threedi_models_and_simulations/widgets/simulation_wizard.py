@@ -57,6 +57,7 @@ uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui",
 uicls_duration_page, basecls_duration_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_duration.ui")
 )
+uicls_substances, basecls_substances = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_substances.ui"))
 uicls_boundary_conditions, basecls_boundary_conditions = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_boundary_conditions.ui")
 )
@@ -193,6 +194,16 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
             self.label_utc_info.setText(self.timezone_template.format(start, end))
         except ValueError:
             self.label_total_time.setText("Invalid datetime format!")
+
+
+class SubstancesWidget(uicls_substances, basecls_substances):
+    """Widget for the Substances page."""
+
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        set_widget_background_color(self)
 
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
@@ -2114,6 +2125,22 @@ class SimulationDurationPage(QWizardPage):
         self.adjustSize()
 
 
+class SubstancesPage(QWizardPage):
+    """Substances definition page."""
+
+    STEP_NAME = "Substances"
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = SubstancesWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+
 class BoundaryConditionsPage(QWizardPage):
     """Boundary conditions definition page."""
 
@@ -2350,6 +2377,9 @@ class SimulationWizard(QWizard):
         self.addPage(self.name_page)
         self.duration_page = SimulationDurationPage(self)
         self.addPage(self.duration_page)
+        if init_conditions.include_substances:
+            self.substances_page = SubstancesPage(self)
+            self.addPage(self.substances_page)
         if init_conditions.include_boundary_conditions:
             self.boundary_conditions_page = BoundaryConditionsPage(self)
             self.addPage(self.boundary_conditions_page)
