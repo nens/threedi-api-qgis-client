@@ -214,12 +214,12 @@ class SubstancesWidget(uicls_substances, basecls_substances):
 
     def add_to_table(self):
         name = self.le_name.text()
-        unit = self.le_unit.text()
+        units = self.le_units.text()
         if name:
             row_count = self.tw_substances.rowCount()
             self.tw_substances.insertRow(row_count)
             self.tw_substances.setItem(row_count, 0, QTableWidgetItem(name))
-            self.tw_substances.setItem(row_count, 1, QTableWidgetItem(unit))
+            self.tw_substances.setItem(row_count, 1, QTableWidgetItem(units))
 
     def remove_last_substance(self):
         row_count = self.tw_substances.rowCount()

@@ -42,7 +42,7 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="6" column="2">
-    <widget class="QWidget" name="hw_unit" native="true">
+    <widget class="QWidget" name="hw_units" native="true">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
        <horstretch>0</horstretch>
@@ -65,12 +65,12 @@
          </size>
         </property>
         <property name="text">
-         <string>Unit:</string>
+         <string>Units:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="le_unit"/>
+       <widget class="QLineEdit" name="le_units"/>
       </item>
      </layout>
     </widget>
@@ -245,7 +245,7 @@
      </column>
      <column>
       <property name="text">
-       <string>unit</string>
+       <string>units</string>
       </property>
       <property name="font">
        <font>
