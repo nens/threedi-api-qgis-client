@@ -58,7 +58,7 @@ from threedi_api_client.openapi import (
     SimulationStatus,
     SqliteFileUpload,
     StableThresholdSavedState,
-    # Substance,
+    Substance,
     TableStructureControl,
     Template,
     ThreediModel,
@@ -530,7 +530,7 @@ class ThreediCalls:
         breach = self.threedi_api.simulations_events_breaches_create(str(simulation_pk), data)
         return breach
 
-    def create_simulation_substances(self, simulation_pk: int, **data):
+    def create_simulation_substances(self, simulation_pk: int, **data) -> Substance:
         """Add substance to the given simulation."""
         substance = self.threedi_api.simulations_substances_create(str(simulation_pk), data)
         return substance
