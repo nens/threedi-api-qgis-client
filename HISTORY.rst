@@ -4,8 +4,8 @@ History
 3.11 (unreleased)
 -----------------
 
-- Nothing changed yet.
-
+- Improvements for Upload wizard (#541).
+- Updated threedi-api-client version to 4.1.6.
 
 3.10 (2024-04-12)
 -----------------
