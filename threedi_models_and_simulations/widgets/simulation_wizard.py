@@ -215,6 +215,9 @@ class SubstancesWidget(uicls_substances, basecls_substances):
     def add_to_table(self):
         name = self.le_name.text()
         units = self.le_units.text()
+        if len(units) > 16:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn("Units length should be less than 16 characters.")
+            return
         if name:
             row_count = self.tw_substances.rowCount()
             self.tw_substances.insertRow(row_count)
