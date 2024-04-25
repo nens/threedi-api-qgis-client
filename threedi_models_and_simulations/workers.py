@@ -285,7 +285,8 @@ class UploadProgressWorker(QRunnable):
         """Build upload tasks list."""
         tasks = list()
         create_revision = self.upload_specification["create_revision"]
-        upload_only = self.upload_specification["upload_only"]
+        make_3di_model = self.upload_specification["make_3di_model"]
+        inherit_templates = self.upload_specification["cb_inherit_templates"]
         if create_revision:
             tasks.append(self.create_revision_task)
         for file_name, file_state in self.upload_specification["selected_files"].items():
@@ -310,8 +311,8 @@ class UploadProgressWorker(QRunnable):
             else:
                 continue
         tasks.append(self.commit_revision_task)
-        if not upload_only:
-            tasks.append(self.create_3di_model_task)
+        if make_3di_model:
+            tasks.append(partial(self.create_3di_model_task, inherit_templates))
         return tasks
 
     def create_revision_task(self):
@@ -411,7 +412,7 @@ class UploadProgressWorker(QRunnable):
         self.local_schematisation.update_wip_revision(self.revision.number)
         self.signals.revision_committed.emit()
 
-    def create_3di_model_task(self):
+    def create_3di_model_task(self, inherit_templates=False):
         """Run creation of the new model out of revision data."""
         self.current_task = "MAKE 3DI MODEL"
         self.current_task_progress = 0.0
@@ -448,7 +449,7 @@ class UploadProgressWorker(QRunnable):
                 err = RevisionUploadError(error_msg)
                 raise err
         # Create 3Di model
-        model = self.tc.create_schematisation_revision_3di_model(self.schematisation.id, self.revision.id)
+        model = self.tc.create_schematisation_revision_3di_model(self.schematisation.id, self.revision.id, inherit_templates)
         model_id = model.id
         finished_tasks = {
             "make_gridadmin": False,
@@ -513,7 +514,7 @@ class SimulationRunner(QRunnable):
         super().__init__()
         self.threedi_api = threedi_api
         self.simulations_to_run = simulations_to_run
-        self.current_simulation = None
+        self.current_simulation: dm.NewSimulation = None
         self.upload_timeout = upload_timeout
         self.tc = None
         self.signals = SimulationRunnerSignals()
@@ -632,6 +633,14 @@ class SimulationRunner(QRunnable):
                 "relative": oe.relative,
             }
             self.tc.create_obstacle_edits(sim_id, **obstacle_edit_data)
+
+    def include_substances(self):
+        """Add substances to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        if self.current_simulation.substances:
+            substances = self.current_simulation.substances.data
+            for substance in substances:
+                self.tc.create_simulation_substances(sim_id, **substance)
 
     def include_boundary_conditions(self):
         """Apply boundary conditions to the new simulation."""
@@ -1076,6 +1085,8 @@ class SimulationRunner(QRunnable):
                 self.create_simulation()
                 self.report_progress()
                 self.include_init_options()
+                self.report_progress()
+                self.include_substances()
                 self.report_progress()
                 self.include_boundary_conditions()
                 self.report_progress()

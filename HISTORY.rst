@@ -4,7 +4,11 @@ History
 3.11 (unreleased)
 -----------------
 
-- Simulation wizard: Improve laterals page.
+- Add substance concentrations to laterals page (#546).
+- Add substances page to the simulation wizard (#547).
+- Simulation wizard: Improve laterals page (#545).
+- Improvements for Upload wizard (#541).
+- Updated threedi-api-client version to 4.1.6.
 
 3.10 (2024-04-12)
 -----------------
