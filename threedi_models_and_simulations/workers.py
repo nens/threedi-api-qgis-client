@@ -514,7 +514,7 @@ class SimulationRunner(QRunnable):
         super().__init__()
         self.threedi_api = threedi_api
         self.simulations_to_run = simulations_to_run
-        self.current_simulation = None
+        self.current_simulation: dm.NewSimulation = None
         self.upload_timeout = upload_timeout
         self.tc = None
         self.signals = SimulationRunnerSignals()
@@ -633,6 +633,14 @@ class SimulationRunner(QRunnable):
                 "relative": oe.relative,
             }
             self.tc.create_obstacle_edits(sim_id, **obstacle_edit_data)
+
+    def include_substances(self):
+        """Add substances to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        if self.current_simulation.substances:
+            substances = self.current_simulation.substances.data
+            for substance in substances:
+                self.tc.create_simulation_substances(sim_id, **substance)
 
     def include_boundary_conditions(self):
         """Apply boundary conditions to the new simulation."""
@@ -1077,6 +1085,8 @@ class SimulationRunner(QRunnable):
                 self.create_simulation()
                 self.report_progress()
                 self.include_init_options()
+                self.report_progress()
+                self.include_substances()
                 self.report_progress()
                 self.include_boundary_conditions()
                 self.report_progress()

@@ -107,6 +107,11 @@ class Laterals(SimulationElement):
 
 
 @dataclass
+class Substances(SimulationElement):
+    data: list = None
+
+
+@dataclass
 class DWF(SimulationElement):
     data: dict = None
 
@@ -198,6 +203,7 @@ class NewSimulation:
     structure_controls: StructureControls = None
     initial_conditions: InitialConditions = None
     laterals: Laterals = None
+    substances: Substances = None
     dwf: DWF = None
     breach: Breach = None
     precipitation: Precipitation = None
