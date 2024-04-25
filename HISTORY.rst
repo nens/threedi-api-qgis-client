@@ -4,6 +4,7 @@ History
 3.11 (unreleased)
 -----------------
 
+- Add substance concentrations to laterals page (#550)
 - Add substances page to the simulation wizard (#547).
 - Simulation wizard: Improve laterals page (#545).
 - Improvements for Upload wizard (#541).
