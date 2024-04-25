@@ -166,7 +166,6 @@ class SimulationInit(uicls, basecls):
     def start_wizard(self):
         """Start new simulation wizard based on selected options."""
         self.initial_conditions = SimulationInitObject()
-        self.initial_conditions.include_substances = self.cb_substances.isChecked()
         self.initial_conditions.include_boundary_conditions = self.cb_boundary.isChecked()
         self.initial_conditions.include_structure_controls = self.cb_structure_controls.isChecked()
         self.initial_conditions.include_initial_conditions = self.cb_conditions.isChecked()
@@ -197,7 +196,6 @@ class SimulationInitObject:
     """Object for storing init options."""
 
     def __init__(self):
-        self.include_substances = False
         self.include_boundary_conditions = False
         self.include_structure_controls = False
         self.include_initial_conditions = False

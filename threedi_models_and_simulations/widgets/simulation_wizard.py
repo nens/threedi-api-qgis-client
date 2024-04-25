@@ -23,7 +23,6 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit,
     QSizePolicy,
     QSpacerItem,
-    QTableWidgetItem,
     QWizard,
     QWizardPage,
 )
@@ -57,9 +56,6 @@ base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_name.ui"))
 uicls_duration_page, basecls_duration_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_duration.ui")
-)
-uicls_substances, basecls_substances = uic.loadUiType(
-    os.path.join(base_dir, "ui", "simulation_wizard", "page_substances.ui")
 )
 uicls_boundary_conditions, basecls_boundary_conditions = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_boundary_conditions.ui")
@@ -197,58 +193,6 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
             self.label_utc_info.setText(self.timezone_template.format(start, end))
         except ValueError:
             self.label_total_time.setText("Invalid datetime format!")
-
-
-class SubstancesWidget(uicls_substances, basecls_substances):
-    """Widget for the Substances page."""
-
-    def __init__(self, parent_page):
-        super().__init__()
-        self.setupUi(self)
-        self.parent_page = parent_page
-        set_widget_background_color(self)
-        self.connect_signals()
-
-    def connect_signals(self):
-        """Connecting widgets signals."""
-        self.pb_add_to_table.clicked.connect(self.add_to_table)
-        self.pb_remove.clicked.connect(self.remove_last_substance)
-
-    def add_to_table(self):
-        name = self.le_name.text()
-        units = self.le_units.text()
-        if len(units) > 16:
-            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
-                "Units length should be less than 16 characters."
-            )
-            return
-        if name:
-            row_count = self.tw_substances.rowCount()
-            self.tw_substances.insertRow(row_count)
-            self.tw_substances.setItem(row_count, 0, QTableWidgetItem(name))
-            self.tw_substances.setItem(row_count, 1, QTableWidgetItem(units))
-            self.le_name.clear()
-            self.le_units.clear()
-
-    def remove_last_substance(self):
-        row_count = self.tw_substances.rowCount()
-        if row_count > 0:
-            self.tw_substances.removeRow(row_count - 1)
-
-    def get_substances_data(self):
-        substances = []
-        row_count = self.tw_substances.rowCount()
-        for row in range(row_count):
-            name_item = self.tw_substances.item(row, 0)
-            units_item = self.tw_substances.item(row, 1)
-            if name_item and units_item:
-                name = name_item.text()
-                units = units_item.text()
-                if units:
-                    substances.append({"name": name, "units": units})
-                else:
-                    substances.append({"name": name})
-        return substances
 
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
@@ -2219,22 +2163,6 @@ class SimulationDurationPage(QWizardPage):
         self.adjustSize()
 
 
-class SubstancesPage(QWizardPage):
-    """Substances definition page."""
-
-    STEP_NAME = "Substances"
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.parent_wizard = parent
-        self.main_widget = SubstancesWidget(self)
-        layout = QGridLayout()
-        layout.addWidget(self.main_widget)
-        self.setLayout(layout)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.adjustSize()
-
-
 class BoundaryConditionsPage(QWizardPage):
     """Boundary conditions definition page."""
 
@@ -2470,9 +2398,6 @@ class SimulationWizard(QWizard):
         self.addPage(self.name_page)
         self.duration_page = SimulationDurationPage(self)
         self.addPage(self.duration_page)
-        if init_conditions.include_substances:
-            self.substances_page = SubstancesPage(self)
-            self.addPage(self.substances_page)
         if init_conditions.include_boundary_conditions:
             self.boundary_conditions_page = BoundaryConditionsPage(self)
             self.addPage(self.boundary_conditions_page)
@@ -3060,12 +2985,6 @@ class SimulationWizard(QWizard):
             wind = dm.Wind(*wind_data)
         else:
             wind = dm.Wind()
-        # Substances
-        if self.init_conditions.include_substances:
-            substances_data = self.substances_page.main_widget.get_substances_data()
-            substances = dm.Substances(substances_data)
-        else:
-            substances = dm.Substances()
 
         # Settings page attributes
         main_settings = self.settings_page.main_widget.collect_single_settings()
@@ -3111,7 +3030,6 @@ class SimulationWizard(QWizard):
                 sim_temp_id, sim_name, tags, threedimodel_id, organisation_uuid, start_datetime, end_datetime, duration
             )
             new_simulation.init_options = init_options
-            new_simulation.substances = substances
             new_simulation.boundary_conditions = boundary_conditions
             new_simulation.structure_controls = structure_controls
             new_simulation.initial_conditions = initial_conditions
