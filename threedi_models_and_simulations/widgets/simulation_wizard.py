@@ -658,13 +658,11 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 laterals_timeseries.update(self.laterals_1d_timeseries_template)
             if self.cb_upload_1d_laterals:
                 laterals_timeseries.update(self.laterals_1d_timeseries)
-        if laterals_type == self.TYPE_2D:
+        else:
             if self.cb_use_2d_laterals:
                 laterals_timeseries.update(self.laterals_2d_timeseries_template)
             if self.cb_upload_2d_laterals:
                 laterals_timeseries.update(self.laterals_2d_timeseries)
-        else:
-            raise NotImplementedError
         if timesteps_in_seconds is False:
             return laterals_timeseries
         laterals_data = deepcopy(laterals_timeseries)
