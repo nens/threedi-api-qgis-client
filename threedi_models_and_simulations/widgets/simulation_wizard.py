@@ -812,7 +812,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     continue
         else:
             interpolate = self.cb_2d_interpolate.isChecked()
-            for x, y, ltype, lat_id, timeseries in laterals_list:
+            for x, y, lat_id, ltype, timeseries in laterals_list:
                 try:
                     vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
                     point = {"type": "Point", "coordinates": [float(x), float(y)]}
