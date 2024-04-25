@@ -5,6 +5,7 @@ History
 -----------------
 
 - Add substances page to the simulation wizard (#547).
+- Simulation wizard: Improve laterals page (#545).
 - Improvements for Upload wizard (#541).
 - Updated threedi-api-client version to 4.1.6.
 

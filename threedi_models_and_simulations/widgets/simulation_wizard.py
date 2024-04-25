@@ -604,86 +604,121 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
 class LateralsWidget(uicls_laterals, basecls_laterals):
     """Widget for the Laterals page."""
 
+    TYPE_1D = "1D"
+    TYPE_2D = "2D"
+
     def __init__(self, parent_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
         set_widget_background_color(self)
-        self.laterals_timeseries = {}
-        self.last_upload_filepath = ""
+        self.laterals_1d = []
+        self.laterals_2d = []
+        self.laterals_1d_timeseries = {}
+        self.laterals_2d_timeseries = {}
+        self.laterals_1d_timeseries_template = {}
+        self.laterals_2d_timeseries_template = {}
+        self.last_upload_1d_filepath = ""
+        self.last_upload_2d_filepath = ""
         self.setup_laterals()
         self.connect_signals()
 
     def setup_laterals(self):
-        """Setup laterals widget."""
-        self.overrule_widget.setVisible(False)
-        self.cb_type.addItems(["1D", "2D"])
+        # 1D laterals
+        if self.current_model.extent_one_d is not None:
+            self.groupbox_1d_laterals.setEnabled(True)
+            self.groupbox_1d_laterals.setChecked(True)
+            if not self.cb_use_1d_laterals.isChecked():
+                self.cb_upload_1d_laterals.setChecked(True)
+            if not self.cb_upload_1d_laterals.isChecked():
+                self.uploadgroup_1d.setEnabled(False)
+        else:
+            self.groupbox_1d_laterals.setEnabled(False)
+            self.groupbox_1d_laterals.setChecked(False)
+
+        # 2D laterals
+        if self.current_model.extent_two_d is not None:
+            self.groupbox_2d_laterals.setEnabled(True)
+            self.groupbox_2d_laterals.setChecked(True)
+            if not self.cb_use_2d_laterals.isChecked():
+                self.cb_upload_2d_laterals.setChecked(True)
+            if not self.cb_upload_2d_laterals.isChecked():
+                self.uploadgroup_2d.setEnabled(False)
+        else:
+            self.groupbox_2d_laterals.setEnabled(False)
+            self.groupbox_2d_laterals.setChecked(False)
 
     def connect_signals(self):
         """Connect signals."""
-        self.cb_overrule.stateChanged.connect(self.overrule_value_changed)
-        self.pb_upload_laterals.clicked.connect(self.load_csv)
-        self.pb_use_csv.clicked.connect(self.overrule_with_csv)
-        self.cb_type.currentIndexChanged.connect(self.selection_changed)
-        self.cb_laterals.currentIndexChanged.connect(self.laterals_change)
-        self.cb_interpolate_laterals.stateChanged.connect(self.interpolate_changed)
+        # 1D laterals
+        self.cb_upload_1d_laterals.toggled.connect(self.toggle_1d_laterals_upload)
+        self.pb_upload_1d_laterals.clicked.connect(partial(self.load_csv, self.TYPE_1D))
+        self.cb_1d_interpolate.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_1D))
 
-    def laterals_change(self):
-        """Handle dropdown menus selection changes."""
-        lat_id = self.cb_laterals.currentText()
-        self.il_location.setText(lat_id)
+        # 2D laterals
+        self.cb_upload_2d_laterals.toggled.connect(self.toggle_2d_laterals_upload)
+        self.pb_upload_2d_laterals.clicked.connect(partial(self.load_csv, self.TYPE_2D))
+        self.cb_2d_interpolate.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_2D))
 
-    def interpolate_changed(self):
+    def toggle_1d_laterals_upload(self, checked):
+        """Handle 1D laterals toggle."""
+        if checked:
+            self.uploadgroup_1d.setEnabled(True)
+        else:
+            self.uploadgroup_1d.setEnabled(False)
+
+    def toggle_2d_laterals_upload(self, checked):
+        """Handle 2D laterals toggle."""
+        if checked:
+            self.uploadgroup_2d.setEnabled(True)
+        else:
+            self.uploadgroup_2d.setEnabled(False)
+
+    def interpolate_changed(self, laterals_type):
         """Handle interpolate checkbox."""
-        interpolate = self.cb_interpolate_laterals.isChecked()
-        for val in self.laterals_timeseries.values():
+        laterals_timeseries = (
+            self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
+        )
+        interpolate = (
+            self.cb_1d_interpolate.isChecked() if laterals_type == self.TYPE_1D else self.cb_2d_interpolate.isChecked()
+        )
+        for val in laterals_timeseries.values():
             val["interpolate"] = interpolate
 
-    def selection_changed(self, index):
-        """Handle dropdown menus selection changes."""
-        if index == 0:
-            self.laterals_layout.setText("Upload laterals for 1D:")
-        if index == 1:
-            self.laterals_layout.setText("Upload laterals for 2D:")
-        self.il_upload.setText("")
-        self.laterals_timeseries.clear()
-        self.cb_laterals.clear()
-        self.cb_overrule.setChecked(False)
-
-    def load_csv(self):
+    def load_csv(self, laterals_type):
         """Load laterals from CSV file."""
-        values, filename = self.open_upload_dialog()
+        values, filename = self.open_upload_dialog(laterals_type)
         if not filename:
             return
-        self.il_upload.setText(filename)
-        self.last_upload_filepath = filename
-        self.laterals_timeseries = values
-        for lat in self.laterals_timeseries.keys():
-            self.cb_laterals.addItem(lat)
+        if laterals_type == self.TYPE_1D:
+            self.il_1d_upload.setText(filename)
+            self.last_upload_1d_filepath = filename
+            self.laterals_1d_timeseries = values
+        elif laterals_type == self.TYPE_2D:
+            self.il_2d_upload.setText(filename)
+            self.last_upload_2d_filepath = filename
+            self.laterals_2d_timeseries = values
+        else:
+            raise NotImplementedError
 
-    def overrule_with_csv(self):
-        """Overrule laterals with values from CSV file."""
-        values, filename = self.open_upload_dialog()
-        if not filename:
-            return
-        laterals = self.laterals_timeseries.get(self.cb_laterals.currentText())
-        for lat in values.values():
-            laterals.values = lat.values
-            return
-
-    def overrule_value_changed(self, value):
-        """Handling checkbox state changes."""
-        if value == 0:
-            self.overrule_widget.setVisible(False)
-        if value == 2:
-            self.overrule_widget.setVisible(True)
-
-    def get_laterals_data(self, timesteps_in_seconds=False):
-        """Get laterals data (timesteps in seconds)."""
+    def recalculate_laterals_timeseries(self, laterals_type, timesteps_in_seconds=False):
+        """Recalculate laterals timeseries (timesteps in seconds)."""
+        laterals_timeseries = {}
+        if laterals_type == self.TYPE_1D:
+            if self.cb_use_1d_laterals:
+                laterals_timeseries.update(self.laterals_1d_timeseries_template)
+            if self.cb_upload_1d_laterals:
+                laterals_timeseries.update(self.laterals_1d_timeseries)
+        else:
+            if self.cb_use_2d_laterals:
+                laterals_timeseries.update(self.laterals_2d_timeseries_template)
+            if self.cb_upload_2d_laterals:
+                laterals_timeseries.update(self.laterals_2d_timeseries)
         if timesteps_in_seconds is False:
-            return self.laterals_timeseries
-        laterals_data = deepcopy(self.laterals_timeseries)
-        units = self.cbo_lateral_units.currentText()
+            return laterals_timeseries
+        laterals_data = deepcopy(laterals_timeseries)
+        units = self.cbo_1d_units.currentText() if laterals_type == self.TYPE_1D else self.cbo_2d_units.currentText()
         if units == "hrs":
             seconds_per_unit = 3600
         elif units == "mins":
@@ -693,6 +728,20 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         for val in laterals_data.values():
             val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
         return laterals_data
+
+    def get_laterals_data(self, timesteps_in_seconds=False):
+        """Get laterals data."""
+        constant_laterals = []
+        file_laterals = {}
+        if self.groupbox_1d_laterals.isChecked():
+            if self.cb_use_1d_laterals:
+                constant_laterals.extend(self.laterals_1d)
+            file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
+        if self.groupbox_2d_laterals.isChecked():
+            if self.cb_use_2d_laterals:
+                constant_laterals.extend(self.laterals_2d)
+            file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
+        return constant_laterals, file_laterals
 
     def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
         """
@@ -723,7 +772,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
         return error_message
 
-    def open_upload_dialog(self):
+    def open_upload_dialog(self, laterals_type):
         """Open dialog for selecting CSV file with laterals."""
         last_folder = QSettings().value("threedi/last_laterals_folder", os.path.expanduser("~"), type=str)
         file_filter = "CSV (*.csv );;All Files (*)"
@@ -732,8 +781,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             return None, None
         QSettings().setValue("threedi/last_laterals_folder", os.path.dirname(filename))
         values = {}
-        laterals_type = self.cb_type.currentText()
-        interpolate = self.cb_interpolate_laterals.isChecked()
         laterals_list = []
         with open(filename, encoding="utf-8-sig") as lateral_file:
             laterals_reader = csv.reader(lateral_file)
@@ -742,6 +789,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if error_msg is not None:
             return None, None
         if laterals_type == "1D":
+            interpolate = self.cb_1d_interpolate.isChecked()
             for lat_id, connection_node_id, timeseries in laterals_list:
                 try:
                     vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
@@ -755,10 +803,11 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                         "interpolate": interpolate,
                     }
                     values[lat_id] = lateral
-                    self.last_uploaded_laterals = lateral
+                    self.last_uploaded_1d_laterals = lateral
                 except ValueError:
                     continue
         else:
+            interpolate = self.cb_2d_interpolate.isChecked()
             for x, y, ltype, lat_id, timeseries in laterals_list:
                 try:
                     vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
@@ -772,7 +821,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                         "interpolate": interpolate,
                     }
                     values[lat_id] = lateral
-                    self.last_uploaded_laterals = lateral
+                    self.last_uploaded_2d_laterals = lateral
                 except ValueError:
                     continue
         return values, filename
@@ -2269,7 +2318,6 @@ class LateralsPage(QWizardPage):
         layout.addWidget(self.main_widget)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.registerField("laterals_upload*", self.main_widget.il_upload)
         self.adjustSize()
 
 
@@ -2515,7 +2563,8 @@ class SimulationWizard(QWizard):
                 self.set_overview_breaches()
         elif isinstance(current_page, LateralsPage):
             laterals_widget = self.laterals_page.main_widget
-            laterals_widget.il_upload.setText(laterals_widget.last_upload_filepath)
+            laterals_widget.il_1d_upload.setText(laterals_widget.last_upload_1d_filepath)
+            laterals_widget.il_2d_upload.setText(laterals_widget.last_upload_2d_filepath)
         elif isinstance(current_page, DWFPage):
             dwf_widget = self.dwf_page.main_widget
             dwf_widget.dwf_upload.setText(dwf_widget.last_upload_filepath)
@@ -2654,33 +2703,68 @@ class SimulationWizard(QWizard):
                             )
                             break
         if init_conditions.include_laterals:
-            laterals_events = [filelateral for filelateral in events.filelaterals if filelateral.periodic != "daily"]
-            if laterals_events:
-                laterals_widget = self.laterals_page.main_widget
+            laterals_widget = self.laterals_page.main_widget
+            laterals = events.laterals
+            file_laterals = [filelateral for filelateral in events.filelaterals if filelateral.periodic != "daily"]
+            if laterals:
+                laterals_1d = []
+                laterals_2d = []
+                for lateral in laterals:
+                    if hasattr(lateral, "point"):
+                        laterals_2d.append(lateral)
+                    else:
+                        laterals_1d.append(lateral)
+                if laterals_1d:
+                    laterals_widget.cb_use_1d_laterals.setChecked(True)
+                    laterals_widget.cb_upload_1d_laterals.setChecked(False)
+                    laterals_widget.laterals_1d = laterals_1d
+                if laterals_2d:
+                    laterals_widget.cb_use_2d_laterals.setChecked(True)
+                    laterals_widget.cb_upload_2d_laterals.setChecked(False)
+                    laterals_widget.laterals_2d = laterals_2d
+            if file_laterals:
                 tc = ThreediCalls(self.plugin_dock.threedi_api)
-                lateral_file = laterals_events[0]
+                lateral_file = file_laterals[0]
                 lateral_file_name = lateral_file.file.filename
                 lateral_file_download = tc.fetch_lateral_file_download(temp_simulation_id, lateral_file.id)
                 lateral_temp_filepath = os.path.join(TEMPDIR, lateral_file_name)
                 get_download_file(lateral_file_download, lateral_temp_filepath)
                 laterals_timeseries = read_json_data(lateral_temp_filepath)
-                last_lateral = laterals_timeseries[-1]
-                if "point" in last_lateral:
-                    laterals_widget.cb_type.setCurrentText("2D")
-                else:
-                    laterals_widget.cb_type.setCurrentText("1D")
-                laterals_widget.il_upload.setText(from_template_placeholder)
-                laterals_widget.last_upload_filepath = from_template_placeholder
-                laterals_widget.cbo_lateral_units.setCurrentText("s")
-                laterals_widget.cb_interpolate_laterals.setChecked(last_lateral["interpolate"])
-                try:
-                    laterals_widget.laterals_timeseries = {str(lat["id"]): lat for lat in laterals_timeseries}
-                except KeyError:
-                    laterals_widget.laterals_timeseries = {str(i): lat for i, lat in enumerate(laterals_timeseries, 1)}
-                laterals_widget.last_uploaded_laterals = laterals_timeseries[-1]
-                for lat_id in laterals_widget.laterals_timeseries.keys():
-                    laterals_widget.cb_laterals.addItem(lat_id)
+                laterals_1d_timeseries = []
+                laterals_2d_timeseries = []
+                for ts in laterals_timeseries:
+                    if "point" in ts:
+                        # 2D laterals if point is present
+                        laterals_2d_timeseries.append(ts)
+                    else:
+                        # 1D laterals if point is not present
+                        laterals_1d_timeseries.append(ts)
+                if laterals_1d_timeseries:
+                    laterals_widget.cb_use_1d_laterals.setChecked(True)
+                    laterals_widget.cb_upload_1d_laterals.setChecked(False)
+                    try:
+                        laterals_widget.laterals_1d_timeseries_template = {
+                            str(lat["id"]): lat for lat in laterals_1d_timeseries
+                        }
+                    except KeyError:
+                        laterals_widget.laterals_1d_timeseries_template = {
+                            str(i): lat for i, lat in enumerate(laterals_1d_timeseries, 1)
+                        }
+                if laterals_2d_timeseries:
+                    laterals_widget.cb_use_2d_laterals.setChecked(True)
+                    laterals_widget.cb_upload_2d_laterals.setChecked(False)
+                    try:
+                        laterals_widget.laterals_2d_timeseries_template = {
+                            str(lat["id"]): lat for lat in laterals_2d_timeseries
+                        }
+                    except KeyError:
+                        laterals_widget.laterals_2d_timeseries_template = {
+                            str(i): lat for i, lat in enumerate(laterals_2d_timeseries, 1)
+                        }
                 os.remove(lateral_temp_filepath)
+            if not laterals and not file_laterals:
+                laterals_widget.cb_use_1d_laterals.setEnabled(False)
+                laterals_widget.cb_use_2d_laterals.setEnabled(False)
         if init_conditions.include_dwf:
             dwf_events = [filelateral for filelateral in events.filelaterals if filelateral.periodic == "daily"]
             if dwf_events:
@@ -2954,8 +3038,10 @@ class SimulationWizard(QWizard):
 
         # Laterals
         if self.init_conditions.include_laterals:
-            laterals_data = self.laterals_page.main_widget.get_laterals_data(timesteps_in_seconds=True)
-            laterals = dm.Laterals(laterals_data)
+            constant_laterals, file_laterals = self.laterals_page.main_widget.get_laterals_data(
+                timesteps_in_seconds=True
+            )
+            laterals = dm.Laterals(constant_laterals, file_laterals)
         else:
             laterals = dm.Laterals()
         # DWF

@@ -853,8 +853,13 @@ class SimulationRunner(QRunnable):
         sim_id = self.current_simulation.simulation.id
         sim_name = self.current_simulation.name
         if self.current_simulation.laterals:
-            lateral_values = list(self.current_simulation.laterals.data.values())
-            write_json_data(lateral_values, LATERALS_FILE_TEMPLATE)
+            # Add constant laterals
+            laterals = self.current_simulation.laterals.laterals
+            for lateral in laterals:
+                self.tc.create_simulation_lateral_constant(sim_id, **lateral)
+            # Add File laterals
+            file_lateral_values = list(self.current_simulation.laterals.file_laterals.values())
+            write_json_data(file_lateral_values, LATERALS_FILE_TEMPLATE)
             filename = f"{sim_name}_laterals.json"
             upload_event_file = self.tc.create_simulation_lateral_file(sim_id, filename=filename, offset=0)
             upload_local_file(upload_event_file, LATERALS_FILE_TEMPLATE)

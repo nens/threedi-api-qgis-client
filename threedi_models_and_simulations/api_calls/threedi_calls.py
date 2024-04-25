@@ -12,6 +12,7 @@ from threedi_api_client.openapi import (
     BasicPostProcessing,
     Breach,
     Commit,
+    ConstantLateral,
     ConstantLocalRain,
     ConstantRain,
     ConstantWind,
@@ -534,6 +535,11 @@ class ThreediCalls:
         """Add substance to the given simulation."""
         substance = self.threedi_api.simulations_substances_create(str(simulation_pk), data)
         return substance
+
+    def create_simulation_lateral_constant(self, simulation_pk: int, **data) -> ConstantLateral:
+        """Add lateral constant to the given simulation."""
+        lateral_constant = self.threedi_api.simulations_events_lateral_constant_create(str(simulation_pk), data)
+        return ConstantLateral
 
     def create_simulation_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
         """Add lateral timeseries to the given simulation."""
