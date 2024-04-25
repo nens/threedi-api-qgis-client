@@ -58,7 +58,9 @@ uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui",
 uicls_duration_page, basecls_duration_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_duration.ui")
 )
-uicls_substances, basecls_substances = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_substances.ui"))
+uicls_substances, basecls_substances = uic.loadUiType(
+    os.path.join(base_dir, "ui", "simulation_wizard", "page_substances.ui")
+)
 uicls_boundary_conditions, basecls_boundary_conditions = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_boundary_conditions.ui")
 )
@@ -216,7 +218,9 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         name = self.le_name.text()
         units = self.le_units.text()
         if len(units) > 16:
-            self.parent_page.parent_wizard.plugin_dock.communication.show_warn("Units length should be less than 16 characters.")
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                "Units length should be less than 16 characters."
+            )
             return
         if name:
             row_count = self.tw_substances.rowCount()
@@ -241,9 +245,9 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                 name = name_item.text()
                 units = units_item.text()
                 if units:
-                    substances.append({ "name": name, "units": units })
+                    substances.append({"name": name, "units": units})
                 else:
-                    substances.append({ "name": name })
+                    substances.append({"name": name})
         return substances
 
 
