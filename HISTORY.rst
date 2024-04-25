@@ -4,6 +4,7 @@ History
 3.11 (unreleased)
 -----------------
 
+- Simulation wizard: Improve laterals page.
 - Improvements for Upload wizard (#541).
 - Updated threedi-api-client version to 4.1.6.
 
