@@ -631,7 +631,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         interpolate = (
             self.cb_1d_interpolate.isChecked() if laterals_type == self.TYPE_1D else self.cb_2d_interpolate.isChecked()
         )
-        for val in laterals_timeseries:
+        for val in laterals_timeseries.values():
             val["interpolate"] = interpolate
 
     def load_csv(self, laterals_type):
