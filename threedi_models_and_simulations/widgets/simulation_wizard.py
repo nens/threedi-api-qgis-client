@@ -91,7 +91,8 @@ uicls_saved_state_page, basecls_saved_state_page = uic.loadUiType(
 uicls_summary_page, basecls_summary_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_initiation.ui")
 )
-
+import logging
+logger = logging.getLogger(__name__)
 
 class NameWidget(uicls_name_page, basecls_name_page):
     """Widget for the Name page."""
@@ -206,6 +207,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.substances = []
         set_widget_background_color(self)
         self.connect_signals()
 
@@ -229,26 +231,13 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             self.tw_substances.setItem(row_count, 1, QTableWidgetItem(units))
             self.le_name.clear()
             self.le_units.clear()
+            self.substances.append({"name": name, "units": units if units else None})
 
     def remove_last_substance(self):
         row_count = self.tw_substances.rowCount()
         if row_count > 0:
             self.tw_substances.removeRow(row_count - 1)
-
-    def get_substances_data(self):
-        substances = []
-        row_count = self.tw_substances.rowCount()
-        for row in range(row_count):
-            name_item = self.tw_substances.item(row, 0)
-            units_item = self.tw_substances.item(row, 1)
-            if name_item and units_item:
-                name = name_item.text()
-                units = units_item.text()
-                if units:
-                    substances.append({"name": name, "units": units})
-                else:
-                    substances.append({"name": name})
-        return substances
+            self.substances.pop()
 
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
@@ -616,6 +605,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.setupUi(self)
         self.parent_page = parent_page
         self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
+        self.substances = parent_page.parent_wizard.substances_page.main_widget.substances
         set_widget_background_color(self)
         self.laterals_1d = []
         self.laterals_2d = []
@@ -3062,8 +3052,7 @@ class SimulationWizard(QWizard):
             wind = dm.Wind()
         # Substances
         if self.init_conditions.include_substances:
-            substances_data = self.substances_page.main_widget.get_substances_data()
-            substances = dm.Substances(substances_data)
+            substances = dm.Substances(self.substances_page.main_widget.substances)
         else:
             substances = dm.Substances()
 
