@@ -19,8 +19,10 @@ from qgis.PyQt.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QGridLayout,
+    QGroupBox,
     QLabel,
     QLineEdit,
+    QPushButton,
     QSizePolicy,
     QSpacerItem,
     QTableWidgetItem,
@@ -232,12 +234,17 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             self.le_name.clear()
             self.le_units.clear()
             self.substances.append({"name": name, "units": units if units else None})
+            self.update_substances()
 
     def remove_last_substance(self):
         row_count = self.tw_substances.rowCount()
         if row_count > 0:
             self.tw_substances.removeRow(row_count - 1)
             self.substances.pop()
+            self.update_substances()
+
+    def update_substances(self):
+        self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
 
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
@@ -642,6 +649,37 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         else:
             self.groupbox_2d_laterals.setEnabled(False)
             self.groupbox_2d_laterals.setChecked(False)
+
+    def setup_substance_concentrations(self):
+        if hasattr(self, "groupbox"):
+            self.groupbox.setParent(None)
+        if not self.substances:
+            return
+        self.groupbox = QGroupBox("Substance concentrations")
+        layout = QGridLayout()
+        self.groupbox.setLayout(layout)
+        self.groupbox.setFont(QFont("Segoe UI", 14, QFont.Bold))
+        font = QFont("Segoe UI", 10, QFont.Normal)
+        # Clear existing widgets from the layout
+        for i in reversed(range(layout.count())):
+            layout.itemAt(i).widget().setParent(None)
+        for i, substance in enumerate(self.substances):
+            name = substance["name"]
+            label = QLabel(name)
+            label.setFont(font)
+            line_edit = QLineEdit()
+            line_edit.setObjectName("le_" + name)
+            line_edit.setReadOnly(True)
+            line_edit.setFont(font)
+            upload_button = QPushButton("Upload CSV")
+            upload_button.setObjectName("pb_" + name)
+            upload_button.setFont(font)
+            layout.addWidget(label, i, 0)
+            layout.addWidget(line_edit, i, 1)
+            layout.addWidget(upload_button, i, 2)
+        # Add QGroupBox to the layout
+        parent_layout = self.layout()
+        parent_layout.addWidget(self.groupbox, 9, 2)
 
     def connect_signals(self):
         """Connect signals."""
