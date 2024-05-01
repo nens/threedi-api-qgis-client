@@ -27,6 +27,7 @@ from qgis.PyQt.QtWidgets import (
     QSizePolicy,
     QSpacerItem,
     QTableWidgetItem,
+    QWidget,
     QWizard,
     QWizardPage,
 )
@@ -663,23 +664,27 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         font = QFont("Segoe UI", 10, QFont.Normal)
         for i, substance in enumerate(self.substances):
             name = substance["name"]
-            label = QLabel(name)
+            label = QLabel(f"{name} (1D):")
             label.setMinimumWidth(100)
             label.setFont(font)
             line_edit = QLineEdit()
-            line_edit.setObjectName("le_" + name)
+            line_edit.setObjectName("le_1d_substance_" + name)
             line_edit.setReadOnly(True)
             line_edit.setFrame(False)
             line_edit.setFont(font)
+            line_edit.setStyleSheet("background-color: white")
             upload_button = QPushButton("Upload CSV")
-            upload_button.setObjectName("pb_" + name)
+            upload_button.setObjectName("pb_1d_substance_" + name)
             upload_button.setMinimumWidth(100)
             upload_button.setFont(font)
             horizontal_layout = QHBoxLayout()
+            horizontal_layout_widget = QWidget()
+            horizontal_layout_widget.setLayout(horizontal_layout)
+            horizontal_layout_widget.setEnabled(self.current_model.extent_one_d is not None)
             horizontal_layout.addWidget(label)
             horizontal_layout.addWidget(line_edit)
             horizontal_layout.addWidget(upload_button)
-            layout.addLayout(horizontal_layout, i, 0)
+            layout.addWidget(horizontal_layout_widget, i, 0)
         # Add QGroupBox to the layout
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
