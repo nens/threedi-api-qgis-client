@@ -20,6 +20,7 @@ from qgis.PyQt.QtWidgets import (
     QFileDialog,
     QGridLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
@@ -660,12 +661,10 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.groupbox.setLayout(layout)
         self.groupbox.setFont(QFont("Segoe UI", 14, QFont.Bold))
         font = QFont("Segoe UI", 10, QFont.Normal)
-        # Clear existing widgets from the layout
-        for i in reversed(range(layout.count())):
-            layout.itemAt(i).widget().setParent(None)
         for i, substance in enumerate(self.substances):
             name = substance["name"]
             label = QLabel(name)
+            label.setMinimumWidth(100)
             label.setFont(font)
             line_edit = QLineEdit()
             line_edit.setObjectName("le_" + name)
@@ -676,9 +675,11 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             upload_button.setObjectName("pb_" + name)
             upload_button.setMinimumWidth(100)
             upload_button.setFont(font)
-            layout.addWidget(label, i, 0)
-            layout.addWidget(line_edit, i, 1)
-            layout.addWidget(upload_button, i, 2)
+            horizontal_layout = QHBoxLayout()
+            horizontal_layout.addWidget(label)
+            horizontal_layout.addWidget(line_edit)
+            horizontal_layout.addWidget(upload_button)
+            layout.addLayout(horizontal_layout, i, 0)
         # Add QGroupBox to the layout
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
