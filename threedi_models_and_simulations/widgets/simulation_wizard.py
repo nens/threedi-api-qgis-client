@@ -670,16 +670,18 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             line_edit = QLineEdit()
             line_edit.setObjectName("le_" + name)
             line_edit.setReadOnly(True)
+            line_edit.setFrame(False)
             line_edit.setFont(font)
             upload_button = QPushButton("Upload CSV")
             upload_button.setObjectName("pb_" + name)
+            upload_button.setMinimumWidth(100)
             upload_button.setFont(font)
             layout.addWidget(label, i, 0)
             layout.addWidget(line_edit, i, 1)
             layout.addWidget(upload_button, i, 2)
         # Add QGroupBox to the layout
         parent_layout = self.layout()
-        parent_layout.addWidget(self.groupbox, 9, 2)
+        parent_layout.addWidget(self.groupbox, 3, 2)
 
     def connect_signals(self):
         """Connect signals."""
