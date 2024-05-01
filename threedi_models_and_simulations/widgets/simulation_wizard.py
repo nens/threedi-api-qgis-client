@@ -615,6 +615,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.parent_page = parent_page
         self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
         self.substances = parent_page.parent_wizard.substances_page.main_widget.substances
+        self.substance_concentrations = {}
         set_widget_background_color(self)
         self.laterals_1d = []
         self.laterals_2d = []
@@ -651,6 +652,18 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         else:
             self.groupbox_2d_laterals.setEnabled(False)
             self.groupbox_2d_laterals.setChecked(False)
+
+    def connect_signals(self):
+        """Connect signals."""
+        # 1D laterals
+        self.cb_upload_1d_laterals.toggled.connect(self.toggle_1d_laterals_upload)
+        self.pb_upload_1d_laterals.clicked.connect(partial(self.load_csv, self.TYPE_1D))
+        self.cb_1d_interpolate.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_1D))
+
+        # 2D laterals
+        self.cb_upload_2d_laterals.toggled.connect(self.toggle_2d_laterals_upload)
+        self.pb_upload_2d_laterals.clicked.connect(partial(self.load_csv, self.TYPE_2D))
+        self.cb_2d_interpolate.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_2D))
 
     def setup_substance_concentrations(self):
         if hasattr(self, "groupbox"):
@@ -713,18 +726,40 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         # Add QGroupBox to the layout
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
+        self.connect_substance_upload_signals()
 
-    def connect_signals(self):
-        """Connect signals."""
-        # 1D laterals
-        self.cb_upload_1d_laterals.toggled.connect(self.toggle_1d_laterals_upload)
-        self.pb_upload_1d_laterals.clicked.connect(partial(self.load_csv, self.TYPE_1D))
-        self.cb_1d_interpolate.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_1D))
+    def connect_substance_upload_signals(self):
+        """Connect substance upload signals."""
+        for substance in self.substances:
+            name = substance["name"]
+            upload_button_1d = self.findChild(QPushButton, "pb_1d_substance_" + name)
+            upload_button_1d.clicked.connect(partial(self.load_substance_csv, self.TYPE_1D, name))
+            upload_button_2d = self.findChild(QPushButton, "pb_2d_substance_" + name)
+            upload_button_2d.clicked.connect(partial(self.load_substance_csv, self.TYPE_2D, name))
 
-        # 2D laterals
-        self.cb_upload_2d_laterals.toggled.connect(self.toggle_2d_laterals_upload)
-        self.pb_upload_2d_laterals.clicked.connect(partial(self.load_csv, self.TYPE_2D))
-        self.cb_2d_interpolate.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_2D))
+    def load_substance_csv(self, laterals_type, name):
+        """Load substance CSV file."""
+        self.open_substance_upload_dialog(laterals_type, name)
+
+    def open_substance_upload_dialog(self, laterals_type, name):
+        """Open dialog for selecting CSV file with laterals."""
+        last_folder = QSettings().value("threedi/last_substances_folder", os.path.expanduser("~"), type=str)
+        file_filter = "CSV (*.csv );;All Files (*)"
+        filename, __ = QFileDialog.getOpenFileName(self, f"Substance Concentrations for {name} ({laterals_type})", last_folder, file_filter)
+        if len(filename) == 0:
+            return None, None
+        QSettings().setValue("threedi/last_substances_folder", os.path.dirname(filename))
+        values = {}
+        substance_list = []
+        with open(filename, encoding="utf-8-sig") as substance_file:
+            substance_reader = csv.reader(substance_file)
+            substance_list += list(substance_reader)
+        for lat_id, timeseries in substance_list:
+            try:
+                vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+            except ValueError:
+                continue
+        return values, filename
 
     def toggle_1d_laterals_upload(self, checked):
         """Handle 1D laterals toggle."""
