@@ -871,7 +871,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def recalculate_substances_timeseries(self, timesteps_in_seconds=False):
         """Recalculate substances timeseries (timesteps in seconds)."""
-        substances = self.substance_concentrations
+        substances = deepcopy(self.substance_concentrations)
         if timesteps_in_seconds is False:
             return substances
         units = self.cbo_1d_units.currentText()
@@ -881,8 +881,9 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             seconds_per_unit = 60
         else:
             seconds_per_unit = 1
-        for val in substances.values():
-            val["concentrations"] = [[t * seconds_per_unit, v] for (t, v) in val["concentrations"]]
+        for lateral_substances in substances.values():
+            for substance in lateral_substances:
+                substance["concentrations"] = [[t * seconds_per_unit, v] for (t, v) in substance["concentrations"]]
         return substances
 
     def update_laterals_with_substances(self, file_laterals, substances):
