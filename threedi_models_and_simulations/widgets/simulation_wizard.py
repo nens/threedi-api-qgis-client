@@ -759,10 +759,10 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     error_message = f"Laterals with ID {lat_id} not found!"
                     break
                 lateralValues = lateral["values"]
+                laterals_timesteps = [timestep for timestep, _ in lateralValues]
                 concentrations = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                if len(lateralValues) != len(concentrations) or any(
-                    len(list1) != len(list2) for list1, list2 in zip(lateralValues, concentrations)
-                ):
+                concentrations_timesteps = [timestep for timestep, _ in concentrations]
+                if laterals_timesteps != concentrations_timesteps:
                     error_message = "Substance concentrations timesteps do not match lateral values timesteps!"
                     break
         if error_message is not None:
