@@ -1,6 +1,7 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import csv
+import logging
 import os
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
@@ -95,8 +96,8 @@ uicls_saved_state_page, basecls_saved_state_page = uic.loadUiType(
 uicls_summary_page, basecls_summary_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_initiation.ui")
 )
-import logging
 logger = logging.getLogger(__name__)
+
 
 class NameWidget(uicls_name_page, basecls_name_page):
     """Widget for the Name page."""
@@ -615,7 +616,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.parent_page = parent_page
         self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
         self.substances = parent_page.parent_wizard.substances_page.main_widget.substances
-        self.substance_concentrations = {}
         set_widget_background_color(self)
         self.laterals_1d = []
         self.laterals_2d = []
@@ -623,6 +623,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.laterals_2d_timeseries = {}
         self.laterals_1d_timeseries_template = {}
         self.laterals_2d_timeseries_template = {}
+        self.substances_1d = {}
+        self.substances_2d = {}
         self.last_upload_1d_filepath = ""
         self.last_upload_2d_filepath = ""
         self.setup_laterals()
@@ -694,7 +696,9 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             horizontal_layout_1d = QHBoxLayout()
             horizontal_layout_widget_1d = QWidget()
             horizontal_layout_widget_1d.setLayout(horizontal_layout_1d)
-            horizontal_layout_widget_1d.setEnabled(self.current_model.extent_one_d is not None)
+            horizontal_layout_widget_1d.setEnabled(
+                self.current_model.extent_one_d is not None and self.cb_upload_1d_laterals.isChecked()
+            )
             horizontal_layout_1d.setContentsMargins(0, 0, 9, 0)
             horizontal_layout_1d.addWidget(label_1d)
             horizontal_layout_1d.addWidget(line_edit_1d)
@@ -717,7 +721,9 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             horizontal_layout_2d = QHBoxLayout()
             horizontal_layout_widget_2d = QWidget()
             horizontal_layout_widget_2d.setLayout(horizontal_layout_2d)
-            horizontal_layout_widget_2d.setEnabled(self.current_model.extent_two_d is not None)
+            horizontal_layout_widget_2d.setEnabled(
+                self.current_model.extent_two_d is not None and self.cb_upload_2d_laterals.isChecked()
+            )
             horizontal_layout_2d.setContentsMargins(0, 0, 9, 0)
             horizontal_layout_2d.addWidget(label_2d)
             horizontal_layout_2d.addWidget(line_edit_2d)
@@ -739,27 +745,106 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def load_substance_csv(self, laterals_type, name):
         """Load substance CSV file."""
-        self.open_substance_upload_dialog(laterals_type, name)
+        substances, filename = self.open_substance_upload_dialog(laterals_type, name)
+        logger.debug(f"Substances: {substances}")
+        if not filename:
+            return
+        if laterals_type == self.TYPE_1D:
+            le_1d_substance = self.findChild(QLineEdit, "le_1d_substance_" + name)
+            le_1d_substance.setText(filename)
+            self.substances_1d.update(substances)
+        elif laterals_type == self.TYPE_2D:
+            le_2d_substance = self.findChild(QLineEdit, "le_2d_substance_" + name)
+            le_2d_substance.setText(filename)
+            self.substances_2d.update(substances)
+        else:
+            raise NotImplementedError
+
+    def handle_substance_header(self, substance_list):
+        """
+        Fetch first csv row and handle potential header.
+        Return None if fetch successful or error message if file is empty or have invalid structure.
+        """
+        error_message = None
+        if not substance_list:
+            error_message = "Substance concentration list is empty!"
+            return error_message
+        header = substance_list[0]
+        if len(header) != 2:
+            error_message = "Wrong csv format for substance concentrations!"
+        if error_message is None:
+            try:
+                timeseries_candidate = header[-1]
+                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+            except ValueError:
+                substance_list.pop(0)
+        return error_message
+
+    def handle_substance_timesteps(self, substance_list, laterals_type):
+        """
+        First, check if lateral values are uploaded.
+        Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
+        Return None if they match or error message if not.
+        """
+        error_message = self.handle_substance_header(substance_list)
+        if laterals_type == self.TYPE_1D and not self.laterals_1d_timeseries:
+            error_message = "1D laterals are not uploaded yet!"
+        if laterals_type == self.TYPE_2D and not self.laterals_2d_timeseries:
+            error_message = "2D laterals are not uploaded yet!"
+        if not substance_list:
+            error_message = "Substance concentrations list is empty!"
+        if error_message is None:
+            for lat_id, timeseries in substance_list:
+                lateral = (
+                    self.laterals_1d_timeseries.get(lat_id)
+                    if laterals_type == "1D"
+                    else self.laterals_2d_timeseries.get(lat_id)
+                )
+                if lateral is None:
+                    error_message = f"Laterals with ID {lat_id} not found!"
+                    break
+                lateralValues = lateral["values"]
+                concentrations = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                if len(lateralValues) != len(concentrations) or any(
+                    len(list1) != len(list2) for list1, list2 in zip(lateralValues, concentrations)
+                ):
+                    error_message = "Substance concentrations timesteps do not match lateral values timesteps!"
+                    break
+        if error_message is not None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        return error_message
 
     def open_substance_upload_dialog(self, laterals_type, name):
         """Open dialog for selecting CSV file with laterals."""
         last_folder = QSettings().value("threedi/last_substances_folder", os.path.expanduser("~"), type=str)
         file_filter = "CSV (*.csv );;All Files (*)"
-        filename, __ = QFileDialog.getOpenFileName(self, f"Substance Concentrations for {name} ({laterals_type})", last_folder, file_filter)
+        filename, __ = QFileDialog.getOpenFileName(
+            self, f"Substance Concentrations for {name} ({laterals_type})", last_folder, file_filter
+        )
         if len(filename) == 0:
             return None, None
         QSettings().setValue("threedi/last_substances_folder", os.path.dirname(filename))
-        values = {}
+        substances = {}
         substance_list = []
         with open(filename, encoding="utf-8-sig") as substance_file:
             substance_reader = csv.reader(substance_file)
             substance_list += list(substance_reader)
+        error_msg = self.handle_substance_timesteps(substance_list, laterals_type)
+        if error_msg is not None:
+            return None, None
         for lat_id, timeseries in substance_list:
             try:
-                vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                concentrations = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                substance = {
+                    "substance": name,
+                    "concentrations": concentrations,
+                }
+                if lat_id not in substances:
+                    substances[lat_id] = []
+                substances[lat_id].append(substance)
             except ValueError:
                 continue
-        return values, filename
+        return substances, filename
 
     def toggle_1d_laterals_upload(self, checked):
         """Handle 1D laterals toggle."""
@@ -770,6 +855,10 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def toggle_2d_laterals_upload(self, checked):
         """Handle 2D laterals toggle."""
+        constant_laterals, file_laterals = self.get_laterals_data(
+            timesteps_in_seconds=True
+        )
+        logger.debug(f"File laterals: {file_laterals}")
         if checked:
             self.uploadgroup_2d.setEnabled(True)
         else:
@@ -829,6 +918,18 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
         return laterals_data
 
+    def update_laterals_with_substances(self, file_laterals, laterals_type):
+        """Update laterals with substances."""
+        for lat_id, lat_data in file_laterals.items():
+            substance = (
+                self.substances_1d.get(lat_id) if laterals_type == self.TYPE_1D else self.substances_2d.get(lat_id)
+            )
+            if substance is None:
+                continue
+            if "substances" not in lat_data:
+                lat_data["substances"] = []
+            lat_data["substances"].append(substance)
+
     def get_laterals_data(self, timesteps_in_seconds=False):
         """Get laterals data."""
         constant_laterals = []
@@ -837,10 +938,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             if self.cb_use_1d_laterals:
                 constant_laterals.extend(self.laterals_1d)
             file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
+            if self.substances_1d:
+                self.update_laterals_with_substances(file_laterals, self.TYPE_1D)
         if self.groupbox_2d_laterals.isChecked():
             if self.cb_use_2d_laterals:
                 constant_laterals.extend(self.laterals_2d)
             file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
+            if self.substances_2d:
+                self.update_laterals_with_substances(file_laterals, self.TYPE_2D)
         return constant_laterals, file_laterals
 
     def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
