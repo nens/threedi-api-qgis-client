@@ -759,9 +759,9 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     error_message = f"Laterals with ID {lat_id} not found!"
                     break
                 lateralValues = lateral["values"]
-                laterals_timesteps = [timestep for timestep, _ in lateralValues]
+                laterals_timesteps = [t for (t, _) in lateralValues]
                 concentrations = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                concentrations_timesteps = [timestep for timestep, _ in concentrations]
+                concentrations_timesteps = [t for (t, _) in concentrations]
                 if laterals_timesteps != concentrations_timesteps:
                     error_message = "Substance concentrations timesteps do not match lateral values timesteps!"
                     break
@@ -869,13 +869,29 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
         return laterals_data
 
-    def update_laterals_with_substances(self, file_laterals):
+    def recalculate_substances_timeseries(self, timesteps_in_seconds=False):
+        """Recalculate substances timeseries (timesteps in seconds)."""
+        substances = self.substance_concentrations
+        if timesteps_in_seconds is False:
+            return substances
+        units = self.cbo_1d_units.currentText()
+        if units == "hrs":
+            seconds_per_unit = 3600
+        elif units == "mins":
+            seconds_per_unit = 60
+        else:
+            seconds_per_unit = 1
+        for val in substances.values():
+            val["concentrations"] = [[t * seconds_per_unit, v] for (t, v) in val["concentrations"]]
+        return substances
+
+    def update_laterals_with_substances(self, file_laterals, substances):
         """Update laterals with substances."""
         for lat_id, lat_data in file_laterals.items():
-            substances = self.substance_concentrations.get(lat_id)
-            if substances is None:
+            lateral_substances = substances.get(lat_id)
+            if lateral_substances is None:
                 continue
-            lat_data["substances"] = substances
+            lat_data["substances"] = lateral_substances
 
     def get_laterals_data(self, timesteps_in_seconds=False):
         """Get laterals data."""
@@ -890,7 +906,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 constant_laterals.extend(self.laterals_2d)
             file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
         if self.substance_concentrations and file_laterals:
-            self.update_laterals_with_substances(file_laterals)
+            substances = self.recalculate_substances_timeseries(timesteps_in_seconds)
+            self.update_laterals_with_substances(file_laterals, substances)
         return constant_laterals, file_laterals
 
     def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
