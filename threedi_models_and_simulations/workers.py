@@ -523,6 +523,7 @@ class SimulationRunner(QRunnable):
         self.current_step = 0
         self.number_of_steps = len(self.simulations_to_run) * self.steps_per_simulation
         self.percentage_per_step = self.total_progress / self.number_of_steps
+        self.substances = {}
 
     def create_simulation(self):
         """Create a new simulation out of the NewSimulation data model."""
@@ -640,7 +641,8 @@ class SimulationRunner(QRunnable):
         if self.current_simulation.substances:
             substances = self.current_simulation.substances.data
             for substance in substances:
-                self.tc.create_simulation_substances(sim_id, **substance)
+                substance_from_api = self.tc.create_simulation_substances(sim_id, **substance)
+                self.substances[substance["name"]] = substance_from_api.id
 
     def include_boundary_conditions(self):
         """Apply boundary conditions to the new simulation."""
@@ -859,6 +861,14 @@ class SimulationRunner(QRunnable):
                 self.tc.create_simulation_lateral_constant(sim_id, **lateral)
             # Add File laterals
             file_lateral_values = list(self.current_simulation.laterals.file_laterals.values())
+            # Replace substance names with substance ids
+            if file_lateral_values and self.substances:
+                for file_lateral in file_lateral_values:
+                    for substance in file_lateral.get("substances", []):
+                        substance_name = substance.get("substance")
+                        if substance_name in self.substances:
+                            substance_id = self.substances[substance_name]
+                            substance["substance"] = substance_id
             write_json_data(file_lateral_values, LATERALS_FILE_TEMPLATE)
             filename = f"{sim_name}_laterals.json"
             upload_event_file = self.tc.create_simulation_lateral_file(sim_id, filename=filename, offset=0)
