@@ -623,8 +623,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.laterals_2d_timeseries = {}
         self.laterals_1d_timeseries_template = {}
         self.laterals_2d_timeseries_template = {}
-        self.substances_1d = {}
-        self.substances_2d = {}
+        self.substance_concentrations = {}
         self.last_upload_1d_filepath = ""
         self.last_upload_2d_filepath = ""
         self.setup_laterals()
@@ -679,56 +678,27 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         font = QFont("Segoe UI", 10, QFont.Normal)
         for i, substance in enumerate(self.substances):
             name = substance["name"]
-            # 1D substance upload
-            label_1d = QLabel(f"{name} (1D):")
-            label_1d.setMinimumWidth(100)
-            label_1d.setFont(font)
-            line_edit_1d = QLineEdit()
-            line_edit_1d.setObjectName("le_1d_substance_" + name)
-            line_edit_1d.setReadOnly(True)
-            line_edit_1d.setFrame(False)
-            line_edit_1d.setFont(font)
-            line_edit_1d.setStyleSheet("background-color: white")
-            upload_button_1d = QPushButton("Upload CSV")
-            upload_button_1d.setObjectName("pb_1d_substance_" + name)
-            upload_button_1d.setMinimumWidth(100)
-            upload_button_1d.setFont(font)
-            horizontal_layout_1d = QHBoxLayout()
-            horizontal_layout_widget_1d = QWidget()
-            horizontal_layout_widget_1d.setLayout(horizontal_layout_1d)
-            horizontal_layout_widget_1d.setEnabled(
-                self.current_model.extent_one_d is not None and self.cb_upload_1d_laterals.isChecked()
-            )
-            horizontal_layout_1d.setContentsMargins(0, 0, 9, 0)
-            horizontal_layout_1d.addWidget(label_1d)
-            horizontal_layout_1d.addWidget(line_edit_1d)
-            horizontal_layout_1d.addWidget(upload_button_1d)
-            layout.addWidget(horizontal_layout_widget_1d, i * 2, 0)
-            # 2D substance upload
-            label_2d = QLabel(f"{name} (2D):")
-            label_2d.setMinimumWidth(100)
-            label_2d.setFont(font)
-            line_edit_2d = QLineEdit()
-            line_edit_2d.setObjectName("le_2d_substance_" + name)
-            line_edit_2d.setReadOnly(True)
-            line_edit_2d.setFrame(False)
-            line_edit_2d.setFont(font)
-            line_edit_2d.setStyleSheet("background-color: white")
-            upload_button_2d = QPushButton("Upload CSV")
-            upload_button_2d.setObjectName("pb_2d_substance_" + name)
-            upload_button_2d.setMinimumWidth(100)
-            upload_button_2d.setFont(font)
-            horizontal_layout_2d = QHBoxLayout()
-            horizontal_layout_widget_2d = QWidget()
-            horizontal_layout_widget_2d.setLayout(horizontal_layout_2d)
-            horizontal_layout_widget_2d.setEnabled(
-                self.current_model.extent_two_d is not None and self.cb_upload_2d_laterals.isChecked()
-            )
-            horizontal_layout_2d.setContentsMargins(0, 0, 9, 0)
-            horizontal_layout_2d.addWidget(label_2d)
-            horizontal_layout_2d.addWidget(line_edit_2d)
-            horizontal_layout_2d.addWidget(upload_button_2d)
-            layout.addWidget(horizontal_layout_widget_2d, i * 2 + 1, 0)
+            label = QLabel(f"{name}:")
+            label.setMinimumWidth(100)
+            label.setFont(font)
+            line_edit = QLineEdit()
+            line_edit.setObjectName("le_substance_" + name)
+            line_edit.setReadOnly(True)
+            line_edit.setFrame(False)
+            line_edit.setFont(font)
+            line_edit.setStyleSheet("background-color: white")
+            upload_button = QPushButton("Upload CSV")
+            upload_button.setObjectName("pb_substance_" + name)
+            upload_button.setMinimumWidth(100)
+            upload_button.setFont(font)
+            horizontal_layout = QHBoxLayout()
+            horizontal_layout_widget = QWidget()
+            horizontal_layout_widget.setLayout(horizontal_layout)
+            horizontal_layout.setContentsMargins(0, 0, 9, 0)
+            horizontal_layout.addWidget(label)
+            horizontal_layout.addWidget(line_edit)
+            horizontal_layout.addWidget(upload_button)
+            layout.addWidget(horizontal_layout_widget, i, 0)
         # Add QGroupBox to the layout
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
@@ -738,27 +708,17 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         """Connect substance upload signals."""
         for substance in self.substances:
             name = substance["name"]
-            upload_button_1d = self.findChild(QPushButton, "pb_1d_substance_" + name)
-            upload_button_1d.clicked.connect(partial(self.load_substance_csv, self.TYPE_1D, name))
-            upload_button_2d = self.findChild(QPushButton, "pb_2d_substance_" + name)
-            upload_button_2d.clicked.connect(partial(self.load_substance_csv, self.TYPE_2D, name))
+            upload_button = self.findChild(QPushButton, "pb_substance_" + name)
+            upload_button.clicked.connect(partial(self.load_substance_csv, name))
 
-    def load_substance_csv(self, laterals_type, name):
+    def load_substance_csv(self, name):
         """Load substance CSV file."""
-        substances, filename = self.open_substance_upload_dialog(laterals_type, name)
-        logger.debug(f"Substances: {substances}")
+        substances, filename = self.open_substance_upload_dialog(name)
         if not filename:
             return
-        if laterals_type == self.TYPE_1D:
-            le_1d_substance = self.findChild(QLineEdit, "le_1d_substance_" + name)
-            le_1d_substance.setText(filename)
-            self.substances_1d.update(substances)
-        elif laterals_type == self.TYPE_2D:
-            le_2d_substance = self.findChild(QLineEdit, "le_2d_substance_" + name)
-            le_2d_substance.setText(filename)
-            self.substances_2d.update(substances)
-        else:
-            raise NotImplementedError
+        le_substance = self.findChild(QLineEdit, "le_substance_" + name)
+        le_substance.setText(filename)
+        self.substance_concentrations.update(substances)
 
     def handle_substance_header(self, substance_list):
         """
@@ -780,26 +740,21 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 substance_list.pop(0)
         return error_message
 
-    def handle_substance_timesteps(self, substance_list, laterals_type):
+    def handle_substance_timesteps(self, substance_list):
         """
         First, check if lateral values are uploaded.
         Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
         Return None if they match or error message if not.
         """
         error_message = self.handle_substance_header(substance_list)
-        if laterals_type == self.TYPE_1D and not self.laterals_1d_timeseries:
-            error_message = "1D laterals are not uploaded yet!"
-        if laterals_type == self.TYPE_2D and not self.laterals_2d_timeseries:
-            error_message = "2D laterals are not uploaded yet!"
+        if not self.laterals_1d_timeseries and not self.laterals_2d_timeseries:
+            error_message = "No laterals uploaded yet!"
         if not substance_list:
             error_message = "Substance concentrations list is empty!"
         if error_message is None:
+            laterals_timeseries = {**self.laterals_1d_timeseries, **self.laterals_2d_timeseries}
             for lat_id, timeseries in substance_list:
-                lateral = (
-                    self.laterals_1d_timeseries.get(lat_id)
-                    if laterals_type == "1D"
-                    else self.laterals_2d_timeseries.get(lat_id)
-                )
+                lateral = laterals_timeseries.get(lat_id)
                 if lateral is None:
                     error_message = f"Laterals with ID {lat_id} not found!"
                     break
@@ -814,12 +769,12 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
         return error_message
 
-    def open_substance_upload_dialog(self, laterals_type, name):
+    def open_substance_upload_dialog(self, name):
         """Open dialog for selecting CSV file with laterals."""
         last_folder = QSettings().value("threedi/last_substances_folder", os.path.expanduser("~"), type=str)
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(
-            self, f"Substance Concentrations for {name} ({laterals_type})", last_folder, file_filter
+            self, f"Substance Concentrations for {name}", last_folder, file_filter
         )
         if len(filename) == 0:
             return None, None
@@ -829,7 +784,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         with open(filename, encoding="utf-8-sig") as substance_file:
             substance_reader = csv.reader(substance_file)
             substance_list += list(substance_reader)
-        error_msg = self.handle_substance_timesteps(substance_list, laterals_type)
+        error_msg = self.handle_substance_timesteps(substance_list)
         if error_msg is not None:
             return None, None
         for lat_id, timeseries in substance_list:
@@ -855,10 +810,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def toggle_2d_laterals_upload(self, checked):
         """Handle 2D laterals toggle."""
-        constant_laterals, file_laterals = self.get_laterals_data(
-            timesteps_in_seconds=True
-        )
-        logger.debug(f"File laterals: {file_laterals}")
         if checked:
             self.uploadgroup_2d.setEnabled(True)
         else:
@@ -918,17 +869,13 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
         return laterals_data
 
-    def update_laterals_with_substances(self, file_laterals, laterals_type):
+    def update_laterals_with_substances(self, file_laterals):
         """Update laterals with substances."""
         for lat_id, lat_data in file_laterals.items():
-            substance = (
-                self.substances_1d.get(lat_id) if laterals_type == self.TYPE_1D else self.substances_2d.get(lat_id)
-            )
-            if substance is None:
+            substances = self.substance_concentrations.get(lat_id)
+            if substances is None:
                 continue
-            if "substances" not in lat_data:
-                lat_data["substances"] = []
-            lat_data["substances"].append(substance)
+            lat_data["substances"] = substances
 
     def get_laterals_data(self, timesteps_in_seconds=False):
         """Get laterals data."""
@@ -938,14 +885,12 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             if self.cb_use_1d_laterals:
                 constant_laterals.extend(self.laterals_1d)
             file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
-            if self.substances_1d:
-                self.update_laterals_with_substances(file_laterals, self.TYPE_1D)
         if self.groupbox_2d_laterals.isChecked():
             if self.cb_use_2d_laterals:
                 constant_laterals.extend(self.laterals_2d)
             file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
-            if self.substances_2d:
-                self.update_laterals_with_substances(file_laterals, self.TYPE_2D)
+        if self.substance_concentrations and file_laterals:
+            self.update_laterals_with_substances(file_laterals)
         return constant_laterals, file_laterals
 
     def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
