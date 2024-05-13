@@ -242,9 +242,10 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                     )
                     item.setText("")
         # Check for units length
+        units_length = 16
         if item.column() == 1:
-            if len(item.text()) > 6:
-                item.setText(item.text()[:6])
+            if len(item.text()) > units_length:
+                item.setText(item.text()[:units_length])
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
                     "Units length should be less than 16 characters!"
                 )
