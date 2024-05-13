@@ -211,29 +211,43 @@ class SubstancesWidget(uicls_substances, basecls_substances):
 
     def connect_signals(self):
         """Connecting widgets signals."""
-        self.pb_add_to_table.clicked.connect(self.add_to_table)
-        self.pb_remove.clicked.connect(self.remove_last_substance)
+        self.pb_add.clicked.connect(self.add_item)
+        self.pb_remove.clicked.connect(self.remove_items)
+        self.tw_substances.itemChanged.connect(self.handle_item_changed)
 
-    def add_to_table(self):
-        name = self.le_name.text()
-        units = self.le_units.text()
-        if len(units) > 16:
-            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
-                "Units length should be less than 16 characters."
-            )
-            return
-        if name:
-            row_count = self.tw_substances.rowCount()
-            self.tw_substances.insertRow(row_count)
-            self.tw_substances.setItem(row_count, 0, QTableWidgetItem(name))
-            self.tw_substances.setItem(row_count, 1, QTableWidgetItem(units))
-            self.le_name.clear()
-            self.le_units.clear()
-
-    def remove_last_substance(self):
+    def add_item(self):
         row_count = self.tw_substances.rowCount()
-        if row_count > 0:
-            self.tw_substances.removeRow(row_count - 1)
+        self.tw_substances.insertRow(row_count)
+        self.tw_substances.setItem(row_count, 0, QTableWidgetItem())
+        self.tw_substances.setItem(row_count, 1, QTableWidgetItem())
+
+    def remove_items(self):
+        selected_rows = set()
+        for item in self.tw_substances.selectedItems():
+            selected_rows.add(item.row())
+        for row in sorted(selected_rows, reverse=True):
+            self.tw_substances.removeRow(row)
+
+    def handle_item_changed(self, item):
+        # Check for duplicate names
+        if item.column() == 0:
+            row_count = self.tw_substances.rowCount()
+            for row in range(row_count):
+                if row == item.row():
+                    continue
+                name_item = self.tw_substances.item(row, 0)
+                if name_item and name_item.text() and name_item.text() == item.text():
+                    self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                        "Substance with the same name already exists!"
+                    )
+                    item.setText("")
+        # Check for units length
+        if item.column() == 1:
+            if len(item.text()) > 6:
+                item.setText(item.text()[:6])
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                    "Units length should be less than 16 characters!"
+                )
 
     def get_substances_data(self):
         substances = []
@@ -244,10 +258,11 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             if name_item and units_item:
                 name = name_item.text()
                 units = units_item.text()
-                if units:
-                    substances.append({"name": name, "units": units})
-                else:
-                    substances.append({"name": name})
+                if name:
+                    substance = {"name": name}
+                    if units:
+                        substance["units"] = units
+                    substances.append(substance)
         return substances
 
 
