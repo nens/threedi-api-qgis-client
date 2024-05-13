@@ -10,12 +10,22 @@ from qgis.PyQt.QtWidgets import (QFileDialog, QGridLayout, QGroupBox,
 
 
 class SubstanceConcentrationsWidget(QWidget):
-    """Widget for handling substance concentrations."""
+    """Widget for handling substance concentrations.
+    Args:
+        substances (list): List of dictionaries of substances.
+        handle_substance_error (function): Function to handle substance errors.
+        parent (QWidget): Parent widget.
+    Attributes:
+        substances (list): List of dictionaries of substances.
+        handle_substance_error (function): Function to handle substance errors.
+        substance_concentrations (dict): Dictionary containing substance concentrations loaded from CSV file.
+        groupbox (QGroupBox): Groupbox containing the layout of the widget.
+    """
 
-    def __init__(self, substances, handle_substance_error, parent=None):
+    def __init__(self, substances, handle_substance_errors, parent=None):
         super().__init__(parent)
         self.substances = substances
-        self.handle_substance_errors = handle_substance_error
+        self.handle_substance_errors = handle_substance_errors
         self.substance_concentrations = {}
         self.setup_ui()
 
