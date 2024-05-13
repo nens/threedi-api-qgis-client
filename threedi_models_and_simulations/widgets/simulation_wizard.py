@@ -20,15 +20,11 @@ from qgis.PyQt.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QGridLayout,
-    QGroupBox,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
-    QPushButton,
     QSizePolicy,
     QSpacerItem,
     QTableWidgetItem,
-    QWidget,
     QWizard,
     QWizardPage,
 )
@@ -57,6 +53,7 @@ from ..utils_ui import (
     set_widgets_parameters,
 )
 from .custom_items import FilteredComboBox
+from .substance_concentrations import SubstanceConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_name.ui"))
@@ -671,54 +668,11 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.groupbox.setParent(None)
         if not self.substances:
             return
-        self.groupbox = QGroupBox("Substance concentrations")
-        layout = QGridLayout()
-        self.groupbox.setLayout(layout)
-        self.groupbox.setFont(QFont("Segoe UI", 14, QFont.Bold))
-        font = QFont("Segoe UI", 10, QFont.Normal)
-        for i, substance in enumerate(self.substances):
-            name = substance["name"]
-            label = QLabel(f"{name}:")
-            label.setMinimumWidth(100)
-            label.setFont(font)
-            line_edit = QLineEdit()
-            line_edit.setObjectName("le_substance_" + name)
-            line_edit.setReadOnly(True)
-            line_edit.setFrame(False)
-            line_edit.setFont(font)
-            line_edit.setStyleSheet("background-color: white")
-            upload_button = QPushButton("Upload CSV")
-            upload_button.setObjectName("pb_substance_" + name)
-            upload_button.setMinimumWidth(100)
-            upload_button.setFont(font)
-            horizontal_layout = QHBoxLayout()
-            horizontal_layout_widget = QWidget()
-            horizontal_layout_widget.setLayout(horizontal_layout)
-            horizontal_layout.setContentsMargins(0, 0, 9, 0)
-            horizontal_layout.addWidget(label)
-            horizontal_layout.addWidget(line_edit)
-            horizontal_layout.addWidget(upload_button)
-            layout.addWidget(horizontal_layout_widget, i, 0)
-        # Add QGroupBox to the layout
+        substance_concentration_widget = SubstanceConcentrationsWidget(self.substances, self.handle_substance_timesteps)
+        self.groupbox = substance_concentration_widget.groupbox
+        self.substance_concentrations = substance_concentration_widget.substance_concentrations
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
-        self.connect_substance_upload_signals()
-
-    def connect_substance_upload_signals(self):
-        """Connect substance upload signals."""
-        for substance in self.substances:
-            name = substance["name"]
-            upload_button = self.findChild(QPushButton, "pb_substance_" + name)
-            upload_button.clicked.connect(partial(self.load_substance_csv, name))
-
-    def load_substance_csv(self, name):
-        """Load substance CSV file."""
-        substances, filename = self.open_substance_upload_dialog(name)
-        if not filename:
-            return
-        le_substance = self.findChild(QLineEdit, "le_substance_" + name)
-        le_substance.setText(filename)
-        self.substance_concentrations.update(substances)
 
     def handle_substance_header(self, substance_list):
         """
@@ -768,38 +722,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if error_message is not None:
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
         return error_message
-
-    def open_substance_upload_dialog(self, name):
-        """Open dialog for selecting CSV file with laterals."""
-        last_folder = QSettings().value("threedi/last_substances_folder", os.path.expanduser("~"), type=str)
-        file_filter = "CSV (*.csv );;All Files (*)"
-        filename, __ = QFileDialog.getOpenFileName(
-            self, f"Substance Concentrations for {name}", last_folder, file_filter
-        )
-        if len(filename) == 0:
-            return None, None
-        QSettings().setValue("threedi/last_substances_folder", os.path.dirname(filename))
-        substances = {}
-        substance_list = []
-        with open(filename, encoding="utf-8-sig") as substance_file:
-            substance_reader = csv.reader(substance_file)
-            substance_list += list(substance_reader)
-        error_msg = self.handle_substance_timesteps(substance_list)
-        if error_msg is not None:
-            return None, None
-        for lat_id, timeseries in substance_list:
-            try:
-                concentrations = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
-                substance = {
-                    "substance": name,
-                    "concentrations": concentrations,
-                }
-                if lat_id not in substances:
-                    substances[lat_id] = []
-                substances[lat_id].append(substance)
-            except ValueError:
-                continue
-        return substances, filename
 
     def toggle_1d_laterals_upload(self, checked):
         """Handle 1D laterals toggle."""
