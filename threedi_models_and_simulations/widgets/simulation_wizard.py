@@ -218,7 +218,6 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.pb_add.clicked.connect(self.add_item)
         self.pb_remove.clicked.connect(self.remove_items)
         self.tw_substances.itemChanged.connect(self.handle_item_changed)
-        self.parent_page.pb_next.clicked.connect(self.update_substances)
 
     def add_item(self):
         row_count = self.tw_substances.rowCount()
@@ -232,6 +231,9 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             selected_rows.add(item.row())
         for row in sorted(selected_rows, reverse=True):
             self.tw_substances.removeRow(row)
+            # Remove item from the substances list
+            if row < len(self.substances):
+                del self.substances[row]
 
     def handle_item_changed(self, item):
         # Check for duplicate names
@@ -254,8 +256,12 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
                     "Units length should be less than 16 characters!"
                 )
+        # Add item to the substances list
+        self.set_substances_data()
+        self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
 
     def set_substances_data(self):
+        self.substances = []
         row_count = self.tw_substances.rowCount()
         for row in range(row_count):
             name_item = self.tw_substances.item(row, 0)
@@ -268,10 +274,6 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                     if units:
                         substance["units"] = units
                     self.substances.append(substance)
-
-    def update_substances(self):
-        self.set_substances_data()
-        self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
 
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
