@@ -52,6 +52,7 @@ from ..utils_ui import (
     set_widget_background_color,
     set_widgets_parameters,
 )
+from ..utils import parse_timeseries
 from .custom_items import FilteredComboBox
 from .substance_concentrations import SubstanceConcentrationsWidget
 
@@ -262,6 +263,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.update_substances()
 
     def set_substances_data(self):
+        """Setting substances data."""
         self.substances.clear()
         row_count = self.tw_substances.rowCount()
         for row in range(row_count):
@@ -357,7 +359,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         if error_message is None:
             try:
                 timeseries_candidate = header[-1]
-                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+                parse_timeseries(timeseries_candidate)
             except ValueError:
                 boundary_conditions_list.pop(0)
         else:
@@ -388,7 +390,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         )
         for bc_id, timeseries in boundary_conditions_list:
             try:
-                vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                vals = parse_timeseries(timeseries)
                 boundary_condition = {
                     "id": int(bc_id),
                     "type": boundary_conditions_type,
@@ -656,6 +658,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.substance_concentrations = {}
         self.last_upload_1d_filepath = ""
         self.last_upload_2d_filepath = ""
+        self.groupbox = None
         self.setup_laterals()
         self.connect_signals()
 
@@ -707,7 +710,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
 
-    def handle_substance_header(self, substance_list):
+    @staticmethod
+    def handle_substance_header(substance_list):
         """
         Fetch first csv row and handle potential header.
         Return None if fetch successful or error message if file is empty or have invalid structure.
@@ -722,7 +726,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if error_message is None:
             try:
                 timeseries_candidate = header[-1]
-                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+                parse_timeseries(timeseries_candidate)
             except ValueError:
                 substance_list.pop(0)
         return error_message
@@ -747,7 +751,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     break
                 lateralValues = lateral["values"]
                 laterals_timesteps = [t for (t, _) in lateralValues]
-                concentrations = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                concentrations = parse_timeseries(timeseries)
                 concentrations_timesteps = [t for (t, _) in concentrations]
                 if laterals_timesteps != concentrations_timesteps:
                     error_message = "Substance concentrations timesteps do not match lateral values timesteps!"
@@ -901,7 +905,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if error_message is None:
             try:
                 timeseries_candidate = header[-1]
-                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+                parse_timeseries(timeseries_candidate)
             except ValueError:
                 laterals_list.pop(0)
         else:
@@ -929,7 +933,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             interpolate = self.cb_1d_interpolate.isChecked()
             for lat_id, connection_node_id, timeseries in laterals_list:
                 try:
-                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                    vals = parse_timeseries(timeseries)
                     lateral = {
                         "values": vals,
                         "units": "m3/s",
@@ -947,7 +951,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             interpolate = self.cb_2d_interpolate.isChecked()
             for x, y, lat_id, ltype, timeseries in laterals_list:
                 try:
-                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                    vals = parse_timeseries(timeseries)
                     point = {"type": "Point", "coordinates": [float(x), float(y)]}
                     lateral = {
                         "values": vals,
@@ -1029,7 +1033,7 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         if error_message is None:
             try:
                 timeseries_candidate = header[-1]
-                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+                parse_timeseries(timeseries_candidate)
             except ValueError:
                 dwf_laterals_list.pop(0)
         else:
@@ -1056,7 +1060,7 @@ class DWFWidget(uicls_dwf, basecls_dwf):
             return None, None
         for dwf_id, connection_node_id, timeseries in dwf_laterals_list:
             try:
-                vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                vals = parse_timeseries(timeseries)
                 dwf = {
                     "values": vals,
                     "units": "m3/s",

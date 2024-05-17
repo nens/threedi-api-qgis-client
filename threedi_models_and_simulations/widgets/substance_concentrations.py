@@ -1,32 +1,32 @@
 import csv
 import os
 from functools import partial
+from typing import Callable, Dict, List, Optional
 
-from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QFont
-from qgis.PyQt.QtWidgets import (QFileDialog, QGridLayout, QGroupBox,
-                                 QHBoxLayout, QLabel, QLineEdit, QPushButton,
-                                 QWidget)
+from qgis.PyQt.QtWidgets import (
+    QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QWidget,
+)
+
+from ..utils_ui import read_3di_settings, save_3di_settings
 
 
 class SubstanceConcentrationsWidget(QWidget):
-    """Widget for handling substance concentrations.
-    Args:
-        substances (list): List of dictionaries of substances.
-        handle_substance_error (function): Function to handle substance errors.
-        parent (QWidget): Parent widget.
-    Attributes:
-        substances (list): List of dictionaries of substances.
-        handle_substance_error (function): Function to handle substance errors.
-        substance_concentrations (dict): Dictionary containing substance concentrations loaded from CSV file.
-        groupbox (QGroupBox): Groupbox containing the layout of the widget.
-    """
+    """Widget for handling substance concentrations."""
 
-    def __init__(self, substances, handle_substance_errors, parent=None):
+    def __init__(self, substances: List[Dict], handle_substance_errors: Callable, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.substances = substances
         self.handle_substance_errors = handle_substance_errors
         self.substance_concentrations = {}
+        self.groupbox = QGroupBox("Substance concentrations", self)
         self.setup_ui()
 
     def setup_ui(self):
@@ -78,14 +78,14 @@ class SubstanceConcentrationsWidget(QWidget):
 
     def open_substance_upload_dialog(self, name):
         """Open dialog for selecting CSV file with laterals."""
-        last_folder = QSettings().value("threedi/last_substances_folder", os.path.expanduser("~"), type=str)
+        last_folder = read_3di_settings("last_substances_folder", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(
             self, f"Substance Concentrations for {name}", last_folder, file_filter
         )
         if len(filename) == 0:
             return None, None
-        QSettings().setValue("threedi/last_substances_folder", os.path.dirname(filename))
+        save_3di_settings("last_substances_folder", os.path.dirname(filename))
         substances = {}
         substance_list = []
         with open(filename, encoding="utf-8-sig") as substance_file:
@@ -94,16 +94,16 @@ class SubstanceConcentrationsWidget(QWidget):
         error_msg = self.handle_substance_errors(substance_list)
         if error_msg is not None:
             return None, None
-        for id, timeseries in substance_list:
+        for obj_id, timeseries in substance_list:
             try:
                 concentrations = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
                 substance = {
                     "substance": name,
                     "concentrations": concentrations,
                 }
-                if id not in substances:
-                    substances[id] = []
-                substances[id].append(substance)
+                if obj_id not in substances:
+                    substances[obj_id] = []
+                substances[obj_id].append(substance)
             except ValueError:
                 continue
         return substances, filename
