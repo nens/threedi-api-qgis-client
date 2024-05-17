@@ -680,16 +680,17 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
     def get_laterals_data(self, timesteps_in_seconds=False):
         """Get laterals data."""
         constant_laterals = []
-        file_laterals = {}
+        file_laterals_1d = {}
+        file_laterals_2d = {}
         if self.groupbox_1d_laterals.isChecked():
             if self.cb_use_1d_laterals:
                 constant_laterals.extend(self.laterals_1d)
-            file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
+            file_laterals_1d.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
         if self.groupbox_2d_laterals.isChecked():
             if self.cb_use_2d_laterals:
                 constant_laterals.extend(self.laterals_2d)
-            file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
-        return constant_laterals, file_laterals
+            file_laterals_2d.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
+        return constant_laterals, file_laterals_1d, file_laterals_2d
 
     def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
         """
@@ -2967,10 +2968,10 @@ class SimulationWizard(QWizard):
 
         # Laterals
         if self.init_conditions.include_laterals:
-            constant_laterals, file_laterals = self.laterals_page.main_widget.get_laterals_data(
+            constant_laterals, file_laterals_1d, file_laterals_2d = self.laterals_page.main_widget.get_laterals_data(
                 timesteps_in_seconds=True
             )
-            laterals = dm.Laterals(constant_laterals, file_laterals)
+            laterals = dm.Laterals(constant_laterals, file_laterals_1d, file_laterals_2d)
         else:
             laterals = dm.Laterals()
         # DWF
