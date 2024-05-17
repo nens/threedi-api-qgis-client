@@ -213,6 +213,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.substances = []
         set_widget_background_color(self)
         self.connect_signals()
+        self.add_item() # Add an empty row by default
 
     def connect_signals(self):
         """Connecting widgets signals."""
@@ -258,7 +259,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
                     "Units length should be less than 16 characters!"
                 )
-        # Add item to the substances list
+        self.tw_substances.resizeColumnToContents(0)
         self.set_substances_data()
         self.update_substances()
 
