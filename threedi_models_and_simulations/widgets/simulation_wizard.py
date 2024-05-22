@@ -43,6 +43,7 @@ from ..utils import (
     mmh_to_ms,
     mmtimestep_to_mmh,
     ms_to_mmh,
+    parse_timeseries,
     read_json_data,
 )
 from ..utils_ui import (
@@ -52,7 +53,6 @@ from ..utils_ui import (
     set_widget_background_color,
     set_widgets_parameters,
 )
-from ..utils import parse_timeseries
 from .custom_items import FilteredComboBox
 from .substance_concentrations import SubstanceConcentrationsWidget
 
@@ -213,7 +213,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.substances = []
         set_widget_background_color(self)
         self.connect_signals()
-        self.add_item() # Add an empty row by default
+        self.add_item()  # Add an empty row by default
 
     def connect_signals(self):
         """Connecting widgets signals."""
@@ -656,10 +656,10 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.laterals_2d_timeseries = {}
         self.laterals_1d_timeseries_template = {}
         self.laterals_2d_timeseries_template = {}
-        self.substance_concentrations = {}
+        self.substance_concentrations_1d = {}
+        self.substance_concentrations_2d = {}
         self.last_upload_1d_filepath = ""
         self.last_upload_2d_filepath = ""
-        self.groupbox = None
         self.setup_laterals()
         self.connect_signals()
 
@@ -707,7 +707,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             return
         substance_concentration_widget = SubstanceConcentrationsWidget(self.substances, self.handle_substance_timesteps)
         self.groupbox = substance_concentration_widget.groupbox
-        self.substance_concentrations = substance_concentration_widget.substance_concentrations
+        self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
+        self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
 
@@ -732,19 +733,21 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 substance_list.pop(0)
         return error_message
 
-    def handle_substance_timesteps(self, substance_list):
+    def handle_substance_timesteps(self, substance_list, laterals_type):
         """
         First, check if lateral values are uploaded.
         Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
         Return None if they match or error message if not.
         """
         error_message = self.handle_substance_header(substance_list)
-        if not self.laterals_1d_timeseries and not self.laterals_2d_timeseries:
+        laterals_timeseries = (
+            self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
+        )
+        if not laterals_timeseries:
             error_message = "No laterals uploaded yet!"
         if not substance_list:
             error_message = "Substance concentrations list is empty!"
         if error_message is None:
-            laterals_timeseries = {**self.laterals_1d_timeseries, **self.laterals_2d_timeseries}
             for lat_id, timeseries in substance_list:
                 lateral = laterals_timeseries.get(lat_id)
                 if lateral is None:
@@ -831,7 +834,12 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def recalculate_substances_timeseries(self, laterals_type, timesteps_in_seconds=False):
         """Recalculate substances timeseries (timesteps in seconds)."""
-        substances = deepcopy(self.substance_concentrations)
+        substance_concentrations = {}
+        if laterals_type == self.TYPE_1D:
+            substance_concentrations.update(self.substance_concentrations_1d)
+        else:
+            substance_concentrations.update(self.substance_concentrations_2d)
+        substances = deepcopy(substance_concentrations)
         substances_data = {}
         if laterals_type == self.TYPE_1D:
             laterals_timeseries = self.laterals_1d_timeseries
@@ -873,14 +881,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             if self.cb_use_1d_laterals:
                 constant_laterals.extend(self.laterals_1d)
             file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
-            if self.substance_concentrations:
+            if self.substance_concentrations_1d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
                 self.update_laterals_with_substances(file_laterals, substances)
         if self.groupbox_2d_laterals.isChecked():
             if self.cb_use_2d_laterals:
                 constant_laterals.extend(self.laterals_2d)
             file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
-            if self.substance_concentrations:
+            if self.substance_concentrations_2d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
                 self.update_laterals_with_substances(file_laterals, substances)
         return constant_laterals, file_laterals
