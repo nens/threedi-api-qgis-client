@@ -876,22 +876,23 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
     def get_laterals_data(self, timesteps_in_seconds=False):
         """Get laterals data."""
         constant_laterals = []
-        file_laterals = {}
+        file_laterals_1d = {}
+        file_laterals_2d = {}
         if self.groupbox_1d_laterals.isChecked():
             if self.cb_use_1d_laterals:
                 constant_laterals.extend(self.laterals_1d)
-            file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
+            file_laterals_1d.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
             if self.substance_concentrations_1d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
-                self.update_laterals_with_substances(file_laterals, substances)
+                self.update_laterals_with_substances(file_laterals_1d, substances)
         if self.groupbox_2d_laterals.isChecked():
             if self.cb_use_2d_laterals:
                 constant_laterals.extend(self.laterals_2d)
-            file_laterals.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
+            file_laterals_2d.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
             if self.substance_concentrations_2d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
-                self.update_laterals_with_substances(file_laterals, substances)
-        return constant_laterals, file_laterals
+                self.update_laterals_with_substances(file_laterals_2d, substances)
+        return constant_laterals, file_laterals_1d, file_laterals_2d
 
     def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
         """
@@ -3188,10 +3189,10 @@ class SimulationWizard(QWizard):
 
         # Laterals
         if self.init_conditions.include_laterals:
-            constant_laterals, file_laterals = self.laterals_page.main_widget.get_laterals_data(
+            constant_laterals, file_laterals_1d, file_laterals_2d = self.laterals_page.main_widget.get_laterals_data(
                 timesteps_in_seconds=True
             )
-            laterals = dm.Laterals(constant_laterals, file_laterals)
+            laterals = dm.Laterals(constant_laterals, file_laterals_1d, file_laterals_2d)
         else:
             laterals = dm.Laterals()
         # DWF

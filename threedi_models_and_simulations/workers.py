@@ -449,7 +449,9 @@ class UploadProgressWorker(QRunnable):
                 err = RevisionUploadError(error_msg)
                 raise err
         # Create 3Di model
-        model = self.tc.create_schematisation_revision_3di_model(self.schematisation.id, self.revision.id, inherit_templates)
+        model = self.tc.create_schematisation_revision_3di_model(
+            self.schematisation.id, self.revision.id, inherit_templates
+        )
         model_id = model.id
         finished_tasks = {
             "make_gridadmin": False,
@@ -860,7 +862,9 @@ class SimulationRunner(QRunnable):
             for lateral in laterals:
                 self.tc.create_simulation_lateral_constant(sim_id, **lateral)
             # Add File laterals
-            file_lateral_values = list(self.current_simulation.laterals.file_laterals.values())
+            file_lateral_1d_values = list(self.current_simulation.laterals.file_laterals_1d.values())
+            file_lateral_2d_values = list(self.current_simulation.laterals.file_laterals_2d.values())
+            file_lateral_values = file_lateral_1d_values + file_lateral_2d_values
             # Replace substance names with substance ids
             if file_lateral_values and self.substances:
                 for file_lateral in file_lateral_values:
