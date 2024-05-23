@@ -24,9 +24,16 @@ class SubstanceConcentrationsWidget(QWidget):
     TYPE_1D = "1D"
     TYPE_2D = "2D"
 
-    def __init__(self, substances: List[Dict], handle_substance_errors: Callable, parent: Optional[QWidget] = None):
+    def __init__(
+        self,
+        substances: List[Dict],
+        current_model,
+        handle_substance_errors: Callable,
+        parent: Optional[QWidget] = None,
+    ):
         super().__init__(parent)
         self.substances = substances
+        self.current_model = current_model
         self.handle_substance_errors = handle_substance_errors
         self.substance_concentrations_1d = {}
         self.substance_concentrations_2d = {}
@@ -38,10 +45,12 @@ class SubstanceConcentrationsWidget(QWidget):
         self.groupbox = QGroupBox("Substance concentrations")
         self.groupbox.setLayout(layout)
         self.groupbox.setFont(QFont("Segoe UI", 14, QFont.Bold))
-        self.create_substance_concentrations(layout, "1D")
-        self.create_substance_concentrations(layout, "2D")
-        self.connect_substance_upload_signals(self.TYPE_1D)
-        self.connect_substance_upload_signals(self.TYPE_2D)
+        if self.current_model.extent_one_d:
+            self.create_substance_concentrations(layout, "1D")
+            self.connect_substance_upload_signals(self.TYPE_1D)
+        if self.current_model.extent_two_d:
+            self.create_substance_concentrations(layout, "2D")
+            self.connect_substance_upload_signals(self.TYPE_2D)
 
     def create_substance_concentrations(self, layout: QGridLayout, laterals_type: str):
         """Create substance concentrations for 1D and 2D laterals type."""

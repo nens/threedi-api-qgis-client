@@ -705,7 +705,9 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.groupbox.setParent(None)
         if not self.substances:
             return
-        substance_concentration_widget = SubstanceConcentrationsWidget(self.substances, self.handle_substance_timesteps)
+        substance_concentration_widget = SubstanceConcentrationsWidget(
+            self.substances, self.current_model, self.handle_substance_timesteps
+        )
         self.groupbox = substance_concentration_widget.groupbox
         self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
         self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
