@@ -206,6 +206,8 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
 class SubstancesWidget(uicls_substances, basecls_substances):
     """Widget for the Substances page."""
 
+    MINIMUM_WIDTH = 100
+
     def __init__(self, parent_page):
         super().__init__()
         self.setupUi(self)
@@ -226,6 +228,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.tw_substances.insertRow(row_count)
         self.tw_substances.setItem(row_count, 0, QTableWidgetItem())
         self.tw_substances.setItem(row_count, 1, QTableWidgetItem())
+        self.tw_substances.setColumnWidth(0, self.MINIMUM_WIDTH)
 
     def remove_items(self):
         selected_rows = set()
@@ -259,7 +262,10 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
                     "Units length should be less than 16 characters!"
                 )
+        # Resize name column to contents and enforce minimum width
         self.tw_substances.resizeColumnToContents(0)
+        if self.tw_substances.columnWidth(0) < self.MINIMUM_WIDTH:
+            self.tw_substances.setColumnWidth(0, self.MINIMUM_WIDTH)
         self.set_substances_data()
         self.update_substances()
 
