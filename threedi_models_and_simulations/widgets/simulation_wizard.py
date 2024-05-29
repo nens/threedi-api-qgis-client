@@ -288,6 +288,8 @@ class SubstancesWidget(uicls_substances, basecls_substances):
     def update_substances(self):
         if hasattr(self.parent_page.parent_wizard, "laterals_page"):
             self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
+        if hasattr(self.parent_page.parent_wizard, "boundary_conditions_page"):
+            self.parent_page.parent_wizard.boundary_conditions_page.main_widget.setup_substance_concentrations()
 
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
@@ -300,6 +302,8 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
+        self.substances = parent_page.parent_wizard.substances_page.main_widget.substances
         set_widget_background_color(self)
         self.template_boundary_conditions = None
         self.boundary_conditions_1d_timeseries = []
@@ -314,6 +318,24 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         self.pb_upload_file_bc_2d.clicked.connect(partial(self.load_csv, self.TYPE_2D))
         self.cb_interpolate_bc_1d.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_1D))
         self.cb_interpolate_bc_2d.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_2D))
+
+    def setup_substance_concentrations(self):
+        if hasattr(self, "groupbox"):
+            self.groupbox.setParent(None)
+        if not self.substances:
+            return
+        substance_concentration_widget = SubstanceConcentrationsWidget(
+            self.substances, self.current_model, self.handle_substance_errors
+        )
+        self.groupbox = substance_concentration_widget.groupbox
+        self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
+        self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
+        parent_layout = self.layout()
+        parent_layout.addWidget(self.groupbox, 6, 2)
+
+    def handle_substance_errors(self):
+        """Handle error message."""
+        return None
 
     def set_template_boundary_conditions(self, template_boundary_conditions=None):
         """Setting boundary conditions data derived from the simulation template."""
