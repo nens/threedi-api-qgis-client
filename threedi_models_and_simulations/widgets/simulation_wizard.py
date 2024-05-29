@@ -280,7 +280,8 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                     self.substances.append(substance)
 
     def update_substances(self):
-        self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
+        if hasattr(self.parent_page.parent_wizard, "laterals_page"):
+            self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
 
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
