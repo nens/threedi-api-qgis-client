@@ -353,45 +353,37 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         else:
             raise NotImplementedError
 
-    def handle_boundary_conditions_header(self, boundary_conditions_list, log_error=True):
+    def handle_boundary_conditions_header(self, header: List[str], log_error=True):
         """
         Fetch first boundary conditions file row and handle potential header.
         Return None if fetch successful or error message if file is empty or have invalid structure.
         """
         error_message = None
-        if not boundary_conditions_list:
-            error_message = "Boundary conditions list is empty!"
+        if not header:
+            error_message = "CSV file is empty!"
             if log_error:
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
             return error_message
-        header = boundary_conditions_list[0]
         if len(header) != 2:
             error_message = "Wrong timeseries format for boundary conditions!"
-        if error_message is None:
-            try:
-                timeseries_candidate = header[-1]
-                parse_timeseries(timeseries_candidate)
-            except ValueError:
-                boundary_conditions_list.pop(0)
-        else:
             if log_error:
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
         return error_message
 
     def open_upload_dialog(self, boundary_conditions_type):
         """Open dialog for selecting CSV file with boundary conditions."""
-        last_folder = QSettings().value("threedi/last_boundary_conditions_folder", os.path.expanduser("~"), type=str)
+        last_folder = read_3di_settings("last_boundary_conditions_folder", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Boundary Conditions Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return None, None
-        QSettings().setValue("threedi/last_boundary_conditions_folder", os.path.dirname(filename))
+        save_3di_settings("last_boundary_conditions_folder", os.path.dirname(filename))
         values = []
-        boundary_conditions_list = []
-        with open(filename, encoding="utf-8-sig") as boundary_conditions_file:
-            boundary_conditions_reader = csv.reader(boundary_conditions_file)
-            boundary_conditions_list += list(boundary_conditions_reader)
-        error_msg = self.handle_boundary_conditions_header(boundary_conditions_list)
+        with open(filename, encoding="utf-8-sig") as csvfile:
+            reader = csv.DictReader(csvfile)
+            header = reader.fieldnames
+            boundary_conditions_list = list(reader)
+        error_msg = self.handle_boundary_conditions_header(header)
         if error_msg is not None:
             return None, None
         interpolate = (
@@ -399,7 +391,9 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             if boundary_conditions_type == self.TYPE_1D
             else self.cb_interpolate_bc_2d.isChecked()
         )
-        for bc_id, timeseries in boundary_conditions_list:
+        for row in boundary_conditions_list:
+            bc_id = row.get("id")
+            timeseries = row.get("timeseries")
             try:
                 vals = parse_timeseries(timeseries)
                 boundary_condition = {
