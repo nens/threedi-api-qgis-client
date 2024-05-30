@@ -355,7 +355,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
 
     def handle_boundary_conditions_header(self, header: List[str], log_error=True):
         """
-        Fetch first boundary conditions file row and handle potential header.
+        Handle boundary conditions potential header.
         Return None if fetch successful or error message if file is empty or have invalid structure.
         """
         error_message = None
@@ -897,7 +897,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def handle_laterals_header(self, header: List[str], laterals_type: str, log_error=True):
         """
-        Fetch first lateral row and handle potential header.
+        Handle laterals potential header.
         Return None if fetch successful or error message if file is empty or have invalid structure.
         """
         error_message = None
@@ -1026,49 +1026,44 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         self.last_upload_filepath = filename
         self.dwf_timeseries = values
 
-    def handle_dwf_laterals_header(self, dwf_laterals_list, log_error=True):
+    def handle_dwf_laterals_header(self, header: List[str], log_error=True):
         """
-        Fetch first DWF lateral row and handle potential header.
+        Handle DWF laterals header.
         Return None if fetch successful or error message if file is empty or have invalid structure.
         """
         error_message = None
-        if not dwf_laterals_list:
-            error_message = "Dry Weather Flow timeseries list is empty!"
+        if not header:
+            error_message = "CSV file is empty!"
             if log_error:
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
             return error_message
-        header = dwf_laterals_list[0]
         if len(header) != 3:
             error_message = "Wrong timeseries format for Dry Weather Flow!"
-        if error_message is None:
-            try:
-                timeseries_candidate = header[-1]
-                parse_timeseries(timeseries_candidate)
-            except ValueError:
-                dwf_laterals_list.pop(0)
-        else:
             if log_error:
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
         return error_message
 
     def open_upload_dialog(self):
         """Open dialog for selecting CSV file with Dry Weather Flow."""
-        last_folder = QSettings().value("threedi/last_dwf_folder", os.path.expanduser("~"), type=str)
+        last_folder = read_3di_settings("last_dwf_folder", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Dry Weather Flow Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return None, None
-        QSettings().setValue("threedi/last_dwf_folder", os.path.dirname(filename))
+        save_3di_settings("last_dwf_folder", os.path.dirname(filename))
         values = {}
         interpolate = self.cb_interpolate_dwf.isChecked()
-        dwf_laterals_list = []
-        with open(filename, encoding="utf-8-sig") as dwf_file:
-            dwf_reader = csv.reader(dwf_file)
-            dwf_laterals_list += list(dwf_reader)
-        error_msg = self.handle_dwf_laterals_header(dwf_laterals_list)
+        with open(filename, encoding="utf-8-sig") as csvfile:
+            reader = csv.DictReader(csvfile)
+            header = reader.fieldnames
+            dwf_laterals_list = list(reader)
+        error_msg = self.handle_dwf_laterals_header(header)
         if error_msg is not None:
             return None, None
-        for dwf_id, connection_node_id, timeseries in dwf_laterals_list:
+        for row in dwf_laterals_list:
+            dwf_id = row.get("id")
+            connection_node_id = row.get("connection_node_id")
+            timeseries = row.get("timeseries")
             try:
                 vals = parse_timeseries(timeseries)
                 dwf = {
