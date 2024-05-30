@@ -1,6 +1,7 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import csv
+import logging
 import os
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
@@ -23,6 +24,7 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit,
     QSizePolicy,
     QSpacerItem,
+    QTableWidgetItem,
     QWizard,
     QWizardPage,
 )
@@ -41,6 +43,7 @@ from ..utils import (
     mmh_to_ms,
     mmtimestep_to_mmh,
     ms_to_mmh,
+    parse_timeseries,
     read_json_data,
 )
 from ..utils_ui import (
@@ -51,11 +54,15 @@ from ..utils_ui import (
     set_widgets_parameters,
 )
 from .custom_items import FilteredComboBox
+from .substance_concentrations import SubstanceConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_name.ui"))
 uicls_duration_page, basecls_duration_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_duration.ui")
+)
+uicls_substances, basecls_substances = uic.loadUiType(
+    os.path.join(base_dir, "ui", "simulation_wizard", "page_substances.ui")
 )
 uicls_boundary_conditions, basecls_boundary_conditions = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_boundary_conditions.ui")
@@ -87,6 +94,7 @@ uicls_saved_state_page, basecls_saved_state_page = uic.loadUiType(
 uicls_summary_page, basecls_summary_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "simulation_wizard", "page_initiation.ui")
 )
+logger = logging.getLogger(__name__)
 
 
 class NameWidget(uicls_name_page, basecls_name_page):
@@ -195,6 +203,93 @@ class SimulationDurationWidget(uicls_duration_page, basecls_duration_page):
             self.label_total_time.setText("Invalid datetime format!")
 
 
+class SubstancesWidget(uicls_substances, basecls_substances):
+    """Widget for the Substances page."""
+
+    MINIMUM_WIDTH = 100
+
+    def __init__(self, parent_page):
+        super().__init__()
+        self.setupUi(self)
+        self.parent_page = parent_page
+        self.substances = []
+        set_widget_background_color(self)
+        self.connect_signals()
+        self.add_item()  # Add an empty row by default
+
+    def connect_signals(self):
+        """Connecting widgets signals."""
+        self.pb_add.clicked.connect(self.add_item)
+        self.pb_remove.clicked.connect(self.remove_items)
+        self.tw_substances.itemChanged.connect(self.handle_item_changed)
+
+    def add_item(self):
+        row_count = self.tw_substances.rowCount()
+        self.tw_substances.insertRow(row_count)
+        self.tw_substances.setItem(row_count, 0, QTableWidgetItem())
+        self.tw_substances.setItem(row_count, 1, QTableWidgetItem())
+        self.tw_substances.setColumnWidth(0, self.MINIMUM_WIDTH)
+
+    def remove_items(self):
+        selected_rows = set()
+        for item in self.tw_substances.selectedItems():
+            selected_rows.add(item.row())
+        for row in sorted(selected_rows, reverse=True):
+            self.tw_substances.removeRow(row)
+            # Remove item from the substances list
+            if row < len(self.substances):
+                del self.substances[row]
+                self.update_substances()
+
+    def handle_item_changed(self, item):
+        # Check for duplicate names
+        if item.column() == 0:
+            row_count = self.tw_substances.rowCount()
+            for row in range(row_count):
+                if row == item.row():
+                    continue
+                name_item = self.tw_substances.item(row, 0)
+                if name_item and name_item.text() and name_item.text() == item.text():
+                    self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                        "Substance with the same name already exists!"
+                    )
+                    item.setText("")
+        # Check for units length
+        units_length = 16
+        if item.column() == 1:
+            if len(item.text()) > units_length:
+                item.setText(item.text()[:units_length])
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                    "Units length should be less than 16 characters!"
+                )
+        # Resize name column to contents and enforce minimum width
+        self.tw_substances.resizeColumnToContents(0)
+        if self.tw_substances.columnWidth(0) < self.MINIMUM_WIDTH:
+            self.tw_substances.setColumnWidth(0, self.MINIMUM_WIDTH)
+        self.set_substances_data()
+        self.update_substances()
+
+    def set_substances_data(self):
+        """Setting substances data."""
+        self.substances.clear()
+        row_count = self.tw_substances.rowCount()
+        for row in range(row_count):
+            name_item = self.tw_substances.item(row, 0)
+            units_item = self.tw_substances.item(row, 1)
+            if name_item and units_item:
+                name = name_item.text()
+                units = units_item.text()
+                if name:
+                    substance = {"name": name}
+                    if units:
+                        substance["units"] = units
+                    self.substances.append(substance)
+
+    def update_substances(self):
+        if hasattr(self.parent_page.parent_wizard, "laterals_page"):
+            self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
+
+
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
     """Widget for the Boundary Conditions page."""
 
@@ -272,7 +367,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         if error_message is None:
             try:
                 timeseries_candidate = header[-1]
-                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+                parse_timeseries(timeseries_candidate)
             except ValueError:
                 boundary_conditions_list.pop(0)
         else:
@@ -303,7 +398,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         )
         for bc_id, timeseries in boundary_conditions_list:
             try:
-                vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                vals = parse_timeseries(timeseries)
                 boundary_condition = {
                     "id": int(bc_id),
                     "type": boundary_conditions_type,
@@ -560,6 +655,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.setupUi(self)
         self.parent_page = parent_page
         self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
+        self.substances = parent_page.parent_wizard.substances_page.main_widget.substances
         set_widget_background_color(self)
         self.laterals_1d = []
         self.laterals_2d = []
@@ -567,6 +663,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.laterals_2d_timeseries = {}
         self.laterals_1d_timeseries_template = {}
         self.laterals_2d_timeseries_template = {}
+        self.substance_concentrations_1d = {}
+        self.substance_concentrations_2d = {}
         self.last_upload_1d_filepath = ""
         self.last_upload_2d_filepath = ""
         self.setup_laterals()
@@ -608,6 +706,72 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.cb_upload_2d_laterals.toggled.connect(self.toggle_2d_laterals_upload)
         self.pb_upload_2d_laterals.clicked.connect(partial(self.load_csv, self.TYPE_2D))
         self.cb_2d_interpolate.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_2D))
+
+    def setup_substance_concentrations(self):
+        if hasattr(self, "groupbox"):
+            self.groupbox.setParent(None)
+        if not self.substances:
+            return
+        substance_concentration_widget = SubstanceConcentrationsWidget(
+            self.substances, self.current_model, self.handle_substance_timesteps
+        )
+        self.groupbox = substance_concentration_widget.groupbox
+        self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
+        self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
+        parent_layout = self.layout()
+        parent_layout.addWidget(self.groupbox, 3, 2)
+
+    @staticmethod
+    def handle_substance_header(substance_list):
+        """
+        Fetch first csv row and handle potential header.
+        Return None if fetch successful or error message if file is empty or have invalid structure.
+        """
+        error_message = None
+        if not substance_list:
+            error_message = "Substance concentration list is empty!"
+            return error_message
+        header = substance_list[0]
+        if len(header) != 2:
+            error_message = "Wrong csv format for substance concentrations!"
+        if error_message is None:
+            try:
+                timeseries_candidate = header[-1]
+                parse_timeseries(timeseries_candidate)
+            except ValueError:
+                substance_list.pop(0)
+        return error_message
+
+    def handle_substance_timesteps(self, substance_list, laterals_type):
+        """
+        First, check if lateral values are uploaded.
+        Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
+        Return None if they match or error message if not.
+        """
+        error_message = self.handle_substance_header(substance_list)
+        laterals_timeseries = (
+            self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
+        )
+        if not laterals_timeseries:
+            error_message = "No laterals uploaded yet!"
+        if not substance_list:
+            error_message = "Substance concentrations list is empty!"
+        if error_message is None:
+            for lat_id, timeseries in substance_list:
+                lateral = laterals_timeseries.get(lat_id)
+                if lateral is None:
+                    error_message = f"Laterals with ID {lat_id} not found!"
+                    break
+                lateralValues = lateral["values"]
+                laterals_timesteps = [t for (t, _) in lateralValues]
+                concentrations = parse_timeseries(timeseries)
+                concentrations_timesteps = [t for (t, _) in concentrations]
+                if laterals_timesteps != concentrations_timesteps:
+                    error_message = "Substance concentrations timesteps do not match lateral values timesteps!"
+                    break
+        if error_message is not None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        return error_message
 
     def toggle_1d_laterals_upload(self, checked):
         """Handle 1D laterals toggle."""
@@ -677,6 +841,47 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
         return laterals_data
 
+    def recalculate_substances_timeseries(self, laterals_type, timesteps_in_seconds=False):
+        """Recalculate substances timeseries (timesteps in seconds)."""
+        substance_concentrations = {}
+        if laterals_type == self.TYPE_1D:
+            substance_concentrations.update(self.substance_concentrations_1d)
+        else:
+            substance_concentrations.update(self.substance_concentrations_2d)
+        substances = deepcopy(substance_concentrations)
+        substances_data = {}
+        if laterals_type == self.TYPE_1D:
+            laterals_timeseries = self.laterals_1d_timeseries
+        else:
+            laterals_timeseries = self.laterals_2d_timeseries
+        for lat_id in laterals_timeseries.keys():
+            if lat_id in substances:
+                substances_data[lat_id] = substances[lat_id]
+        if timesteps_in_seconds is False:
+            return substances_data
+        if laterals_type == self.TYPE_1D:
+            units = self.cbo_1d_units.currentText()
+        else:
+            units = self.cbo_2d_units.currentText()
+        if units == "hrs":
+            seconds_per_unit = 3600
+        elif units == "mins":
+            seconds_per_unit = 60
+        else:
+            seconds_per_unit = 1
+        for lateral_substances in substances_data.values():
+            for substance in lateral_substances:
+                substance["concentrations"] = [[t * seconds_per_unit, v] for (t, v) in substance["concentrations"]]
+        return substances_data
+
+    def update_laterals_with_substances(self, file_laterals, substances):
+        """Update laterals with substances."""
+        for lat_id, lat_data in file_laterals.items():
+            lateral_substances = substances.get(lat_id)
+            if lateral_substances is None:
+                continue
+            lat_data["substances"] = lateral_substances
+
     def get_laterals_data(self, timesteps_in_seconds=False):
         """Get laterals data."""
         constant_laterals = []
@@ -686,10 +891,16 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             if self.cb_use_1d_laterals:
                 constant_laterals.extend(self.laterals_1d)
             file_laterals_1d.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
+            if self.substance_concentrations_1d:
+                substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
+                self.update_laterals_with_substances(file_laterals_1d, substances)
         if self.groupbox_2d_laterals.isChecked():
             if self.cb_use_2d_laterals:
                 constant_laterals.extend(self.laterals_2d)
             file_laterals_2d.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
+            if self.substance_concentrations_2d:
+                substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
+                self.update_laterals_with_substances(file_laterals_2d, substances)
         return constant_laterals, file_laterals_1d, file_laterals_2d
 
     def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
@@ -713,7 +924,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if error_message is None:
             try:
                 timeseries_candidate = header[-1]
-                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+                parse_timeseries(timeseries_candidate)
             except ValueError:
                 laterals_list.pop(0)
         else:
@@ -741,7 +952,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             interpolate = self.cb_1d_interpolate.isChecked()
             for lat_id, connection_node_id, timeseries in laterals_list:
                 try:
-                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                    vals = parse_timeseries(timeseries)
                     lateral = {
                         "values": vals,
                         "units": "m3/s",
@@ -759,7 +970,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             interpolate = self.cb_2d_interpolate.isChecked()
             for x, y, lat_id, ltype, timeseries in laterals_list:
                 try:
-                    vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                    vals = parse_timeseries(timeseries)
                     point = {"type": "Point", "coordinates": [float(x), float(y)]}
                     lateral = {
                         "values": vals,
@@ -841,7 +1052,7 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         if error_message is None:
             try:
                 timeseries_candidate = header[-1]
-                [[float(f) for f in line.split(",")] for line in timeseries_candidate.split("\n")]
+                parse_timeseries(timeseries_candidate)
             except ValueError:
                 dwf_laterals_list.pop(0)
         else:
@@ -868,7 +1079,7 @@ class DWFWidget(uicls_dwf, basecls_dwf):
             return None, None
         for dwf_id, connection_node_id, timeseries in dwf_laterals_list:
             try:
-                vals = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+                vals = parse_timeseries(timeseries)
                 dwf = {
                     "values": vals,
                     "units": "m3/s",
@@ -2164,6 +2375,22 @@ class SimulationDurationPage(QWizardPage):
         self.adjustSize()
 
 
+class SubstancesPage(QWizardPage):
+    """Substances definition page."""
+
+    STEP_NAME = "Substances"
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_wizard = parent
+        self.main_widget = SubstancesWidget(self)
+        layout = QGridLayout()
+        layout.addWidget(self.main_widget)
+        self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.adjustSize()
+
+
 class BoundaryConditionsPage(QWizardPage):
     """Boundary conditions definition page."""
 
@@ -2399,6 +2626,9 @@ class SimulationWizard(QWizard):
         self.addPage(self.name_page)
         self.duration_page = SimulationDurationPage(self)
         self.addPage(self.duration_page)
+        if init_conditions.include_substances:
+            self.substances_page = SubstancesPage(self)
+            self.addPage(self.substances_page)
         if init_conditions.include_boundary_conditions:
             self.boundary_conditions_page = BoundaryConditionsPage(self)
             self.addPage(self.boundary_conditions_page)
@@ -2986,6 +3216,11 @@ class SimulationWizard(QWizard):
             wind = dm.Wind(*wind_data)
         else:
             wind = dm.Wind()
+        # Substances
+        if self.init_conditions.include_substances:
+            substances = dm.Substances(self.substances_page.main_widget.substances)
+        else:
+            substances = dm.Substances()
 
         # Settings page attributes
         main_settings = self.settings_page.main_widget.collect_single_settings()
@@ -3031,6 +3266,7 @@ class SimulationWizard(QWizard):
                 sim_temp_id, sim_name, tags, threedimodel_id, organisation_uuid, start_datetime, end_datetime, duration
             )
             new_simulation.init_options = init_options
+            new_simulation.substances = substances
             new_simulation.boundary_conditions = boundary_conditions
             new_simulation.structure_controls = structure_controls
             new_simulation.initial_conditions = initial_conditions

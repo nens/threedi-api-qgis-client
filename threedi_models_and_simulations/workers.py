@@ -449,7 +449,9 @@ class UploadProgressWorker(QRunnable):
                 err = RevisionUploadError(error_msg)
                 raise err
         # Create 3Di model
-        model = self.tc.create_schematisation_revision_3di_model(self.schematisation.id, self.revision.id, inherit_templates)
+        model = self.tc.create_schematisation_revision_3di_model(
+            self.schematisation.id, self.revision.id, inherit_templates
+        )
         model_id = model.id
         finished_tasks = {
             "make_gridadmin": False,
@@ -514,7 +516,7 @@ class SimulationRunner(QRunnable):
         super().__init__()
         self.threedi_api = threedi_api
         self.simulations_to_run = simulations_to_run
-        self.current_simulation = None
+        self.current_simulation: dm.NewSimulation = None
         self.upload_timeout = upload_timeout
         self.tc = None
         self.signals = SimulationRunnerSignals()
@@ -523,6 +525,7 @@ class SimulationRunner(QRunnable):
         self.current_step = 0
         self.number_of_steps = len(self.simulations_to_run) * self.steps_per_simulation
         self.percentage_per_step = self.total_progress / self.number_of_steps
+        self.substances = {}
 
     def create_simulation(self):
         """Create a new simulation out of the NewSimulation data model."""
@@ -633,6 +636,15 @@ class SimulationRunner(QRunnable):
                 "relative": oe.relative,
             }
             self.tc.create_obstacle_edits(sim_id, **obstacle_edit_data)
+
+    def include_substances(self):
+        """Add substances to the new simulation."""
+        sim_id = self.current_simulation.simulation.id
+        if self.current_simulation.substances:
+            substances = self.current_simulation.substances.data
+            for substance in substances:
+                substance_from_api = self.tc.create_simulation_substances(sim_id, **substance)
+                self.substances[substance["name"]] = substance_from_api.id
 
     def include_boundary_conditions(self):
         """Apply boundary conditions to the new simulation."""
@@ -853,6 +865,14 @@ class SimulationRunner(QRunnable):
             file_lateral_1d_values = list(self.current_simulation.laterals.file_laterals_1d.values())
             file_lateral_2d_values = list(self.current_simulation.laterals.file_laterals_2d.values())
             file_lateral_values = file_lateral_1d_values + file_lateral_2d_values
+            # Replace substance names with substance ids
+            if file_lateral_values and self.substances:
+                for file_lateral in file_lateral_values:
+                    for substance in file_lateral.get("substances", []):
+                        substance_name = substance.get("substance")
+                        if substance_name in self.substances:
+                            substance_id = self.substances[substance_name]
+                            substance["substance"] = substance_id
             write_json_data(file_lateral_values, LATERALS_FILE_TEMPLATE)
             filename = f"{sim_name}_laterals.json"
             upload_event_file = self.tc.create_simulation_lateral_file(sim_id, filename=filename, offset=0)
@@ -1079,6 +1099,8 @@ class SimulationRunner(QRunnable):
                 self.create_simulation()
                 self.report_progress()
                 self.include_init_options()
+                self.report_progress()
+                self.include_substances()
                 self.report_progress()
                 self.include_boundary_conditions()
                 self.report_progress()
