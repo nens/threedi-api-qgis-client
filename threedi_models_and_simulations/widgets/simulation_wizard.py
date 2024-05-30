@@ -1540,11 +1540,11 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
     def set_csv_time_series(self):
         """Selecting and setting up rain time series from CSV format."""
         file_filter = "CSV (*.csv);;All Files (*)"
-        last_folder = QSettings().value("threedi/last_precipitation_folder", os.path.expanduser("~"), type=str)
+        last_folder = read_3di_settings("last_precipitation_folder", os.path.expanduser("~"))
         filename, __ = QFileDialog.getOpenFileName(self, "Precipitation Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return
-        QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
+        save_3di_settings("last_precipitation_folder", os.path.dirname(filename))
         time_series = []
         simulation = self.dd_simulation.currentText()
         with open(filename, encoding="utf-8-sig") as rain_file:
@@ -1877,11 +1877,11 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
     def set_custom_wind(self):
         """Selecting and setting up wind time series from CSV format."""
         file_filter = "CSV (*.csv);;All Files (*)"
-        last_folder = QSettings().value("threedi/last_wind_folder", os.path.expanduser("~"), type=str)
+        last_folder = read_3di_settings("last_wind_folder", os.path.expanduser("~"))
         filename, __ = QFileDialog.getOpenFileName(self, "Wind Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return
-        QSettings().setValue("threedi/last_wind_folder", os.path.dirname(filename))
+        save_3di_settings("last_wind_folder", os.path.dirname(filename))
         time_series = []
         with open(filename, encoding="utf-8-sig") as wind_file:
             wind_reader = csv.reader(wind_file)
