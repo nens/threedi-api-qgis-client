@@ -28,13 +28,13 @@ class SubstanceConcentrationsWidget(QWidget):
         self,
         substances: List[Dict],
         current_model,
-        handle_substance_errors: Callable,
+        handle_csv_errors: Callable,
         parent: Optional[QWidget] = None,
     ):
         super().__init__(parent)
         self.substances = substances
         self.current_model = current_model
-        self.handle_substance_errors = handle_substance_errors
+        self.handle_csv_errors = handle_csv_errors
         self.substance_concentrations_1d = {}
         self.substance_concentrations_2d = {}
         self.groupbox = QGroupBox("Substance concentrations", self)
@@ -85,11 +85,11 @@ class SubstanceConcentrationsWidget(QWidget):
         for substance in self.substances:
             name = substance["name"]
             upload_button = self.groupbox.findChild(QPushButton, f"pb_substance_{laterals_type}_{name}")
-            upload_button.clicked.connect(partial(self.load_substance_csv, name, laterals_type))
+            upload_button.clicked.connect(partial(self.load_csv, name, laterals_type))
 
-    def load_substance_csv(self, name: str, laterals_type: str):
-        """Load substance CSV file."""
-        substances, filename = self.open_substance_upload_dialog(name, laterals_type)
+    def load_csv(self, name: str, laterals_type: str):
+        """Load CSV file."""
+        substances, filename = self.open_upload_dialog(name, laterals_type)
         if not filename:
             return
         le_substance = self.groupbox.findChild(QLineEdit, f"le_substance_{laterals_type}_{name}")
@@ -99,7 +99,7 @@ class SubstanceConcentrationsWidget(QWidget):
         else:
             self.substance_concentrations_2d.update(substances)
 
-    def open_substance_upload_dialog(self, name, laterals_type):
+    def open_upload_dialog(self, name, laterals_type):
         """Open dialog for selecting CSV file with laterals."""
         last_folder = read_3di_settings("last_substances_folder", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
@@ -110,23 +110,25 @@ class SubstanceConcentrationsWidget(QWidget):
             return None, None
         save_3di_settings("last_substances_folder", os.path.dirname(filename))
         substances = {}
-        substance_list = []
-        with open(filename, encoding="utf-8-sig") as substance_file:
-            substance_reader = csv.reader(substance_file)
-            substance_list += list(substance_reader)
-        error_msg = self.handle_substance_errors(substance_list, laterals_type)
+        with open(filename, encoding="utf-8-sig") as csvfile:
+            reader = csv.DictReader(csvfile)
+            header = reader.fieldnames
+            substance_list = list(reader)
+        error_msg = self.handle_csv_errors(header, substance_list, laterals_type)
         if error_msg is not None:
             return None, None
-        for obj_id, timeseries in substance_list:
+        for substance in substance_list:
+            parent_id = substance["id"]
+            timeseries = substance["timeseries"]
             try:
                 concentrations = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
                 substance = {
                     "substance": name,
                     "concentrations": concentrations,
                 }
-                if obj_id not in substances:
-                    substances[obj_id] = []
-                substances[obj_id].append(substance)
+                if parent_id not in substances:
+                    substances[parent_id] = []
+                substances[parent_id].append(substance)
             except ValueError:
                 continue
         return substances, filename

@@ -8,6 +8,7 @@ from copy import deepcopy
 from datetime import datetime
 from functools import partial
 from operator import attrgetter
+from typing import List
 
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
@@ -722,42 +723,37 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         parent_layout.addWidget(self.groupbox, 3, 2)
 
     @staticmethod
-    def handle_substance_header(substance_list):
+    def handle_substance_header(header: List[str]):
         """
-        Fetch first csv row and handle potential header.
+        Handle CSV header.
         Return None if fetch successful or error message if file is empty or have invalid structure.
         """
         error_message = None
-        if not substance_list:
-            error_message = "Substance concentration list is empty!"
+        if not header:
+            error_message = "CSV file is empty!"
             return error_message
-        header = substance_list[0]
         if len(header) != 2:
             error_message = "Wrong csv format for substance concentrations!"
-        if error_message is None:
-            try:
-                timeseries_candidate = header[-1]
-                parse_timeseries(timeseries_candidate)
-            except ValueError:
-                substance_list.pop(0)
         return error_message
 
-    def handle_substance_timesteps(self, substance_list, laterals_type):
+    def handle_substance_timesteps(self, header, substance_list, laterals_type):
         """
         First, check if lateral values are uploaded.
         Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
         Return None if they match or error message if not.
         """
-        error_message = self.handle_substance_header(substance_list)
+        error_message = self.handle_substance_header(header)
         laterals_timeseries = (
             self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
         )
         if not laterals_timeseries:
             error_message = "No laterals uploaded yet!"
         if not substance_list:
-            error_message = "Substance concentrations list is empty!"
+            error_message = "CSV file is empty!"
         if error_message is None:
-            for lat_id, timeseries in substance_list:
+            for substance in substance_list:
+                lat_id = substance.get("id")
+                timeseries = substance.get("timeseries")
                 lateral = laterals_timeseries.get(lat_id)
                 if lateral is None:
                     error_message = f"Laterals with ID {lat_id} not found!"
