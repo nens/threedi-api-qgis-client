@@ -117,9 +117,9 @@ class SubstanceConcentrationsWidget(QWidget):
         error_msg = self.handle_csv_errors(header, substance_list, laterals_type)
         if error_msg is not None:
             return None, None
-        for substance in substance_list:
-            parent_id = substance["id"]
-            timeseries = substance["timeseries"]
+        for row in substance_list:
+            parent_id = row["id"]
+            timeseries = row["timeseries"]
             try:
                 concentrations = [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
                 substance = {

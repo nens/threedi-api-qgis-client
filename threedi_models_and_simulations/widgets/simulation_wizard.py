@@ -53,6 +53,8 @@ from ..utils_ui import (
     scan_widgets_parameters,
     set_widget_background_color,
     set_widgets_parameters,
+    read_3di_settings,
+    save_3di_settings,
 )
 from .custom_items import FilteredComboBox
 from .substance_concentrations import SubstanceConcentrationsWidget
@@ -899,54 +901,49 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 self.update_laterals_with_substances(file_laterals_2d, substances)
         return constant_laterals, file_laterals_1d, file_laterals_2d
 
-    def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
+    def handle_laterals_header(self, header: List[str], laterals_type: str, log_error=True):
         """
         Fetch first lateral row and handle potential header.
         Return None if fetch successful or error message if file is empty or have invalid structure.
         """
         error_message = None
-        if not laterals_list:
-            error_message = "Laterals list is empty!"
+        if not header:
+            error_message = "CSV file is empty!"
             if log_error:
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
             return error_message
-        header = laterals_list[0]
         if laterals_type == "1D":
             if len(header) != 3:
                 error_message = "Wrong timeseries format for 1D laterals!"
         else:
             if len(header) != 5:
                 error_message = "Wrong timeseries format for 2D laterals!"
-        if error_message is None:
-            try:
-                timeseries_candidate = header[-1]
-                parse_timeseries(timeseries_candidate)
-            except ValueError:
-                laterals_list.pop(0)
-        else:
-            if log_error:
-                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        if log_error and error_message:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
         return error_message
 
     def open_upload_dialog(self, laterals_type):
         """Open dialog for selecting CSV file with laterals."""
-        last_folder = QSettings().value("threedi/last_laterals_folder", os.path.expanduser("~"), type=str)
+        last_folder = read_3di_settings("last_laterals_folder", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Laterals Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return None, None
-        QSettings().setValue("threedi/last_laterals_folder", os.path.dirname(filename))
+        save_3di_settings("last_laterals_folder", os.path.dirname(filename))
         values = {}
-        laterals_list = []
-        with open(filename, encoding="utf-8-sig") as lateral_file:
-            laterals_reader = csv.reader(lateral_file)
-            laterals_list += list(laterals_reader)
-        error_msg = self.handle_laterals_header(laterals_list, laterals_type)
+        with open(filename, encoding="utf-8-sig") as csvfile:
+            reader = csv.DictReader(csvfile)
+            header = reader.fieldnames
+            laterals_list = list(reader)
+        error_msg = self.handle_laterals_header(header, laterals_type)
         if error_msg is not None:
             return None, None
         if laterals_type == "1D":
             interpolate = self.cb_1d_interpolate.isChecked()
-            for lat_id, connection_node_id, timeseries in laterals_list:
+            for row in laterals_list:
+                lat_id = row.get("id")
+                connection_node_id = row.get("connection_node_id")
+                timeseries = row.get("timeseries")
                 try:
                     vals = parse_timeseries(timeseries)
                     lateral = {
@@ -964,7 +961,11 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     continue
         else:
             interpolate = self.cb_2d_interpolate.isChecked()
-            for x, y, lat_id, ltype, timeseries in laterals_list:
+            for row in laterals_list:
+                x = row.get("x") or row.get("X")
+                y = row.get("y") or row.get("Y")
+                lat_id = row.get("id")
+                timeseries = row.get("timeseries")
                 try:
                     vals = parse_timeseries(timeseries)
                     point = {"type": "Point", "coordinates": [float(x), float(y)]}
