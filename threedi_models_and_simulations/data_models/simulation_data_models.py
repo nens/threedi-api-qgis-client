@@ -199,6 +199,7 @@ class NewSimulation:
     start_datetime: datetime
     end_datetime: datetime
     duration: float
+    started_from: str = "3Di Modeller Interface"
     init_options: InitOptions = None
     boundary_conditions: BoundaryConditions = None
     structure_controls: StructureControls = None
