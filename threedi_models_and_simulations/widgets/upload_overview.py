@@ -112,6 +112,7 @@ class UploadOverview(uicls_log, basecls_log):
         revision = upload_specification["latest_revision"]
         revision_number = revision.number + 1 if create_revision is True else revision.number
         revision_item = QStandardItem(f"{revision_number}")
+        revision_item.setData(revision_number, role=Qt.DisplayRole)
         commit_msg_item = QStandardItem(f"{upload_specification['commit_message']}")
         status_item = QStandardItem(UploadStatus.IN_PROGRESS.value)
         self.tv_model.appendRow([schema_name_item, revision_item, commit_msg_item, status_item])
