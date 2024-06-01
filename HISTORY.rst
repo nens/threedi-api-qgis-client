@@ -7,6 +7,7 @@ History
 - Added computational grid checks before an upload (#429).
 - Added handling of the 'started_from' Simulation parameter (#556).
 - Updated threedi-api-client version to 4.1.7.
+- Remove illegal characters from the simulation name (#497).
 
 
 3.10.2 (2024-06-05)

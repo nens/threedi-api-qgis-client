@@ -24,6 +24,7 @@ CHUNK_SIZE = 1024**2
 RADAR_ID = "d6c2347d-7bd1-4d9d-a1f6-b342c865516f"
 API_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
 USER_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+ILLEGAL_WIN_CHARS = r'\/:*?"<>|'
 
 
 class EventTypes(Enum):
@@ -292,6 +293,14 @@ def parse_version_number(version_str):
 def parse_timeseries(timeseries: str):
     """Parse the timeseries from the given string."""
     return [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+
+
+def translate_illegal_chars(text, replacement_character="-"):
+    """Remove illegal characters from the text."""
+    sanitized_text = text
+    for char in ILLEGAL_WIN_CHARS:
+        sanitized_text = sanitized_text.replace(char, replacement_character)
+    return sanitized_text
 
 
 class SchematisationRasterReferences:
