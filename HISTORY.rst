@@ -4,6 +4,7 @@ History
 3.11 (unreleased)
 -----------------
 
+- Use column names i/o column orderings to read CSV uploaded files (#563).
 - Add substance concentrations to Laterals page (#553, #557).
 - Add substances page to the simulation wizard (#548, #554).
 - Simulation wizard: Improve laterals page (#545).

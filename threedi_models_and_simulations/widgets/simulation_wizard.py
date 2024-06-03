@@ -8,6 +8,7 @@ from copy import deepcopy
 from datetime import datetime
 from functools import partial
 from operator import attrgetter
+from typing import List
 
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
@@ -52,6 +53,8 @@ from ..utils_ui import (
     scan_widgets_parameters,
     set_widget_background_color,
     set_widgets_parameters,
+    read_3di_settings,
+    save_3di_settings,
 )
 from .custom_items import FilteredComboBox
 from .substance_concentrations import SubstanceConcentrationsWidget
@@ -372,45 +375,37 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         else:
             raise NotImplementedError
 
-    def handle_boundary_conditions_header(self, boundary_conditions_list, log_error=True):
+    def handle_boundary_conditions_header(self, header: List[str], log_error=True):
         """
-        Fetch first boundary conditions file row and handle potential header.
+        Handle boundary conditions potential header.
         Return None if fetch successful or error message if file is empty or have invalid structure.
         """
         error_message = None
-        if not boundary_conditions_list:
-            error_message = "Boundary conditions list is empty!"
+        if not header:
+            error_message = "CSV file is empty!"
             if log_error:
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
             return error_message
-        header = boundary_conditions_list[0]
         if len(header) != 2:
             error_message = "Wrong timeseries format for boundary conditions!"
-        if error_message is None:
-            try:
-                timeseries_candidate = header[-1]
-                parse_timeseries(timeseries_candidate)
-            except ValueError:
-                boundary_conditions_list.pop(0)
-        else:
             if log_error:
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
         return error_message
 
     def open_upload_dialog(self, boundary_conditions_type):
         """Open dialog for selecting CSV file with boundary conditions."""
-        last_folder = QSettings().value("threedi/last_boundary_conditions_folder", os.path.expanduser("~"), type=str)
+        last_folder = read_3di_settings("last_boundary_conditions_folder", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Boundary Conditions Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return None, None
-        QSettings().setValue("threedi/last_boundary_conditions_folder", os.path.dirname(filename))
+        save_3di_settings("last_boundary_conditions_folder", os.path.dirname(filename))
         values = []
-        boundary_conditions_list = []
-        with open(filename, encoding="utf-8-sig") as boundary_conditions_file:
-            boundary_conditions_reader = csv.reader(boundary_conditions_file)
-            boundary_conditions_list += list(boundary_conditions_reader)
-        error_msg = self.handle_boundary_conditions_header(boundary_conditions_list)
+        with open(filename, encoding="utf-8-sig") as csvfile:
+            reader = csv.DictReader(csvfile)
+            header = reader.fieldnames
+            boundary_conditions_list = list(reader)
+        error_msg = self.handle_boundary_conditions_header(header)
         if error_msg is not None:
             return None, None
         interpolate = (
@@ -418,7 +413,9 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             if boundary_conditions_type == self.TYPE_1D
             else self.cb_interpolate_bc_2d.isChecked()
         )
-        for bc_id, timeseries in boundary_conditions_list:
+        for row in boundary_conditions_list:
+            bc_id = row.get("id")
+            timeseries = row.get("timeseries")
             try:
                 vals = parse_timeseries(timeseries)
                 boundary_condition = {
@@ -744,42 +741,39 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         parent_layout.addWidget(self.groupbox, 3, 2)
 
     @staticmethod
-    def handle_substance_header(substance_list):
+    def handle_substance_header(header: List[str]):
         """
-        Fetch first csv row and handle potential header.
+        Handle CSV header.
         Return None if fetch successful or error message if file is empty or have invalid structure.
         """
         error_message = None
-        if not substance_list:
-            error_message = "Substance concentration list is empty!"
+        if not header:
+            error_message = "CSV file is empty!"
             return error_message
-        header = substance_list[0]
-        if len(header) != 2:
-            error_message = "Wrong csv format for substance concentrations!"
-        if error_message is None:
-            try:
-                timeseries_candidate = header[-1]
-                parse_timeseries(timeseries_candidate)
-            except ValueError:
-                substance_list.pop(0)
+        if "id" not in header:
+            error_message = "Missing 'id' column in CSV file!"
+        if "timeseries" not in header:
+            error_message = "Missing 'timeseries' column in CSV file!"
         return error_message
 
-    def handle_substance_timesteps(self, substance_list, laterals_type):
+    def handle_substance_timesteps(self, header, substance_list, laterals_type):
         """
         First, check if lateral values are uploaded.
         Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
         Return None if they match or error message if not.
         """
-        error_message = self.handle_substance_header(substance_list)
+        error_message = self.handle_substance_header(header)
         laterals_timeseries = (
             self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
         )
         if not laterals_timeseries:
             error_message = "No laterals uploaded yet!"
         if not substance_list:
-            error_message = "Substance concentrations list is empty!"
+            error_message = "CSV file is empty!"
         if error_message is None:
-            for lat_id, timeseries in substance_list:
+            for substance in substance_list:
+                lat_id = substance.get("id")
+                timeseries = substance.get("timeseries")
                 lateral = laterals_timeseries.get(lat_id)
                 if lateral is None:
                     error_message = f"Laterals with ID {lat_id} not found!"
@@ -925,54 +919,53 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 self.update_laterals_with_substances(file_laterals_2d, substances)
         return constant_laterals, file_laterals_1d, file_laterals_2d
 
-    def handle_laterals_header(self, laterals_list, laterals_type, log_error=True):
+    def handle_laterals_header(self, header: List[str], laterals_type: str, log_error=True):
         """
-        Fetch first lateral row and handle potential header.
+        Handle laterals potential header.
         Return None if fetch successful or error message if file is empty or have invalid structure.
         """
         error_message = None
-        if not laterals_list:
-            error_message = "Laterals list is empty!"
+        if not header:
+            error_message = "CSV file is empty!"
             if log_error:
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
             return error_message
-        header = laterals_list[0]
         if laterals_type == "1D":
-            if len(header) != 3:
+            if any(k not in header for k in ["id", "connection_node_id", "timeseries"]):
                 error_message = "Wrong timeseries format for 1D laterals!"
         else:
-            if len(header) != 5:
+            if (
+                any(k not in header for k in ["id", "timeseries"])
+                or not any(k in header for k in ["x", "X"])
+                or not any(k in header for k in ["y", "Y"])
+            ):
                 error_message = "Wrong timeseries format for 2D laterals!"
-        if error_message is None:
-            try:
-                timeseries_candidate = header[-1]
-                parse_timeseries(timeseries_candidate)
-            except ValueError:
-                laterals_list.pop(0)
-        else:
-            if log_error:
-                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        if log_error and error_message:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
         return error_message
 
     def open_upload_dialog(self, laterals_type):
         """Open dialog for selecting CSV file with laterals."""
-        last_folder = QSettings().value("threedi/last_laterals_folder", os.path.expanduser("~"), type=str)
+        last_folder = read_3di_settings("last_laterals_folder", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Laterals Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return None, None
-        QSettings().setValue("threedi/last_laterals_folder", os.path.dirname(filename))
+        save_3di_settings("last_laterals_folder", os.path.dirname(filename))
         values = {}
-        laterals_list = []
-        with open(filename, encoding="utf-8-sig") as lateral_file:
-            laterals_reader = csv.reader(lateral_file)
-            laterals_list += list(laterals_reader)
-        error_msg = self.handle_laterals_header(laterals_list, laterals_type)
+        with open(filename, encoding="utf-8-sig") as csvfile:
+            reader = csv.DictReader(csvfile)
+            header = reader.fieldnames
+            laterals_list = list(reader)
+        error_msg = self.handle_laterals_header(header, laterals_type)
         if error_msg is not None:
             return None, None
         if laterals_type == "1D":
             interpolate = self.cb_1d_interpolate.isChecked()
-            for lat_id, connection_node_id, timeseries in laterals_list:
+            for row in laterals_list:
+                lat_id = row.get("id")
+                connection_node_id = row.get("connection_node_id")
+                timeseries = row.get("timeseries")
                 try:
                     vals = parse_timeseries(timeseries)
                     lateral = {
@@ -990,7 +983,11 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     continue
         else:
             interpolate = self.cb_2d_interpolate.isChecked()
-            for x, y, lat_id, ltype, timeseries in laterals_list:
+            for row in laterals_list:
+                x = row.get("x") or row.get("X")
+                y = row.get("y") or row.get("Y")
+                lat_id = row.get("id")
+                timeseries = row.get("timeseries")
                 try:
                     vals = parse_timeseries(timeseries)
                     point = {"type": "Point", "coordinates": [float(x), float(y)]}
@@ -1057,49 +1054,44 @@ class DWFWidget(uicls_dwf, basecls_dwf):
         self.last_upload_filepath = filename
         self.dwf_timeseries = values
 
-    def handle_dwf_laterals_header(self, dwf_laterals_list, log_error=True):
+    def handle_dwf_laterals_header(self, header: List[str], log_error=True):
         """
-        Fetch first DWF lateral row and handle potential header.
+        Handle DWF laterals header.
         Return None if fetch successful or error message if file is empty or have invalid structure.
         """
         error_message = None
-        if not dwf_laterals_list:
-            error_message = "Dry Weather Flow timeseries list is empty!"
+        if not header:
+            error_message = "CSV file is empty!"
             if log_error:
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
             return error_message
-        header = dwf_laterals_list[0]
         if len(header) != 3:
             error_message = "Wrong timeseries format for Dry Weather Flow!"
-        if error_message is None:
-            try:
-                timeseries_candidate = header[-1]
-                parse_timeseries(timeseries_candidate)
-            except ValueError:
-                dwf_laterals_list.pop(0)
-        else:
             if log_error:
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
         return error_message
 
     def open_upload_dialog(self):
         """Open dialog for selecting CSV file with Dry Weather Flow."""
-        last_folder = QSettings().value("threedi/last_dwf_folder", os.path.expanduser("~"), type=str)
+        last_folder = read_3di_settings("last_dwf_folder", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(self, "Dry Weather Flow Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return None, None
-        QSettings().setValue("threedi/last_dwf_folder", os.path.dirname(filename))
+        save_3di_settings("last_dwf_folder", os.path.dirname(filename))
         values = {}
         interpolate = self.cb_interpolate_dwf.isChecked()
-        dwf_laterals_list = []
-        with open(filename, encoding="utf-8-sig") as dwf_file:
-            dwf_reader = csv.reader(dwf_file)
-            dwf_laterals_list += list(dwf_reader)
-        error_msg = self.handle_dwf_laterals_header(dwf_laterals_list)
+        with open(filename, encoding="utf-8-sig") as csvfile:
+            reader = csv.DictReader(csvfile)
+            header = reader.fieldnames
+            dwf_laterals_list = list(reader)
+        error_msg = self.handle_dwf_laterals_header(header)
         if error_msg is not None:
             return None, None
-        for dwf_id, connection_node_id, timeseries in dwf_laterals_list:
+        for row in dwf_laterals_list:
+            dwf_id = row.get("id")
+            connection_node_id = row.get("connection_node_id")
+            timeseries = row.get("timeseries")
             try:
                 vals = parse_timeseries(timeseries)
                 dwf = {
@@ -1576,11 +1568,11 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
     def set_csv_time_series(self):
         """Selecting and setting up rain time series from CSV format."""
         file_filter = "CSV (*.csv);;All Files (*)"
-        last_folder = QSettings().value("threedi/last_precipitation_folder", os.path.expanduser("~"), type=str)
+        last_folder = read_3di_settings("last_precipitation_folder", os.path.expanduser("~"))
         filename, __ = QFileDialog.getOpenFileName(self, "Precipitation Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return
-        QSettings().setValue("threedi/last_precipitation_folder", os.path.dirname(filename))
+        save_3di_settings("last_precipitation_folder", os.path.dirname(filename))
         time_series = []
         simulation = self.dd_simulation.currentText()
         with open(filename, encoding="utf-8-sig") as rain_file:
@@ -1913,11 +1905,11 @@ class WindWidget(uicls_wind_page, basecls_wind_page):
     def set_custom_wind(self):
         """Selecting and setting up wind time series from CSV format."""
         file_filter = "CSV (*.csv);;All Files (*)"
-        last_folder = QSettings().value("threedi/last_wind_folder", os.path.expanduser("~"), type=str)
+        last_folder = read_3di_settings("last_wind_folder", os.path.expanduser("~"))
         filename, __ = QFileDialog.getOpenFileName(self, "Wind Time Series", last_folder, file_filter)
         if len(filename) == 0:
             return
-        QSettings().setValue("threedi/last_wind_folder", os.path.dirname(filename))
+        save_3di_settings("last_wind_folder", os.path.dirname(filename))
         time_series = []
         with open(filename, encoding="utf-8-sig") as wind_file:
             wind_reader = csv.reader(wind_file)
