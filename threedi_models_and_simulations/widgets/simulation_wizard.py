@@ -728,8 +728,10 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if not header:
             error_message = "CSV file is empty!"
             return error_message
-        if len(header) != 2:
-            error_message = "Wrong csv format for substance concentrations!"
+        if "id" not in header:
+            error_message = "Missing 'id' column in CSV file!"
+        if "timeseries" not in header:
+            error_message = "Missing 'timeseries' column in CSV file!"
         return error_message
 
     def handle_substance_timesteps(self, header, substance_list, laterals_type):
@@ -907,10 +909,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
             return error_message
         if laterals_type == "1D":
-            if len(header) != 3:
+            if any(k not in header for k in ["id", "connection_node_id", "timeseries"]):
                 error_message = "Wrong timeseries format for 1D laterals!"
         else:
-            if len(header) != 5:
+            if (
+                any(k not in header for k in ["id", "timeseries"])
+                or not any(k in header for k in ["x", "X"])
+                or not any(k in header for k in ["y", "Y"])
+            ):
                 error_message = "Wrong timeseries format for 2D laterals!"
         if log_error and error_message:
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
