@@ -339,7 +339,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 6, 2)
 
-    def handle_substance_errors(self, header, substance_list, laterals_type):
+    def handle_substance_errors(self, header, substance_list, bc_type):
         """
         First, check if boundary condition values are uploaded.
         Second, check if substance concentrations timesteps match exactly the boundary condition values timesteps.
@@ -347,7 +347,9 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         """
         error_message = handle_substance_header(header)
         bc_timeseries = (
-            self.boundary_conditions_1d_timeseries if laterals_type == self.TYPE_1D else self.boundary_conditions_2d_timeseries
+            self.boundary_conditions_1d_timeseries
+            if bc_type == self.TYPE_1D
+            else self.boundary_conditions_2d_timeseries
         )
         if not bc_timeseries:
             error_message = "No boundary conditions uploaded yet!"
@@ -366,7 +368,9 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                 concentrations = parse_timeseries(timeseries)
                 concentrations_timesteps = [t for (t, _) in concentrations]
                 if bc_timesteps != concentrations_timesteps:
-                    error_message = "Substance concentrations timesteps do not match boundary condition values timesteps!"
+                    error_message = (
+                        "Substance concentrations timesteps do not match boundary condition values timesteps!"
+                    )
                     break
         if error_message is not None:
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
@@ -384,11 +388,6 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
 
     def change_boundary_conditions_source(self):
         """Disable/enable widgets based on the boundary conditions source."""
-        logger.debug("boundary conditions 1d %s", self.boundary_conditions_1d_timeseries)
-        logger.debug("boundary conditions 2d %s", self.boundary_conditions_2d_timeseries)
-        logger.debug("substances 1d %s", self.substance_concentrations_1d)
-        logger.debug("substances 2d %s", self.substance_concentrations_2d)
-        self.get_boundary_conditions_data(timesteps_in_seconds=True)
         if self.rb_from_template.isChecked():
             self.gb_upload_1d.setChecked(False)
             self.gb_upload_2d.setChecked(False)
@@ -506,10 +505,59 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
         return boundary_conditions_data
 
+    def recalculate_substances_timeseries(self, bc_type, timesteps_in_seconds=False):
+        """Recalculate substances timeseries (timesteps in seconds)."""
+        substance_concentrations = {}
+        if bc_type == self.TYPE_1D:
+            substance_concentrations.update(self.substance_concentrations_1d)
+        else:
+            substance_concentrations.update(self.substance_concentrations_2d)
+        substances = deepcopy(substance_concentrations)
+        substances_data = {}
+        if bc_type == self.TYPE_1D:
+            bc_timeseries = self.boundary_conditions_1d_timeseries
+        else:
+            bc_timeseries = self.boundary_conditions_2d_timeseries
+        for bc in bc_timeseries:
+            bc_id = str(bc["id"])
+            if bc_id in substances:
+                substances_data[bc_id] = substances[bc_id]
+        if timesteps_in_seconds is False:
+            return substances_data
+        units = self.cbo_bc_units_1d.currentText() if bc_type == self.TYPE_1D else self.cbo_bc_units_2d.currentText()
+        if units == "hrs":
+            seconds_per_unit = 3600
+        elif units == "mins":
+            seconds_per_unit = 60
+        else:
+            seconds_per_unit = 1
+        for bc_substances in substances_data.values():
+            for substance in bc_substances:
+                substance["concentrations"] = [[t * seconds_per_unit, v] for (t, v) in substance["concentrations"]]
+        return substances_data
+
+    def update_boundary_conditions_with_substances(self, boundary_conditions_data, substances):
+        """ "Update boundary conditions with substances."""
+        for bc in boundary_conditions_data:
+            bc_id = str(bc["id"])
+            if bc_id in substances:
+                bc["substances"] = substances[bc_id]
+
     def get_boundary_conditions_data(self, timesteps_in_seconds=False):
         """Get boundary conditions data."""
-        boundary_conditions_data = self.recalculate_boundary_conditions_timeseries(self.TYPE_1D, timesteps_in_seconds)
-        boundary_conditions_data += self.recalculate_boundary_conditions_timeseries(self.TYPE_2D, timesteps_in_seconds)
+        boundary_conditions_data_1d = self.recalculate_boundary_conditions_timeseries(
+            self.TYPE_1D, timesteps_in_seconds
+        )
+        if self.substance_concentrations_1d:
+            substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
+            self.update_boundary_conditions_with_substances(boundary_conditions_data_1d, substances)
+        boundary_conditions_data_2d = self.recalculate_boundary_conditions_timeseries(
+            self.TYPE_2D, timesteps_in_seconds
+        )
+        if self.substance_concentrations_2d:
+            substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
+            self.update_boundary_conditions_with_substances(boundary_conditions_data_2d, substances)
+        boundary_conditions_data = boundary_conditions_data_1d + boundary_conditions_data_2d
         return self.template_boundary_conditions, boundary_conditions_data
 
 
