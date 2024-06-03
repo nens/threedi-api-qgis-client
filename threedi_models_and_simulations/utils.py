@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import tempfile
+from typing import List
 from collections import OrderedDict
 from datetime import datetime
 from enum import Enum
@@ -237,6 +238,22 @@ def extract_error_message(e):
         error_details = str(error_body)
     error_msg = f"Error: {error_details}"
     return error_msg
+
+
+def handle_substance_header(header: List[str]):
+    """
+    Handle CSV header.
+    Return None if fetch successful or error message if file is empty or have invalid structure.
+    """
+    error_message = None
+    if not header:
+        error_message = "CSV file is empty!"
+        return error_message
+    if "id" not in header:
+        error_message = "Missing 'id' column in CSV file!"
+    if "timeseries" not in header:
+        error_message = "Missing 'timeseries' column in CSV file!"
+    return error_message
 
 
 def apply_24h_timeseries(start_datetime, end_datetime, timeseries):

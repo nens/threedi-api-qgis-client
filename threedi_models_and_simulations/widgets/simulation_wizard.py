@@ -46,6 +46,7 @@ from ..utils import (
     ms_to_mmh,
     parse_timeseries,
     read_json_data,
+    handle_substance_header,
 )
 from ..utils_ui import (
     get_filepath,
@@ -311,6 +312,8 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         self.template_boundary_conditions = None
         self.boundary_conditions_1d_timeseries = []
         self.boundary_conditions_2d_timeseries = []
+        self.substance_concentrations_1d = {}
+        self.substance_concentrations_2d = {}
         self.connect_signals()
 
     def connect_signals(self):
@@ -336,9 +339,38 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 6, 2)
 
-    def handle_substance_errors(self):
-        """Handle error message."""
-        return None
+    def handle_substance_errors(self, header, substance_list, laterals_type):
+        """
+        First, check if boundary condition values are uploaded.
+        Second, check if substance concentrations timesteps match exactly the boundary condition values timesteps.
+        Return None if they match or error message if not.
+        """
+        error_message = handle_substance_header(header)
+        bc_timeseries = (
+            self.boundary_conditions_1d_timeseries if laterals_type == self.TYPE_1D else self.boundary_conditions_2d_timeseries
+        )
+        if not bc_timeseries:
+            error_message = "No boundary conditions uploaded yet!"
+        if not substance_list:
+            error_message = "CSV file is empty!"
+        if error_message is None:
+            for substance in substance_list:
+                bc_id = int(substance.get("id"))
+                timeseries = substance.get("timeseries")
+                boundary_condition = next((bc for bc in bc_timeseries if bc["id"] == bc_id), None)
+                if boundary_condition is None:
+                    error_message = f"Boundary condition with ID {bc_id} not found!"
+                    break
+                bcValues = boundary_condition["values"]
+                bc_timesteps = [t for (t, _) in bcValues]
+                concentrations = parse_timeseries(timeseries)
+                concentrations_timesteps = [t for (t, _) in concentrations]
+                if bc_timesteps != concentrations_timesteps:
+                    error_message = "Substance concentrations timesteps do not match boundary condition values timesteps!"
+                    break
+        if error_message is not None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        return error_message
 
     def set_template_boundary_conditions(self, template_boundary_conditions=None):
         """Setting boundary conditions data derived from the simulation template."""
@@ -352,6 +384,11 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
 
     def change_boundary_conditions_source(self):
         """Disable/enable widgets based on the boundary conditions source."""
+        logger.debug("boundary conditions 1d %s", self.boundary_conditions_1d_timeseries)
+        logger.debug("boundary conditions 2d %s", self.boundary_conditions_2d_timeseries)
+        logger.debug("substances 1d %s", self.substance_concentrations_1d)
+        logger.debug("substances 2d %s", self.substance_concentrations_2d)
+        self.get_boundary_conditions_data(timesteps_in_seconds=True)
         if self.rb_from_template.isChecked():
             self.gb_upload_1d.setChecked(False)
             self.gb_upload_2d.setChecked(False)
@@ -740,29 +777,13 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
 
-    @staticmethod
-    def handle_substance_header(header: List[str]):
-        """
-        Handle CSV header.
-        Return None if fetch successful or error message if file is empty or have invalid structure.
-        """
-        error_message = None
-        if not header:
-            error_message = "CSV file is empty!"
-            return error_message
-        if "id" not in header:
-            error_message = "Missing 'id' column in CSV file!"
-        if "timeseries" not in header:
-            error_message = "Missing 'timeseries' column in CSV file!"
-        return error_message
-
     def handle_substance_timesteps(self, header, substance_list, laterals_type):
         """
         First, check if lateral values are uploaded.
         Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
         Return None if they match or error message if not.
         """
-        error_message = self.handle_substance_header(header)
+        error_message = handle_substance_header(header)
         laterals_timeseries = (
             self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
         )
