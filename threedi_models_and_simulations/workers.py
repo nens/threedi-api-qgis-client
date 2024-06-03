@@ -676,7 +676,16 @@ class SimulationRunner(QRunnable):
             upload_file_boundary_conditions(bc_file_name, bc_temp_filepath)
             os.remove(bc_temp_filepath)
         if boundary_conditions.data:
-            write_json_data(boundary_conditions.data, BOUNDARY_CONDITIONS_TEMPLATE)
+            boundary_conditions_data = boundary_conditions.data
+            # Replace substance names with substance ids
+            if boundary_conditions_data and self.substances:
+                for boundary_condition in boundary_conditions_data:
+                    for substance in boundary_condition.get("substances", []):
+                        substance_name = substance.get("substance")
+                        if substance_name in self.substances:
+                            substance_id = self.substances[substance_name]
+                            substance["substance"] = substance_id
+            write_json_data(boundary_conditions_data, BOUNDARY_CONDITIONS_TEMPLATE)
             bc_file_name = f"{sim_name}_boundary_conditions.json"
             upload_file_boundary_conditions(bc_file_name, BOUNDARY_CONDITIONS_TEMPLATE)
 
