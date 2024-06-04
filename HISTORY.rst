@@ -10,6 +10,8 @@ History
 - Simulation wizard: Improve laterals page (#545).
 - Improvements for Upload wizard (#541).
 - Updated threedi-api-client version to 4.1.6.
+- Updated threedi-schema version to 0.219.3.
+
 
 3.10 (2024-04-12)
 -----------------
