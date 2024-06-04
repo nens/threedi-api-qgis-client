@@ -307,7 +307,11 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         self.setupUi(self)
         self.parent_page = parent_page
         self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
-        self.substances = parent_page.parent_wizard.substances_page.main_widget.substances
+        self.substances = (
+            parent_page.parent_wizard.substances_page.main_widget.substances
+            if hasattr(parent_page.parent_wizard, "substances_page")
+            else []
+        )
         set_widget_background_color(self)
         self.template_boundary_conditions = None
         self.boundary_conditions_1d_timeseries = []
@@ -746,7 +750,11 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.setupUi(self)
         self.parent_page = parent_page
         self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
-        self.substances = parent_page.parent_wizard.substances_page.main_widget.substances
+        self.substances = (
+            parent_page.parent_wizard.substances_page.main_widget.substances
+            if hasattr(parent_page.parent_wizard, "substances_page")
+            else []
+        )
         set_widget_background_color(self)
         self.laterals_1d = []
         self.laterals_2d = []
