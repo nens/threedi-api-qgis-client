@@ -131,6 +131,9 @@ class SimulationInit(uicls, basecls):
         # Check post-processing options
         if self.lizard_post_processing_overview and self.lizard_post_processing_overview.results.basic:
             self.cb_postprocess.setChecked(True)
+        # Check substances
+        if self.events.substances:
+            self.cb_substances.setChecked(True)
 
     def toggle_breaches(self):
         """Handle breaches checkboxes state changes."""
