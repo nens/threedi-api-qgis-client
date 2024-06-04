@@ -599,7 +599,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
         self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
         parent_layout = self.layout()
-        parent_layout.addWidget(self.groupbox, 4, 2)
+        parent_layout.addWidget(self.groupbox, 2, 2)
 
     def handle_substance_errors(self, header, substance_list, type):
         """Handle substance errors."""
