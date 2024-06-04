@@ -240,7 +240,7 @@ def extract_error_message(e):
     return error_msg
 
 
-def handle_substance_header(header: List[str]):
+def handle_csv_header(header: List[str]):
     """
     Handle CSV header.
     Return None if fetch successful or error message if file is empty or have invalid structure.

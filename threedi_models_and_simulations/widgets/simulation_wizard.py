@@ -46,7 +46,7 @@ from ..utils import (
     ms_to_mmh,
     parse_timeseries,
     read_json_data,
-    handle_substance_header,
+    handle_csv_header,
 )
 from ..utils_ui import (
     get_filepath,
@@ -345,7 +345,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         Second, check if substance concentrations timesteps match exactly the boundary condition values timesteps.
         Return None if they match or error message if not.
         """
-        error_message = handle_substance_header(header)
+        error_message = handle_csv_header(header)
         bc_timeseries = (
             self.boundary_conditions_1d_timeseries
             if bc_type == self.TYPE_1D
@@ -411,23 +411,6 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         else:
             raise NotImplementedError
 
-    def handle_boundary_conditions_header(self, header: List[str], log_error=True):
-        """
-        Handle boundary conditions potential header.
-        Return None if fetch successful or error message if file is empty or have invalid structure.
-        """
-        error_message = None
-        if not header:
-            error_message = "CSV file is empty!"
-            if log_error:
-                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
-            return error_message
-        if len(header) != 2:
-            error_message = "Wrong timeseries format for boundary conditions!"
-            if log_error:
-                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
-        return error_message
-
     def open_upload_dialog(self, boundary_conditions_type):
         """Open dialog for selecting CSV file with boundary conditions."""
         last_folder = read_3di_settings("last_boundary_conditions_folder", os.path.expanduser("~"))
@@ -441,7 +424,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             reader = csv.DictReader(csvfile)
             header = reader.fieldnames
             boundary_conditions_list = list(reader)
-        error_msg = self.handle_boundary_conditions_header(header)
+        error_msg = handle_csv_header(header)
         if error_msg is not None:
             return None, None
         interpolate = (
@@ -831,7 +814,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
         Return None if they match or error message if not.
         """
-        error_message = handle_substance_header(header)
+        error_message = handle_csv_header(header)
         laterals_timeseries = (
             self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
         )
