@@ -528,18 +528,22 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
 
     def get_boundary_conditions_data(self, timesteps_in_seconds=False):
         """Get boundary conditions data."""
-        boundary_conditions_data_1d = self.recalculate_boundary_conditions_timeseries(
-            self.TYPE_1D, timesteps_in_seconds
-        )
-        if self.substance_concentrations_1d:
-            substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
-            self.update_boundary_conditions_with_substances(boundary_conditions_data_1d, substances)
-        boundary_conditions_data_2d = self.recalculate_boundary_conditions_timeseries(
-            self.TYPE_2D, timesteps_in_seconds
-        )
-        if self.substance_concentrations_2d:
-            substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
-            self.update_boundary_conditions_with_substances(boundary_conditions_data_2d, substances)
+        boundary_conditions_data_1d = []
+        boundary_conditions_data_2d = []
+        if self.gb_upload_1d.isChecked():
+            boundary_conditions_data_1d = self.recalculate_boundary_conditions_timeseries(
+                self.TYPE_1D, timesteps_in_seconds
+            )
+            if self.substance_concentrations_1d:
+                substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
+                self.update_boundary_conditions_with_substances(boundary_conditions_data_1d, substances)
+        if self.gb_upload_2d.isChecked():
+            boundary_conditions_data_2d = self.recalculate_boundary_conditions_timeseries(
+                self.TYPE_2D, timesteps_in_seconds
+            )
+            if self.substance_concentrations_2d:
+                substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
+                self.update_boundary_conditions_with_substances(boundary_conditions_data_2d, substances)
         boundary_conditions_data = boundary_conditions_data_1d + boundary_conditions_data_2d
         return self.template_boundary_conditions, boundary_conditions_data
 
