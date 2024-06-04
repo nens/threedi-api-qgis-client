@@ -11,7 +11,7 @@ History
 - Improvements for Upload wizard (#541).
 - Updated threedi-api-client version to 4.1.6.
 - Updated threedi-schema version to 0.219.3.
-
+- Applied models sorting by their revision as an integer (#564).
 
 3.10 (2024-04-12)
 -----------------

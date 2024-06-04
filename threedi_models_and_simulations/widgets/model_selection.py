@@ -154,7 +154,9 @@ class ModelSelectionDialog(uicls, basecls):
                 name_item.setData(sim_model, role=Qt.UserRole)
                 schema_item = QStandardItem(sim_model.schematisation_name)
                 schema_item.setData(sim_model.schematisation_id, role=Qt.UserRole)
-                rev_item = QStandardItem(sim_model.revision_number)
+                rev_number = sim_model.revision_number
+                rev_item = QStandardItem(rev_number)
+                rev_item.setData(int(rev_number), role=Qt.DisplayRole)
                 last_updated_day = sim_model.revision_commit_date.split("T")[0]
                 lu_datetime = QDateTime.fromString(last_updated_day, "yyyy-MM-dd")
                 lu_item = QStandardItem(lu_datetime.toString("dd-MMMM-yyyy"))
