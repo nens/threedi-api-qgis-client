@@ -1,13 +1,13 @@
 History
 =======
 
-3.10.2 (unreleased)
+3.10.3 (unreleased)
 -------------------
 
 - Nothing changed yet.
 
 
-3.10.1 (2024-06-05)
+3.10.2 (2024-06-05)
 -------------------
 
 - Use column names i/o column orderings to read CSV uploaded files (#563).
