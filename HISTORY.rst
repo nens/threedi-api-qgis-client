@@ -1,8 +1,8 @@
 History
 =======
 
-3.11 (unreleased)
------------------
+3.10.1 (2024-06-05)
+-------------------
 
 - Use column names i/o column orderings to read CSV uploaded files (#563).
 - Add substance concentrations to Laterals page (#553, #557).
