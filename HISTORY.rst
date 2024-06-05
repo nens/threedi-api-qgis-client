@@ -8,6 +8,7 @@ History
 - Added handling of the 'started_from' Simulation parameter (#556).
 - Updated threedi-api-client version to 4.1.7.
 - Added simulation name sanitization (#497).
+- Changed simulation results directory name (#530).
 
 
 3.10.2 (2024-06-05)

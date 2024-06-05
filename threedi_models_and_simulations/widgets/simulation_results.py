@@ -207,7 +207,7 @@ class SimulationResults(uicls, basecls):
                     raise e
             if not results_dir:
                 return
-            simulation_subdirectory = translate_illegal_chars(f"sim_{sim_id}_{simulation_name}")
+            simulation_subdirectory = translate_illegal_chars(f"{simulation_name} ({sim_id}")
             simulation_subdirectory_path = os.path.join(results_dir, simulation_subdirectory)
             downloads = tc.fetch_simulation_downloads(sim_id)
             if gridadmin_downloads is not None:
