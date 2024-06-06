@@ -4,7 +4,7 @@ History
 3.10.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Added computational grid checks before an upload (#429).
 
 
 3.10.2 (2024-06-05)
