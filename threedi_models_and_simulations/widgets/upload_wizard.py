@@ -122,22 +122,24 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             self.pb_check_model.setDisabled(True)
 
     def run_model_checks(self):
-        """Run all model checks."""
+        """Run all available checks for a schematisation model."""
         self.btn_export_check_spatialite_results.setDisabled(True)
         self.lbl_check_spatialite.hide()
         self.pbar_check_spatialite.show()
         self.spatialite_checker_logger.initialize_view()
         self.pbar_check_spatialite.setValue(0)
         self.check_spatialite()
+        self.btn_export_check_spatialite_results.setEnabled(True)
         self.lbl_check_grid.hide()
         self.pbar_check_grid.show()
         self.grid_checker_logger.initialize_view()
         self.pbar_check_grid.setValue(0)
         self.check_computational_grid()
-        self.btn_export_check_spatialite_results.setEnabled(True)
+        self.btn_export_check_grid_results.setEnabled(True)
         self.communication.bar_info("Finished schematisation checks.")
 
     def check_spatialite(self):
+        """Run spatialite database checks."""
         from sqlalchemy.exc import OperationalError
         from threedi_modelchecker import ThreediModelChecker
         from threedi_schema import ThreediDatabase, errors
@@ -225,6 +227,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.lbl_check_spatialite.show()
 
     def check_computational_grid(self):
+        """Run computational grid checks."""
         from threedigrid_builder import SchematisationError, make_gridadmin
 
         def progress_logger(progress, info):
