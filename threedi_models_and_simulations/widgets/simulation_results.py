@@ -153,7 +153,7 @@ class SimulationResults(uicls, basecls):
             name_item = self.tv_model.item(current_row, 0)
             sim_id = name_item.data(Qt.UserRole)
             simulation = tc.fetch_simulation(sim_id)
-            simulation_name = simulation.name.replace(" ", "_")
+            simulation_name = simulation.name
             simulation_model_id = int(simulation.threedimodel_id)
             results_dir, gridadmin_downloads, gridadmin_downloads_gpkg = None, None, None
             try:
@@ -207,7 +207,7 @@ class SimulationResults(uicls, basecls):
                     raise e
             if not results_dir:
                 return
-            simulation_subdirectory = translate_illegal_chars(f"{simulation_name} ({sim_id}")
+            simulation_subdirectory = translate_illegal_chars(f"{simulation_name} ({sim_id})")
             simulation_subdirectory_path = os.path.join(results_dir, simulation_subdirectory)
             downloads = tc.fetch_simulation_downloads(sim_id)
             if gridadmin_downloads is not None:
