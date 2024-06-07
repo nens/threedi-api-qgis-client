@@ -73,7 +73,9 @@ class StartWidget(uicls_start_page, basecls_start_page):
 class CheckModelWidget(uicls_check_page, basecls_check_page):
     """Widget for the Check Model page."""
 
-    SCHEMA_CHECKS_HEADER = ("Level", "Error code", "ID", "Table", "Column", "Value", "Description")
+    SPATIALITE_CHECKS_HEADER = ("Level", "Error code", "ID", "Table", "Column", "Value", "Description")
+    GRID_CHECKS_HEADER = ("Level", "Description")
+
     CHECKS_PER_CODE_LIMIT = 100
 
     def __init__(self, parent_page):
@@ -83,10 +85,25 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.current_local_schematisation = self.parent_page.parent_wizard.current_local_schematisation
         self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
         self.communication = self.parent_page.parent_wizard.plugin_dock.communication
-        self.schematisation_checker_logger = TreeViewLogger(self.tv_schema_check_result, self.SCHEMA_CHECKS_HEADER)
+        self.spatialite_checker_logger = TreeViewLogger(self.tv_schema_check_result, self.SPATIALITE_CHECKS_HEADER)
+        self.grid_checker_logger = TreeViewLogger(self.tv_grid_check_result, self.GRID_CHECKS_HEADER)
         self.pb_check_model.clicked.connect(self.run_model_checks)
-        self.btn_export_check_results.clicked.connect(self.export_schematisation_checker_results)
+        self.btn_export_check_spatialite_results.clicked.connect(
+            partial(
+                self.export_schematisation_checker_results,
+                self.spatialite_checker_logger,
+                self.SPATIALITE_CHECKS_HEADER,
+            )
+        )
+        self.btn_export_check_grid_results.clicked.connect(
+            partial(
+                self.export_schematisation_checker_results,
+                self.grid_checker_logger,
+                self.GRID_CHECKS_HEADER,
+            )
+        )
         self.lbl_check_spatialite.hide()
+        self.lbl_check_grid.hide()
         self.lbl_on_limited_display.hide()
         self.test_external_imports()
 
@@ -96,6 +113,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             from sqlalchemy.exc import OperationalError
             from threedi_modelchecker import ThreediModelChecker
             from threedi_schema import ThreediDatabase, errors
+            from threedigrid_builder import SchematisationError, make_gridadmin
 
             self.lbl_on_import_error.hide()
             self.pb_check_model.setEnabled(True)
@@ -104,23 +122,29 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             self.pb_check_model.setDisabled(True)
 
     def run_model_checks(self):
-        """Run all model checks."""
+        """Run all available checks for a schematisation model."""
+        self.btn_export_check_spatialite_results.setDisabled(True)
         self.lbl_check_spatialite.hide()
         self.pbar_check_spatialite.show()
-        self.schematisation_checker_logger.initialize_view()
+        self.spatialite_checker_logger.initialize_view()
         self.pbar_check_spatialite.setValue(0)
-        self.btn_export_check_results.setDisabled(True)
-        self.check_schematisation()
+        self.check_spatialite()
+        self.btn_export_check_spatialite_results.setEnabled(True)
+        self.lbl_check_grid.hide()
+        self.pbar_check_grid.show()
+        self.grid_checker_logger.initialize_view()
+        self.pbar_check_grid.setValue(0)
+        self.check_computational_grid()
+        self.btn_export_check_grid_results.setEnabled(True)
+        self.communication.bar_info("Finished schematisation checks.")
 
-    def check_schematisation(self):
-        """Run schematisation checker."""
+    def check_spatialite(self):
+        """Run spatialite database checks."""
+        from sqlalchemy.exc import OperationalError
+        from threedi_modelchecker import ThreediModelChecker
+        from threedi_schema import ThreediDatabase, errors
+
         self.lbl_on_limited_display.hide()
-        try:
-            from sqlalchemy.exc import OperationalError
-            from threedi_modelchecker import ThreediModelChecker
-            from threedi_schema import ThreediDatabase, errors
-        except ImportError:
-            raise
         threedi_db = ThreediDatabase(self.schematisation_sqlite)
         schema = threedi_db.schema
         try:
@@ -173,8 +197,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         session = model_checker.db.get_session()
         session.model_checker_context = model_checker.context
         total_checks = len(model_checker.config.checks)
-        self.pbar_check_spatialite.setMaximum(total_checks)
-        self.pbar_check_spatialite.setValue(0)
+
         results_rows = defaultdict(list)
         for i, check in enumerate(model_checker.checks(level=LogLevels.INFO.value), start=1):
             for result_row in check.get_invalid(session):
@@ -198,16 +221,46 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                         self.lbl_on_limited_display.show()
                 for result_row in results_per_code:
                     level = result_row[0].upper()
-                    self.schematisation_checker_logger.log_result_row(result_row, level)
-            self.btn_export_check_results.setEnabled(True)
-        self.communication.bar_info("Finished schematisation checks.")
+                    self.spatialite_checker_logger.log_result_row(result_row, level)
         self.pbar_check_spatialite.setValue(total_checks)
         self.pbar_check_spatialite.hide()
         self.lbl_check_spatialite.show()
 
-    def export_schematisation_checker_results(self):
+    def check_computational_grid(self):
+        """Run computational grid checks."""
+        from threedigrid_builder import SchematisationError, make_gridadmin
+
+        def progress_logger(progress, info):
+            self.pbar_check_grid.setValue(int(progress * 100))
+            self.grid_checker_logger.log_result_row([LogLevels.INFO.value.capitalize(), info], LogLevels.INFO.value)
+
+        self.pbar_check_grid.setMaximum(100)
+        self.pbar_check_grid.setValue(0)
+        try:
+            global_settings_layer = sqlite_layer(self.schematisation_sqlite, "v2_global_settings", geom_column=None)
+            global_settings_feat = next(global_settings_layer.getFeatures())
+            dem_file = global_settings_feat["dem_file"]
+            if dem_file:
+                spatialite_dir = os.path.dirname(self.schematisation_sqlite)
+                dem_file_name = os.path.basename(dem_file)
+                dem_path = os.path.join(spatialite_dir, "rasters", dem_file_name)
+            else:
+                dem_path = None
+            make_gridadmin(sqlite_path=self.schematisation_sqlite, dem_path=dem_path, progress_callback=progress_logger)
+        except SchematisationError as e:
+            err = f"Creating grid file failed with the following error: {repr(e)}"
+            self.grid_checker_logger.log_result_row([LogLevels.ERROR.value.capitalize(), err], LogLevels.ERROR.value)
+        except Exception as e:
+            err = f"Checking computational grid failed with the following error: {repr(e)}"
+            self.grid_checker_logger.log_result_row([LogLevels.ERROR.value.capitalize(), err], LogLevels.ERROR.value)
+        finally:
+            self.pbar_check_grid.setValue(100)
+        self.pbar_check_grid.hide()
+        self.lbl_check_grid.show()
+
+    def export_schematisation_checker_results(self, logger_tree_view, header):
         """Save schematisation checker results into the CSV file."""
-        model = self.schematisation_checker_logger.model
+        model = logger_tree_view.model
         row_count = model.rowCount()
         column_count = model.columnCount()
         checker_results = []
@@ -225,7 +278,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             return
         with open(csv_filepath, "w", newline="") as csv_file:
             csv_writer = csv.writer(csv_file, delimiter=",")
-            csv_writer.writerow(self.SCHEMA_CHECKS_HEADER)
+            csv_writer.writerow(header)
             csv_writer.writerows(checker_results)
         self.communication.show_info("Schematisation checker results successfully exported!")
 

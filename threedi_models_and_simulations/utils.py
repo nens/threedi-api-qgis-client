@@ -288,9 +288,11 @@ def parse_version_number(version_str):
     version = [int(i) for i in version_str.split(".") if i.isnumeric()]
     return version
 
+
 def parse_timeseries(timeseries: str):
     """Parse the timeseries from the given string."""
     return [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+
 
 class SchematisationRasterReferences:
     @staticmethod

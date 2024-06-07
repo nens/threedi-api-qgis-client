@@ -50,11 +50,11 @@ from ..utils import (
 from ..utils_ui import (
     get_filepath,
     qgis_layers_cbo_get_layer_uri,
+    read_3di_settings,
+    save_3di_settings,
     scan_widgets_parameters,
     set_widget_background_color,
     set_widgets_parameters,
-    read_3di_settings,
-    save_3di_settings,
 )
 from .custom_items import FilteredComboBox
 from .substance_concentrations import SubstanceConcentrationsWidget
