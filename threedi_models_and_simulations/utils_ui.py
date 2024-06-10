@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from qgis.gui import QgsFileWidget, QgsProjectionSelectionWidget
 from qgis.PyQt.QtCore import QDate, QSettings, QTime
-from qgis.PyQt.QtGui import QColor, QIcon
+from qgis.PyQt.QtGui import QColor, QIcon, QDoubleValidator
 from qgis.PyQt.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -14,6 +14,7 @@ from qgis.PyQt.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QGroupBox,
+    QItemDelegate,
     QLineEdit,
     QRadioButton,
     QSpinBox,
@@ -206,3 +207,12 @@ def read_3di_settings(entry_name, default_value=""):
     settings = QSettings()
     value_from_settings = settings.value(f"threedi/{entry_name}", default_value)
     return value_from_settings
+
+
+class NumericDelegate(QItemDelegate):
+    def createEditor(self, parent: QWidget) -> QWidget:
+        editor = QLineEdit(parent)
+        validator = QDoubleValidator(0.0, 999999999.0, 10, parent)
+        validator.setNotation(QDoubleValidator.StandardNotation)
+        editor.setValidator(validator)
+        return editor
