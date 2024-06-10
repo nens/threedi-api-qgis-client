@@ -294,6 +294,12 @@ def parse_timeseries(timeseries: str):
     return [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
 
 
+def translate_illegal_chars(text, illegal_characters=r'\/:*?"<>|', replacement_character="-"):
+    """Remove illegal characters from the text."""
+    sanitized_text = "".join(char if char not in illegal_characters else replacement_character for char in text)
+    return sanitized_text
+
+
 class SchematisationRasterReferences:
     @staticmethod
     def global_settings_rasters():
