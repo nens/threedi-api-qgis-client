@@ -202,6 +202,9 @@
                <pointsize>10</pointsize>
               </font>
              </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
            <item>
@@ -1032,6 +1035,18 @@
      <y>440</y>
     </hint>
    </hints>
+  </connection>
+  <connection>
+   <sender>rb_1d_upload_csv</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>le_1d_upload_csv</receiver>
+   <slot>setEnabled(bool)</slot>
+  </connection>
+  <connection>
+   <sender>rb_1d_upload_csv</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_1d_upload_csv</receiver>
+   <slot>setEnabled(bool)</slot>
   </connection>
  </connections>
 </ui>
