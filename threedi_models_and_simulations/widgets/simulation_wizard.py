@@ -573,6 +573,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         set_widget_background_color(self)
         self.initial_saved_state = initial_conditions.initial_saved_state
         self.initial_waterlevels = {}
+        self.initial_waterlevels_1d_timeseries = []
         self.saved_states = {}
         self.gb_saved_state.setChecked(False)
         self.gb_1d.setChecked(False)
@@ -582,6 +583,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.cbo_gw_local_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.btn_browse_2d_local_raster.clicked.connect(partial(self.browse_for_local_raster, self.cbo_2d_local_raster))
         self.btn_browse_gw_local_raster.clicked.connect(partial(self.browse_for_local_raster, self.cbo_gw_local_raster))
+        self.btn_1d_upload_csv.clicked.connect(self.load_csv)
         self.setup_initial_conditions()
         self.connect_signals()
 
@@ -641,6 +643,59 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         except Exception as e:
             error_msg = f"Error: {e}"
             self.parent_page.parent_wizard.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
+
+    def load_csv(self):
+        """Load 1D initial water level from the CSV file."""
+        values, filename = self.open_upload_dialog()
+        if not filename:
+            return
+        self.le_1d_upload_csv.setText(filename)
+        self.initial_waterlevels_1d_timeseries = values
+
+    def handle_1D_initial_waterlevels_header(self, header: List[str]):
+        """
+        Handle 1D initial waterlevels potential header.
+        Return None if fetch successful or error message if file is empty or have invalid structure.
+        """
+        error_message = None
+        if not header:
+            error_message = "CSV file is empty!"
+            return error_message
+        if "id" not in header:
+            error_message = "Missing 'id' column in CSV file!"
+        if "value" not in header:
+            error_message = "Missing 'value' column in CSV file!"
+        return error_message
+
+    def open_upload_dialog(self):
+        """Open dialog for selecting CSV file with 1D initial waterlevels."""
+        last_folder = read_3di_settings("last_1d_initial_waterlevels", os.path.expanduser("~"))
+        file_filter = "CSV (*.csv );;All Files (*)"
+        filename, __ = QFileDialog.getOpenFileName(self, "1D Initial Waterlevels Time Series", last_folder, file_filter)
+        if len(filename) == 0:
+            return None, None
+        save_3di_settings("last_1d_initial_waterlevels", os.path.dirname(filename))
+        values = []
+        with open(filename, encoding="utf-8-sig") as csvfile:
+            reader = csv.DictReader(csvfile)
+            header = reader.fieldnames
+            waterlevels_list = list(reader)
+        error_msg = self.handle_1D_initial_waterlevels_header(header)
+        if error_msg is not None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_msg)
+            return None, None
+        for row in waterlevels_list:
+            node_id = row.get("id")
+            value = row.get("value")
+            try:
+                waterlevel = {
+                    "id": int(node_id),
+                    "value": value,
+                }
+                values.append(waterlevel)
+            except ValueError:
+                continue
+        return values, filename
 
     @staticmethod
     def browse_for_local_raster(layers_widget):
