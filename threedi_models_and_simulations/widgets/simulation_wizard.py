@@ -690,7 +690,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             try:
                 waterlevel = {
                     "id": int(node_id),
-                    "value": value,
+                    "value": float(value),
                 }
                 values.append(waterlevel)
             except ValueError:
