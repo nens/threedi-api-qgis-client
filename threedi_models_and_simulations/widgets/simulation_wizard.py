@@ -573,7 +573,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         set_widget_background_color(self)
         self.initial_saved_state = initial_conditions.initial_saved_state
         self.initial_waterlevels = {}
-        self.initial_waterlevels_1d_timeseries = []
+        self.initial_waterlevels_1d = {}
         self.saved_states = {}
         self.gb_saved_state.setChecked(False)
         self.gb_1d.setChecked(False)
@@ -646,11 +646,11 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
 
     def load_csv(self):
         """Load 1D initial water level from the CSV file."""
-        values, filename = self.open_upload_dialog()
+        waterlevels, filename = self.open_upload_dialog()
         if not filename:
             return
         self.le_1d_upload_csv.setText(filename)
-        self.initial_waterlevels_1d_timeseries = values
+        self.initial_waterlevels_1d = waterlevels
 
     def handle_1D_initial_waterlevels_header(self, header: List[str]):
         """
@@ -675,6 +675,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         if len(filename) == 0:
             return None, None
         save_3di_settings("last_1d_initial_waterlevels", os.path.dirname(filename))
+        node_ids = []
         values = []
         with open(filename, encoding="utf-8-sig") as csvfile:
             reader = csv.DictReader(csvfile)
@@ -685,17 +686,15 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_msg)
             return None, None
         for row in waterlevels_list:
-            node_id = row.get("id")
-            value = row.get("value")
-            try:
-                waterlevel = {
-                    "id": int(node_id),
-                    "value": float(value),
-                }
-                values.append(waterlevel)
-            except ValueError:
-                continue
-        return values, filename
+            node_id = int(row.get("id"))
+            value = float(row.get("value"))
+            node_ids.append(node_id)
+            values.append(value)
+        waterlevels = {
+            "node_ids": node_ids,
+            "values": values,
+        }
+        return waterlevels, filename
 
     @staticmethod
     def browse_for_local_raster(layers_widget):
