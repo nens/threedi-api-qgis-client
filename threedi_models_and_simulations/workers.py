@@ -23,6 +23,7 @@ from .utils import (
     BOUNDARY_CONDITIONS_TEMPLATE,
     CHUNK_SIZE,
     DWF_FILE_TEMPLATE,
+    INITIAL_WATERLEVELS_TEMPLATE,
     LATERALS_FILE_TEMPLATE,
     RADAR_ID,
     TEMPDIR,
@@ -736,6 +737,7 @@ class SimulationRunner(QRunnable):
     def include_initial_conditions(self):
         """Add initial conditions to the new simulation."""
         sim_id = self.current_simulation.simulation.id
+        sim_name = self.current_simulation.name
         threedimodel_id = self.current_simulation.threedimodel_id
         initial_conditions = self.current_simulation.initial_conditions
         # 1D
@@ -743,6 +745,32 @@ class SimulationRunner(QRunnable):
             self.tc.create_simulation_initial_1d_water_level_constant(sim_id, value=initial_conditions.global_value_1d)
         if initial_conditions.from_spatialite_1d:
             self.tc.create_simulation_initial_1d_water_level_predefined(sim_id)
+        if initial_conditions.initial_waterlevels_1d is not None:
+            write_json_data(initial_conditions.initial_waterlevels_1d, INITIAL_WATERLEVELS_TEMPLATE)
+            filename = f"{sim_name}_1d_initial_waterlevels.json"
+            # 1. Create a new initial water level instance for this model
+            initial_waterlevel_instance = self.tc.create_initial_water_level(threedimodel_id, dimension="one_d")
+            initial_waterlevel_id = initial_waterlevel_instance.id
+            # 2. Create an upload instance for the initial waterl level
+            initial_waterlevel_upload = self.tc.upload_initial_water_level(threedimodel_id, initial_waterlevel_id, filename=filename)
+            upload_local_file(initial_waterlevel_upload, INITIAL_WATERLEVELS_TEMPLATE)
+            # 3. Wait for the data to be processed (initial_waterlevel.state == "valid")
+            for ti in range(int(self.upload_timeout // 2)):
+                uploaded_initial_waterlevel = self.tc.fetch_3di_model_initial_waterlevel(threedimodel_id, initial_waterlevel_id)
+                if uploaded_initial_waterlevel.state == ThreediFileState.VALID.value:
+                    # 4.1 Find & delete existing 1D water levels file
+                    water_level_1d_files = self.tc.fetch_simulation_initial_1d_water_level_files(sim_id)
+                    for water_level_1d_file in water_level_1d_files:
+                        self.tc.delete_simulation_initial_1d_water_level_file(sim_id, water_level_1d_file.id)
+                    # 4.2 Create a new 1d initial water level file
+                    self.tc.create_simulation_initial_1d_water_level_file(sim_id, initial_waterlevel=initial_waterlevel_id)
+                    break
+                elif uploaded_initial_waterlevel.state == ThreediFileState.INVALID.value:
+                    state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()
+                    err_msg = f"Failed to upload Initial Waterlevel file due to the following reasons: {state_detail}"
+                    raise SimulationRunnerError(err_msg)
+                else:
+                    time.sleep(2)
         # 2D
         if initial_conditions.global_value_2d is not None:
             self.tc.create_simulation_initial_2d_water_level_constant(sim_id, value=initial_conditions.global_value_2d)

@@ -3216,6 +3216,8 @@ class SimulationWizard(QWizard):
                     initial_conditions.global_value_1d = (
                         self.init_conditions_page.main_widget.sp_1d_global_value.value()
                     )
+                elif self.init_conditions_page.main_widget.rb_1d_upload_csv.isChecked():
+                    initial_conditions.initial_waterlevels_1d = self.init_conditions_page.main_widget.initial_waterlevels_1d
                 else:
                     initial_conditions.from_spatialite_1d = True
             # 2D
