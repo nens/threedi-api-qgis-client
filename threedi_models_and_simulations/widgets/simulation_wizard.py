@@ -314,6 +314,8 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         )
         set_widget_background_color(self)
         self.template_boundary_conditions = None
+        self.template_boundary_conditions_1d_timeseries = []
+        self.template_boundary_conditions_2d_timeseries = []
         self.boundary_conditions_1d_timeseries = []
         self.boundary_conditions_2d_timeseries = []
         self.substance_concentrations_1d = {}
@@ -345,18 +347,27 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
 
     def handle_substance_errors(self, header, substance_list, bc_type):
         """
-        First, check if boundary condition values are uploaded.
+        First, check if boundary condition values are available.
         Second, check if substance concentrations timesteps match exactly the boundary condition values timesteps.
         Return None if they match or error message if not.
         """
         error_message = handle_csv_header(header)
-        bc_timeseries = (
-            self.boundary_conditions_1d_timeseries
-            if bc_type == self.TYPE_1D
-            else self.boundary_conditions_2d_timeseries
-        )
+        bc_timeseries = []
+        if bc_type == self.TYPE_1D:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_1d_timeseries
+            else:
+                bc_timeseries = self.boundary_conditions_1d_timeseries
+        else:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_2d_timeseries
+            else:
+                bc_timeseries = self.boundary_conditions_2d_timeseries
         if not bc_timeseries:
-            error_message = "No boundary conditions uploaded yet!"
+            if self.rb_from_template.isChecked():
+                error_message = "No boundary conditions found in template file!"
+            else:
+                error_message = "No boundary conditions uploaded yet!"
         if not substance_list:
             error_message = "CSV file is empty!"
         if error_message is None:
@@ -2891,8 +2902,21 @@ class SimulationWizard(QWizard):
         simulation_duration = self.duration_page.main_widget.calculate_simulation_duration()
         init_conditions = self.init_conditions_dlg.initial_conditions
         if init_conditions.include_boundary_conditions:
-            temp_file_bc = events.fileboundaryconditions if events.fileboundaryconditions else None
-            self.boundary_conditions_page.main_widget.set_template_boundary_conditions(temp_file_bc)
+            bc_widget = self.boundary_conditions_page.main_widget
+            bc_file = events.fileboundaryconditions if events.fileboundaryconditions else None
+            self.boundary_conditions_page.main_widget.set_template_boundary_conditions(bc_file)
+            # Download file and set template boundary conditions timeseries
+            if bc_file:
+                tc = ThreediCalls(self.plugin_dock.threedi_api)
+                bc_file_name = bc_file.file.filename
+                bc_file_download = tc.fetch_boundarycondition_file_download(temp_simulation_id, bc_file.id)
+                bc_temp_filepath = os.path.join(TEMPDIR, bc_file_name)
+                get_download_file(bc_file_download, bc_temp_filepath)
+                bc_timeseries = read_json_data(bc_temp_filepath)
+                bc_timeseries_1d = [ts for ts in bc_timeseries if ts["type"] == "1D"]
+                bc_timeseries_2d = [ts for ts in bc_timeseries if ts["type"] == "2D"]
+                bc_widget.template_boundary_conditions_1d_timeseries = bc_timeseries_1d
+                bc_widget.template_boundary_conditions_2d_timeseries = bc_timeseries_2d
         if init_conditions.include_structure_controls:
             temp_file_sc = events.filestructurecontrols[0] if events.filestructurecontrols else None
             temp_memory_sc = events.memorystructurecontrols[0] if events.memorystructurecontrols else None
