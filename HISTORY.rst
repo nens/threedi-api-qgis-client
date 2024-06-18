@@ -14,6 +14,7 @@ History
 3.10.2 (2024-06-05)
 -------------------
 
+- Add substance concentrations to Boundary Conditions page (#559).
 - Use column names i/o column orderings to read CSV uploaded files (#563).
 - Add substance concentrations to Laterals page (#553, #557).
 - Add substances page to the simulation wizard (#548, #554).
