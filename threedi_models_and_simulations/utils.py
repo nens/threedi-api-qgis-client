@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import tempfile
+from typing import List
 from collections import OrderedDict
 from datetime import datetime
 from enum import Enum
@@ -239,6 +240,22 @@ def extract_error_message(e):
     return error_msg
 
 
+def handle_csv_header(header: List[str]):
+    """
+    Handle CSV header.
+    Return None if fetch successful or error message if file is empty or have invalid structure.
+    """
+    error_message = None
+    if not header:
+        error_message = "CSV file is empty!"
+        return error_message
+    if "id" not in header:
+        error_message = "Missing 'id' column in CSV file!"
+    if "timeseries" not in header:
+        error_message = "Missing 'timeseries' column in CSV file!"
+    return error_message
+
+
 def apply_24h_timeseries(start_datetime, end_datetime, timeseries):
     """Applying 24 hours Dry Weather Flow timeseries based on simulation duration."""
     start_day = datetime(start_datetime.year, start_datetime.month, start_datetime.day)
@@ -292,6 +309,12 @@ def parse_version_number(version_str):
 def parse_timeseries(timeseries: str):
     """Parse the timeseries from the given string."""
     return [[float(f) for f in line.split(",")] for line in timeseries.split("\n")]
+
+
+def translate_illegal_chars(text, illegal_characters=r'\/:*?"<>|', replacement_character="-"):
+    """Remove illegal characters from the text."""
+    sanitized_text = "".join(char if char not in illegal_characters else replacement_character for char in text)
+    return sanitized_text
 
 
 class SchematisationRasterReferences:
