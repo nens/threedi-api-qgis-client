@@ -49,6 +49,7 @@ from ..utils import (
     handle_csv_header,
 )
 from ..utils_ui import (
+    NumericDelegate,
     get_filepath,
     qgis_layers_cbo_get_layer_uri,
     read_3di_settings,
@@ -219,6 +220,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.substances = []
         set_widget_background_color(self)
         self.connect_signals()
+        self.init_table()
         self.add_item()  # Add an empty row by default
 
     def connect_signals(self):
@@ -227,6 +229,17 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.pb_remove.clicked.connect(self.remove_items)
         self.tw_substances.itemChanged.connect(self.handle_item_changed)
 
+    def init_table(self):
+        """Initialize substances table."""
+        NAME_COLUMN = 0
+        DECAY_COEFFICIENT_COLUMN = 2
+        # Set minimum width for the columns
+        self.tw_substances.setColumnWidth(NAME_COLUMN, self.MINIMUM_WIDTH)  # Name
+        self.tw_substances.setColumnWidth(DECAY_COEFFICIENT_COLUMN, 160)  # Decay coefficient
+        # Set the numeric delegate for the decay coefficient column
+        numeric_delegate = NumericDelegate(self.tw_substances)
+        self.tw_substances.setItemDelegateForColumn(DECAY_COEFFICIENT_COLUMN, numeric_delegate)
+
     def prepopulate_substances_table(self, substances):
         self.tw_substances.setRowCount(0)
         for substance in substances:
@@ -234,11 +247,14 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             row = self.tw_substances.rowCount() - 1
             name = substance.get("name", "")
             units = substance.get("units", "")
+            decay_coefficient = substance.get("decay_coefficient", "")
             if name:
                 name_item = QTableWidgetItem(name)
                 units_item = QTableWidgetItem(units)
+                decay_coefficient_item = QTableWidgetItem(decay_coefficient)
                 self.tw_substances.setItem(row, 0, name_item)
                 self.tw_substances.setItem(row, 1, units_item)
+                self.tw_substances.setItem(row, 2, decay_coefficient_item)
         self.set_substances_data()
         self.update_substances()
 
@@ -247,7 +263,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.tw_substances.insertRow(row_count)
         self.tw_substances.setItem(row_count, 0, QTableWidgetItem())
         self.tw_substances.setItem(row_count, 1, QTableWidgetItem())
-        self.tw_substances.setColumnWidth(0, self.MINIMUM_WIDTH)
+        self.tw_substances.setItem(row_count, 2, QTableWidgetItem())
 
     def remove_items(self):
         selected_rows = set()
@@ -295,13 +311,17 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         for row in range(row_count):
             name_item = self.tw_substances.item(row, 0)
             units_item = self.tw_substances.item(row, 1)
-            if name_item and units_item:
+            decay_coefficient_item = self.tw_substances.item(row, 2)
+            if name_item and units_item and decay_coefficient_item:
                 name = name_item.text()
                 units = units_item.text()
+                decay_coefficient = decay_coefficient_item.text()
                 if name:
                     substance = {"name": name}
                     if units:
                         substance["units"] = units
+                    if decay_coefficient:
+                        substance["decay_coefficient"] = decay_coefficient
                     self.substances.append(substance)
 
     def update_substances(self):

@@ -4,6 +4,7 @@ History
 3.10.3 (unreleased)
 -------------------
 
+- Added decay coefficients to substances table (#574).
 - Added computational grid checks before an upload (#429).
 - Added handling of the 'started_from' Simulation parameter (#556).
 - Updated threedi-api-client version to 4.1.7.
