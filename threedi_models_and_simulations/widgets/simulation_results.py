@@ -13,7 +13,7 @@ from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import LocalRevision, LocalSchematisation, bypass_max_path_limit, list_local_schematisations
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import API_DATETIME_FORMAT, USER_DATETIME_FORMAT, extract_error_message
+from ..utils import API_DATETIME_FORMAT, USER_DATETIME_FORMAT, extract_error_message, translate_illegal_chars
 from ..utils_ui import set_icon
 from ..workers import DownloadProgressWorker
 from .custom_items import DownloadProgressDelegate
@@ -153,7 +153,7 @@ class SimulationResults(uicls, basecls):
             name_item = self.tv_model.item(current_row, 0)
             sim_id = name_item.data(Qt.UserRole)
             simulation = tc.fetch_simulation(sim_id)
-            simulation_name = simulation.name.replace(" ", "_")
+            simulation_name = simulation.name
             simulation_model_id = int(simulation.threedimodel_id)
             results_dir, gridadmin_downloads, gridadmin_downloads_gpkg = None, None, None
             try:
@@ -207,7 +207,8 @@ class SimulationResults(uicls, basecls):
                     raise e
             if not results_dir:
                 return
-            simulation_subdirectory = os.path.join(results_dir, f"sim_{sim_id}_{simulation_name}")
+            simulation_subdirectory = translate_illegal_chars(f"{simulation_name} ({sim_id})")
+            simulation_subdirectory_path = os.path.join(results_dir, simulation_subdirectory)
             downloads = tc.fetch_simulation_downloads(sim_id)
             if gridadmin_downloads is not None:
                 downloads.append(gridadmin_downloads)
@@ -225,7 +226,7 @@ class SimulationResults(uicls, basecls):
             return
         self.pb_download.setDisabled(True)
         self.refresh_btn.setDisabled(True)
-        download_worker = DownloadProgressWorker(simulation, downloads, simulation_subdirectory)
+        download_worker = DownloadProgressWorker(simulation, downloads, simulation_subdirectory_path)
         download_worker.signals.thread_finished.connect(self.on_download_finished_success)
         download_worker.signals.download_failed.connect(self.on_download_finished_failed)
         download_worker.signals.download_progress.connect(self.on_download_progress_update)

@@ -536,6 +536,7 @@ class SimulationRunner(QRunnable):
             start_datetime=self.current_simulation.start_datetime,
             organisation=self.current_simulation.organisation_uuid,
             duration=self.current_simulation.duration,
+            started_from=self.current_simulation.started_from,
         )
         self.current_simulation.simulation = simulation
         current_status = self.tc.fetch_simulation_status(simulation.id)

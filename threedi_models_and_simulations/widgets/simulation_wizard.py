@@ -51,11 +51,11 @@ from ..utils import (
 from ..utils_ui import (
     get_filepath,
     qgis_layers_cbo_get_layer_uri,
+    read_3di_settings,
+    save_3di_settings,
     scan_widgets_parameters,
     set_widget_background_color,
     set_widgets_parameters,
-    read_3di_settings,
-    save_3di_settings,
 )
 from .custom_items import FilteredComboBox
 from .substance_concentrations import SubstanceConcentrationsWidget
@@ -226,6 +226,21 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.pb_add.clicked.connect(self.add_item)
         self.pb_remove.clicked.connect(self.remove_items)
         self.tw_substances.itemChanged.connect(self.handle_item_changed)
+
+    def prepopulate_substances_table(self, substances):
+        self.tw_substances.setRowCount(0)
+        for substance in substances:
+            self.add_item()
+            row = self.tw_substances.rowCount() - 1
+            name = substance.get("name", "")
+            units = substance.get("units", "")
+            if name:
+                name_item = QTableWidgetItem(name)
+                units_item = QTableWidgetItem(units)
+                self.tw_substances.setItem(row, 0, name_item)
+                self.tw_substances.setItem(row, 1, units_item)
+        self.set_substances_data()
+        self.update_substances()
 
     def add_item(self):
         row_count = self.tw_substances.rowCount()
@@ -2901,6 +2916,10 @@ class SimulationWizard(QWizard):
         # Simulation events
         simulation_duration = self.duration_page.main_widget.calculate_simulation_duration()
         init_conditions = self.init_conditions_dlg.initial_conditions
+        if init_conditions.include_substances:
+            substances = [{"name": item.name, "units": item.units or ""} for item in events.substances]
+            if substances:
+                self.substances_page.main_widget.prepopulate_substances_table(substances)
         if init_conditions.include_boundary_conditions:
             bc_widget = self.boundary_conditions_page.main_widget
             bc_file = events.fileboundaryconditions if events.fileboundaryconditions else None
