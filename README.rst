@@ -22,9 +22,9 @@ https://artifacts.lizard.net/ via the ``upload-artifact.sh`` script. You'll need
 to set $ARTIFACTS_KEY environment variable. Get the key from
 https://artifacts.lizard.net/admin/ Afterwards run it like this::
 
-    $ `docker compose run --rm qgis make clean` or `make clean`
-    $ `docker compose run --rm qgis make zip` or `make zip`
-    $ bash upload-artifact.sh threedi_api_qgis_client_<version>.zip
+    $ docker compose run --rm qgis make clean
+    $ docker compose run --rm qgis make zip
+    $ bash upload-artifact.sh threedi_models_and_simulations.<version>.zip
 
 
 Local development notes
