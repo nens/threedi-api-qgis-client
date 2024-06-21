@@ -1,7 +1,7 @@
 History
 =======
 
-3.10.3 (unreleased)
+3.11.0 (2024-06-21)
 -------------------
 
 - Added decay coefficients to substances table (#574).
