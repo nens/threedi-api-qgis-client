@@ -583,7 +583,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.cbo_gw_local_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.btn_browse_2d_local_raster.clicked.connect(partial(self.browse_for_local_raster, self.cbo_2d_local_raster))
         self.btn_browse_gw_local_raster.clicked.connect(partial(self.browse_for_local_raster, self.cbo_gw_local_raster))
-        self.btn_1d_upload_csv.clicked.connect(self.load_csv)
+        self.btn_1d_upload_csv.clicked.connect(self.load_1d_initial_waterlevel_csv)
         self.setup_initial_conditions()
         self.connect_signals()
 
@@ -644,9 +644,9 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             error_msg = f"Error: {e}"
             self.parent_page.parent_wizard.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
 
-    def load_csv(self):
+    def load_1d_initial_waterlevel_csv(self):
         """Load 1D initial water level from the CSV file."""
-        waterlevels, filename = self.open_upload_dialog()
+        waterlevels, filename = self.open_upload_1d_initial_waterlevel_dialog()
         if not filename:
             return
         self.le_1d_upload_csv.setText(filename)
@@ -667,7 +667,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             error_message = "Missing 'value' column in CSV file!"
         return error_message
 
-    def open_upload_dialog(self):
+    def open_upload_1d_initial_waterlevel_dialog(self):
         """Open dialog for selecting CSV file with 1D initial waterlevels."""
         last_folder = read_3di_settings("last_1d_initial_waterlevels", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
