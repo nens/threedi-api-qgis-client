@@ -46,8 +46,10 @@ from ..utils import (
     ms_to_mmh,
     parse_timeseries,
     read_json_data,
+    handle_csv_header,
 )
 from ..utils_ui import (
+    NumericDelegate,
     get_filepath,
     qgis_layers_cbo_get_layer_uri,
     read_3di_settings,
@@ -219,6 +221,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.substances = []
         set_widget_background_color(self)
         self.connect_signals()
+        self.init_table()
         self.add_item()  # Add an empty row by default
 
     def connect_signals(self):
@@ -227,6 +230,17 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.pb_remove.clicked.connect(self.remove_items)
         self.tw_substances.itemChanged.connect(self.handle_item_changed)
 
+    def init_table(self):
+        """Initialize substances table."""
+        NAME_COLUMN = 0
+        DECAY_COEFFICIENT_COLUMN = 2
+        # Set minimum width for the columns
+        self.tw_substances.setColumnWidth(NAME_COLUMN, self.MINIMUM_WIDTH)  # Name
+        self.tw_substances.setColumnWidth(DECAY_COEFFICIENT_COLUMN, 160)  # Decay coefficient
+        # Set the numeric delegate for the decay coefficient column
+        numeric_delegate = NumericDelegate(self.tw_substances)
+        self.tw_substances.setItemDelegateForColumn(DECAY_COEFFICIENT_COLUMN, numeric_delegate)
+
     def prepopulate_substances_table(self, substances):
         self.tw_substances.setRowCount(0)
         for substance in substances:
@@ -234,11 +248,14 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             row = self.tw_substances.rowCount() - 1
             name = substance.get("name", "")
             units = substance.get("units", "")
+            decay_coefficient = substance.get("decay_coefficient", "")
             if name:
                 name_item = QTableWidgetItem(name)
                 units_item = QTableWidgetItem(units)
+                decay_coefficient_item = QTableWidgetItem(decay_coefficient)
                 self.tw_substances.setItem(row, 0, name_item)
                 self.tw_substances.setItem(row, 1, units_item)
+                self.tw_substances.setItem(row, 2, decay_coefficient_item)
         self.set_substances_data()
         self.update_substances()
 
@@ -247,7 +264,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.tw_substances.insertRow(row_count)
         self.tw_substances.setItem(row_count, 0, QTableWidgetItem())
         self.tw_substances.setItem(row_count, 1, QTableWidgetItem())
-        self.tw_substances.setColumnWidth(0, self.MINIMUM_WIDTH)
+        self.tw_substances.setItem(row_count, 2, QTableWidgetItem())
 
     def remove_items(self):
         selected_rows = set()
@@ -295,16 +312,22 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         for row in range(row_count):
             name_item = self.tw_substances.item(row, 0)
             units_item = self.tw_substances.item(row, 1)
-            if name_item and units_item:
+            decay_coefficient_item = self.tw_substances.item(row, 2)
+            if name_item and units_item and decay_coefficient_item:
                 name = name_item.text()
                 units = units_item.text()
+                decay_coefficient = decay_coefficient_item.text()
                 if name:
                     substance = {"name": name}
                     if units:
                         substance["units"] = units
+                    if decay_coefficient:
+                        substance["decay_coefficient"] = decay_coefficient
                     self.substances.append(substance)
 
     def update_substances(self):
+        if hasattr(self.parent_page.parent_wizard, "boundary_conditions_page"):
+            self.parent_page.parent_wizard.boundary_conditions_page.main_widget.setup_substance_concentrations()
         if hasattr(self.parent_page.parent_wizard, "laterals_page"):
             self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
         if hasattr(self.parent_page.parent_wizard, "init_conditions_page"):
@@ -321,10 +344,20 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
+        self.substances = (
+            parent_page.parent_wizard.substances_page.main_widget.substances
+            if hasattr(parent_page.parent_wizard, "substances_page")
+            else []
+        )
         set_widget_background_color(self)
         self.template_boundary_conditions = None
+        self.template_boundary_conditions_1d_timeseries = []
+        self.template_boundary_conditions_2d_timeseries = []
         self.boundary_conditions_1d_timeseries = []
         self.boundary_conditions_2d_timeseries = []
+        self.substance_concentrations_1d = {}
+        self.substance_concentrations_2d = {}
         self.connect_signals()
 
     def connect_signals(self):
@@ -335,6 +368,66 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         self.pb_upload_file_bc_2d.clicked.connect(partial(self.load_csv, self.TYPE_2D))
         self.cb_interpolate_bc_1d.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_1D))
         self.cb_interpolate_bc_2d.stateChanged.connect(partial(self.interpolate_changed, self.TYPE_2D))
+
+    def setup_substance_concentrations(self):
+        if hasattr(self, "groupbox"):
+            self.groupbox.setParent(None)
+        if not self.substances:
+            return
+        substance_concentration_widget = SubstanceConcentrationsWidget(
+            self.substances, self.current_model, self.handle_substance_errors
+        )
+        self.groupbox = substance_concentration_widget.groupbox
+        self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
+        self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
+        parent_layout = self.layout()
+        parent_layout.addWidget(self.groupbox, 6, 2)
+
+    def handle_substance_errors(self, header, substance_list, bc_type):
+        """
+        First, check if boundary condition values are available.
+        Second, check if substance concentrations timesteps match exactly the boundary condition values timesteps.
+        Return None if they match or error message if not.
+        """
+        error_message = handle_csv_header(header)
+        bc_timeseries = []
+        if bc_type == self.TYPE_1D:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_1d_timeseries
+            else:
+                bc_timeseries = self.boundary_conditions_1d_timeseries
+        else:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_2d_timeseries
+            else:
+                bc_timeseries = self.boundary_conditions_2d_timeseries
+        if not bc_timeseries:
+            if self.rb_from_template.isChecked():
+                error_message = "No boundary conditions found in template file!"
+            else:
+                error_message = "No boundary conditions uploaded yet!"
+        if not substance_list:
+            error_message = "CSV file is empty!"
+        if error_message is None:
+            for substance in substance_list:
+                bc_id = int(substance.get("id"))
+                timeseries = substance.get("timeseries")
+                boundary_condition = next((bc for bc in bc_timeseries if bc["id"] == bc_id), None)
+                if boundary_condition is None:
+                    error_message = f"Boundary condition with ID {bc_id} not found!"
+                    break
+                bcValues = boundary_condition["values"]
+                bc_timesteps = [t for (t, _) in bcValues]
+                concentrations = parse_timeseries(timeseries)
+                concentrations_timesteps = [t for (t, _) in concentrations]
+                if bc_timesteps != concentrations_timesteps:
+                    error_message = (
+                        "Substance concentrations timesteps do not match boundary condition values timesteps!"
+                    )
+                    break
+        if error_message is not None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        return error_message
 
     def set_template_boundary_conditions(self, template_boundary_conditions=None):
         """Setting boundary conditions data derived from the simulation template."""
@@ -371,23 +464,6 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         else:
             raise NotImplementedError
 
-    def handle_boundary_conditions_header(self, header: List[str], log_error=True):
-        """
-        Handle boundary conditions potential header.
-        Return None if fetch successful or error message if file is empty or have invalid structure.
-        """
-        error_message = None
-        if not header:
-            error_message = "CSV file is empty!"
-            if log_error:
-                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
-            return error_message
-        if len(header) != 2:
-            error_message = "Wrong timeseries format for boundary conditions!"
-            if log_error:
-                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
-        return error_message
-
     def open_upload_dialog(self, boundary_conditions_type):
         """Open dialog for selecting CSV file with boundary conditions."""
         last_folder = read_3di_settings("last_boundary_conditions_folder", os.path.expanduser("~"))
@@ -401,7 +477,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             reader = csv.DictReader(csvfile)
             header = reader.fieldnames
             boundary_conditions_list = list(reader)
-        error_msg = self.handle_boundary_conditions_header(header)
+        error_msg = handle_csv_header(header)
         if error_msg is not None:
             return None, None
         interpolate = (
@@ -465,10 +541,63 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
         return boundary_conditions_data
 
+    def recalculate_substances_timeseries(self, bc_type, timesteps_in_seconds=False):
+        """Recalculate substances timeseries (timesteps in seconds)."""
+        substance_concentrations = {}
+        if bc_type == self.TYPE_1D:
+            substance_concentrations.update(self.substance_concentrations_1d)
+        else:
+            substance_concentrations.update(self.substance_concentrations_2d)
+        substances = deepcopy(substance_concentrations)
+        substances_data = {}
+        if bc_type == self.TYPE_1D:
+            bc_timeseries = self.boundary_conditions_1d_timeseries
+        else:
+            bc_timeseries = self.boundary_conditions_2d_timeseries
+        for bc in bc_timeseries:
+            bc_id = str(bc["id"])
+            if bc_id in substances:
+                substances_data[bc_id] = substances[bc_id]
+        if timesteps_in_seconds is False:
+            return substances_data
+        units = self.cbo_bc_units_1d.currentText() if bc_type == self.TYPE_1D else self.cbo_bc_units_2d.currentText()
+        if units == "hrs":
+            seconds_per_unit = 3600
+        elif units == "mins":
+            seconds_per_unit = 60
+        else:
+            seconds_per_unit = 1
+        for bc_substances in substances_data.values():
+            for substance in bc_substances:
+                substance["concentrations"] = [[t * seconds_per_unit, v] for (t, v) in substance["concentrations"]]
+        return substances_data
+
+    def update_boundary_conditions_with_substances(self, boundary_conditions_data, substances):
+        """ "Update boundary conditions with substances."""
+        for bc in boundary_conditions_data:
+            bc_id = str(bc["id"])
+            if bc_id in substances:
+                bc["substances"] = substances[bc_id]
+
     def get_boundary_conditions_data(self, timesteps_in_seconds=False):
         """Get boundary conditions data."""
-        boundary_conditions_data = self.recalculate_boundary_conditions_timeseries(self.TYPE_1D, timesteps_in_seconds)
-        boundary_conditions_data += self.recalculate_boundary_conditions_timeseries(self.TYPE_2D, timesteps_in_seconds)
+        boundary_conditions_data_1d = []
+        boundary_conditions_data_2d = []
+        if self.gb_upload_1d.isChecked():
+            boundary_conditions_data_1d = self.recalculate_boundary_conditions_timeseries(
+                self.TYPE_1D, timesteps_in_seconds
+            )
+            if self.substance_concentrations_1d:
+                substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
+                self.update_boundary_conditions_with_substances(boundary_conditions_data_1d, substances)
+        if self.gb_upload_2d.isChecked():
+            boundary_conditions_data_2d = self.recalculate_boundary_conditions_timeseries(
+                self.TYPE_2D, timesteps_in_seconds
+            )
+            if self.substance_concentrations_2d:
+                substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
+                self.update_boundary_conditions_with_substances(boundary_conditions_data_2d, substances)
+        boundary_conditions_data = boundary_conditions_data_1d + boundary_conditions_data_2d
         return self.template_boundary_conditions, boundary_conditions_data
 
 
@@ -694,7 +823,11 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.setupUi(self)
         self.parent_page = parent_page
         self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
-        self.substances = parent_page.parent_wizard.substances_page.main_widget.substances
+        self.substances = (
+            parent_page.parent_wizard.substances_page.main_widget.substances
+            if hasattr(parent_page.parent_wizard, "substances_page")
+            else []
+        )
         set_widget_background_color(self)
         self.laterals_1d = []
         self.laterals_2d = []
@@ -760,29 +893,13 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
 
-    @staticmethod
-    def handle_substance_header(header: List[str]):
-        """
-        Handle CSV header.
-        Return None if fetch successful or error message if file is empty or have invalid structure.
-        """
-        error_message = None
-        if not header:
-            error_message = "CSV file is empty!"
-            return error_message
-        if "id" not in header:
-            error_message = "Missing 'id' column in CSV file!"
-        if "timeseries" not in header:
-            error_message = "Missing 'timeseries' column in CSV file!"
-        return error_message
-
     def handle_substance_timesteps(self, header, substance_list, laterals_type):
         """
         First, check if lateral values are uploaded.
         Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
         Return None if they match or error message if not.
         """
-        error_message = self.handle_substance_header(header)
+        error_message = handle_csv_header(header)
         laterals_timeseries = (
             self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
         )
@@ -2851,8 +2968,21 @@ class SimulationWizard(QWizard):
             if substances:
                 self.substances_page.main_widget.prepopulate_substances_table(substances)
         if init_conditions.include_boundary_conditions:
-            temp_file_bc = events.fileboundaryconditions if events.fileboundaryconditions else None
-            self.boundary_conditions_page.main_widget.set_template_boundary_conditions(temp_file_bc)
+            bc_widget = self.boundary_conditions_page.main_widget
+            bc_file = events.fileboundaryconditions if events.fileboundaryconditions else None
+            self.boundary_conditions_page.main_widget.set_template_boundary_conditions(bc_file)
+            # Download file and set template boundary conditions timeseries
+            if bc_file:
+                tc = ThreediCalls(self.plugin_dock.threedi_api)
+                bc_file_name = bc_file.file.filename
+                bc_file_download = tc.fetch_boundarycondition_file_download(temp_simulation_id, bc_file.id)
+                bc_temp_filepath = os.path.join(TEMPDIR, bc_file_name)
+                get_download_file(bc_file_download, bc_temp_filepath)
+                bc_timeseries = read_json_data(bc_temp_filepath)
+                bc_timeseries_1d = [ts for ts in bc_timeseries if ts["type"] == "1D"]
+                bc_timeseries_2d = [ts for ts in bc_timeseries if ts["type"] == "2D"]
+                bc_widget.template_boundary_conditions_1d_timeseries = bc_timeseries_1d
+                bc_widget.template_boundary_conditions_2d_timeseries = bc_timeseries_2d
         if init_conditions.include_structure_controls:
             temp_file_sc = events.filestructurecontrols[0] if events.filestructurecontrols else None
             temp_memory_sc = events.memorystructurecontrols[0] if events.memorystructurecontrols else None

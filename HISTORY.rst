@@ -1,9 +1,16 @@
 History
 =======
 
-3.10.3 (unreleased)
+3.11.1 (unreleased)
 -------------------
 
+- Nothing changed yet.
+
+
+3.11.0 (2024-06-21)
+-------------------
+
+- Added decay coefficients to substances table (#574).
 - Added computational grid checks before an upload (#429).
 - Added handling of the 'started_from' Simulation parameter (#556).
 - Updated threedi-api-client version to 4.1.7.
@@ -14,6 +21,7 @@ History
 3.10.2 (2024-06-05)
 -------------------
 
+- Add substance concentrations to Boundary Conditions page (#559).
 - Use column names i/o column orderings to read CSV uploaded files (#563).
 - Add substance concentrations to Laterals page (#553, #557).
 - Add substances page to the simulation wizard (#548, #554).
