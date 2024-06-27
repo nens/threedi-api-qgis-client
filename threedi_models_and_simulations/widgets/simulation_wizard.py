@@ -686,10 +686,21 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_msg)
             return None, None
         for row in waterlevels_list:
-            node_id = int(row.get("id"))
-            value = float(row.get("value"))
-            node_ids.append(node_id)
-            values.append(value)
+            node_id_str = row.get("id").strip()
+            value_str = row.get("value").strip()
+            if not node_id_str or not value_str:
+                error_msg = "Missing values in CSV file. Please remove these lines or fill in a value and try again."
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_msg)
+                return None, None
+            try:
+                node_id = int(node_id_str)
+                value = float(value_str)
+                node_ids.append(node_id)
+                values.append(value)
+            except ValueError:
+                error_msg = f"Invalid data format in CSV: id='{node_id_str}', value='{value_str}'"
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_msg)
+                return None, None
         waterlevels = {
             "node_ids": node_ids,
             "values": values,
@@ -3217,7 +3228,9 @@ class SimulationWizard(QWizard):
                         self.init_conditions_page.main_widget.sp_1d_global_value.value()
                     )
                 elif self.init_conditions_page.main_widget.rb_1d_upload_csv.isChecked():
-                    initial_conditions.initial_waterlevels_1d = self.init_conditions_page.main_widget.initial_waterlevels_1d
+                    initial_conditions.initial_waterlevels_1d = (
+                        self.init_conditions_page.main_widget.initial_waterlevels_1d
+                    )
                 else:
                     initial_conditions.from_spatialite_1d = True
             # 2D
