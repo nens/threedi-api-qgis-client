@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from qgis.gui import QgsFileWidget, QgsProjectionSelectionWidget
 from qgis.PyQt.QtCore import QDate, QSettings, QTime
-from qgis.PyQt.QtGui import QColor, QIcon, QDoubleValidator
+from qgis.PyQt.QtGui import QColor, QDoubleValidator, QIcon
 from qgis.PyQt.QtWidgets import (
     QCheckBox,
     QComboBox,
