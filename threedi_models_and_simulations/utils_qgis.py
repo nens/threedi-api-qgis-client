@@ -66,3 +66,17 @@ def is_loaded_in_schematisation_editor(local_schematisation_sqlite):
             return None
     except KeyError:
         return None
+
+
+def get_plugin_instance(plugin_name):
+    """Return given plugin name instance."""
+    try:
+        plugin_instance = plugins[plugin_name]
+    except AttributeError:
+        plugin_instance = None
+    return plugin_instance
+
+
+def get_schematisation_editor_instance():
+    """Return Schematisation Editor plugin instance."""
+    return get_plugin_instance("threedi_schematisation_editor")

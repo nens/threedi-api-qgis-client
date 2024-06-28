@@ -39,6 +39,7 @@ from ..utils import (
     apply_24h_timeseries,
     extract_error_message,
     get_download_file,
+    handle_csv_header,
     intervals_are_even,
     mmh_to_mmtimestep,
     mmh_to_ms,
@@ -46,7 +47,6 @@ from ..utils import (
     ms_to_mmh,
     parse_timeseries,
     read_json_data,
-    handle_csv_header,
 )
 from ..utils_ui import (
     NumericDelegate,
