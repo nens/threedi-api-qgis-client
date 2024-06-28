@@ -61,13 +61,14 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
         if last_organisation:
             self.cbo_organisations.setCurrentText(last_organisation)
 
-    def get_new_schematisation_name_data(self):
+    def get_new_schematisation_data(self):
         """Return new schematisation name, tags and owner."""
         name = self.le_schematisation_name.text()
+        description = self.le_description.text()
         tags = self.le_tags.text()
         organisation = self.cbo_organisations.currentData()
         owner = organisation.unique_id
-        return name, tags, owner
+        return name, description, tags, owner
 
     def browse_existing_spatialite(self):
         """Show dialog for choosing an existing Spatialite file path."""
@@ -507,12 +508,12 @@ class NewSchematisationWizard(QWizard):
         """Get settings from the wizard and create new schematisation (locally and remotely)."""
         if not self.schematisation_settings_page.settings_are_valid:
             return
-        name, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_name_data()
+        name, description, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_data()
         schematisation_settings = self.schematisation_settings_page.main_widget.collect_new_schematisation_settings()
         raster_filepaths = self.schematisation_settings_page.main_widget.raster_filepaths()
         aggregation_settings_queries = self.schematisation_settings_page.main_widget.aggregation_settings_queries
         try:
-            schematisation = self.tc.create_schematisation(name, owner, tags=tags)
+            schematisation = self.tc.create_schematisation(name, owner, tags=tags, meta={"description": description})
             local_schematisation = LocalSchematisation(
                 self.working_dir, schematisation.id, name, parent_revision_number=0, create=True
             )
@@ -579,8 +580,8 @@ class NewSchematisationWizard(QWizard):
     def create_schematisation_from_spatialite(self):
         """Get settings from existing Spatialite and create new schematisation (locally and remotely)."""
         try:
-            name, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_name_data()
-            schematisation = self.tc.create_schematisation(name, owner, tags=tags)
+            name, description, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_data()
+            schematisation = self.tc.create_schematisation(name, owner, tags=tags, meta={"description": description})
             local_schematisation = LocalSchematisation(
                 self.working_dir, schematisation.id, name, parent_revision_number=0, create=True
             )
