@@ -5,6 +5,7 @@ from enum import Enum
 
 from qgis.PyQt.QtCore import QSettings
 
+from ..utils_qgis import get_schematisation_editor_instance
 from ..widgets.new_schematisation_wizard import NewSchematisationWizard
 from ..widgets.schematisation_download import SchematisationDownload
 from ..widgets.schematisation_load_local import SchematisationLoad
@@ -49,8 +50,13 @@ class BuildOptions:
                 self.plugin_dock.current_local_schematisation = local_schematisation
                 self.plugin_dock.update_schematisation_view()
                 sqlite_filepath = local_schematisation.sqlite if not custom_sqlite_filepath else custom_sqlite_filepath
+                # Load new schematisation
+                schematisation_editor = get_schematisation_editor_instance()
                 msg = f"Schematisation '{local_schematisation.name}' {action.value}!\n"
-                msg += f"Please use the 3Di Schematisation Editor to load it to your project from the Spatialite:\n{sqlite_filepath}"
+                if schematisation_editor:
+                    schematisation_editor.load_from_spatialite(sqlite_filepath)
+                else:
+                    msg += f"Please use the 3Di Schematisation Editor to load it to your project from the Spatialite:\n{sqlite_filepath}"
                 self.plugin_dock.communication.show_info(msg)
             except (TypeError, ValueError):
                 error_msg = "Invalid schematisation directory structure. Loading schematisation canceled."
