@@ -8,7 +8,6 @@ from qgis.PyQt.QtWidgets import (
     QFileDialog,
     QGridLayout,
     QGroupBox,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
@@ -33,22 +32,28 @@ class InitialConcentrationsWidget(QWidget):
         self.current_model = current_model
         self.handle_csv_errors = handle_csv_errors
         self.initial_concentrations_2d = {}
-        self.groupbox = QGroupBox("Substance concentrations", self)
+        self.widget = QWidget()
         self.setup_ui()
 
     def setup_ui(self):
         layout = QGridLayout()
-        self.groupbox = QGroupBox("2D initial concentrations")
-        self.groupbox.setLayout(layout)
-        self.groupbox.setFont(QFont("Segoe UI", 14, QFont.Bold))
+        self.widget.setLayout(layout)
         self.create_initial_concentrations(layout)
         self.connect_upload_signals()
 
-    def create_initial_concentrations(self, layout: QGridLayout):
+    def create_initial_concentrations(self, main_layout: QGridLayout):
         """Create initial concentrations."""
         font = QFont("Segoe UI", 10, QFont.Normal)
         for i, substance in enumerate(self.substances):
             name = substance["name"]
+            # Groupbox
+            groupbox = QGroupBox(name)
+            groupbox.setFont(QFont("Segoe UI", 12))
+            groupbox.setCheckable(True)
+            groupbox.setChecked(False)
+            groupbox_layout = QGridLayout()
+
+            # Widgets
             label = QLabel(name)
             label.setMinimumWidth(100)
             label.setFont(font)
@@ -62,20 +67,21 @@ class InitialConcentrationsWidget(QWidget):
             upload_button.setObjectName(f"pb_substance_{name}")
             upload_button.setMinimumWidth(100)
             upload_button.setFont(font)
-            horizontal_layout = QHBoxLayout()
-            horizontal_layout_widget = QWidget()
-            horizontal_layout_widget.setLayout(horizontal_layout)
-            horizontal_layout.setContentsMargins(0, 0, 9, 0)
-            horizontal_layout.addWidget(label)
-            horizontal_layout.addWidget(line_edit)
-            horizontal_layout.addWidget(upload_button)
-            layout.addWidget(horizontal_layout_widget, i, 0)
+
+            # Add widgets to layout
+            groupbox_layout.addWidget(label, 0, 0)
+            groupbox_layout.addWidget(line_edit, 0, 1)
+            groupbox_layout.addWidget(upload_button, 0, 2)
+            groupbox.setLayout(groupbox_layout)
+
+            # Add groupbox to the main layout
+            main_layout.addWidget(groupbox, i, 0)
 
     def connect_upload_signals(self):
         """Connect substance upload signals."""
         for substance in self.substances:
             name = substance["name"]
-            upload_button = self.groupbox.findChild(QPushButton, f"pb_substance_{name}")
+            upload_button = self.widget.findChild(QPushButton, f"pb_substance_{name}")
             upload_button.clicked.connect(partial(self.load_csv, name))
 
     def load_csv(self, name: str):
@@ -83,7 +89,7 @@ class InitialConcentrationsWidget(QWidget):
         substances, filename = self.open_upload_dialog(name)
         if not filename:
             return
-        le_substance = self.groupbox.findChild(QLineEdit, f"le_substance_{name}")
+        le_substance = self.widget.findChild(QLineEdit, f"le_substance_{name}")
         le_substance.setText(filename)
         self.initial_concentrations_2d.update(substances)
 

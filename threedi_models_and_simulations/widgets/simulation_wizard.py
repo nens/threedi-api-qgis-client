@@ -722,6 +722,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.btn_browse_2d_local_raster.clicked.connect(partial(self.browse_for_local_raster, self.cbo_2d_local_raster))
         self.btn_browse_gw_local_raster.clicked.connect(partial(self.browse_for_local_raster, self.cbo_gw_local_raster))
         self.setup_initial_conditions()
+        self.setup_2d_initial_concentrations()
         self.connect_signals()
 
     def connect_signals(self):
@@ -732,17 +733,19 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.gb_groundwater.toggled.connect(self.on_initial_waterlevel_change)
 
     def setup_2d_initial_concentrations(self):
-        if hasattr(self, "groupbox"):
-            self.groupbox.setParent(None)
+        if hasattr(self, "widget"):
+            self.widget.setParent(None)
         if not self.substances:
+            self.initial_concentrations_2d_label.hide()
             return
+        self.initial_concentrations_2d_label.show()
         initial_concentration_widget = InitialConcentrationsWidget(
             self.substances, self.current_model, self.handle_substance_errors
         )
-        self.groupbox = initial_concentration_widget.groupbox
+        self.widget = initial_concentration_widget.widget
         self.initial_concentrations_2d = initial_concentration_widget.initial_concentrations_2d
         parent_layout = self.layout()
-        parent_layout.addWidget(self.groupbox, 2, 2)
+        parent_layout.addWidget(self.widget, 3, 2)
 
     def handle_substance_errors(self, header, substance_list):
         """Handle substance errors."""
