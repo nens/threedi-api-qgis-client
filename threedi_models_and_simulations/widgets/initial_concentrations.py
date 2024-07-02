@@ -1,4 +1,3 @@
-
 from typing import Dict, List, Optional
 
 from qgis.PyQt.QtGui import QFont
@@ -52,12 +51,19 @@ class InitialConcentrationsWidget(QWidget):
             # Online raster upload
             rb_online_raster = QRadioButton("Online raster")
             cbo_online_raster = QComboBox()
+            cbo_online_raster.setEnabled(False)
+            rb_online_raster.toggled.connect(lambda checked: cbo_online_raster.setEnabled(checked))
 
             # Local raster upload
             rb_local_raster = QRadioButton("Local raster")
             cbo_local_raster = QComboBox()
+            cbo_local_raster.setEnabled(False)
             btn_browse_local_raster = QToolButton()
             btn_browse_local_raster.setText("...")
+            btn_browse_local_raster.setEnabled(False)
+            rb_local_raster.toggled.connect(
+                lambda checked: (cbo_local_raster.setEnabled(checked), btn_browse_local_raster.setEnabled(checked))
+            )
 
             # Aggregation method widget
             label_aggregation = QLabel("     Aggregation method:")
