@@ -89,6 +89,7 @@ class StructureControls(SimulationElement):
 class InitialConditions(SimulationElement):
     global_value_1d: float = None
     from_spatialite_1d: bool = None
+    initial_waterlevels_1d: dict = None
     global_value_2d: float = None
     online_raster_2d: InitialWaterlevel = None
     local_raster_2d: str = None

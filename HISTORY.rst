@@ -16,6 +16,7 @@ History
 - Updated threedi-api-client version to 4.1.7.
 - Added simulation name sanitization (#497).
 - Changed simulation results directory name (#530).
+- Add CSV upload support for 1D initial water level (#575).
 
 
 3.10.2 (2024-06-05)
