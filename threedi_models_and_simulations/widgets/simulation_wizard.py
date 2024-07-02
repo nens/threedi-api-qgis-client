@@ -740,16 +740,12 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             return
         self.initial_concentrations_2d_label.show()
         initial_concentration_widget = InitialConcentrationsWidget(
-            self.substances, self.current_model, self.handle_substance_errors
+            self.substances, self.current_model
         )
         self.widget = initial_concentration_widget.widget
         self.initial_concentrations_2d = initial_concentration_widget.initial_concentrations_2d
         parent_layout = self.layout()
         parent_layout.addWidget(self.widget, 3, 2)
-
-    def handle_substance_errors(self, header, substance_list):
-        """Handle substance errors."""
-        return None
 
     def on_saved_state_change(self, checked):
         """Handle saved state group checkbox."""
