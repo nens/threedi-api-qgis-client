@@ -63,7 +63,7 @@ class BuildOptions:
                         "Please use the 3Di Schematisation Editor to load it to your project from the Spatialite:"
                         f"\n{sqlite_filepath}"
                     )
-                self.plugin_dock.communication.show_info(msg)
+                self.plugin_dock.communication.bar_info(msg)
             except (TypeError, ValueError):
                 error_msg = "Invalid schematisation directory structure. Loading schematisation canceled."
                 self.plugin_dock.communication.show_error(error_msg)
