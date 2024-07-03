@@ -762,18 +762,24 @@ class SimulationRunner(QRunnable):
             initial_waterlevel_instance = self.tc.create_initial_water_level(threedimodel_id, dimension="one_d")
             initial_waterlevel_id = initial_waterlevel_instance.id
             # Step 2: Create an upload instance for the initial waterl level
-            initial_waterlevel_upload = self.tc.upload_initial_water_level(threedimodel_id, initial_waterlevel_id, filename=filename)
+            initial_waterlevel_upload = self.tc.upload_initial_water_level(
+                threedimodel_id, initial_waterlevel_id, filename=filename
+            )
             upload_local_file(initial_waterlevel_upload, INITIAL_WATERLEVELS_TEMPLATE)
             # Step 3: Wait for the data to be processed (initial_waterlevel.state == "valid")
             for ti in range(int(self.upload_timeout // 2)):
-                uploaded_initial_waterlevel = self.tc.fetch_3di_model_initial_waterlevel(threedimodel_id, initial_waterlevel_id)
+                uploaded_initial_waterlevel = self.tc.fetch_3di_model_initial_waterlevel(
+                    threedimodel_id, initial_waterlevel_id
+                )
                 if uploaded_initial_waterlevel.state == ThreediFileState.VALID.value:
                     # Step 4: Find & delete existing 1D water levels file of the simulation
                     water_level_1d_files = self.tc.fetch_simulation_initial_1d_water_level_files(sim_id)
                     for water_level_1d_file in water_level_1d_files:
                         self.tc.delete_simulation_initial_1d_water_level_file(sim_id, water_level_1d_file.id)
                     # Step 5: Create a new 1D initial water level file for the simulation
-                    self.tc.create_simulation_initial_1d_water_level_file(sim_id, initial_waterlevel=initial_waterlevel_id)
+                    self.tc.create_simulation_initial_1d_water_level_file(
+                        sim_id, initial_waterlevel=initial_waterlevel_id
+                    )
                     break
                 elif uploaded_initial_waterlevel.state == ThreediFileState.INVALID.value:
                     state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()
