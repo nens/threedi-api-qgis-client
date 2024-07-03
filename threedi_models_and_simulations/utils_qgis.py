@@ -52,7 +52,7 @@ def is_loaded_in_schematisation_editor(local_schematisation_sqlite):
         schematisation_editor = plugins["threedi_schematisation_editor"]
         schematisation_editor_gpkg = schematisation_editor.model_gpkg
         if not schematisation_editor_gpkg:
-            return False
+            return None
         schematisation_editor_sqlite = schematisation_editor_gpkg.replace(".gpkg", ".sqlite")
         if not os.path.isfile(schematisation_editor_sqlite):
             return False
