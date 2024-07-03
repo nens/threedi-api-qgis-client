@@ -1,5 +1,8 @@
+from functools import partial
 from typing import Dict, List, Optional
 
+from qgis.core import QgsMapLayerProxyModel
+from qgis.gui import QgsMapLayerComboBox
 from qgis.PyQt.QtGui import QFont
 from qgis.PyQt.QtWidgets import (
     QComboBox,
@@ -12,7 +15,7 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
 )
 
-from ..utils_ui import read_3di_settings, save_3di_settings
+from ..utils_ui import get_filepath
 
 
 class InitialConcentrationsWidget(QWidget):
@@ -30,11 +33,19 @@ class InitialConcentrationsWidget(QWidget):
         self.initial_concentrations_2d = {}
         self.widget = QWidget()
         self.setup_ui()
+        self.connect_signals()
 
     def setup_ui(self):
         layout = QGridLayout()
         self.widget.setLayout(layout)
         self.create_initial_concentrations(layout)
+
+    def connect_signals(self):
+        for substance in self.substances:
+            name = substance["name"]
+            cbo_local_raster = self.widget.findChild(QgsMapLayerComboBox, f"cbo_local_raster_{name}")
+            browse_button = self.widget.findChild(QToolButton, f"btn_browse_local_raster_{name}")
+            browse_button.clicked.connect(partial(self.browse_for_local_raster, cbo_local_raster))
 
     def create_initial_concentrations(self, main_layout: QGridLayout):
         """Create initial concentrations."""
@@ -56,11 +67,14 @@ class InitialConcentrationsWidget(QWidget):
 
             # Local raster upload
             rb_local_raster = QRadioButton("Local raster")
-            cbo_local_raster = QComboBox()
+            cbo_local_raster = QgsMapLayerComboBox()
+            cbo_local_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
             cbo_local_raster.setEnabled(False)
+            cbo_local_raster.setObjectName(f"cbo_local_raster_{name}")
             btn_browse_local_raster = QToolButton()
             btn_browse_local_raster.setText("...")
             btn_browse_local_raster.setEnabled(False)
+            btn_browse_local_raster.setObjectName(f"btn_browse_local_raster_{name}")
             rb_local_raster.toggled.connect(
                 lambda checked: (cbo_local_raster.setEnabled(checked), btn_browse_local_raster.setEnabled(checked))
             )
@@ -83,3 +97,16 @@ class InitialConcentrationsWidget(QWidget):
 
             # Add groupbox to the main layout
             main_layout.addWidget(groupbox, i, 0)
+
+    @staticmethod
+    def browse_for_local_raster(widget: QgsMapLayerComboBox):
+        """Allow user to browse for a raster layer and insert it to the widget."""
+        name_filter = "GeoTIFF (*.tif *.TIF *.tiff *.TIFF)"
+        title = "Select raster file"
+        raster_file = get_filepath(None, extension_filter=name_filter, dialog_title=title)
+        if not raster_file:
+            return
+        items = widget.additionalItems()
+        if raster_file not in items:
+            items.append(raster_file)
+        widget.setAdditionalItems(items)
