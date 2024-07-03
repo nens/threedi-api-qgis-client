@@ -739,9 +739,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.initial_concentrations_2d_label.hide()
             return
         self.initial_concentrations_2d_label.show()
-        initial_concentration_widget = InitialConcentrationsWidget(
-            self.substances, self.current_model
-        )
+        initial_concentration_widget = InitialConcentrationsWidget(self.substances, self.parent_page)
         self.widget = initial_concentration_widget.widget
         self.initial_concentrations_2d = initial_concentration_widget.initial_concentrations_2d
         parent_layout = self.layout()
