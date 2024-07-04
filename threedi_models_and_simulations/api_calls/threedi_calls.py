@@ -645,6 +645,13 @@ class ThreediCalls:
         )
         return initial_water_level_upload
 
+    def create_simulation_initial_2d_substance_concentrations(self, simulation_pk: int, **data):
+        """Link 2D initial concentrations to substance for the given simulation."""
+        substance_concentration = self.threedi_api.simulations_initial2d_substance_concentrations_create(
+            str(simulation_pk), data
+        )
+        return substance_concentration
+
     def create_3di_model_raster(self, threedimodel_id: str, **data) -> Raster:
         """Create raster for the given 3Di model."""
         raster = self.threedi_api.threedimodels_rasters_create(threedimodel_id, data)

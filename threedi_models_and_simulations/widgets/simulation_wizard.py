@@ -3361,6 +3361,10 @@ class SimulationWizard(QWizard):
                     self.init_conditions_page.main_widget.cbo_saved_states.currentText()
                 )
 
+            # Initial concentrations 2D for substances
+            if self.init_conditions_page.main_widget.substances:
+                initial_conditions.initial_concentrations_2d = self.init_conditions_page.main_widget.initial_concentrations_2d
+
         # Laterals
         if self.init_conditions.include_laterals:
             constant_laterals, file_laterals_1d, file_laterals_2d = self.laterals_page.main_widget.get_laterals_data(

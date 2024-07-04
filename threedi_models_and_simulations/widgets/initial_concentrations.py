@@ -1,6 +1,6 @@
 from functools import partial
 from operator import attrgetter
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapLayerComboBox
@@ -54,7 +54,7 @@ class InitialConcentrationsWidget(QWidget):
             # local raster
             cbo_local_raster = self.widget.findChild(QgsMapLayerComboBox, f"cbo_local_raster_{name}")
             browse_button = self.widget.findChild(QToolButton, f"btn_browse_local_raster_{name}")
-            browse_button.clicked.connect(partial(self.browse_for_local_raster, cbo_local_raster))
+            browse_button.clicked.connect(partial(self.browse_for_local_raster, name, cbo_local_raster))
 
     def load_rasters(self):
         tc = ThreediCalls(self.parent_page.parent_wizard.plugin_dock.threedi_api)
@@ -97,6 +97,7 @@ class InitialConcentrationsWidget(QWidget):
             label_aggregation = QLabel("     Aggregation method:")
             cbo_aggregation = QComboBox()
             cbo_aggregation.addItems(["mean", "max", "min"])
+            cbo_aggregation.setObjectName(f"cbo_aggregation_{name}")
 
             # Add widgets to layout
             groupbox_layout = QGridLayout()
@@ -112,8 +113,15 @@ class InitialConcentrationsWidget(QWidget):
             groupbox.setLayout(groupbox_layout)
             main_layout.addWidget(groupbox, i, 0)
 
-    @staticmethod
-    def browse_for_local_raster(widget: QgsMapLayerComboBox):
+    def update_initial_concentrations(self, substance: str, filepath: str):
+        aggregation_method = self.widget.findChild(QComboBox, f"cbo_aggregation_{substance}").currentText()
+        self.initial_concentrations_2d[substance] = {
+            "raster_id": None,
+            "aggregation_method": aggregation_method,
+            "filepath": filepath,
+        }
+
+    def browse_for_local_raster(self, substance: str, widget: QgsMapLayerComboBox):
         """Allow user to browse for a raster layer and insert it to the widget."""
         name_filter = "GeoTIFF (*.tif *.TIF *.tiff *.TIFF)"
         title = "Select raster file"
@@ -124,3 +132,4 @@ class InitialConcentrationsWidget(QWidget):
         if raster_file not in items:
             items.append(raster_file)
         widget.setAdditionalItems(items)
+        self.update_initial_concentrations(substance, raster_file)
