@@ -124,7 +124,10 @@ class SchematisationDownload(uicls, basecls):
             for schematisation in schematisations:
                 name_item = QStandardItem(schematisation.name)
                 name_item.setData(schematisation, role=Qt.UserRole)
-                description_item = QStandardItem(getattr(schematisation.meta, "description", ""))
+                try:
+                    description_item = QStandardItem(schematisation.meta["description"])
+                except (KeyError, TypeError):
+                    description_item = QStandardItem("")
                 organisation = self.plugin_dock.organisations[schematisation.owner]
                 owner_item = QStandardItem(organisation.name)
                 created_by_item = QStandardItem(schematisation.created_by)
