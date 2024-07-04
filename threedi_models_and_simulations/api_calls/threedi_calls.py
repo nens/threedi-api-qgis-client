@@ -73,6 +73,7 @@ from threedi_api_client.openapi import (
     TimeseriesSourcesSinks,
     TimeseriesWind,
     TimeStepSettings,
+    TwoDSubstanceConcentration,
     TwoDWaterLevel,
     TwoDWaterRaster,
     Upload,
@@ -645,7 +646,9 @@ class ThreediCalls:
         )
         return initial_water_level_upload
 
-    def create_simulation_initial_2d_substance_concentrations(self, simulation_pk: int, **data):
+    def create_simulation_initial_2d_substance_concentrations(
+        self, simulation_pk: int, **data
+    ) -> TwoDSubstanceConcentration:
         """Link 2D initial concentrations to substance for the given simulation."""
         substance_concentration = self.threedi_api.simulations_initial2d_substance_concentrations_create(
             str(simulation_pk), data

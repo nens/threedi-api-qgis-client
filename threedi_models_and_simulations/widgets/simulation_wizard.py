@@ -3363,7 +3363,9 @@ class SimulationWizard(QWizard):
 
             # Initial concentrations 2D for substances
             if self.init_conditions_page.main_widget.substances:
-                initial_conditions.initial_concentrations_2d = self.init_conditions_page.main_widget.initial_concentrations_2d
+                initial_conditions.initial_concentrations_2d = (
+                    self.init_conditions_page.main_widget.initial_concentrations_2d
+                )
 
         # Laterals
         if self.init_conditions.include_laterals:

@@ -896,7 +896,9 @@ class SimulationRunner(QRunnable):
                     if raster_task_ic and raster_task_ic.status == ThreediModelTaskStatus.SUCCESS.value:
                         break
                     elif raster_task_ic and raster_task_ic.status == ThreediModelTaskStatus.FAILURE.value:
-                        raise SimulationRunnerError(f"Failed to process Initial Concentration raster: {local_raster_ic_name}")
+                        raise SimulationRunnerError(
+                            f"Failed to process Initial Concentration raster: {local_raster_ic_name}"
+                        )
                     else:
                         time.sleep(2)
                 # Link substance to initial concentration
@@ -907,7 +909,7 @@ class SimulationRunner(QRunnable):
                             "substance": substance_id,
                             "aggregation_method": aggregation_method,
                             "initial_concentration": raster_id,
-                        }
+                        },
                     )
                 except:
                     error_msg = f"Failed to create initial concentration for substance: {substance}"
