@@ -25,6 +25,7 @@ from qgis.PyQt.QtWidgets import (
     QLabel,
     QLineEdit,
     QRadioButton,
+    QScrollArea,
     QSizePolicy,
     QSpacerItem,
     QTableWidgetItem,
@@ -2610,8 +2611,13 @@ class InitialConditionsPage(QWizardPage):
         super().__init__(parent)
         self.parent_wizard = parent
         self.main_widget = InitialConditionsWidget(self, initial_conditions=initial_conditions)
+        # Create a scroll area
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameStyle(QScrollArea.NoFrame)
+        self.scroll_area.setWidget(self.main_widget)
         layout = QGridLayout()
-        layout.addWidget(self.main_widget)
+        layout.addWidget(self.scroll_area)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.adjustSize()
