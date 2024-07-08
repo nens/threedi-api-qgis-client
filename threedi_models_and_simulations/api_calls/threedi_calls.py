@@ -28,6 +28,7 @@ from threedi_api_client.openapi import (
     FileTimeseriesSourcesSinks,
     GroundWaterLevel,
     GroundWaterRaster,
+    InitialConcentration,
     InitialSavedState,
     InitialWaterlevel,
     LizardRasterRain,
@@ -654,6 +655,11 @@ class ThreediCalls:
             str(simulation_pk), data
         )
         return substance_concentration
+
+    def create_3di_model_initial_concentration(self, threedimodel_id: str, **data) -> InitialConcentration:
+        """Create initial concentration for the given 3Di model."""
+        initial_concentration = self.threedi_api.threedimodels_initial_concentrations_create(threedimodel_id, data)
+        return initial_concentration
 
     def create_3di_model_raster(self, threedimodel_id: str, **data) -> Raster:
         """Create raster for the given 3Di model."""

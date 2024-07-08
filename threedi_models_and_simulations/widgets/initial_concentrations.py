@@ -50,10 +50,7 @@ class InitialConcentrationsWidget(QWidget):
             # online raster
             cbo_online_raster: QComboBox = self.widget.findChild(QComboBox, f"cbo_online_raster_{substance_name}")
             for raster in sorted(self.rasters, key=attrgetter("id")):
-                if not raster.file:
-                    continue
-                filename = raster.file.filename
-                cbo_online_raster.addItem(filename)
+                cbo_online_raster.addItem(raster.name)
             # local raster
             cbo_local_raster = self.widget.findChild(QgsMapLayerComboBox, f"cbo_local_raster_{substance_name}")
             browse_button = self.widget.findChild(QToolButton, f"btn_browse_local_raster_{substance_name}")
@@ -62,9 +59,10 @@ class InitialConcentrationsWidget(QWidget):
     def load_rasters(self):
         tc = ThreediCalls(self.parent_page.parent_wizard.plugin_dock.threedi_api)
         model_id = self.parent_page.parent_wizard.model_selection_dlg.current_model.id
-        self.rasters = tc.fetch_3di_model_rasters(model_id, type="initial_concentration_file")
-        for raster in self.rasters:
+        rasters = tc.fetch_3di_model_rasters(model_id, type="initial_concentration_file")
+        for raster in rasters:
             if raster.file:
+                self.rasters.append(raster)
                 self.filenames.append(raster.file.filename)
 
     def create_initial_concentrations(self, main_layout: QGridLayout):

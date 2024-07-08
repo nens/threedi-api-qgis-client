@@ -716,6 +716,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.initial_waterlevels = {}
         self.saved_states = {}
         self.initial_concentrations_widget = QWidget()
+        self.rasters = []
         self.gb_saved_state.setChecked(False)
         self.gb_1d.setChecked(False)
         self.gb_2d.setChecked(False)
@@ -744,6 +745,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.initial_concentrations_2d_label.show()
         initial_concentrations_widget = InitialConcentrationsWidget(self.substances, self.parent_page)
         self.initial_concentrations_widget = initial_concentrations_widget.widget
+        self.rasters = initial_concentrations_widget.rasters
         parent_layout = self.layout()
         parent_layout.addWidget(self.initial_concentrations_widget, 3, 2)
 
@@ -3365,6 +3367,7 @@ class SimulationWizard(QWizard):
 
             # Initial concentrations 2D for substances
             widget = self.init_conditions_page.main_widget.initial_concentrations_widget
+            rasters = self.init_conditions_page.main_widget.rasters
             substances = self.init_conditions_page.main_widget.substances
             initial_concentrations_2d = {}
             for substance in substances:
@@ -3384,12 +3387,15 @@ class SimulationWizard(QWizard):
                         }
                         initial_concentrations_2d[substance_name] = initial_concentrations
                     if rb_online_raster and rb_online_raster.isChecked() and cbo_online_raster:
-                        initial_concentrations = {
-                            "local_raster": None,
-                            "online_raster": cbo_online_raster,
-                            "aggregation_method": aggregation_method,
-                        }
-                        initial_concentrations_2d[substance_name] = initial_concentrations
+                        for raster in rasters:
+                            if raster.name == cbo_online_raster:
+                                initial_concentrations = {
+                                    "local_raster": None,
+                                    "online_raster": raster.id,
+                                    "aggregation_method": aggregation_method,
+                                }
+                                initial_concentrations_2d[substance_name] = initial_concentrations
+                                break
             if initial_concentrations_2d:
                 initial_conditions.initial_concentrations_2d = initial_concentrations_2d
 

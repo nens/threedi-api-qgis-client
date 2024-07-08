@@ -868,7 +868,10 @@ class SimulationRunner(QRunnable):
                 aggregation_method = params.get("aggregation_method")
                 local_raster = params.get("local_raster")
                 online_raster = params.get("online_raster")
-                if local_raster:
+                raster_id = None
+                if online_raster:
+                    raster_id = online_raster
+                elif local_raster:
                     # Create a 3Di model raster
                     local_raster_path = params.get(local_raster)
                     local_raster_ic_name = os.path.basename(local_raster_path)
@@ -903,8 +906,16 @@ class SimulationRunner(QRunnable):
                             )
                         else:
                             time.sleep(2)
-                if online_raster:
-                    raster_id = online_raster
+                # Create a 2D initial concentration
+                initial_concentration = self.tc.create_3di_model_initial_concentration(
+                    threedimodel_id,
+                    {
+                        "user_generated": True,
+                        "source_raster": raster_id,
+                        "dimension": "two_d",
+                    }
+                )
+                # Wait for the initial concentration processing
                 # Link substance to initial concentration
                 try:
                     self.tc.create_simulation_initial_2d_substance_concentrations(
@@ -912,7 +923,7 @@ class SimulationRunner(QRunnable):
                         {
                             "substance": substance_id,
                             "aggregation_method": aggregation_method,
-                            "initial_concentration": raster_id,
+                            "initial_concentration": initial_concentration.id,
                         },
                     )
                 except:
