@@ -4,7 +4,8 @@ History
 3.11.1 (unreleased)
 -------------------
 
-- Add CSV upload support for 1D initial water level (#575).
+- Add CSV upload support for 1D initial water level (#575)
+- Add initial concentrations to initial conditions page (#580)
 - Fixes/enhancements: #526
 
 
