@@ -35,8 +35,8 @@ class InitialConcentrationsWidget(QWidget):
         self.widget = QWidget()
         self.rasters = []
         self.filenames = []
-        self.setup_ui()
         self.load_rasters()
+        self.setup_ui()
         self.connect_signals()
 
     def setup_ui(self):
@@ -78,23 +78,26 @@ class InitialConcentrationsWidget(QWidget):
             groupbox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
             # Online raster upload widget
+            is_online_raster_available = True if self.rasters else False
             rb_online_raster = QRadioButton("Online raster")
             rb_online_raster.setObjectName(f"rb_online_raster_{name}")
+            rb_online_raster.setChecked(is_online_raster_available)
             cbo_online_raster = QComboBox()
-            cbo_online_raster.setEnabled(False)
+            cbo_online_raster.setEnabled(is_online_raster_available)
             cbo_online_raster.setObjectName(f"cbo_online_raster_{name}")
             rb_online_raster.toggled.connect(lambda checked: cbo_online_raster.setEnabled(checked))
 
             # Local raster upload widget
             rb_local_raster = QRadioButton("Local raster")
             rb_local_raster.setObjectName(f"rb_local_raster_{name}")
+            rb_local_raster.setChecked(not is_online_raster_available)
             cbo_local_raster = QgsMapLayerComboBox()
             cbo_local_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
-            cbo_local_raster.setEnabled(False)
+            cbo_local_raster.setEnabled(not is_online_raster_available)
             cbo_local_raster.setObjectName(f"cbo_local_raster_{name}")
             btn_browse_local_raster = QToolButton()
             btn_browse_local_raster.setText("...")
-            btn_browse_local_raster.setEnabled(False)
+            btn_browse_local_raster.setEnabled(not is_online_raster_available)
             btn_browse_local_raster.setObjectName(f"btn_browse_local_raster_{name}")
             rb_local_raster.toggled.connect(
                 lambda checked: (cbo_local_raster.setEnabled(checked), btn_browse_local_raster.setEnabled(checked))
