@@ -344,7 +344,9 @@ class ThreediCalls:
 
     def fetch_3di_model_initial_concentrations(self, threedimodel_id: str) -> List[InitialConcentration]:
         """Fetch initial concentrations list"""
-        concentrations = self.paginated_fetch(self.threedi_api.threedimodels_initial_concentrations_list, threedimodel_id)
+        concentrations = self.paginated_fetch(
+            self.threedi_api.threedimodels_initial_concentrations_list, threedimodel_id
+        )
         return concentrations
 
     def fetch_3di_model_rasters(self, threedimodel_id: str, **data) -> List[Raster]:
