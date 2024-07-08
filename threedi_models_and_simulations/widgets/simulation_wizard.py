@@ -3380,8 +3380,9 @@ class SimulationWizard(QWizard):
                 cbo_online_raster = widget.findChild(QComboBox, f"cbo_online_raster_{substance_name}").currentText()
                 if groupbox_ic and groupbox_ic.isChecked():
                     if rb_local_raster and rb_local_raster.isChecked() and cbo_local_raster:
+                        layer_uri = qgis_layers_cbo_get_layer_uri(cbo_local_raster)
                         initial_concentrations = {
-                            "local_raster": qgis_layers_cbo_get_layer_uri(cbo_local_raster),
+                            "local_raster": layer_uri,
                             "online_raster": None,
                             "aggregation_method": aggregation_method,
                         }

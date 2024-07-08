@@ -906,29 +906,30 @@ class SimulationRunner(QRunnable):
                             )
                         else:
                             time.sleep(2)
-                # Create a 2D initial concentration
-                initial_concentration = self.tc.create_3di_model_initial_concentration(
-                    threedimodel_id,
-                    {
-                        "user_generated": True,
-                        "source_raster": raster_id,
-                        "dimension": "two_d",
-                    }
-                )
-                # Wait for the initial concentration processing
-                # Link substance to initial concentration
-                try:
-                    self.tc.create_simulation_initial_2d_substance_concentrations(
-                        sim_id,
+                if raster_id:
+                    # Create a 2D initial concentration
+                    initial_concentration = self.tc.create_3di_model_initial_concentration(
+                        threedimodel_id,
                         {
-                            "substance": substance_id,
-                            "aggregation_method": aggregation_method,
-                            "initial_concentration": initial_concentration.id,
-                        },
+                            "user_generated": True,
+                            "source_raster": raster_id,
+                            "dimension": "two_d",
+                        }
                     )
-                except:
-                    error_msg = f"Failed to create initial concentration for substance: {substance}"
-                    raise SimulationRunnerError(error_msg)
+                    # Wait for the initial concentration processing
+                    # Link substance to initial concentration
+                    try:
+                        self.tc.create_simulation_initial_2d_substance_concentrations(
+                            sim_id,
+                            {
+                                "substance": substance_id,
+                                "aggregation_method": aggregation_method,
+                                "initial_concentration": initial_concentration.id,
+                            },
+                        )
+                    except:
+                        error_msg = f"Failed to create initial concentration for substance: {substance}"
+                        raise SimulationRunnerError(error_msg)
 
     def include_laterals(self):
         """Add initial laterals to the new simulation."""
