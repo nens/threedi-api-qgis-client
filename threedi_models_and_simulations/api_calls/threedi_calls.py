@@ -342,6 +342,11 @@ class ThreediCalls:
         water_level = self.threedi_api.threedimodels_initial_waterlevels_read(water_level_id, threedimodel_id)
         return water_level
 
+    def fetch_3di_model_initial_concentrations(self, threedimodel_id: str) -> List[InitialConcentration]:
+        """Fetch initial concentrations list"""
+        concentrations = self.paginated_fetch(self.threedi_api.threedimodels_initial_concentrations_list, threedimodel_id)
+        return concentrations
+
     def fetch_3di_model_rasters(self, threedimodel_id: str, **data) -> List[Raster]:
         """Fetch paginated rasters list"""
         rasters = self.paginated_fetch(self.threedi_api.threedimodels_rasters_list, threedimodel_id, **data)

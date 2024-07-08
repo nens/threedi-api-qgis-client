@@ -900,34 +900,36 @@ class SimulationRunner(QRunnable):
                         if raster_task_ic and raster_task_ic.status == ThreediModelTaskStatus.SUCCESS.value:
                             break
                         elif raster_task_ic and raster_task_ic.status == ThreediModelTaskStatus.FAILURE.value:
-                            raise SimulationRunnerError(
-                                f"Failed to process Initial Concentration raster: {local_raster_ic_name}"
-                            )
+                            error_msg = f"Failed to process Initial Concentration raster: {local_raster_ic_name}"
+                            raise SimulationRunnerError(error_msg)
                         else:
                             time.sleep(2)
                 if raster_id:
-                    # Create a 2D initial concentration
-                    initial_concentration = self.tc.create_3di_model_initial_concentration(
-                        threedimodel_id,
-                        {
-                            "user_generated": True,
-                            "source_raster": raster_id,
-                            "dimension": "two_d",
-                        }
-                    )
-                    # Wait for the initial concentration processing
-                    # Link substance to initial concentration
-                    try:
-                        self.tc.create_simulation_initial_2d_substance_concentrations(
-                            sim_id,
-                            {
-                                "substance": substance_id,
-                                "aggregation_method": aggregation_method,
-                                "initial_concentration": initial_concentration.id,
-                            },
-                        )
-                    except:
-                        error_msg = f"Failed to create initial concentration for substance: {substance}"
+                    # Wait for the processing of initial concentration file to finish
+                    retries = 0
+                    initial_concentration_2d = None
+                    while not initial_concentration_2d and retries < 12:
+                        results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
+                        two_d_ids = [x for x in results if x.dimension == "two_d" and x.source_raster_id == raster_id]
+                        if len(two_d_ids) > 0:
+                            initial_concentration_2d = two_d_ids[0]
+                            break
+                        retries += 1
+                        time.sleep(5)
+                    if initial_concentration_2d:
+                        # Link substance to initial concentration
+                        try:
+                            self.tc.create_simulation_initial_2d_substance_concentrations(
+                                sim_id,
+                                substance=substance_id,
+                                aggregation_method=aggregation_method,
+                                initial_concentration=initial_concentration_2d.id,
+                            )
+                        except:
+                            error_msg = f"Failed to create initial concentration for substance: {substance}"
+                            raise SimulationRunnerError(error_msg)
+                    else:
+                        error_msg = f"Could not find 2D initial concentration for raster ID: {raster_id}"
                         raise SimulationRunnerError(error_msg)
 
     def include_laterals(self):
