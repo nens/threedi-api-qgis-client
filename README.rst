@@ -34,7 +34,7 @@ On Linux, local development happens with docker to make sure we're working in a 
 isolated environment. To start the development environment, run the following commands::
 
     $ docker compose build
-    $ xhost +localhost
+    $ xhost +local:docker
     $ docker compose up
 
 and::
@@ -42,4 +42,9 @@ and::
     $ docker compose run --rm qgis make test
 
 On Mac, you might need to install xquartz, adjust the DISPLAY env variable in the docker-compose.yml
-to `host.docker.internal:0` and remove the //tmp/x-something mount from volumes.
+to `host.docker.internal:0` and remove the //tmp/x-something mount from volumes. Then, to start the
+development environment, run the following commands::
+
+    $ docker compose build
+    $ xhost +localhost
+    $ docker compose up
