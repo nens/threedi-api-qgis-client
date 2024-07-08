@@ -4,7 +4,8 @@ History
 3.11.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add CSV upload support for 1D initial water level (#575).
+- Fixes/enhancements: #526
 
 
 3.11.0 (2024-06-21)
