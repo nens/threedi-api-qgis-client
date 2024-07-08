@@ -3388,7 +3388,7 @@ class SimulationWizard(QWizard):
                     if rb_local_raster and rb_local_raster.isChecked() and cbo_local_raster:
                         layer_uri = qgis_layers_cbo_get_layer_uri(cbo_local_raster)
                         initial_concentrations = {
-                            "local_raster": layer_uri,
+                            "local_raster_path": layer_uri,
                             "online_raster": None,
                             "aggregation_method": aggregation_method,
                         }
@@ -3397,7 +3397,7 @@ class SimulationWizard(QWizard):
                         for raster in rasters:
                             if raster.name == cbo_online_raster:
                                 initial_concentrations = {
-                                    "local_raster": None,
+                                    "local_raster_path": None,
                                     "online_raster": raster.id,
                                     "aggregation_method": aggregation_method,
                                 }

@@ -866,14 +866,13 @@ class SimulationRunner(QRunnable):
             for substance, params in initial_conditions.initial_concentrations_2d.items():
                 substance_id = self.substances[substance]
                 aggregation_method = params.get("aggregation_method")
-                local_raster = params.get("local_raster")
+                local_raster_path = params.get("local_raster_path")
                 online_raster = params.get("online_raster")
                 raster_id = None
                 if online_raster:
                     raster_id = online_raster
-                elif local_raster:
+                elif local_raster_path:
                     # Create a 3Di model raster
-                    local_raster_path = params.get(local_raster)
                     local_raster_ic_name = os.path.basename(local_raster_path)
                     raster = self.tc.create_3di_model_raster(
                         threedimodel_id, name=local_raster_ic_name, type="initial_concentration_file"
