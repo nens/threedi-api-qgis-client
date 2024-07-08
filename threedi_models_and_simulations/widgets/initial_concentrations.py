@@ -1,6 +1,7 @@
 from functools import partial
 from operator import attrgetter
 from typing import Dict, List
+import os
 
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapLayerComboBox
@@ -31,9 +32,9 @@ class InitialConcentrationsWidget(QWidget):
         super().__init__(parent)
         self.substances = substances
         self.parent_page = parent
-        self.initial_concentrations_2d = {}
         self.widget = QWidget()
         self.rasters = []
+        self.filenames = []
         self.setup_ui()
         self.load_rasters()
         self.connect_signals()
@@ -45,21 +46,26 @@ class InitialConcentrationsWidget(QWidget):
 
     def connect_signals(self):
         for substance in self.substances:
-            name = substance["name"]
+            substance_name = substance["name"]
             # online raster
-            cbo_online_raster: QComboBox = self.widget.findChild(QComboBox, f"cbo_online_raster_{name}")
+            cbo_online_raster: QComboBox = self.widget.findChild(QComboBox, f"cbo_online_raster_{substance_name}")
             for raster in sorted(self.rasters, key=attrgetter("id")):
+                if not raster.file:
+                    continue
                 filename = raster.file.filename
                 cbo_online_raster.addItem(filename)
             # local raster
-            cbo_local_raster = self.widget.findChild(QgsMapLayerComboBox, f"cbo_local_raster_{name}")
-            browse_button = self.widget.findChild(QToolButton, f"btn_browse_local_raster_{name}")
-            browse_button.clicked.connect(partial(self.browse_for_local_raster, name, cbo_local_raster))
+            cbo_local_raster = self.widget.findChild(QgsMapLayerComboBox, f"cbo_local_raster_{substance_name}")
+            browse_button = self.widget.findChild(QToolButton, f"btn_browse_local_raster_{substance_name}")
+            browse_button.clicked.connect(partial(self.browse_for_local_raster, cbo_local_raster))
 
     def load_rasters(self):
         tc = ThreediCalls(self.parent_page.parent_wizard.plugin_dock.threedi_api)
         model_id = self.parent_page.parent_wizard.model_selection_dlg.current_model.id
         self.rasters = tc.fetch_3di_model_rasters(model_id, type="initial_concentration_file")
+        for raster in self.rasters:
+            if raster.file:
+                self.filenames.append(raster.file.filename)
 
     def create_initial_concentrations(self, main_layout: QGridLayout):
         """Create initial concentrations."""
@@ -70,10 +76,12 @@ class InitialConcentrationsWidget(QWidget):
             groupbox.setFont(QFont("Segoe UI", 10))
             groupbox.setCheckable(True)
             groupbox.setChecked(False)
+            groupbox.setObjectName(f"gb_initial_concentrations_2d_{name}")
             groupbox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
             # Online raster upload widget
             rb_online_raster = QRadioButton("Online raster")
+            rb_online_raster.setObjectName(f"rb_online_raster_{name}")
             cbo_online_raster = QComboBox()
             cbo_online_raster.setEnabled(False)
             cbo_online_raster.setObjectName(f"cbo_online_raster_{name}")
@@ -81,6 +89,7 @@ class InitialConcentrationsWidget(QWidget):
 
             # Local raster upload widget
             rb_local_raster = QRadioButton("Local raster")
+            rb_local_raster.setObjectName(f"rb_local_raster_{name}")
             cbo_local_raster = QgsMapLayerComboBox()
             cbo_local_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
             cbo_local_raster.setEnabled(False)
@@ -113,23 +122,19 @@ class InitialConcentrationsWidget(QWidget):
             groupbox.setLayout(groupbox_layout)
             main_layout.addWidget(groupbox, i, 0)
 
-    def update_initial_concentrations(self, substance: str, filepath: str):
-        aggregation_method = self.widget.findChild(QComboBox, f"cbo_aggregation_{substance}").currentText()
-        self.initial_concentrations_2d[substance] = {
-            "raster_id": None,
-            "aggregation_method": aggregation_method,
-            "filepath": filepath,
-        }
-
-    def browse_for_local_raster(self, substance: str, widget: QgsMapLayerComboBox):
+    def browse_for_local_raster(self, widget: QgsMapLayerComboBox):
         """Allow user to browse for a raster layer and insert it to the widget."""
         name_filter = "GeoTIFF (*.tif *.TIF *.tiff *.TIFF)"
         title = "Select raster file"
         raster_file = get_filepath(None, extension_filter=name_filter, dialog_title=title)
         if not raster_file:
             return
+        filename = os.path.basename(raster_file)
+        if filename in self.filenames:
+            error_message = f"Raster {filename} is already in the online rasters."
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+            return
         items = widget.additionalItems()
         if raster_file not in items:
             items.append(raster_file)
         widget.setAdditionalItems(items)
-        self.update_initial_concentrations(substance, raster_file)

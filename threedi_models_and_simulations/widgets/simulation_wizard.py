@@ -21,11 +21,14 @@ from qgis.PyQt.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QGridLayout,
+    QGroupBox,
     QLabel,
     QLineEdit,
+    QRadioButton,
     QSizePolicy,
     QSpacerItem,
     QTableWidgetItem,
+    QWidget,
     QWizard,
     QWizardPage,
 )
@@ -712,7 +715,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.initial_saved_state = initial_conditions.initial_saved_state
         self.initial_waterlevels = {}
         self.saved_states = {}
-        self.initial_concentrations_2d = {}
+        self.initial_concentrations_widget = QWidget()
         self.gb_saved_state.setChecked(False)
         self.gb_1d.setChecked(False)
         self.gb_2d.setChecked(False)
@@ -733,17 +736,16 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.gb_groundwater.toggled.connect(self.on_initial_waterlevel_change)
 
     def setup_2d_initial_concentrations(self):
-        if hasattr(self, "widget"):
-            self.widget.setParent(None)
+        if hasattr(self, "initial_concentrations_widget"):
+            self.initial_concentrations_widget.setParent(None)
         if not self.substances:
             self.initial_concentrations_2d_label.hide()
             return
         self.initial_concentrations_2d_label.show()
-        initial_concentration_widget = InitialConcentrationsWidget(self.substances, self.parent_page)
-        self.widget = initial_concentration_widget.widget
-        self.initial_concentrations_2d = initial_concentration_widget.initial_concentrations_2d
+        initial_concentrations_widget = InitialConcentrationsWidget(self.substances, self.parent_page)
+        self.initial_concentrations_widget = initial_concentrations_widget.widget
         parent_layout = self.layout()
-        parent_layout.addWidget(self.widget, 3, 2)
+        parent_layout.addWidget(self.initial_concentrations_widget, 3, 2)
 
     def on_saved_state_change(self, checked):
         """Handle saved state group checkbox."""
@@ -3362,10 +3364,34 @@ class SimulationWizard(QWizard):
                 )
 
             # Initial concentrations 2D for substances
-            if self.init_conditions_page.main_widget.substances:
-                initial_conditions.initial_concentrations_2d = (
-                    self.init_conditions_page.main_widget.initial_concentrations_2d
-                )
+            widget = self.init_conditions_page.main_widget.initial_concentrations_widget
+            substances = self.init_conditions_page.main_widget.substances
+            initial_concentrations_2d = {}
+            for substance in substances:
+                substance_name = substance.get("name")
+                aggregation_method = widget.findChild(QComboBox, f"cbo_aggregation_{substance_name}").currentText()
+                groupbox_ic = widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                rb_local_raster = widget.findChild(QRadioButton, f"rb_local_raster_{substance_name}")
+                rb_online_raster = widget.findChild(QRadioButton, f"rb_online_raster_{substance_name}")
+                cbo_local_raster = widget.findChild(QComboBox, f"cbo_local_raster_{substance_name}")
+                cbo_online_raster = widget.findChild(QComboBox, f"cbo_online_raster_{substance_name}").currentText()
+                if groupbox_ic and groupbox_ic.isChecked():
+                    if rb_local_raster and rb_local_raster.isChecked() and cbo_local_raster:
+                        initial_concentrations = {
+                            "local_raster": qgis_layers_cbo_get_layer_uri(cbo_local_raster),
+                            "online_raster": None,
+                            "aggregation_method": aggregation_method,
+                        }
+                        initial_concentrations_2d[substance_name] = initial_concentrations
+                    if rb_online_raster and rb_online_raster.isChecked() and cbo_online_raster:
+                        initial_concentrations = {
+                            "local_raster": None,
+                            "online_raster": cbo_online_raster,
+                            "aggregation_method": aggregation_method,
+                        }
+                        initial_concentrations_2d[substance_name] = initial_concentrations
+            if initial_concentrations_2d:
+                initial_conditions.initial_concentrations_2d = initial_concentrations_2d
 
         # Laterals
         if self.init_conditions.include_laterals:
