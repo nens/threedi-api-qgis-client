@@ -119,16 +119,19 @@ class SchematisationDownload(uicls, basecls):
             self.schematisations_page_sbox.setMaximum(pages_nr)
             self.schematisations_page_sbox.setSuffix(f" / {pages_nr}")
             self.tv_schematisations_model.clear()
-            header = ["Schematisation name", "Slug", "Owner", "Created by"]
+            header = ["Schematisation name", "Description", "Owner", "Created by"]
             self.tv_schematisations_model.setHorizontalHeaderLabels(header)
             for schematisation in schematisations:
                 name_item = QStandardItem(schematisation.name)
                 name_item.setData(schematisation, role=Qt.UserRole)
-                slug_item = QStandardItem(schematisation.slug)
+                try:
+                    description_item = QStandardItem(schematisation.meta["description"])
+                except (KeyError, TypeError):
+                    description_item = QStandardItem("")
                 organisation = self.plugin_dock.organisations[schematisation.owner]
                 owner_item = QStandardItem(organisation.name)
                 created_by_item = QStandardItem(schematisation.created_by)
-                self.tv_schematisations_model.appendRow([name_item, slug_item, owner_item, created_by_item])
+                self.tv_schematisations_model.appendRow([name_item, description_item, owner_item, created_by_item])
             for i in range(len(header)):
                 self.schematisations_tv.resizeColumnToContents(i)
             self.schematisations = schematisations
