@@ -4,10 +4,10 @@ import hashlib
 import json
 import os
 import tempfile
-from typing import List
 from collections import OrderedDict
 from datetime import datetime
 from enum import Enum
+from typing import List
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import requests

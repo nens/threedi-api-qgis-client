@@ -603,19 +603,21 @@ class ThreediCalls:
 
     def fetch_simulation_initial_1d_water_level_files(self, simulation_pk: int) -> List[OneDWaterLevelFile]:
         """Fetch initial 1D water level list of the given simulation."""
-        water_level_1d_files = self.paginated_fetch(self.threedi_api.simulations_initial1d_water_level_file_list, simulation_pk)
+        water_level_1d_files = self.paginated_fetch(
+            self.threedi_api.simulations_initial1d_water_level_file_list, simulation_pk
+        )
         return water_level_1d_files
 
-    def create_simulation_initial_1d_water_level_file(
-        self, simulation_pk: int, **data
-    ) -> OneDWaterLevelFile:
+    def create_simulation_initial_1d_water_level_file(self, simulation_pk: int, **data) -> OneDWaterLevelFile:
         """Add initial 1D water level file to the given simulation."""
         water_level_1d_file = self.threedi_api.simulations_initial1d_water_level_file_create(str(simulation_pk), data)
         return water_level_1d_file
 
     def delete_simulation_initial_1d_water_level_file(self, simulation_pk: int, water_level_1d_file_id: int) -> None:
         """Delete initial 1D water level file from the given simulation."""
-        logger.debug("Deleting initial 1D water level file %s from simulation %s", water_level_1d_file_id, simulation_pk)
+        logger.debug(
+            "Deleting initial 1D water level file %s from simulation %s", water_level_1d_file_id, simulation_pk
+        )
         self.threedi_api.simulations_initial1d_water_level_file_delete(simulation_pk)
 
     def create_simulation_initial_2d_water_level_constant(self, simulation_pk: int, **data) -> TwoDWaterLevel:
