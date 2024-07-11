@@ -164,9 +164,10 @@
  </widget>
  <tabstops>
   <tabstop>tv_sim_tree</tabstop>
-  <tabstop>pb_new_sim</tabstop>
-  <tabstop>pb_stop_sim</tabstop>
+  <tabstop>refresh_btn</tabstop>
   <tabstop>pb_hide</tabstop>
+  <tabstop>pb_stop_sim</tabstop>
+  <tabstop>pb_new_sim</tabstop>
  </tabstops>
  <resources/>
  <connections/>

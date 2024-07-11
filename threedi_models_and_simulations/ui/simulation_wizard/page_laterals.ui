@@ -723,6 +723,22 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>groupbox_1d_laterals</tabstop>
+  <tabstop>cb_use_1d_laterals</tabstop>
+  <tabstop>cb_upload_1d_laterals</tabstop>
+  <tabstop>il_1d_upload</tabstop>
+  <tabstop>pb_upload_1d_laterals</tabstop>
+  <tabstop>cbo_1d_units</tabstop>
+  <tabstop>cb_1d_interpolate</tabstop>
+  <tabstop>groupbox_2d_laterals</tabstop>
+  <tabstop>cb_use_2d_laterals</tabstop>
+  <tabstop>cb_upload_2d_laterals</tabstop>
+  <tabstop>il_2d_upload</tabstop>
+  <tabstop>pb_upload_2d_laterals</tabstop>
+  <tabstop>cbo_2d_units</tabstop>
+  <tabstop>cb_2d_interpolate</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

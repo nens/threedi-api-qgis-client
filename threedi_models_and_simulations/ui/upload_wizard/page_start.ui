@@ -177,6 +177,9 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>revisions_tv</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -971,6 +971,29 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>cb_conditions</tabstop>
+  <tabstop>cb_substances</tabstop>
+  <tabstop>cb_boundary</tabstop>
+  <tabstop>cb_laterals</tabstop>
+  <tabstop>cb_dwf</tabstop>
+  <tabstop>cb_precipitation</tabstop>
+  <tabstop>cb_wind</tabstop>
+  <tabstop>cb_raster_edits</tabstop>
+  <tabstop>cb_leakage</tabstop>
+  <tabstop>cb_sources_sinks</tabstop>
+  <tabstop>cb_local_or_ts_rain</tabstop>
+  <tabstop>cb_obstacle_edits</tabstop>
+  <tabstop>cb_structure_controls</tabstop>
+  <tabstop>cb_breaches</tabstop>
+  <tabstop>cb_generate</tabstop>
+  <tabstop>cb_postprocess</tabstop>
+  <tabstop>cb_multiple_simulations</tabstop>
+  <tabstop>dd_number_of_simulation</tabstop>
+  <tabstop>dd_simulation_difference</tabstop>
+  <tabstop>pb_cancel</tabstop>
+  <tabstop>pb_next</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

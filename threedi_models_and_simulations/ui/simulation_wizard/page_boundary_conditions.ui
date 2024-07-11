@@ -538,6 +538,20 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>rb_from_template</tabstop>
+  <tabstop>rb_upload_file</tabstop>
+  <tabstop>gb_upload_1d</tabstop>
+  <tabstop>file_bc_1d_upload</tabstop>
+  <tabstop>pb_upload_file_bc_1d</tabstop>
+  <tabstop>cbo_bc_units_1d</tabstop>
+  <tabstop>cb_interpolate_bc_1d</tabstop>
+  <tabstop>gb_upload_2d</tabstop>
+  <tabstop>file_bc_2d_upload</tabstop>
+  <tabstop>pb_upload_file_bc_2d</tabstop>
+  <tabstop>cbo_bc_units_2d</tabstop>
+  <tabstop>cb_interpolate_bc_2d</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

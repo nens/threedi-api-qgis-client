@@ -478,6 +478,16 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>gb_from_template</tabstop>
+  <tabstop>cb_file_sc</tabstop>
+  <tabstop>cb_memory_sc</tabstop>
+  <tabstop>cb_table_sc</tabstop>
+  <tabstop>cb_timed_sc</tabstop>
+  <tabstop>gb_upload_file</tabstop>
+  <tabstop>file_sc_upload</tabstop>
+  <tabstop>pb_upload_file_sc</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
