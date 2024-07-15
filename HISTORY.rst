@@ -5,6 +5,7 @@ History
 -------------------
 
 - Add CSV upload support for 1D initial water level (#575).
+- Convert timesteps to correct time units (#585).
 - Fixes/enhancements: #238, #493, #526
 
 
