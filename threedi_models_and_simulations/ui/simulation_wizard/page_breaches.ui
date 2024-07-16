@@ -777,6 +777,16 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>dd_simulation</tabstop>
+  <tabstop>sb_duration</tabstop>
+  <tabstop>dd_units</tabstop>
+  <tabstop>sb_discharge_coefficient_positive</tabstop>
+  <tabstop>sb_discharge_coefficient_negative</tabstop>
+  <tabstop>sb_width</tabstop>
+  <tabstop>sp_start_after</tabstop>
+  <tabstop>sb_max_breach_depth</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

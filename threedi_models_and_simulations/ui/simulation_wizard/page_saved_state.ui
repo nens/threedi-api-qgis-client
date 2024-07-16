@@ -583,6 +583,18 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>le_saved_state_name</tabstop>
+  <tabstop>le_saved_state_tags</tabstop>
+  <tabstop>rb_end_of_sim</tabstop>
+  <tabstop>rb_after_time</tabstop>
+  <tabstop>sp_time</tabstop>
+  <tabstop>cbo_units</tabstop>
+  <tabstop>rb_stable_flow</tabstop>
+  <tabstop>rb_water_level</tabstop>
+  <tabstop>rb_flow_velocity</tabstop>
+  <tabstop>sp_threshold</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
