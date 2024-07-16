@@ -867,6 +867,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.laterals_2d_timeseries = {}
         self.laterals_1d_timeseries_template = {}
         self.laterals_2d_timeseries_template = {}
+        self.substance_constants_1d = []
+        self.substance_constants_2d = []
         self.substance_concentrations_1d = {}
         self.substance_concentrations_2d = {}
         self.last_upload_1d_filepath = ""
@@ -918,6 +920,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             return
         substance_concentration_widget = SubstanceConcentrationsWidget(self)
         self.groupbox = substance_concentration_widget.groupbox
+        self.substance_constants_1d = substance_concentration_widget.substance_constants_1d
+        self.substance_constants_2d = substance_concentration_widget.substance_constants_2d
         self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
         self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
         parent_layout = self.layout()
@@ -1027,17 +1031,41 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def recalculate_substances_timeseries(self, laterals_type, timesteps_in_seconds=False):
         """Recalculate substances timeseries (timesteps in seconds)."""
-        substance_concentrations = {}
-        if laterals_type == self.TYPE_1D:
-            substance_concentrations.update(self.substance_concentrations_1d)
-        else:
-            substance_concentrations.update(self.substance_concentrations_2d)
-        substances = deepcopy(substance_concentrations)
         substances_data = {}
+        substance_concentrations = {}
+        substance_constants = []
+        substance_concentrations_constants = {}
         if laterals_type == self.TYPE_1D:
             laterals_timeseries = self.laterals_1d_timeseries
+            substance_concentrations.update(self.substance_concentrations_1d)
+            substance_constants = self.substance_constants_1d
         else:
             laterals_timeseries = self.laterals_2d_timeseries
+            substance_concentrations.update(self.substance_concentrations_2d)
+            substance_constants = self.substance_constants_2d
+        for lat_id, lat_data in laterals_timeseries.items():
+            for substance_constanst in substance_constants:
+                for name, value in substance_constanst.items():
+                    concentrations = [[t, value] for (t, v) in lat_data["values"]]
+                    substance = {
+                        "substance": name,
+                        "concentrations": concentrations,
+                        "time_units": "s",
+                    }
+                    if lat_id not in substance_concentrations_constants:
+                        substance_concentrations_constants[lat_id] = []
+                    substance_concentrations_constants[lat_id].append(substance)
+        # Merge substance concentrations with substance_concentrations_constants
+        for lat_id, substance in substance_concentrations_constants.items():
+            if lat_id not in substance_concentrations:
+                substance_concentrations[lat_id] = substance
+            else:
+                existing_substance = {sub["substance"]: sub for sub in substance_concentrations[lat_id]}
+                for sub in substance:
+                    name = sub.get("substance")
+                    existing_substance.setdefault(name, sub)
+                substance_concentrations[lat_id] = list(existing_substance.values())
+        substances = deepcopy(substance_concentrations)
         for lat_id in laterals_timeseries.keys():
             if lat_id in substances:
                 substances_data[lat_id] = substances[lat_id]
