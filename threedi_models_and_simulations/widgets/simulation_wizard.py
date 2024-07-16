@@ -372,16 +372,14 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             self.groupbox.setParent(None)
         if not self.substances:
             return
-        substance_concentration_widget = SubstanceConcentrationsWidget(
-            self.substances, self.current_model, self.handle_substance_errors
-        )
+        substance_concentration_widget = SubstanceConcentrationsWidget(self)
         self.groupbox = substance_concentration_widget.groupbox
         self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
         self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 6, 2)
 
-    def handle_substance_errors(self, header, substance_list, bc_type, time_units):
+    def handle_substance_csv_errors(self, header, substance_list, bc_type, time_units):
         """
         First, check if boundary condition values are available.
         Second, check if substance concentrations timesteps match exactly the boundary condition values timesteps.
@@ -918,16 +916,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.groupbox.setParent(None)
         if not self.substances:
             return
-        substance_concentration_widget = SubstanceConcentrationsWidget(
-            self.substances, self.current_model, self.handle_substance_timesteps
-        )
+        substance_concentration_widget = SubstanceConcentrationsWidget(self)
         self.groupbox = substance_concentration_widget.groupbox
         self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
         self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
 
-    def handle_substance_timesteps(self, header, substance_list, laterals_type, time_units):
+    def handle_substance_csv_errors(self, header, substance_list, laterals_type, time_units):
         """
         First, check if lateral values are uploaded.
         Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
