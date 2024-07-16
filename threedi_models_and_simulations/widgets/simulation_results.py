@@ -26,7 +26,7 @@ class SimulationResults(uicls, basecls):
     """Dialog with methods for handling simulations results."""
 
     PROGRESS_COLUMN_IDX = 2
-    MAX_THREAD_COUNT = 1
+    MAX_THREAD_COUNT = 4
 
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
@@ -36,13 +36,14 @@ class SimulationResults(uicls, basecls):
         self.download_results_pool = QThreadPool()
         self.download_results_pool.setMaxThreadCount(self.MAX_THREAD_COUNT)
         self.finished_simulations = {}
+        self.download_progress_bars = {}
+        self.running_downloads = set()
         self.tv_model = None
-        self.last_progress_item = None
         self.setup_view_model()
         self.plugin_dock.simulations_progresses_sentinel.simulation_finished.connect(self.update_finished_list)
         self.pb_cancel.clicked.connect(self.close)
         self.pb_download.clicked.connect(self.download_results)
-        self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_download_results)
+        self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_refresh_results)
         set_icon(self.refresh_btn, "refresh.svg")
         self.refresh_btn.clicked.connect(self.refresh_finished_simulations_list)
 
@@ -60,27 +61,26 @@ class SimulationResults(uicls, basecls):
 
     def refresh_finished_simulations_list(self):
         """Refresh finished simulation results list."""
-        self.tv_finished_sim_tree.selectionModel().selectionChanged.disconnect(self.toggle_download_results)
+        self.tv_finished_sim_tree.selectionModel().selectionChanged.disconnect(self.toggle_refresh_results)
         self.plugin_dock.simulations_progresses_sentinel.simulation_finished.disconnect(self.update_finished_list)
         self.tv_model.clear()
         self.finished_simulations.clear()
+        self.download_progress_bars.clear()
+        self.running_downloads.clear()
         self.setup_view_model()
         self.plugin_dock.simulations_progresses_sentinel.simulation_finished.connect(self.update_finished_list)
-        self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_download_results)
+        self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_refresh_results)
         self.plugin_dock.simulations_progresses_sentinel.fetch_finished_simulations()
         self.plugin_dock.communication.bar_info("Finished simulation results reloaded!")
 
-    def toggle_download_results(self):
-        """Toggle download if any simulation is selected."""
+    def toggle_refresh_results(self):
+        """Toggle refresh if any simulation results are downloading."""
         if self.download_results_pool.activeThreadCount() == 0:
-            selection_model = self.tv_finished_sim_tree.selectionModel()
-            if selection_model.hasSelection():
-                self.pb_download.setEnabled(True)
-            else:
-                self.pb_download.setDisabled(True)
             self.refresh_btn.setEnabled(True)
+            self.refresh_btn.setToolTip("Refresh")
         else:
             self.refresh_btn.setDisabled(True)
+            self.refresh_btn.setToolTip("Refreshing disabled while downloading")
 
     def add_finished_simulation_to_model(self, sim_id, sim_data):
         """Method for adding information about finished simulation to the model."""
@@ -95,6 +95,7 @@ class SimulationResults(uicls, basecls):
         progress_item.setData(-1, Qt.UserRole)
         self.tv_model.insertRow(0, [sim_name_item, expires_item, progress_item])
         self.finished_simulations[sim_id] = sim_data
+        self.download_progress_bars[sim_id] = progress_item
 
     def update_finished_list(self, finished_simulations_data):
         """Update finished simulations list."""
@@ -103,17 +104,19 @@ class SimulationResults(uicls, basecls):
                 self.add_finished_simulation_to_model(sim_id, sim_data)
         self.refresh_last_updated_label()
 
-    def on_download_progress_update(self, percentage):
+    def on_download_progress_update(self, percentage, sim_id):
         """Update download progress bar."""
-        self.last_progress_item.setData(percentage, Qt.UserRole)
+        progress_item = self.download_progress_bars[sim_id]
+        progress_item.setData(percentage, Qt.UserRole)
         if percentage == 0:
-            row = self.last_progress_item.index().row()
+            row = progress_item.index().row()
             name_text = self.tv_model.item(row, 0).text()
             msg = f"Downloading results of {name_text} started!"
             self.plugin_dock.communication.bar_info(msg)
 
-    def on_download_finished_success(self, msg, results_dir):
+    def on_download_finished_success(self, msg, results_dir, sim_id):
         """Reporting finish successfully status and closing download thread."""
+        self.running_downloads.remove(sim_id)
         self.plugin_dock.communication.bar_info(msg, log_text_color=Qt.darkGreen)
         grid_file_names = ["gridadmin.h5", "gridadmin.gpkg"]
         grid_dir = os.path.join(os.path.dirname(os.path.dirname(results_dir)), "grid")
@@ -123,12 +126,13 @@ class SimulationResults(uicls, basecls):
                 if os.path.exists(grid_file):
                     grid_file_copy = os.path.join(grid_dir, grid_file_name)
                     shutil.copyfile(grid_file, bypass_max_path_limit(grid_file_copy, is_file=True))
-        self.toggle_download_results()
+        self.toggle_refresh_results()
 
-    def on_download_finished_failed(self, msg):
+    def on_download_finished_failed(self, msg, sim_id):
         """Reporting failure and closing download thread."""
+        self.running_downloads.remove(sim_id)
         self.plugin_dock.communication.bar_error(msg, log_text_color=Qt.red)
-        self.toggle_download_results()
+        self.toggle_refresh_results()
 
     def pick_results_destination_dir(self):
         """Pick folder where results will be written to."""
@@ -145,13 +149,16 @@ class SimulationResults(uicls, basecls):
         current_index = self.tv_finished_sim_tree.currentIndex()
         if not current_index.isValid():
             return
+        current_row = current_index.row()
+        name_item = self.tv_model.item(current_row, 0)
+        sim_id = name_item.data(Qt.UserRole)
+        if sim_id in self.running_downloads:
+            self.plugin_dock.communication.bar_warn("The selected results are already being downloaded!")
+            return
         working_dir = self.plugin_dock.plugin_settings.working_dir
         local_schematisations = list_local_schematisations(working_dir)
         try:
             tc = ThreediCalls(self.plugin_dock.threedi_api)
-            current_row = current_index.row()
-            name_item = self.tv_model.item(current_row, 0)
-            sim_id = name_item.data(Qt.UserRole)
             simulation = tc.fetch_simulation(sim_id)
             simulation_name = simulation.name
             simulation_model_id = int(simulation.threedimodel_id)
@@ -215,7 +222,6 @@ class SimulationResults(uicls, basecls):
             if gridadmin_downloads_gpkg is not None:
                 downloads.append(gridadmin_downloads_gpkg)
             downloads.sort(key=lambda x: x[-1].size)
-            self.last_progress_item = self.tv_model.item(current_row, self.PROGRESS_COLUMN_IDX)
         except ApiException as e:
             error_msg = extract_error_message(e)
             self.plugin_dock.communication.show_error(error_msg)
@@ -224,10 +230,10 @@ class SimulationResults(uicls, basecls):
             error_msg = f"Error: {e}"
             self.plugin_dock.communication.show_error(error_msg)
             return
-        self.pb_download.setDisabled(True)
-        self.refresh_btn.setDisabled(True)
         download_worker = DownloadProgressWorker(simulation, downloads, simulation_subdirectory_path)
         download_worker.signals.thread_finished.connect(self.on_download_finished_success)
         download_worker.signals.download_failed.connect(self.on_download_finished_failed)
         download_worker.signals.download_progress.connect(self.on_download_progress_update)
         self.download_results_pool.start(download_worker)
+        self.running_downloads.add(sim_id)
+        self.toggle_refresh_results()
