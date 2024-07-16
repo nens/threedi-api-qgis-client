@@ -2064,6 +2064,32 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>dd_simulation</tabstop>
+  <tabstop>cbo_prec_type</tabstop>
+  <tabstop>sp_start_after_constant</tabstop>
+  <tabstop>start_after_constant_u</tabstop>
+  <tabstop>sp_stop_after_constant</tabstop>
+  <tabstop>stop_after_constant_u</tabstop>
+  <tabstop>sp_intensity</tabstop>
+  <tabstop>sp_start_after_csv</tabstop>
+  <tabstop>start_after_csv_u</tabstop>
+  <tabstop>cbo_units_csv</tabstop>
+  <tabstop>cb_interpolate_rain</tabstop>
+  <tabstop>le_upload_csv</tabstop>
+  <tabstop>pb_upload_csv</tabstop>
+  <tabstop>rb_global_netcdf</tabstop>
+  <tabstop>rb_raster_netcdf</tabstop>
+  <tabstop>le_upload_netcdf</tabstop>
+  <tabstop>pb_upload_netcdf</tabstop>
+  <tabstop>sp_start_after_design</tabstop>
+  <tabstop>start_after_design_u</tabstop>
+  <tabstop>cbo_design</tabstop>
+  <tabstop>sp_start_after_radar</tabstop>
+  <tabstop>start_after_radar_u</tabstop>
+  <tabstop>sp_stop_after_radar</tabstop>
+  <tabstop>stop_after_radar_u</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

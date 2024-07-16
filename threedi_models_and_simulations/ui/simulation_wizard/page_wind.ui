@@ -1312,6 +1312,25 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>cbo_wind_type</tabstop>
+  <tabstop>sp_start_wind_constant</tabstop>
+  <tabstop>start_wind_constant_u</tabstop>
+  <tabstop>sp_stop_wind_constant</tabstop>
+  <tabstop>stop_wind_constant_u</tabstop>
+  <tabstop>sp_windspeed</tabstop>
+  <tabstop>cbo_windspeed_u</tabstop>
+  <tabstop>sp_dc_constant</tabstop>
+  <tabstop>sp_direction</tabstop>
+  <tabstop>wind_dial</tabstop>
+  <tabstop>sp_start_wind_custom</tabstop>
+  <tabstop>start_wind_custom_u</tabstop>
+  <tabstop>sp_dc_custom</tabstop>
+  <tabstop>le_upload_wind</tabstop>
+  <tabstop>pb_upload_wind</tabstop>
+  <tabstop>cb_interpolate_speed</tabstop>
+  <tabstop>cb_interpolate_direction</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

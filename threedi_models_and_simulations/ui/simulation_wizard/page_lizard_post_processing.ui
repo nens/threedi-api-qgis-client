@@ -730,6 +730,15 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>cb_arrival_time_map</tabstop>
+  <tabstop>cb_damage_estimation</tabstop>
+  <tabstop>cbo_cost_type</tabstop>
+  <tabstop>cbo_flood_month</tabstop>
+  <tabstop>sb_period</tabstop>
+  <tabstop>cbo_repair_infrastructure</tabstop>
+  <tabstop>cbo_repair_building</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

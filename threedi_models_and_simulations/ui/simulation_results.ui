@@ -37,7 +37,7 @@
      <item row="0" column="2">
       <widget class="QPushButton" name="pb_download">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -122,6 +122,9 @@
      <property name="editTriggers">
       <set>QAbstractItemView::NoEditTriggers</set>
      </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
+     </property>
      <property name="sortingEnabled">
       <bool>true</bool>
      </property>
@@ -173,6 +176,12 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>tv_finished_sim_tree</tabstop>
+  <tabstop>refresh_btn</tabstop>
+  <tabstop>pb_cancel</tabstop>
+  <tabstop>pb_download</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

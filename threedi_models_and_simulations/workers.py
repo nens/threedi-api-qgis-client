@@ -160,9 +160,9 @@ class WSProgressesSentinel(QObject):
 class DownloadWorkerSignals(QObject):
     """Definition of the download worker signals."""
 
-    thread_finished = pyqtSignal(str, str)  # finish message, download directory
-    download_failed = pyqtSignal(str)
-    download_progress = pyqtSignal(float)
+    thread_finished = pyqtSignal(str, str, int)  # finish message, download directory, sim_id
+    download_failed = pyqtSignal(str, int)
+    download_progress = pyqtSignal(float, int)
 
 
 class DownloadProgressWorker(QRunnable):
@@ -175,6 +175,7 @@ class DownloadProgressWorker(QRunnable):
     def __init__(self, simulation, downloads, directory):
         super().__init__()
         self.simulation = simulation
+        self.simulation_id = simulation.id
         self.downloads = downloads
         self.directory = bypass_max_path_limit(directory)
         self.success = True
@@ -192,7 +193,7 @@ class DownloadProgressWorker(QRunnable):
             finished_message = "Nothing to download!"
         total_size = sum(download.size for result_file, download in self.downloads)
         size = 0
-        self.signals.download_progress.emit(size)
+        self.signals.download_progress.emit(size, self.simulation_id)
         for result_file, download in self.downloads:
             filename = result_file.filename
             filename_path = bypass_max_path_limit(os.path.join(self.directory, filename), is_file=True)
@@ -204,19 +205,19 @@ class DownloadProgressWorker(QRunnable):
                         if chunk:
                             f.write(chunk)
                             size += len(chunk)
-                            self.signals.download_progress.emit(size / total_size * 100)
+                            self.signals.download_progress.emit(size / total_size * 100, self.simulation_id)
                 if filename.lower().endswith(".zip"):
                     unzip_archive(filename_path)
                 continue
             except Exception as e:
                 error_msg = f"Error: {e}"
-            self.signals.download_progress.emit(self.FAILED)
-            self.signals.download_failed.emit(error_msg)
+            self.signals.download_progress.emit(self.FAILED, self.simulation_id)
+            self.signals.download_failed.emit(error_msg, self.simulation_id)
             self.success = False
             break
         if self.success is True:
-            self.signals.download_progress.emit(self.FINISHED)
-            self.signals.thread_finished.emit(finished_message, self.directory)
+            self.signals.download_progress.emit(self.FINISHED, self.simulation_id)
+            self.signals.thread_finished.emit(finished_message, self.directory, self.simulation_id)
 
 
 class UploadWorkerSignals(QObject):
@@ -762,18 +763,24 @@ class SimulationRunner(QRunnable):
             initial_waterlevel_instance = self.tc.create_initial_water_level(threedimodel_id, dimension="one_d")
             initial_waterlevel_id = initial_waterlevel_instance.id
             # Step 2: Create an upload instance for the initial waterl level
-            initial_waterlevel_upload = self.tc.upload_initial_water_level(threedimodel_id, initial_waterlevel_id, filename=filename)
+            initial_waterlevel_upload = self.tc.upload_initial_water_level(
+                threedimodel_id, initial_waterlevel_id, filename=filename
+            )
             upload_local_file(initial_waterlevel_upload, INITIAL_WATERLEVELS_TEMPLATE)
             # Step 3: Wait for the data to be processed (initial_waterlevel.state == "valid")
             for ti in range(int(self.upload_timeout // 2)):
-                uploaded_initial_waterlevel = self.tc.fetch_3di_model_initial_waterlevel(threedimodel_id, initial_waterlevel_id)
+                uploaded_initial_waterlevel = self.tc.fetch_3di_model_initial_waterlevel(
+                    threedimodel_id, initial_waterlevel_id
+                )
                 if uploaded_initial_waterlevel.state == ThreediFileState.VALID.value:
                     # Step 4: Find & delete existing 1D water levels file of the simulation
                     water_level_1d_files = self.tc.fetch_simulation_initial_1d_water_level_files(sim_id)
                     for water_level_1d_file in water_level_1d_files:
                         self.tc.delete_simulation_initial_1d_water_level_file(sim_id, water_level_1d_file.id)
                     # Step 5: Create a new 1D initial water level file for the simulation
-                    self.tc.create_simulation_initial_1d_water_level_file(sim_id, initial_waterlevel=initial_waterlevel_id)
+                    self.tc.create_simulation_initial_1d_water_level_file(
+                        sim_id, initial_waterlevel=initial_waterlevel_id
+                    )
                     break
                 elif uploaded_initial_waterlevel.state == ThreediFileState.INVALID.value:
                     state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()

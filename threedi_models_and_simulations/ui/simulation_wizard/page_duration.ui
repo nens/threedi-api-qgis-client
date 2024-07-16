@@ -735,6 +735,8 @@
   <tabstop>time_from</tabstop>
   <tabstop>date_to</tabstop>
   <tabstop>time_to</tabstop>
+  <tabstop>grp_timezone</tabstop>
+  <tabstop>cbo_timezone</tabstop>
  </tabstops>
  <resources/>
  <connections/>

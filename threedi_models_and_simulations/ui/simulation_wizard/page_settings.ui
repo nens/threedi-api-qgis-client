@@ -1256,7 +1256,7 @@
              <string>Aggregation settings</string>
             </property>
             <property name="collapsed">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
             <layout class="QGridLayout" name="gridLayout_4">
              <item row="0" column="0" rowspan="2" colspan="3">
@@ -1338,7 +1338,7 @@
              <string>Timestep settings</string>
             </property>
             <property name="collapsed">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
             <layout class="QGridLayout" name="gridLayout_3">
              <item row="0" column="0">
@@ -1732,6 +1732,46 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>scrollArea_2</tabstop>
+  <tabstop>group_physical</tabstop>
+  <tabstop>use_advection_1d</tabstop>
+  <tabstop>use_advection_2d</tabstop>
+  <tabstop>group_numerical</tabstop>
+  <tabstop>pump_implicit_ratio</tabstop>
+  <tabstop>cfl_strictness_factor_1d</tabstop>
+  <tabstop>cfl_strictness_factor_2d</tabstop>
+  <tabstop>convergence_eps</tabstop>
+  <tabstop>convergence_cg</tabstop>
+  <tabstop>flow_direction_threshold</tabstop>
+  <tabstop>general_numerical_threshold</tabstop>
+  <tabstop>use_of_cg</tabstop>
+  <tabstop>use_nested_newton</tabstop>
+  <tabstop>limiter_waterlevel_gradient_1d</tabstop>
+  <tabstop>limiter_waterlevel_gradient_2d</tabstop>
+  <tabstop>max_non_linear_newton_iterations</tabstop>
+  <tabstop>max_degree_gauss_seidel</tabstop>
+  <tabstop>min_friction_velocity</tabstop>
+  <tabstop>min_surface_area</tabstop>
+  <tabstop>preissmann_slot</tabstop>
+  <tabstop>limiter_slope_thin_water_layer</tabstop>
+  <tabstop>flooding_threshold</tabstop>
+  <tabstop>friction_shallow_water_depth_correction</tabstop>
+  <tabstop>time_integration_method</tabstop>
+  <tabstop>limiter_slope_crossectional_area_2d</tabstop>
+  <tabstop>limiter_slope_friction_2d</tabstop>
+  <tabstop>use_preconditioner_cg</tabstop>
+  <tabstop>group_timestep</tabstop>
+  <tabstop>time_step</tabstop>
+  <tabstop>output_time_step</tabstop>
+  <tabstop>min_time_step</tabstop>
+  <tabstop>max_time_step</tabstop>
+  <tabstop>use_time_step_stretch</tabstop>
+  <tabstop>group_aggregation</tabstop>
+  <tabstop>aggregation_tv</tabstop>
+  <tabstop>add_aggregation_entry</tabstop>
+  <tabstop>remove_aggregation_entry</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

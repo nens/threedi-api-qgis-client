@@ -53,9 +53,12 @@
    </item>
    <item row="6" column="0">
     <widget class="QCheckBox" name="cb_upload_schematisation_revision">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="font">
       <font>
-        <family>Segoe UI</family>
+       <family>Segoe UI</family>
       </font>
      </property>
      <property name="text">
@@ -64,41 +67,38 @@
      <property name="checked">
       <bool>true</bool>
      </property>
-     <property name="enabled">
-      <bool>false</bool>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QCheckBox" name="cb_make_3di_model">
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+      </font>
+     </property>
+     <property name="text">
+      <string>Make 3Di model</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
-    <item row="7" column="0">
-        <widget class="QCheckBox" name="cb_make_3di_model">
-            <property name="font">
-                <font>
-                    <family>Segoe UI</family>
-                </font>
-            </property>
-            <property name="text">
-                <string>Make 3Di model</string>
-            </property>
-            <property name="checked">
-                <bool>true</bool>
-            </property>
-        </widget>
-    </item>
-    <item row="8" column="0">
-        <widget class="QCheckBox" name="cb_inherit_templates">
-            <property name="font">
-                <font>
-                    <family>Segoe UI</family>
-                </font>
-            </property>
-            <property name="text">
-                <string>Inherit simulation templates from previous revision</string>
-            </property>
-            <property name="checked">
-                <bool>true</bool>
-            </property>
-        </widget>
-    </item>
+   <item row="8" column="0">
+    <widget class="QCheckBox" name="cb_inherit_templates">
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+      </font>
+     </property>
+     <property name="text">
+      <string>Inherit simulation templates from previous revision</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
    <item row="3" column="0">
     <widget class="QLabel" name="label_3">
      <property name="font">
@@ -129,7 +129,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>677</width>
+        <width>694</width>
         <height>234</height>
        </rect>
       </property>
@@ -267,6 +267,13 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>scrollArea</tabstop>
+  <tabstop>te_upload_description</tabstop>
+  <tabstop>cb_upload_schematisation_revision</tabstop>
+  <tabstop>cb_make_3di_model</tabstop>
+  <tabstop>cb_inherit_templates</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

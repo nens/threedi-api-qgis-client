@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>350</width>
-    <height>600</height>
+    <height>702</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>300</width>
-    <height>600</height>
+    <height>702</height>
    </size>
   </property>
   <property name="font">
@@ -769,6 +769,18 @@ background-color: #C4C4C4;</string>
    <container>1</container>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>btn_log_in_out</tabstop>
+  <tabstop>btn_load_schematisation</tabstop>
+  <tabstop>btn_load_revision</tabstop>
+  <tabstop>btn_download</tabstop>
+  <tabstop>btn_upload</tabstop>
+  <tabstop>btn_new</tabstop>
+  <tabstop>btn_simulate</tabstop>
+  <tabstop>btn_results</tabstop>
+  <tabstop>btn_manage</tabstop>
+  <tabstop>mGroupBox</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

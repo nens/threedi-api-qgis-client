@@ -6,7 +6,7 @@ History
 
 - Add CSV upload support for 1D initial water level (#575)
 - Add initial concentrations to initial conditions page (#580)
-- Fixes/enhancements: #526
+- Fixes/enhancements: #238, #391, #480, #493, #496, #526
 
 
 3.11.0 (2024-06-21)
