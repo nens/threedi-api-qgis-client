@@ -34,6 +34,8 @@ class SubstanceConcentrationsWidget(QWidget):
         self.parent_widget = parent
         self.csv_header = None
         self.substance_list = []
+        self.substance_constants_1d = []
+        self.substance_constants_2d = []
         self.substance_concentrations_1d = {}
         self.substance_concentrations_2d = {}
         self.groupbox = QGroupBox("Substance concentrations", self)
@@ -144,11 +146,27 @@ class SubstanceConcentrationsWidget(QWidget):
     def handle_constant_value(self, name: str, var_type: str):
         """Handle constant value for substance concentrations."""
         le_substance_constant = self.groupbox.findChild(QLineEdit, f"le_substance_constant_{var_type}_{name}")
-        constant_value = le_substance_constant.text()
+        constant_value = le_substance_constant.text().strip()
         if not constant_value:
+            # Remove the substance value from substance_constants_1d or substance_constants_2d
+            if var_type == self.TYPE_1D:
+                self.substance_constants_1d = [substance for substance in self.substance_constants_1d if name not in substance]
+            else:
+                self.substance_constants_2d = [substance for substance in self.substance_constants_2d if name not in substance]
             return
+        float_value = float(constant_value)
         if var_type == self.TYPE_1D:
-            print("1D")
+            for substance in self.substance_constants_1d:
+                if name in substance:
+                    substance[name] = float_value
+                    return
+            self.substance_constants_1d.append({name: float_value})
+        else:
+            for substance in self.substance_constants_2d:
+                if name in substance:
+                    substance[name] = float_value
+                    return
+            self.substance_constants_2d.append({name: float_value})
 
     def load_csv(self, name: str, var_type: str):
         """Load CSV file."""
