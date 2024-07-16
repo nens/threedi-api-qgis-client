@@ -21,11 +21,15 @@ from qgis.PyQt.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QGridLayout,
+    QGroupBox,
     QLabel,
     QLineEdit,
+    QRadioButton,
+    QScrollArea,
     QSizePolicy,
     QSpacerItem,
     QTableWidgetItem,
+    QWidget,
     QWizard,
     QWizardPage,
 )
@@ -61,6 +65,7 @@ from ..utils_ui import (
 )
 from .custom_items import FilteredComboBox
 from .substance_concentrations import SubstanceConcentrationsWidget
+from .initial_concentrations import InitialConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_name.ui"))
@@ -326,10 +331,12 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                     self.substances.append(substance)
 
     def update_substances(self):
-        if hasattr(self.parent_page.parent_wizard, "laterals_page"):
-            self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
         if hasattr(self.parent_page.parent_wizard, "boundary_conditions_page"):
             self.parent_page.parent_wizard.boundary_conditions_page.main_widget.setup_substance_concentrations()
+        if hasattr(self.parent_page.parent_wizard, "laterals_page"):
+            self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
+        if hasattr(self.parent_page.parent_wizard, "init_conditions_page"):
+            self.parent_page.parent_wizard.init_conditions_page.main_widget.setup_2d_initial_concentrations()
 
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
@@ -695,11 +702,19 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
+        self.substances = (
+            parent_page.parent_wizard.substances_page.main_widget.substances
+            if hasattr(parent_page.parent_wizard, "substances_page")
+            else []
+        )
         set_widget_background_color(self)
         self.initial_saved_state = initial_conditions.initial_saved_state
         self.initial_waterlevels = {}
         self.initial_waterlevels_1d = {}
         self.saved_states = {}
+        self.initial_concentrations_widget = QWidget()
+        self.rasters = []
         self.gb_saved_state.setChecked(False)
         self.gb_1d.setChecked(False)
         self.gb_2d.setChecked(False)
@@ -710,6 +725,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.btn_browse_gw_local_raster.clicked.connect(partial(self.browse_for_local_raster, self.cbo_gw_local_raster))
         self.btn_1d_upload_csv.clicked.connect(self.load_1d_initial_waterlevel_csv)
         self.setup_initial_conditions()
+        self.setup_2d_initial_concentrations()
         self.connect_signals()
 
     def connect_signals(self):
@@ -718,6 +734,19 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.gb_1d.toggled.connect(self.on_initial_waterlevel_change)
         self.gb_2d.toggled.connect(self.on_initial_waterlevel_change)
         self.gb_groundwater.toggled.connect(self.on_initial_waterlevel_change)
+
+    def setup_2d_initial_concentrations(self):
+        if hasattr(self, "initial_concentrations_widget"):
+            self.initial_concentrations_widget.setParent(None)
+        if not self.substances:
+            self.initial_concentrations_2d_label.hide()
+            return
+        self.initial_concentrations_2d_label.show()
+        initial_concentrations_widget = InitialConcentrationsWidget(self.substances, self.parent_page)
+        self.initial_concentrations_widget = initial_concentrations_widget.widget
+        self.rasters = initial_concentrations_widget.rasters
+        parent_layout = self.layout()
+        parent_layout.addWidget(self.initial_concentrations_widget, 3, 2)
 
     def on_saved_state_change(self, checked):
         """Handle saved state group checkbox."""
@@ -2635,8 +2664,13 @@ class InitialConditionsPage(QWizardPage):
         super().__init__(parent)
         self.parent_wizard = parent
         self.main_widget = InitialConditionsWidget(self, initial_conditions=initial_conditions)
+        # Create a scroll area
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameStyle(QScrollArea.NoFrame)
+        self.scroll_area.setWidget(self.main_widget)
         layout = QGridLayout()
-        layout.addWidget(self.main_widget)
+        layout.addWidget(self.scroll_area)
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.adjustSize()
@@ -3393,6 +3427,41 @@ class SimulationWizard(QWizard):
                 initial_conditions.saved_state = self.init_conditions_page.main_widget.saved_states.get(
                     self.init_conditions_page.main_widget.cbo_saved_states.currentText()
                 )
+
+            # Initial concentrations 2D for substances
+            widget = self.init_conditions_page.main_widget.initial_concentrations_widget
+            rasters = self.init_conditions_page.main_widget.rasters
+            substances = self.init_conditions_page.main_widget.substances
+            initial_concentrations_2d = {}
+            for substance in substances:
+                substance_name = substance.get("name")
+                aggregation_method = widget.findChild(QComboBox, f"cbo_aggregation_{substance_name}").currentText()
+                groupbox_ic = widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                rb_local_raster = widget.findChild(QRadioButton, f"rb_local_raster_{substance_name}")
+                rb_online_raster = widget.findChild(QRadioButton, f"rb_online_raster_{substance_name}")
+                cbo_local_raster = widget.findChild(QComboBox, f"cbo_local_raster_{substance_name}")
+                cbo_online_raster = widget.findChild(QComboBox, f"cbo_online_raster_{substance_name}").currentText()
+                if groupbox_ic and groupbox_ic.isChecked():
+                    if rb_local_raster and rb_local_raster.isChecked() and cbo_local_raster:
+                        layer_uri = qgis_layers_cbo_get_layer_uri(cbo_local_raster)
+                        initial_concentrations = {
+                            "local_raster_path": layer_uri,
+                            "online_raster": None,
+                            "aggregation_method": aggregation_method,
+                        }
+                        initial_concentrations_2d[substance_name] = initial_concentrations
+                    if rb_online_raster and rb_online_raster.isChecked() and cbo_online_raster:
+                        for raster in rasters:
+                            if raster.name == cbo_online_raster:
+                                initial_concentrations = {
+                                    "local_raster_path": None,
+                                    "online_raster": raster.id,
+                                    "aggregation_method": aggregation_method,
+                                }
+                                initial_concentrations_2d[substance_name] = initial_concentrations
+                                break
+            if initial_concentrations_2d:
+                initial_conditions.initial_concentrations_2d = initial_concentrations_2d
 
         # Laterals
         if self.init_conditions.include_laterals:

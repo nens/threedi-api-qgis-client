@@ -951,6 +951,11 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>dd_simulation</tabstop>
+  <tabstop>cb_save_template</tabstop>
+  <tabstop>template_name</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

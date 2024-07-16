@@ -897,6 +897,21 @@
      </property>
     </spacer>
    </item>
+   <item row="2" column="2">
+    <widget class="QLabel" name="initial_concentrations_2d_label">
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>14</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>2D initial concentrations</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <customwidgets>
@@ -906,6 +921,35 @@
    <header>qgsmaplayercombobox.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>gb_saved_state</tabstop>
+  <tabstop>cbo_saved_states</tabstop>
+  <tabstop>gb_1d</tabstop>
+  <tabstop>rb_d1_gv</tabstop>
+  <tabstop>sp_1d_global_value</tabstop>
+  <tabstop>rb_d1_dd</tabstop>
+  <tabstop>rb_1d_upload_csv</tabstop>
+  <tabstop>le_1d_upload_csv</tabstop>
+  <tabstop>btn_1d_upload_csv</tabstop>
+  <tabstop>gb_2d</tabstop>
+  <tabstop>rb_2d_global_value</tabstop>
+  <tabstop>sp_2d_global_value</tabstop>
+  <tabstop>rb_2d_online_raster</tabstop>
+  <tabstop>cbo_2d_online_raster</tabstop>
+  <tabstop>rb_2d_local_raster</tabstop>
+  <tabstop>cbo_2d_local_raster</tabstop>
+  <tabstop>btn_browse_2d_local_raster</tabstop>
+  <tabstop>cb_2d_aggregation</tabstop>
+  <tabstop>gb_groundwater</tabstop>
+  <tabstop>rb_gw_global_value</tabstop>
+  <tabstop>sp_gwater_global_value</tabstop>
+  <tabstop>rb_gw_online_raster</tabstop>
+  <tabstop>cbo_gw_online_raster</tabstop>
+  <tabstop>rb_gw_local_raster</tabstop>
+  <tabstop>cbo_gw_local_raster</tabstop>
+  <tabstop>btn_browse_gw_local_raster</tabstop>
+  <tabstop>cb_gwater_aggregation</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
@@ -1041,12 +1085,32 @@
    <signal>toggled(bool)</signal>
    <receiver>le_1d_upload_csv</receiver>
    <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
   </connection>
   <connection>
    <sender>rb_1d_upload_csv</sender>
    <signal>toggled(bool)</signal>
    <receiver>btn_1d_upload_csv</receiver>
    <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
   </connection>
  </connections>
 </ui>

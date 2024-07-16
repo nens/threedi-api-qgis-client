@@ -99,6 +99,7 @@ class InitialConditions(SimulationElement):
     local_raster_groundwater: str = None
     aggregation_method_groundwater: str = None
     saved_state: str = None
+    initial_concentrations_2d: dict = None
 
 
 @dataclass

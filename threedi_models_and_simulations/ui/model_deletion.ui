@@ -129,6 +129,12 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>models_tv</tabstop>
+  <tabstop>cb_filter</tabstop>
+  <tabstop>pb_cancel</tabstop>
+  <tabstop>pb_delete</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

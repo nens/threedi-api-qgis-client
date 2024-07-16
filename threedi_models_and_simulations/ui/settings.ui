@@ -203,9 +203,14 @@
  </widget>
  <tabstops>
   <tabstop>base_url_le</tabstop>
-  <tabstop>save_pb</tabstop>
-  <tabstop>cancel_pb</tabstop>
+  <tabstop>upload_timeout_sb</tabstop>
+  <tabstop>working_dir_le</tabstop>
+  <tabstop>browse_pb</tabstop>
+  <tabstop>set_pak_pb</tabstop>
+  <tabstop>obtain_pak_pb</tabstop>
   <tabstop>defaults_pb</tabstop>
+  <tabstop>cancel_pb</tabstop>
+  <tabstop>save_pb</tabstop>
  </tabstops>
  <resources/>
  <connections/>
