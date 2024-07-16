@@ -118,11 +118,11 @@ class SubstanceConcentrationsWidget(QWidget):
             line_edit_csv.setStyleSheet("background-color: white")
 
             # combo box for time units
-            combo_box_units = QComboBox()
-            combo_box_units.addItems(["mins", "hrs", "s"])
-            combo_box_units.setObjectName(f"cb_units_{var_type}_{name}")
-            combo_box_units.setFont(font)
-            combo_box_units.currentIndexChanged.connect(partial(self.update_units, name, var_type))
+            combo_box_time_units = QComboBox()
+            combo_box_time_units.addItems(["mins", "hrs", "s"])
+            combo_box_time_units.setObjectName(f"cb_time_units_{var_type}_{name}")
+            combo_box_time_units.setFont(font)
+            combo_box_time_units.currentIndexChanged.connect(partial(self.update_time_units, name, var_type))
 
             # upload button
             upload_button = QPushButton("Upload CSV")
@@ -140,16 +140,16 @@ class SubstanceConcentrationsWidget(QWidget):
             horizontal_layout.addWidget(line_edit_constant)
             horizontal_layout.addWidget(units_label)
             horizontal_layout.addWidget(line_edit_csv)
-            horizontal_layout.addWidget(combo_box_units)
+            horizontal_layout.addWidget(combo_box_time_units)
             horizontal_layout.addWidget(upload_button)
             row = i * 2 if var_type == self.TYPE_1D else i * 2 + 1
             layout.addWidget(horizontal_layout_widget, row + 1, 0)
 
     def load_csv(self, name: str, var_type: str):
         """Load CSV file."""
-        combo_box_units = self.groupbox.findChild(QComboBox, f"cb_units_{var_type}_{name}")
-        units = combo_box_units.currentText()
-        substances, filename = self.open_upload_dialog(name, var_type, units)
+        combo_box_time_units = self.groupbox.findChild(QComboBox, f"cb_time_units_{var_type}_{name}")
+        time_units = combo_box_time_units.currentText()
+        substances, filename = self.open_upload_dialog(name, var_type, time_units)
         if not filename:
             return
         le_substance = self.groupbox.findChild(QLineEdit, f"le_substance_{var_type}_{name}")
@@ -159,7 +159,7 @@ class SubstanceConcentrationsWidget(QWidget):
         else:
             self.substance_concentrations_2d.update(substances)
 
-    def open_upload_dialog(self, name: str, var_type: str, units: str = "s"):
+    def open_upload_dialog(self, name: str, var_type: str, time_units: str = "s"):
         """Open dialog for selecting CSV file with laterals."""
         last_folder = read_3di_settings("last_substances_folder", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
@@ -174,7 +174,7 @@ class SubstanceConcentrationsWidget(QWidget):
             reader = csv.DictReader(csvfile)
             self.header = reader.fieldnames
             self.substance_list = list(reader)
-        error_msg = self.handle_csv_errors(self.header, self.substance_list, var_type, units)
+        error_msg = self.handle_csv_errors(self.header, self.substance_list, var_type, time_units)
         if error_msg is not None:
             return None, None
         for row in self.substance_list:
@@ -185,7 +185,7 @@ class SubstanceConcentrationsWidget(QWidget):
                 substance = {
                     "substance": name,
                     "concentrations": concentrations,
-                    "units": units,
+                    "time_units": time_units,
                 }
                 if parent_id not in substances:
                     substances[parent_id] = []
@@ -194,11 +194,11 @@ class SubstanceConcentrationsWidget(QWidget):
                 continue
         return substances, filename
 
-    def update_units(self, name: str, var_type: str):
-        """Update units for substance concentrations."""
-        combo_box = self.groupbox.findChild(QComboBox, f"cb_units_{var_type}_{name}")
-        units = combo_box.currentText()
-        error_message = self.handle_csv_errors(self.header, self.substance_list, var_type, units)
+    def update_time_units(self, name: str, var_type: str):
+        """Update time units for substance concentrations."""
+        combo_box = self.groupbox.findChild(QComboBox, f"cb_time_units_{var_type}_{name}")
+        time_units = combo_box.currentText()
+        error_message = self.handle_csv_errors(self.header, self.substance_list, var_type, time_units)
         if error_message:
             # clear the QLineEdit
             le_substance = self.groupbox.findChild(QLineEdit, f"le_substance_{var_type}_{name}")

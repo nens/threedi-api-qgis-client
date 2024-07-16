@@ -381,7 +381,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 6, 2)
 
-    def handle_substance_errors(self, header, substance_list, bc_type, units):
+    def handle_substance_errors(self, header, substance_list, bc_type, time_units):
         """
         First, check if boundary condition values are available.
         Second, check if substance concentrations timesteps match exactly the boundary condition values timesteps.
@@ -423,7 +423,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                 converted_bc_values = convert_timeseries_to_seconds(bc_values, bc_units)
                 bc_timesteps = [t for (t, _) in converted_bc_values]
                 concentrations = parse_timeseries(timeseries)
-                converted_concentrations = convert_timeseries_to_seconds(concentrations, units)
+                converted_concentrations = convert_timeseries_to_seconds(concentrations, time_units)
                 concentrations_timesteps = [t for (t, _) in converted_concentrations]
                 if bc_timesteps != concentrations_timesteps:
                     error_message = (
@@ -927,7 +927,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
 
-    def handle_substance_timesteps(self, header, substance_list, laterals_type, units):
+    def handle_substance_timesteps(self, header, substance_list, laterals_type, time_units):
         """
         First, check if lateral values are uploaded.
         Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
@@ -958,7 +958,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 converted_lateral_values = convert_timeseries_to_seconds(lateral_values, lateral_units)
                 laterals_timesteps = [t for (t, _) in converted_lateral_values]
                 concentrations = parse_timeseries(timeseries)
-                converted_concentrations = convert_timeseries_to_seconds(concentrations, units)
+                converted_concentrations = convert_timeseries_to_seconds(concentrations, time_units)
                 concentrations_timesteps = [t for (t, _) in converted_concentrations]
                 if laterals_timesteps != concentrations_timesteps:
                     error_message = "Substance concentrations timesteps do not match lateral values timesteps!"
