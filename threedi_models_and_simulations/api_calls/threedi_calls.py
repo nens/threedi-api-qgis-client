@@ -28,6 +28,7 @@ from threedi_api_client.openapi import (
     FileTimeseriesSourcesSinks,
     GroundWaterLevel,
     GroundWaterRaster,
+    InitialConcentration,
     InitialSavedState,
     InitialWaterlevel,
     LizardRasterRain,
@@ -74,6 +75,7 @@ from threedi_api_client.openapi import (
     TimeseriesSourcesSinks,
     TimeseriesWind,
     TimeStepSettings,
+    TwoDSubstanceConcentration,
     TwoDWaterLevel,
     TwoDWaterRaster,
     Upload,
@@ -340,6 +342,18 @@ class ThreediCalls:
         """Fetch initial water level with given id"""
         water_level = self.threedi_api.threedimodels_initial_waterlevels_read(water_level_id, threedimodel_id)
         return water_level
+
+    def fetch_3di_model_initial_concentrations(self, threedimodel_id: str) -> List[InitialConcentration]:
+        """Fetch initial concentrations list"""
+        concentrations = self.paginated_fetch(
+            self.threedi_api.threedimodels_initial_concentrations_list, threedimodel_id
+        )
+        return concentrations
+
+    def fetch_3di_model_rasters(self, threedimodel_id: str, **data) -> List[Raster]:
+        """Fetch paginated rasters list"""
+        rasters = self.paginated_fetch(self.threedi_api.threedimodels_rasters_list, threedimodel_id, **data)
+        return rasters
 
     def fetch_3di_model_raster(self, threedimodel_id: str, raster_id: int) -> Raster:
         """Fetch raster with given id"""
@@ -659,6 +673,20 @@ class ThreediCalls:
             water_level_id, threedimodel_id, data
         )
         return initial_water_level_upload
+
+    def create_simulation_initial_2d_substance_concentrations(
+        self, simulation_pk: int, **data
+    ) -> TwoDSubstanceConcentration:
+        """Link 2D initial concentrations to substance for the given simulation."""
+        substance_concentration = self.threedi_api.simulations_initial2d_substance_concentrations_create(
+            str(simulation_pk), data
+        )
+        return substance_concentration
+
+    def create_3di_model_initial_concentration(self, threedimodel_id: str, **data) -> InitialConcentration:
+        """Create initial concentration for the given 3Di model."""
+        initial_concentration = self.threedi_api.threedimodels_initial_concentrations_create(threedimodel_id, data)
+        return initial_concentration
 
     def create_3di_model_raster(self, threedimodel_id: str, **data) -> Raster:
         """Create raster for the given 3Di model."""

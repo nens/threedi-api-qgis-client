@@ -897,6 +897,76 @@ class SimulationRunner(QRunnable):
         if initial_conditions.saved_state:
             saved_state_id = initial_conditions.saved_state.url.strip("/").split("/")[-1]
             self.tc.create_simulation_initial_saved_state(sim_id, saved_state=saved_state_id)
+        # Initial concentrations 2D for substances
+        if initial_conditions.initial_concentrations_2d:
+            for substance, params in initial_conditions.initial_concentrations_2d.items():
+                substance_id = self.substances[substance]
+                aggregation_method = params.get("aggregation_method")
+                local_raster_path = params.get("local_raster_path")
+                online_raster = params.get("online_raster")
+                raster_id = None
+                if online_raster:
+                    raster_id = online_raster
+                elif local_raster_path:
+                    # Create a 3Di model raster
+                    local_raster_ic_name = os.path.basename(local_raster_path)
+                    raster = self.tc.create_3di_model_raster(
+                        threedimodel_id, name=local_raster_ic_name, type="initial_concentration_file"
+                    )
+                    raster_id = raster.id
+                    # Upload the raster
+                    initial_concentration_raster_upload = self.tc.upload_3di_model_raster(
+                        threedimodel_id, raster_id, filename=local_raster_ic_name
+                    )
+                    upload_local_file(initial_concentration_raster_upload, local_raster_path)
+                    # Wait for the raster processing
+                    raster_task_ic = None
+                    for ti in range(int(self.upload_timeout // 2)):
+                        if raster_task_ic is None:
+                            model_tasks = self.tc.fetch_3di_model_tasks(threedimodel_id)
+                            for task in model_tasks:
+                                try:
+                                    if task.params and raster_id in task.params.get("only_raster_ids", []):
+                                        raster_task_ic = task
+                                        break
+                                except KeyError:
+                                    continue
+                        else:
+                            raster_task_ic = self.tc.fetch_3di_model_task(threedimodel_id, raster_task_ic.id)
+                        if raster_task_ic and raster_task_ic.status == ThreediModelTaskStatus.SUCCESS.value:
+                            break
+                        elif raster_task_ic and raster_task_ic.status == ThreediModelTaskStatus.FAILURE.value:
+                            error_msg = f"Failed to process Initial Concentration raster: {local_raster_ic_name}"
+                            raise SimulationRunnerError(error_msg)
+                        else:
+                            time.sleep(2)
+                if raster_id:
+                    # Wait for the processing of initial concentration file to finish
+                    retries = 0
+                    initial_concentration_2d = None
+                    while not initial_concentration_2d and retries < 12:
+                        results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
+                        two_d_ids = [x for x in results if x.dimension == "two_d" and x.source_raster_id == raster_id]
+                        if len(two_d_ids) > 0:
+                            initial_concentration_2d = two_d_ids[0]
+                            break
+                        retries += 1
+                        time.sleep(5)
+                    if initial_concentration_2d:
+                        # Link substance to initial concentration
+                        try:
+                            self.tc.create_simulation_initial_2d_substance_concentrations(
+                                sim_id,
+                                substance=substance_id,
+                                aggregation_method=aggregation_method,
+                                initial_concentration=initial_concentration_2d.id,
+                            )
+                        except:
+                            error_msg = f"Failed to create initial concentration for substance: {substance}"
+                            raise SimulationRunnerError(error_msg)
+                    else:
+                        error_msg = f"Could not find 2D initial concentration for raster ID: {raster_id}"
+                        raise SimulationRunnerError(error_msg)
 
     def include_laterals(self):
         """Add initial laterals to the new simulation."""
