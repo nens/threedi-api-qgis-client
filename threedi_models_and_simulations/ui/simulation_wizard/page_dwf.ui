@@ -424,6 +424,12 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>dwf_upload</tabstop>
+  <tabstop>pb_upload_dwf</tabstop>
+  <tabstop>cb_interpolate_dwf</tabstop>
+  <tabstop>cb_24h</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

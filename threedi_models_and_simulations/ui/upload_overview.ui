@@ -224,6 +224,12 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>tv_uploads</tabstop>
+  <tabstop>lv_upload_feedback</tabstop>
+  <tabstop>pb_hide</tabstop>
+  <tabstop>pb_new_upload</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

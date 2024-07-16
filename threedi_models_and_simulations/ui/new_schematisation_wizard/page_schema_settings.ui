@@ -851,6 +851,22 @@
    <header>qgsprojectionselectionwidget.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>crs</tabstop>
+  <tabstop>use_2d_flow_group</tabstop>
+  <tabstop>grid_space</tabstop>
+  <tabstop>frict_shallow_water_correction_flat</tabstop>
+  <tabstop>frict_shallow_water_correction_sloping</tabstop>
+  <tabstop>use_1d_flow_group</tabstop>
+  <tabstop>manhole_storage_area</tabstop>
+  <tabstop>use_0d_inflow_group</tabstop>
+  <tabstop>use_0d_inflow_surfaces</tabstop>
+  <tabstop>use_0d_inflow_impervious_surfaces</tabstop>
+  <tabstop>frict_type_text</tabstop>
+  <tabstop>frict_coef</tabstop>
+  <tabstop>sim_time_step</tabstop>
+  <tabstop>output_time_step_text</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

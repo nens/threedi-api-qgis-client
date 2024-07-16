@@ -1,7 +1,6 @@
 import csv
 import os
 from functools import partial
-from typing import Callable, Dict, List, Optional
 
 from qgis.PyQt.QtGui import QFont, QDoubleValidator
 from qgis.PyQt.QtWidgets import (
