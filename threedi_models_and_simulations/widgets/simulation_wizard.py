@@ -41,6 +41,7 @@ from ..utils import (
     TEMPDIR,
     EventTypes,
     apply_24h_timeseries,
+    convert_timeseries_to_seconds,
     extract_error_message,
     get_download_file,
     handle_csv_header,
@@ -387,7 +388,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 6, 2)
 
-    def handle_substance_errors(self, header, substance_list, bc_type):
+    def handle_substance_errors(self, header, substance_list, bc_type, units):
         """
         First, check if boundary condition values are available.
         Second, check if substance concentrations timesteps match exactly the boundary condition values timesteps.
@@ -420,10 +421,17 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                 if boundary_condition is None:
                     error_message = f"Boundary condition with ID {bc_id} not found!"
                     break
-                bcValues = boundary_condition["values"]
-                bc_timesteps = [t for (t, _) in bcValues]
+                bc_values = boundary_condition["values"]
+                bc_units = (
+                    self.cbo_bc_units_1d.currentText()
+                    if bc_type == self.TYPE_1D
+                    else self.cbo_bc_units_2d.currentText()
+                )
+                converted_bc_values = convert_timeseries_to_seconds(bc_values, bc_units)
+                bc_timesteps = [t for (t, _) in converted_bc_values]
                 concentrations = parse_timeseries(timeseries)
-                concentrations_timesteps = [t for (t, _) in concentrations]
+                converted_concentrations = convert_timeseries_to_seconds(concentrations, units)
+                concentrations_timesteps = [t for (t, _) in converted_concentrations]
                 if bc_timesteps != concentrations_timesteps:
                     error_message = (
                         "Substance concentrations timesteps do not match boundary condition values timesteps!"
@@ -535,14 +543,8 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             if boundary_conditions_type == self.TYPE_1D
             else self.cbo_bc_units_2d.currentText()
         )
-        if units == "hrs":
-            seconds_per_unit = 3600
-        elif units == "mins":
-            seconds_per_unit = 60
-        else:
-            seconds_per_unit = 1
         for val in boundary_conditions_data:
-            val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
+            val["values"] = convert_timeseries_to_seconds(val["values"], units)
         return boundary_conditions_data
 
     def recalculate_substances_timeseries(self, bc_type, timesteps_in_seconds=False):
@@ -564,16 +566,10 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                 substances_data[bc_id] = substances[bc_id]
         if timesteps_in_seconds is False:
             return substances_data
-        units = self.cbo_bc_units_1d.currentText() if bc_type == self.TYPE_1D else self.cbo_bc_units_2d.currentText()
-        if units == "hrs":
-            seconds_per_unit = 3600
-        elif units == "mins":
-            seconds_per_unit = 60
-        else:
-            seconds_per_unit = 1
         for bc_substances in substances_data.values():
             for substance in bc_substances:
-                substance["concentrations"] = [[t * seconds_per_unit, v] for (t, v) in substance["concentrations"]]
+                units = substance["units"]
+                substance["concentrations"] = convert_timeseries_to_seconds(substance["concentrations"], units)
         return substances_data
 
     def update_boundary_conditions_with_substances(self, boundary_conditions_data, substances):
@@ -960,7 +956,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
 
-    def handle_substance_timesteps(self, header, substance_list, laterals_type):
+    def handle_substance_timesteps(self, header, substance_list, laterals_type, units):
         """
         First, check if lateral values are uploaded.
         Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
@@ -982,10 +978,17 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 if lateral is None:
                     error_message = f"Laterals with ID {lat_id} not found!"
                     break
-                lateralValues = lateral["values"]
-                laterals_timesteps = [t for (t, _) in lateralValues]
+                lateral_values = lateral["values"]
+                lateral_units = (
+                    self.cbo_1d_units.currentText()
+                    if laterals_type == self.TYPE_1D
+                    else self.cbo_2d_units.currentText()
+                )
+                converted_lateral_values = convert_timeseries_to_seconds(lateral_values, lateral_units)
+                laterals_timesteps = [t for (t, _) in converted_lateral_values]
                 concentrations = parse_timeseries(timeseries)
-                concentrations_timesteps = [t for (t, _) in concentrations]
+                converted_concentrations = convert_timeseries_to_seconds(concentrations, units)
+                concentrations_timesteps = [t for (t, _) in converted_concentrations]
                 if laterals_timesteps != concentrations_timesteps:
                     error_message = "Substance concentrations timesteps do not match lateral values timesteps!"
                     break
@@ -1051,14 +1054,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             return laterals_timeseries
         laterals_data = deepcopy(laterals_timeseries)
         units = self.cbo_1d_units.currentText() if laterals_type == self.TYPE_1D else self.cbo_2d_units.currentText()
-        if units == "hrs":
-            seconds_per_unit = 3600
-        elif units == "mins":
-            seconds_per_unit = 60
-        else:
-            seconds_per_unit = 1
         for val in laterals_data.values():
-            val["values"] = [[t * seconds_per_unit, v] for (t, v) in val["values"]]
+            val["values"] = convert_timeseries_to_seconds(val["values"], units)
         return laterals_data
 
     def recalculate_substances_timeseries(self, laterals_type, timesteps_in_seconds=False):
@@ -1079,19 +1076,10 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 substances_data[lat_id] = substances[lat_id]
         if timesteps_in_seconds is False:
             return substances_data
-        if laterals_type == self.TYPE_1D:
-            units = self.cbo_1d_units.currentText()
-        else:
-            units = self.cbo_2d_units.currentText()
-        if units == "hrs":
-            seconds_per_unit = 3600
-        elif units == "mins":
-            seconds_per_unit = 60
-        else:
-            seconds_per_unit = 1
         for lateral_substances in substances_data.values():
             for substance in lateral_substances:
-                substance["concentrations"] = [[t * seconds_per_unit, v] for (t, v) in substance["concentrations"]]
+                units = substance["units"]
+                substance["concentrations"] = convert_timeseries_to_seconds(substance["concentrations"], units)
         return substances_data
 
     def update_laterals_with_substances(self, file_laterals, substances):
