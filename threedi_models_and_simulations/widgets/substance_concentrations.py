@@ -49,35 +49,59 @@ class SubstanceConcentrationsWidget(QWidget):
         self.groupbox = QGroupBox("Substance concentrations")
         self.groupbox.setLayout(layout)
         self.groupbox.setFont(QFont("Segoe UI", 14, QFont.Bold))
+        self.add_help_texts(layout)
         if self.current_model.extent_one_d:
             self.create_substance_concentrations(layout, "1D")
         if self.current_model.extent_two_d:
             self.create_substance_concentrations(layout, "2D")
 
-    def create_substance_concentrations(self, layout: QGridLayout, laterals_type: str):
+    def add_help_texts(self, layout: QGridLayout):
+        """Help texts for substance concentrations."""
+        font = QFont("Segoe UI", 10, QFont.Normal)
+        text_layout = QHBoxLayout()
+        text1 = QLabel("Specify the same constant substance concentrations for all laterals")
+        text2 = QLabel("- or -")
+        text3 = QLabel("Upload CSV containing a specific time series for each lateral (overules the constant values)")
+        text1.setFont(font)
+        text2.setFont(font)
+        text3.setFont(font)
+        text1.setMaximumWidth(250)
+        text2.setMaximumWidth(50)
+        text3.setMaximumWidth(350)
+        text1.setWordWrap(True)
+        text2.setWordWrap(True)
+        text3.setWordWrap(True)
+        text_layout.addWidget(text1)
+        text_layout.addWidget(text2)
+        text_layout.addWidget(text3)
+        text_layout_widget = QWidget()
+        text_layout_widget.setLayout(text_layout)
+        layout.addWidget(text_layout_widget, 0, 0)
+
+    def create_substance_concentrations(self, layout: QGridLayout, var_type: str):
         """Create substance concentrations for 1D and 2D laterals type."""
         font = QFont("Segoe UI", 10, QFont.Normal)
         for i, substance in enumerate(self.substances):
             name = substance["name"]
-            label = QLabel(f"{name} ({laterals_type}):")
+            label = QLabel(f"{name} ({var_type}):")
             label.setMinimumWidth(100)
             label.setFont(font)
             line_edit = QLineEdit()
-            line_edit.setObjectName(f"le_substance_{laterals_type}_{name}")
+            line_edit.setObjectName(f"le_substance_{var_type}_{name}")
             line_edit.setReadOnly(True)
             line_edit.setFrame(False)
             line_edit.setFont(font)
             line_edit.setStyleSheet("background-color: white")
             combo_box_units = QComboBox()
             combo_box_units.addItems(["mins", "hrs", "s"])
-            combo_box_units.setObjectName(f"cb_units_{laterals_type}_{name}")
+            combo_box_units.setObjectName(f"cb_units_{var_type}_{name}")
             combo_box_units.setFont(font)
-            combo_box_units.currentIndexChanged.connect(partial(self.update_units, name, laterals_type))
+            combo_box_units.currentIndexChanged.connect(partial(self.update_units, name, var_type))
             upload_button = QPushButton("Upload CSV")
-            upload_button.setObjectName(f"pb_substance_{laterals_type}_{name}")
+            upload_button.setObjectName(f"pb_substance_{var_type}_{name}")
             upload_button.setMinimumWidth(100)
             upload_button.setFont(font)
-            upload_button.clicked.connect(partial(self.load_csv, name, laterals_type))
+            upload_button.clicked.connect(partial(self.load_csv, name, var_type))
             horizontal_layout = QHBoxLayout()
             horizontal_layout_widget = QWidget()
             horizontal_layout_widget.setLayout(horizontal_layout)
@@ -86,29 +110,29 @@ class SubstanceConcentrationsWidget(QWidget):
             horizontal_layout.addWidget(line_edit)
             horizontal_layout.addWidget(combo_box_units)
             horizontal_layout.addWidget(upload_button)
-            row = i * 2 if laterals_type == self.TYPE_1D else i * 2 + 1
-            layout.addWidget(horizontal_layout_widget, row, 0)
+            row = i * 2 if var_type == self.TYPE_1D else i * 2 + 1
+            layout.addWidget(horizontal_layout_widget, row + 1, 0)
 
-    def load_csv(self, name: str, laterals_type: str):
+    def load_csv(self, name: str, var_type: str):
         """Load CSV file."""
-        combo_box_units = self.groupbox.findChild(QComboBox, f"cb_units_{laterals_type}_{name}")
+        combo_box_units = self.groupbox.findChild(QComboBox, f"cb_units_{var_type}_{name}")
         units = combo_box_units.currentText()
-        substances, filename = self.open_upload_dialog(name, laterals_type, units)
+        substances, filename = self.open_upload_dialog(name, var_type, units)
         if not filename:
             return
-        le_substance = self.groupbox.findChild(QLineEdit, f"le_substance_{laterals_type}_{name}")
+        le_substance = self.groupbox.findChild(QLineEdit, f"le_substance_{var_type}_{name}")
         le_substance.setText(filename)
-        if laterals_type == self.TYPE_1D:
+        if var_type == self.TYPE_1D:
             self.substance_concentrations_1d.update(substances)
         else:
             self.substance_concentrations_2d.update(substances)
 
-    def open_upload_dialog(self, name: str, laterals_type: str, units: str = "s"):
+    def open_upload_dialog(self, name: str, var_type: str, units: str = "s"):
         """Open dialog for selecting CSV file with laterals."""
         last_folder = read_3di_settings("last_substances_folder", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
         filename, __ = QFileDialog.getOpenFileName(
-            self, f"Substance Concentrations for {name} ({laterals_type})", last_folder, file_filter
+            self, f"Substance Concentrations for {name} ({var_type})", last_folder, file_filter
         )
         if len(filename) == 0:
             return None, None
@@ -118,7 +142,7 @@ class SubstanceConcentrationsWidget(QWidget):
             reader = csv.DictReader(csvfile)
             self.header = reader.fieldnames
             self.substance_list = list(reader)
-        error_msg = self.handle_csv_errors(self.header, self.substance_list, laterals_type, units)
+        error_msg = self.handle_csv_errors(self.header, self.substance_list, var_type, units)
         if error_msg is not None:
             return None, None
         for row in self.substance_list:
@@ -138,17 +162,17 @@ class SubstanceConcentrationsWidget(QWidget):
                 continue
         return substances, filename
 
-    def update_units(self, name: str, laterals_type: str):
+    def update_units(self, name: str, var_type: str):
         """Update units for substance concentrations."""
-        combo_box = self.groupbox.findChild(QComboBox, f"cb_units_{laterals_type}_{name}")
+        combo_box = self.groupbox.findChild(QComboBox, f"cb_units_{var_type}_{name}")
         units = combo_box.currentText()
-        error_message = self.handle_csv_errors(self.header, self.substance_list, laterals_type, units)
+        error_message = self.handle_csv_errors(self.header, self.substance_list, var_type, units)
         if error_message:
             # clear the QLineEdit
-            le_substance = self.groupbox.findChild(QLineEdit, f"le_substance_{laterals_type}_{name}")
+            le_substance = self.groupbox.findChild(QLineEdit, f"le_substance_{var_type}_{name}")
             le_substance.clear()
             # remove the substance from the values
-            if laterals_type == self.TYPE_1D:
+            if var_type == self.TYPE_1D:
                 self.substance_concentrations_1d = {
                     k: [substance for substance in v if substance["substance"] != name]
                     for k, v in self.substance_concentrations_1d.items()
