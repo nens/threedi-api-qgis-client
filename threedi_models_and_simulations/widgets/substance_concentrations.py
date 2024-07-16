@@ -3,7 +3,7 @@ import os
 from functools import partial
 from typing import Callable, Dict, List, Optional
 
-from qgis.PyQt.QtGui import QFont
+from qgis.PyQt.QtGui import QFont, QDoubleValidator
 from qgis.PyQt.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -82,32 +82,64 @@ class SubstanceConcentrationsWidget(QWidget):
         """Create substance concentrations for 1D and 2D laterals type."""
         font = QFont("Segoe UI", 10, QFont.Normal)
         for i, substance in enumerate(self.substances):
-            name = substance["name"]
+            name = substance.get("name")
+            units = substance.get("units", "")
+
+            # label
             label = QLabel(f"{name} ({var_type}):")
             label.setMinimumWidth(100)
             label.setFont(font)
-            line_edit = QLineEdit()
-            line_edit.setObjectName(f"le_substance_{var_type}_{name}")
-            line_edit.setReadOnly(True)
-            line_edit.setFrame(False)
-            line_edit.setFont(font)
-            line_edit.setStyleSheet("background-color: white")
+
+            # line edit for constant value
+            line_edit_constant = QLineEdit()
+            line_edit_constant.setObjectName(f"le_substance_constant_{var_type}_{name}")
+            line_edit_constant.setPlaceholderText("Enter constant value")
+            line_edit_constant.setFont(font)
+            line_edit_constant.setFrame(False)
+            line_edit_constant.setStyleSheet("background-color: white")
+
+            # validator for constant value
+            validator = QDoubleValidator()
+            validator.setNotation(QDoubleValidator.StandardNotation)
+            line_edit_constant.setValidator(validator)
+
+            # units label
+            units_label = QLabel(units)
+            units_label.setMinimumWidth(100)
+            units_label.setFont(font)
+
+            # line edit for CSV file
+            line_edit_csv = QLineEdit()
+            line_edit_csv.setObjectName(f"le_substance_{var_type}_{name}")
+            line_edit_csv.setPlaceholderText("Upload CSV file")
+            line_edit_csv.setReadOnly(True)
+            line_edit_csv.setFrame(False)
+            line_edit_csv.setFont(font)
+            line_edit_csv.setStyleSheet("background-color: white")
+
+            # combo box for time units
             combo_box_units = QComboBox()
             combo_box_units.addItems(["mins", "hrs", "s"])
             combo_box_units.setObjectName(f"cb_units_{var_type}_{name}")
             combo_box_units.setFont(font)
             combo_box_units.currentIndexChanged.connect(partial(self.update_units, name, var_type))
+
+            # upload button
             upload_button = QPushButton("Upload CSV")
             upload_button.setObjectName(f"pb_substance_{var_type}_{name}")
             upload_button.setMinimumWidth(100)
             upload_button.setFont(font)
             upload_button.clicked.connect(partial(self.load_csv, name, var_type))
+
+            # add widgets to layout
             horizontal_layout = QHBoxLayout()
             horizontal_layout_widget = QWidget()
             horizontal_layout_widget.setLayout(horizontal_layout)
             horizontal_layout.setContentsMargins(0, 0, 9, 0)
             horizontal_layout.addWidget(label)
-            horizontal_layout.addWidget(line_edit)
+            horizontal_layout.addWidget(line_edit_constant)
+            horizontal_layout.addWidget(units_label)
+            horizontal_layout.addWidget(line_edit_csv)
             horizontal_layout.addWidget(combo_box_units)
             horizontal_layout.addWidget(upload_button)
             row = i * 2 if var_type == self.TYPE_1D else i * 2 + 1
