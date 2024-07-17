@@ -361,6 +361,8 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         self.template_boundary_conditions_2d_timeseries = []
         self.boundary_conditions_1d_timeseries = []
         self.boundary_conditions_2d_timeseries = []
+        self.substance_constants_1d = []
+        self.substance_constants_2d = []
         self.substance_concentrations_1d = {}
         self.substance_concentrations_2d = {}
         self.connect_signals()
@@ -381,6 +383,8 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             return
         substance_concentration_widget = SubstanceConcentrationsWidget(self)
         self.groupbox = substance_concentration_widget.groupbox
+        self.substance_constants_1d = substance_concentration_widget.substance_constants_1d
+        self.substance_constants_2d = substance_concentration_widget.substance_constants_2d
         self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
         self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
         parent_layout = self.layout()

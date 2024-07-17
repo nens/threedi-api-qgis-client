@@ -147,15 +147,12 @@ class SubstanceConcentrationsWidget(QWidget):
         le_substance_constant = self.groupbox.findChild(QLineEdit, f"le_substance_constant_{var_type}_{name}")
         constant_value = le_substance_constant.text().strip()
         if not constant_value:
-            # Remove the substance value from substance_constants_1d or substance_constants_2d
-            if var_type == self.TYPE_1D:
-                self.substance_constants_1d = [substance for substance in self.substance_constants_1d if name not in substance]
-            else:
-                self.substance_constants_2d = [substance for substance in self.substance_constants_2d if name not in substance]
+            self.clear_substance_constants(name, var_type)
             return
         error_message = self.parent_widget.handle_substance_constant_error(var_type)
         if error_message:
             le_substance_constant.clear()
+            self.clear_substance_constants(name, var_type)
             return
         float_value = float(constant_value)
         if var_type == self.TYPE_1D:
@@ -243,3 +240,10 @@ class SubstanceConcentrationsWidget(QWidget):
                 }
                 self.substance_concentrations_2d = {k: v for k, v in self.substance_concentrations_2d.items() if v}
             return
+
+    def clear_substance_constants(self, substance_name: str, var_type: str):
+        """Remove the substance value from substance_constants_1d or substance_constants_2d."""
+        if var_type == self.TYPE_1D:
+            self.substance_constants_1d = [substance for substance in self.substance_constants_1d if substance_name not in substance]
+        else:
+            self.substance_constants_2d = [substance for substance in self.substance_constants_2d if substance_name not in substance]
