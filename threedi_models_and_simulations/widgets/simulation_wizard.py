@@ -574,16 +574,40 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
     def recalculate_substances_timeseries(self, bc_type, timesteps_in_seconds=False):
         """Recalculate substances timeseries (timesteps in seconds)."""
         substance_concentrations = {}
-        if bc_type == self.TYPE_1D:
-            substance_concentrations.update(self.substance_concentrations_1d)
-        else:
-            substance_concentrations.update(self.substance_concentrations_2d)
-        substances = deepcopy(substance_concentrations)
-        substances_data = {}
+        substance_constants = []
+        substance_concentrations_constants = {}
         if bc_type == self.TYPE_1D:
             bc_timeseries = self.boundary_conditions_1d_timeseries
+            substance_concentrations.update(self.substance_concentrations_1d)
+            substance_constants = self.substance_constants_1d
         else:
             bc_timeseries = self.boundary_conditions_2d_timeseries
+            substance_concentrations.update(self.substance_concentrations_2d)
+            substance_constants = self.substance_constants_2d
+        for bc_id, bc_data in bc_timeseries.items():
+            for substance_constanst in substance_constants:
+                for name, value in substance_constanst.items():
+                    concentrations = [[t, value] for (t, v) in bc_data["values"]]
+                    substance = {
+                        "substance": name,
+                        "concentrations": concentrations,
+                        "time_units": "s",
+                    }
+                    if bc_id not in substance_concentrations_constants:
+                        substance_concentrations_constants[bc_id] = []
+                    substance_concentrations_constants[bc_id].append(substance)
+        # Merge substance concentrations with substance_concentrations_constants
+        for bc_id, substance in substance_concentrations_constants.items():
+            if bc_id not in substance_concentrations:
+                substance_concentrations[bc_id] = substance
+            else:
+                existing_substance = {sub["substance"]: sub for sub in substance_concentrations[bc_id]}
+                for sub in substance:
+                    name = sub.get("substance")
+                    existing_substance.setdefault(name, sub)
+                substance_concentrations[bc_id] = list(existing_substance.values())
+        substances = deepcopy(substance_concentrations)
+        substances_data = {}
         for bc in bc_timeseries:
             bc_id = str(bc["id"])
             if bc_id in substances:
@@ -1097,7 +1121,6 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def recalculate_substances_timeseries(self, laterals_type, timesteps_in_seconds=False):
         """Recalculate substances timeseries (timesteps in seconds)."""
-        substances_data = {}
         substance_concentrations = {}
         substance_constants = []
         substance_concentrations_constants = {}
@@ -1132,6 +1155,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     existing_substance.setdefault(name, sub)
                 substance_concentrations[lat_id] = list(existing_substance.values())
         substances = deepcopy(substance_concentrations)
+        substances_data = {}
         for lat_id in laterals_timeseries.keys():
             if lat_id in substances:
                 substances_data[lat_id] = substances[lat_id]
