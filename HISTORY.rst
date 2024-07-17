@@ -1,7 +1,7 @@
 History
 =======
 
-3.11.1 (unreleased)
+3.12.0 (2024-07-17)
 -------------------
 
 - Add CSV upload support for 1D initial water level (#575).
