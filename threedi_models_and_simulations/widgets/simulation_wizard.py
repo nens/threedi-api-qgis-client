@@ -386,6 +386,28 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 6, 2)
 
+    def handle_substance_constant_error(self, bc_type):
+        """Handle error if laterals are not uploaded yet."""
+        error_message = None
+        bc_timeseries = []
+        if bc_type == self.TYPE_1D:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_1d_timeseries
+            else:
+                bc_timeseries = self.boundary_conditions_1d_timeseries
+        else:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_2d_timeseries
+            else:
+                bc_timeseries = self.boundary_conditions_2d_timeseries
+        if not bc_timeseries:
+            if self.rb_from_template.isChecked():
+                error_message = "No boundary conditions found in template file!"
+            else:
+                error_message = "No boundary conditions uploaded yet!"
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        return error_message
+
     def handle_substance_csv_errors(self, header, substance_list, bc_type, time_units):
         """
         First, check if boundary condition values are available.
@@ -955,6 +977,17 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
+
+    def handle_substance_constant_error(self, laterals_type):
+        """Handle error if laterals are not uploaded yet."""
+        error_message = None
+        laterals_timeseries = (
+            self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
+        )
+        if not laterals_timeseries:
+            error_message = "No laterals uploaded yet!"
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        return error_message
 
     def handle_substance_csv_errors(self, header, substance_list, laterals_type, time_units):
         """

@@ -153,6 +153,10 @@ class SubstanceConcentrationsWidget(QWidget):
             else:
                 self.substance_constants_2d = [substance for substance in self.substance_constants_2d if name not in substance]
             return
+        error_message = self.parent_widget.handle_substance_constant_error(var_type)
+        if error_message:
+            le_substance_constant.clear()
+            return
         float_value = float(constant_value)
         if var_type == self.TYPE_1D:
             for substance in self.substance_constants_1d:
