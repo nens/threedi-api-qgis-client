@@ -65,6 +65,7 @@ from ..utils_ui import (
 )
 from .custom_items import FilteredComboBox
 from .substance_concentrations import SubstanceConcentrationsWidget
+from .substance_concentrations_rain import SubstanceConcentrationsRainWidget
 from .initial_concentrations import InitialConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -335,6 +336,8 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             self.parent_page.parent_wizard.boundary_conditions_page.main_widget.setup_substance_concentrations()
         if hasattr(self.parent_page.parent_wizard, "laterals_page"):
             self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
+        if hasattr(self.parent_page.parent_wizard, "precipitation_page"):
+            self.parent_page.parent_wizard.precipitation_page.main_widget.setup_substance_concentrations()
         if hasattr(self.parent_page.parent_wizard, "init_conditions_page"):
             self.parent_page.parent_wizard.init_conditions_page.main_widget.setup_2d_initial_concentrations()
 
@@ -1577,6 +1580,13 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.current_model = parent_page.parent_wizard.model_selection_dlg.current_model
+        self.substances = (
+            parent_page.parent_wizard.substances_page.main_widget.substances
+            if hasattr(parent_page.parent_wizard, "substances_page")
+            else []
+        )
+        self.substance_constants = []
         set_widget_background_color(self)
         self.current_units = "hrs"
         self.precipitation_duration = 0
@@ -1625,6 +1635,20 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.sp_stop_after_radar.valueChanged.connect(self.plot_precipitation)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
         self.cb_interpolate_rain.stateChanged.connect(self.plot_precipitation)
+
+    def setup_substance_concentrations(self):
+        if hasattr(self, "groupbox"):
+            self.groupbox.setParent(None)
+        if not self.substances:
+            return
+        substance_concentration_widget = SubstanceConcentrationsRainWidget(self)
+        self.groupbox = substance_concentration_widget.groupbox
+        self.substance_constants = substance_concentration_widget.substance_constants
+        parent_layout = self.layout()
+        parent_layout.addWidget(self.groupbox, 0, 2)
+
+    def handle_substance_constant_error(self):
+        return
 
     def change_time_series_source(self, is_checked):
         """Handling rain time series source change."""
