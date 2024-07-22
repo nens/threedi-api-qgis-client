@@ -994,7 +994,8 @@ class SimulationRunner(QRunnable):
             upload_event_file = self.tc.create_simulation_lateral_file(sim_id, filename=filename, offset=0)
             upload_local_file(upload_event_file, LATERALS_FILE_TEMPLATE)
             for ti in range(int(self.upload_timeout // 2)):
-                uploaded_lateral = self.tc.fetch_lateral_files(sim_id)[0]
+                lateral_files = self.tc.fetch_lateral_files(sim_id)
+                uploaded_lateral = next((file for file in lateral_files if file.periodic != "daily"), None)
                 if uploaded_lateral.state == ThreediFileState.VALID.value:
                     break
                 elif uploaded_lateral.state == ThreediFileState.INVALID.value:
@@ -1020,7 +1021,8 @@ class SimulationRunner(QRunnable):
             )
             upload_local_file(upload_event_file, DWF_FILE_TEMPLATE)
             for ti in range(int(self.upload_timeout // 2)):
-                uploaded_dwf = self.tc.fetch_lateral_files(sim_id)[0]
+                lateral_files = self.tc.fetch_lateral_files(sim_id)
+                uploaded_dwf = next((file for file in lateral_files if file.periodic == "daily"), None)
                 if uploaded_dwf.state == ThreediFileState.VALID.value:
                     break
                 elif uploaded_dwf.state == ThreediFileState.INVALID.value:
