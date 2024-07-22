@@ -361,6 +361,8 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         self.template_boundary_conditions_2d_timeseries = []
         self.boundary_conditions_1d_timeseries = []
         self.boundary_conditions_2d_timeseries = []
+        self.substance_constants_1d = []
+        self.substance_constants_2d = []
         self.substance_concentrations_1d = {}
         self.substance_concentrations_2d = {}
         self.connect_signals()
@@ -379,16 +381,38 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             self.groupbox.setParent(None)
         if not self.substances:
             return
-        substance_concentration_widget = SubstanceConcentrationsWidget(
-            self.substances, self.current_model, self.handle_substance_errors
-        )
+        substance_concentration_widget = SubstanceConcentrationsWidget(self)
         self.groupbox = substance_concentration_widget.groupbox
+        self.substance_constants_1d = substance_concentration_widget.substance_constants_1d
+        self.substance_constants_2d = substance_concentration_widget.substance_constants_2d
         self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
         self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 6, 2)
 
-    def handle_substance_errors(self, header, substance_list, bc_type, units):
+    def handle_substance_constant_error(self, bc_type):
+        """Handle error if laterals are not uploaded yet."""
+        error_message = None
+        bc_timeseries = []
+        if bc_type == self.TYPE_1D:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_1d_timeseries
+            else:
+                bc_timeseries = self.boundary_conditions_1d_timeseries
+        else:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_2d_timeseries
+            else:
+                bc_timeseries = self.boundary_conditions_2d_timeseries
+        if not bc_timeseries:
+            if self.rb_from_template.isChecked():
+                error_message = "No boundary conditions found in template file!"
+            else:
+                error_message = "No boundary conditions uploaded yet!"
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        return error_message
+
+    def handle_substance_csv_errors(self, header, substance_list, bc_type, time_units):
         """
         First, check if boundary condition values are available.
         Second, check if substance concentrations timesteps match exactly the boundary condition values timesteps.
@@ -430,7 +454,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                 converted_bc_values = convert_timeseries_to_seconds(bc_values, bc_units)
                 bc_timesteps = [t for (t, _) in converted_bc_values]
                 concentrations = parse_timeseries(timeseries)
-                converted_concentrations = convert_timeseries_to_seconds(concentrations, units)
+                converted_concentrations = convert_timeseries_to_seconds(concentrations, time_units)
                 concentrations_timesteps = [t for (t, _) in converted_concentrations]
                 if bc_timesteps != concentrations_timesteps:
                     error_message = (
@@ -550,16 +574,40 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
     def recalculate_substances_timeseries(self, bc_type, timesteps_in_seconds=False):
         """Recalculate substances timeseries (timesteps in seconds)."""
         substance_concentrations = {}
-        if bc_type == self.TYPE_1D:
-            substance_concentrations.update(self.substance_concentrations_1d)
-        else:
-            substance_concentrations.update(self.substance_concentrations_2d)
-        substances = deepcopy(substance_concentrations)
-        substances_data = {}
+        substance_constants = []
+        substance_concentrations_constants = {}
         if bc_type == self.TYPE_1D:
             bc_timeseries = self.boundary_conditions_1d_timeseries
+            substance_concentrations.update(self.substance_concentrations_1d)
+            substance_constants = self.substance_constants_1d
         else:
             bc_timeseries = self.boundary_conditions_2d_timeseries
+            substance_concentrations.update(self.substance_concentrations_2d)
+            substance_constants = self.substance_constants_2d
+        for bc_id, bc_data in bc_timeseries.items():
+            for substance_constanst in substance_constants:
+                for name, value in substance_constanst.items():
+                    concentrations = [[t, value] for (t, v) in bc_data["values"]]
+                    substance = {
+                        "substance": name,
+                        "concentrations": concentrations,
+                        "time_units": "s",
+                    }
+                    if bc_id not in substance_concentrations_constants:
+                        substance_concentrations_constants[bc_id] = []
+                    substance_concentrations_constants[bc_id].append(substance)
+        # Merge substance concentrations with substance_concentrations_constants
+        for bc_id, substance in substance_concentrations_constants.items():
+            if bc_id not in substance_concentrations:
+                substance_concentrations[bc_id] = substance
+            else:
+                existing_substance = {sub["substance"]: sub for sub in substance_concentrations[bc_id]}
+                for sub in substance:
+                    name = sub.get("substance")
+                    existing_substance.setdefault(name, sub)
+                substance_concentrations[bc_id] = list(existing_substance.values())
+        substances = deepcopy(substance_concentrations)
+        substances_data = {}
         for bc in bc_timeseries:
             bc_id = str(bc["id"])
             if bc_id in substances:
@@ -898,6 +946,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         self.laterals_2d_timeseries = {}
         self.laterals_1d_timeseries_template = {}
         self.laterals_2d_timeseries_template = {}
+        self.substance_constants_1d = []
+        self.substance_constants_2d = []
         self.substance_concentrations_1d = {}
         self.substance_concentrations_2d = {}
         self.last_upload_1d_filepath = ""
@@ -947,16 +997,27 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.groupbox.setParent(None)
         if not self.substances:
             return
-        substance_concentration_widget = SubstanceConcentrationsWidget(
-            self.substances, self.current_model, self.handle_substance_timesteps
-        )
+        substance_concentration_widget = SubstanceConcentrationsWidget(self)
         self.groupbox = substance_concentration_widget.groupbox
+        self.substance_constants_1d = substance_concentration_widget.substance_constants_1d
+        self.substance_constants_2d = substance_concentration_widget.substance_constants_2d
         self.substance_concentrations_1d = substance_concentration_widget.substance_concentrations_1d
         self.substance_concentrations_2d = substance_concentration_widget.substance_concentrations_2d
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 3, 2)
 
-    def handle_substance_timesteps(self, header, substance_list, laterals_type, units):
+    def handle_substance_constant_error(self, laterals_type):
+        """Handle error if laterals are not uploaded yet."""
+        error_message = None
+        laterals_timeseries = (
+            self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
+        )
+        if not laterals_timeseries:
+            error_message = "No laterals uploaded yet!"
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
+        return error_message
+
+    def handle_substance_csv_errors(self, header, substance_list, laterals_type, time_units):
         """
         First, check if lateral values are uploaded.
         Second, check if substance concentrations timesteps match exactly the lateral values timesteps.
@@ -987,7 +1048,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 converted_lateral_values = convert_timeseries_to_seconds(lateral_values, lateral_units)
                 laterals_timesteps = [t for (t, _) in converted_lateral_values]
                 concentrations = parse_timeseries(timeseries)
-                converted_concentrations = convert_timeseries_to_seconds(concentrations, units)
+                converted_concentrations = convert_timeseries_to_seconds(concentrations, time_units)
                 concentrations_timesteps = [t for (t, _) in converted_concentrations]
                 if laterals_timesteps != concentrations_timesteps:
                     error_message = "Substance concentrations timesteps do not match lateral values timesteps!"
@@ -1061,16 +1122,40 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
     def recalculate_substances_timeseries(self, laterals_type, timesteps_in_seconds=False):
         """Recalculate substances timeseries (timesteps in seconds)."""
         substance_concentrations = {}
-        if laterals_type == self.TYPE_1D:
-            substance_concentrations.update(self.substance_concentrations_1d)
-        else:
-            substance_concentrations.update(self.substance_concentrations_2d)
-        substances = deepcopy(substance_concentrations)
-        substances_data = {}
+        substance_constants = []
+        substance_concentrations_constants = {}
         if laterals_type == self.TYPE_1D:
             laterals_timeseries = self.laterals_1d_timeseries
+            substance_concentrations.update(self.substance_concentrations_1d)
+            substance_constants = self.substance_constants_1d
         else:
             laterals_timeseries = self.laterals_2d_timeseries
+            substance_concentrations.update(self.substance_concentrations_2d)
+            substance_constants = self.substance_constants_2d
+        for lat_id, lat_data in laterals_timeseries.items():
+            for substance_constanst in substance_constants:
+                for name, value in substance_constanst.items():
+                    concentrations = [[t, value] for (t, v) in lat_data["values"]]
+                    substance = {
+                        "substance": name,
+                        "concentrations": concentrations,
+                        "time_units": "s",
+                    }
+                    if lat_id not in substance_concentrations_constants:
+                        substance_concentrations_constants[lat_id] = []
+                    substance_concentrations_constants[lat_id].append(substance)
+        # Merge substance concentrations with substance_concentrations_constants
+        for lat_id, substance in substance_concentrations_constants.items():
+            if lat_id not in substance_concentrations:
+                substance_concentrations[lat_id] = substance
+            else:
+                existing_substance = {sub["substance"]: sub for sub in substance_concentrations[lat_id]}
+                for sub in substance:
+                    name = sub.get("substance")
+                    existing_substance.setdefault(name, sub)
+                substance_concentrations[lat_id] = list(existing_substance.values())
+        substances = deepcopy(substance_concentrations)
+        substances_data = {}
         for lat_id in laterals_timeseries.keys():
             if lat_id in substances:
                 substances_data[lat_id] = substances[lat_id]
