@@ -4,7 +4,7 @@ History
 3.13.0 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix error when trying to start a simulation with laterals (#589).
 
 
 3.12.0 (2024-07-17)
