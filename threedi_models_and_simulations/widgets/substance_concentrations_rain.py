@@ -35,9 +35,10 @@ class SubstanceConcentrationsRainWidget(QWidget):
         """Help texts for substance concentrations."""
         font = QFont("Segoe UI", 10, QFont.Normal)
         text_layout = QHBoxLayout()
-        text1 = QLabel("Specify constant substance concentrations for the whole duration of the rain event")
-        text1.setFont(font)
-        text_layout.addWidget(text1)
+        text_layout.setContentsMargins(0, 9, 0, 9)
+        text = QLabel("Specify constant substance concentrations for the whole duration of the rain event")
+        text.setFont(font)
+        text_layout.addWidget(text)
         text_layout_widget = QWidget()
         text_layout_widget.setLayout(text_layout)
         layout.addWidget(text_layout_widget, 0, 0)

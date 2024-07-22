@@ -1643,6 +1643,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             return
         substance_concentration_widget = SubstanceConcentrationsRainWidget(self)
         self.groupbox = substance_concentration_widget.groupbox
+        self.groupbox.setDisabled(True)
         self.substance_constants = substance_concentration_widget.substance_constants
         parent_layout = self.layout()
         parent_layout.addWidget(self.groupbox, 0, 2)
@@ -1782,6 +1783,11 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             precipitation_type = EventTypes(precipitation_type_str)
         except ValueError:
             precipitation_type = None
+        if hasattr(self, "groupbox"):
+            if precipitation_type in (EventTypes.FROM_NETCDF, None):
+                self.groupbox.setDisabled(True)
+            else:
+                self.groupbox.setDisabled(False)
         if precipitation_type == EventTypes.CONSTANT:
             self.widget_constant.show()
             self.widget_from_csv.hide()
