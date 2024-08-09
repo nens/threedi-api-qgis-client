@@ -1335,20 +1335,18 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
 
     def setup_breaches(self):
         """Setup breaches data with corresponding vector layer."""
-        cached_breaches = self.parent_page.parent_wizard.model_selection_dlg.current_model_breaches
-        if cached_breaches is not None:
+        available_gridadming_gpkg = self.parent_page.parent_wizard.model_selection_dlg.current_model_gridadmin_gpkg
+        if available_gridadming_gpkg is not None:
             field_names = [field.name() for field in self.breaches_layer.fields()]
-            if self.breaches_layer.selectedFeatureCount() > 0:
-                first_id = [str(feat["content_pk"]) for feat in self.breaches_layer.selectedFeatures()][0]
-            else:
-                first_id = None
             breaches_ids = []
             for feat in self.breaches_layer.getFeatures():
-                breach_id = str(feat["content_pk"])
+                line_id = feat["id"]
+                line_type = feat["line_type"]
+                breach_id = f"KCU {line_type} ({line_id})"
                 breaches_ids.append(breach_id)
                 self.potential_breaches[breach_id] = {field_name: feat[field_name] for field_name in field_names}
-            breaches_ids.sort(key=lambda i: int(i))
             self.dd_breach_id.addItems(breaches_ids)
+            first_id = breaches_ids[0] if breaches_ids else None
             if first_id is not None:
                 self.dd_breach_id.setCurrentText(first_id)
                 self.set_values_from_feature()
@@ -1359,7 +1357,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         breach_id = self.dd_breach_id.currentText()
         try:
             breach_attributes = self.potential_breaches[breach_id]
-            max_breach_depth = breach_attributes["levbr"]
+            max_breach_depth = breach_attributes["exchange_level"]  # Is it right?
             if max_breach_depth not in (None, NULL):
                 self.sb_max_breach_depth.setValue(max_breach_depth)
         except KeyError:
