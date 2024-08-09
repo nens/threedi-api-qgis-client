@@ -12,7 +12,6 @@ from typing import List
 
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
-from qgis.gui import QgsMapToolExtent
 from qgis.core import NULL, QgsMapLayerProxyModel
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
@@ -64,7 +63,7 @@ from ..utils_ui import (
     set_widget_background_color,
     set_widgets_parameters,
 )
-from .custom_items import ExtentSelector, FilteredComboBox
+from .custom_items import FilteredComboBox
 from .initial_concentrations import InitialConcentrationsWidget
 from .substance_concentrations import SubstanceConcentrationsWidget
 
@@ -1311,13 +1310,11 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
     def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
         self.setupUi(self)
-        self.breach_selection_tool = None
         self.parent_page = parent_page
         set_widget_background_color(self)
         self.values = dict()
         self.potential_breaches = dict()
         self.breaches_layer = parent_page.parent_wizard.model_selection_dlg.breaches_layer
-        self.flowlines_layer = parent_page.parent_wizard.model_selection_dlg.flowlines_layer
         self.dd_breach_id = FilteredComboBox(self)
         self.breach_lout.addWidget(self.dd_breach_id)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
@@ -1329,8 +1326,6 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.sb_discharge_coefficient_positive.valueChanged.connect(self.write_values_into_dict)
         self.sb_discharge_coefficient_negative.valueChanged.connect(self.write_values_into_dict)
         self.sb_max_breach_depth.valueChanged.connect(self.write_values_into_dict)
-        self.breach_selection_tool = None
-        self.pb_select_breach.clicked.connect(self.select_breaches)
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
             self.simulation_widget.show()
         else:
@@ -1338,41 +1333,23 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.dd_simulation.addItems(initial_conditions.simulations_list)
         self.setup_breaches()
 
-    def select_breaches(self):
-        if self.breach_selection_tool is not None:
-            self.breach_selection_tool.deactivated.disconnect()
-        map_canvas = self.parent_page.parent_wizard.plugin_dock.iface.mapCanvas()
-        self.breach_selection_tool = ExtentSelector(self.breaches_layer, map_canvas, self.parent_page.parent_wizard)
-        self.breach_selection_tool.deactivated.connect(self.on_breach_selection_extent_changed)
-
-    def on_breach_selection_extent_changed(self):
-        print(self.breach_selection_tool.extent())
-
     def setup_breaches(self):
         """Setup breaches data with corresponding vector layer."""
-        breaches_ids = []
-        if self.flowlines_layer is not None:
-            field_names = [field.name() for field in self.flowlines_layer.fields()]
-            for feat in self.flowlines_layer.getFeatures():
+        available_gridadming_gpkg = self.parent_page.parent_wizard.model_selection_dlg.current_model_gridadmin_gpkg
+        if available_gridadming_gpkg is not None:
+            field_names = [field.name() for field in self.breaches_layer.fields()]
+            breaches_ids = []
+            for feat in self.breaches_layer.getFeatures():
                 line_id = feat["id"]
                 line_type = feat["line_type"]
-                breach_id = f"Flowline {line_id} (KCU {line_type})"
+                breach_id = f"KCU {line_type} ({line_id})"
                 breaches_ids.append(breach_id)
                 self.potential_breaches[breach_id] = {field_name: feat[field_name] for field_name in field_names}
             self.dd_breach_id.addItems(breaches_ids)
-        if self.breaches_layer is not None:
-            field_names = [field.name() for field in self.breaches_layer.fields()]
-            for feat in self.breaches_layer.getFeatures():
-                code = feat["code"]
-                display_name = feat["display_name"]
-                breach_id = f"{code}: {display_name}"
-                breaches_ids.append(breach_id)
-                self.potential_breaches[breach_id] = {field_name: feat[field_name] for field_name in field_names}
-            self.dd_breach_id.addItems(breaches_ids)
-        first_id = breaches_ids[0] if breaches_ids else None
-        if first_id is not None:
-            self.dd_breach_id.setCurrentText(first_id)
-            self.set_values_from_feature()
+            first_id = breaches_ids[0] if breaches_ids else None
+            if first_id is not None:
+                self.dd_breach_id.setCurrentText(first_id)
+                self.set_values_from_feature()
         self.write_values_into_dict()
 
     def set_values_from_feature(self):
