@@ -1315,6 +1315,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.values = dict()
         self.potential_breaches = dict()
         self.breaches_layer = parent_page.parent_wizard.model_selection_dlg.breaches_layer
+        self.flowlines_layer = parent_page.parent_wizard.model_selection_dlg.flowlines_layer
         self.dd_breach_id = FilteredComboBox(self)
         self.breach_lout.addWidget(self.dd_breach_id)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
@@ -1335,21 +1336,29 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
 
     def setup_breaches(self):
         """Setup breaches data with corresponding vector layer."""
-        available_gridadming_gpkg = self.parent_page.parent_wizard.model_selection_dlg.current_model_gridadmin_gpkg
-        if available_gridadming_gpkg is not None:
-            field_names = [field.name() for field in self.breaches_layer.fields()]
-            breaches_ids = []
-            for feat in self.breaches_layer.getFeatures():
+        breaches_ids = []
+        if self.flowlines_layer is not None:
+            field_names = [field.name() for field in self.flowlines_layer.fields()]
+            for feat in self.flowlines_layer.getFeatures():
                 line_id = feat["id"]
                 line_type = feat["line_type"]
-                breach_id = f"KCU {line_type} ({line_id})"
+                breach_id = f"Flowline {line_id} (KCU {line_type})"
                 breaches_ids.append(breach_id)
                 self.potential_breaches[breach_id] = {field_name: feat[field_name] for field_name in field_names}
             self.dd_breach_id.addItems(breaches_ids)
-            first_id = breaches_ids[0] if breaches_ids else None
-            if first_id is not None:
-                self.dd_breach_id.setCurrentText(first_id)
-                self.set_values_from_feature()
+        if self.breaches_layer is not None:
+            field_names = [field.name() for field in self.breaches_layer.fields()]
+            for feat in self.breaches_layer.getFeatures():
+                code = feat["code"]
+                display_name = feat["display_name"]
+                breach_id = f"{code}: {display_name}"
+                breaches_ids.append(breach_id)
+                self.potential_breaches[breach_id] = {field_name: feat[field_name] for field_name in field_names}
+            self.dd_breach_id.addItems(breaches_ids)
+        first_id = breaches_ids[0] if breaches_ids else None
+        if first_id is not None:
+            self.dd_breach_id.setCurrentText(first_id)
+            self.set_values_from_feature()
         self.write_values_into_dict()
 
     def set_values_from_feature(self):

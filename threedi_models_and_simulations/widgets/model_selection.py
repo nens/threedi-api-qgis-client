@@ -70,6 +70,7 @@ class ModelSelectionDialog(uicls, basecls):
         self.current_model_gridadmin_gpkg = None
         self.current_simulation_template = None
         self.breaches_layer = None
+        self.flowlines_layer = None
         self.organisation = None
         self.model_is_loaded = False
         self.source_models_model = QStandardItemModel(self)
@@ -244,13 +245,21 @@ class ModelSelectionDialog(uicls, basecls):
     def load_breach_layers(self):
         """Loading breach layers into the map canvas."""
         if self.current_model_gridadmin_gpkg is not None:
-            breaches_uri = f"{self.current_model_gridadmin_gpkg}|layername=flowline"
-            self.breaches_layer = QgsVectorLayer(breaches_uri, "breaches", "ogr")
-            self.breaches_layer.setSubsetString('"line_type" IN (52, 54, 55)')
-            set_named_style(self.breaches_layer, "breaches.qml")
-            QgsProject.instance().addMapLayer(self.breaches_layer, False)
-            QgsProject.instance().layerTreeRoot().insertLayer(0, self.breaches_layer)
-            self.breaches_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
+            breaches_uri = f"{self.current_model_gridadmin_gpkg}|layername=breach"
+            breaches_layer = QgsVectorLayer(breaches_uri, "breaches", "ogr")
+            if breaches_layer.isValid():
+                self.breaches_layer = breaches_layer
+                set_named_style(self.breaches_layer, "breaches.qml")
+                QgsProject.instance().addMapLayer(self.breaches_layer, False)
+                QgsProject.instance().layerTreeRoot().insertLayer(0, self.breaches_layer)
+            flowlines_uri = f"{self.current_model_gridadmin_gpkg}|layername=flowline"
+            flowlines_layer = QgsVectorLayer(flowlines_uri, "flowlines", "ogr")
+            if flowlines_layer.isValid():
+                self.flowlines_layer = flowlines_layer
+                self.flowlines_layer.setSubsetString('"line_type" IN (52, 54, 55)')
+                set_named_style(self.flowlines_layer, "breaches.qml")
+                QgsProject.instance().addMapLayer(self.flowlines_layer, False)
+                QgsProject.instance().layerTreeRoot().insertLayer(0, self.flowlines_layer)
 
     def unload_breach_layer(self):
         """Removing model related vector layers from map canvas."""
@@ -258,6 +267,9 @@ class ModelSelectionDialog(uicls, basecls):
             if self.breaches_layer is not None:
                 QgsProject.instance().removeMapLayer(self.breaches_layer)
                 self.breaches_layer = None
+            if self.flowlines_layer is not None:
+                QgsProject.instance().removeMapLayer(self.flowlines_layer)
+                self.flowlines_layer = None
             self.plugin_dock.iface.mapCanvas().refresh()
         except (AttributeError, RuntimeError):
             pass
