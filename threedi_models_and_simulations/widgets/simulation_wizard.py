@@ -12,6 +12,7 @@ from typing import List
 
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
+from qgis.gui import QgsMapToolExtent
 from qgis.core import NULL, QgsMapLayerProxyModel
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
@@ -63,7 +64,7 @@ from ..utils_ui import (
     set_widget_background_color,
     set_widgets_parameters,
 )
-from .custom_items import FilteredComboBox
+from .custom_items import ExtentSelector, FilteredComboBox
 from .initial_concentrations import InitialConcentrationsWidget
 from .substance_concentrations import SubstanceConcentrationsWidget
 
@@ -1310,6 +1311,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
     def __init__(self, parent_page, initial_conditions=None):
         super().__init__()
         self.setupUi(self)
+        self.breach_selection_tool = None
         self.parent_page = parent_page
         set_widget_background_color(self)
         self.values = dict()
@@ -1327,12 +1329,24 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.sb_discharge_coefficient_positive.valueChanged.connect(self.write_values_into_dict)
         self.sb_discharge_coefficient_negative.valueChanged.connect(self.write_values_into_dict)
         self.sb_max_breach_depth.valueChanged.connect(self.write_values_into_dict)
+        self.breach_selection_tool = None
+        self.pb_select_breach.clicked.connect(self.select_breaches)
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
             self.simulation_widget.show()
         else:
             self.simulation_widget.hide()
         self.dd_simulation.addItems(initial_conditions.simulations_list)
         self.setup_breaches()
+
+    def select_breaches(self):
+        if self.breach_selection_tool is not None:
+            self.breach_selection_tool.deactivated.disconnect()
+        map_canvas = self.parent_page.parent_wizard.plugin_dock.iface.mapCanvas()
+        self.breach_selection_tool = ExtentSelector(self.breaches_layer, map_canvas, self.parent_page.parent_wizard)
+        self.breach_selection_tool.deactivated.connect(self.on_breach_selection_extent_changed)
+
+    def on_breach_selection_extent_changed(self):
+        print(self.breach_selection_tool.extent())
 
     def setup_breaches(self):
         """Setup breaches data with corresponding vector layer."""
