@@ -9,7 +9,7 @@ from ..utils import parse_version_number
 
 REQUIRED_API_CLIENT_VERSION = "4.1.7"
 REQUIRED_3DI_SCHEMA_VERSION = "0.219.3"
-REQUIRED_3DI_MI_UTILS_VERSION = "0.1.3"
+REQUIRED_3DI_MI_UTILS_VERSION = "0.1.4"
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 API_CLIENT_WHEEL = os.path.join(MAIN_DIR, f"threedi_api_client-{REQUIRED_API_CLIENT_VERSION}-py2.py3-none-any.whl")
 SCHEMA_WHEEL = os.path.join(MAIN_DIR, f"threedi_schema-{REQUIRED_3DI_SCHEMA_VERSION}-py3-none-any.whl")
