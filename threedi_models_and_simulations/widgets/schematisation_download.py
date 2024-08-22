@@ -112,16 +112,19 @@ class SchematisationDownload(uicls, basecls):
             tc = ThreediCalls(self.threedi_api)
             offset = (self.schematisations_page_sbox.value() - 1) * self.TABLE_LIMIT
             text = self.schematisations_search_le.text()
+            ordering = "last_updated"
             schematisations, schematisations_count = tc.fetch_schematisations_with_count(
-                limit=self.TABLE_LIMIT, offset=offset, name_contains=text
+                limit=self.TABLE_LIMIT, offset=offset, name_contains=text, ordering=ordering
             )
             pages_nr = ceil(schematisations_count / self.TABLE_LIMIT) or 1
             self.schematisations_page_sbox.setMaximum(pages_nr)
             self.schematisations_page_sbox.setSuffix(f" / {pages_nr}")
             self.tv_schematisations_model.clear()
-            header = ["Schematisation name", "Description", "Owner", "Created by"]
+            header = ["Schematisation name", "Description", "Owner", "Created by", "Last updated"]
             self.tv_schematisations_model.setHorizontalHeaderLabels(header)
-            for schematisation in schematisations:
+            for schematisation in sorted(
+                schematisations, key=lambda s: s.last_updated.timestamp() if s.last_updated else 1, reverse=True
+            ):
                 name_item = QStandardItem(schematisation.name)
                 name_item.setData(schematisation, role=Qt.UserRole)
                 try:
@@ -130,8 +133,15 @@ class SchematisationDownload(uicls, basecls):
                     description_item = QStandardItem("")
                 organisation = self.plugin_dock.organisations[schematisation.owner]
                 owner_item = QStandardItem(organisation.name)
-                created_by_item = QStandardItem(schematisation.created_by)
-                self.tv_schematisations_model.appendRow([name_item, description_item, owner_item, created_by_item])
+                created_by_item = QStandardItem(
+                    f"{schematisation.created_by_first_name} {schematisation.created_by_last_name}"
+                )
+                last_updated_item = QStandardItem(
+                    schematisation.last_updated.strftime("%d-%m-%Y") if schematisation.last_updated else ""
+                )
+                self.tv_schematisations_model.appendRow(
+                    [name_item, description_item, owner_item, created_by_item, last_updated_item]
+                )
             for i in range(len(header)):
                 self.schematisations_tv.resizeColumnToContents(i)
             self.schematisations = schematisations
@@ -164,7 +174,7 @@ class SchematisationDownload(uicls, basecls):
                 number_item = QStandardItem(str(revision.number))
                 number_item.setData(revision, role=Qt.UserRole)
                 commit_message_item = QStandardItem(revision.commit_message or "")
-                commit_user_item = QStandardItem(revision.commit_user or "")
+                commit_user_item = QStandardItem(f"{revision.commit_first_name} {revision.commit_last_name}")
                 commit_date = revision.commit_date.strftime("%d-%m-%Y") if revision.commit_date else ""
                 commit_date_item = QStandardItem(commit_date)
                 self.tv_revisions_model.appendRow(

@@ -838,7 +838,11 @@ class ThreediCalls:
         return schematisations_list
 
     def fetch_schematisations_with_count(
-        self, limit: int = None, offset: int = None, name_contains: str = None
+        self,
+        limit: int = None,
+        offset: int = None,
+        name_contains: str = None,
+        ordering: str = None,
     ) -> Tuple[List[Schematisation], int]:
         """Get list of the schematisations with count."""
         params = {}
@@ -848,6 +852,8 @@ class ThreediCalls:
             params["offset"] = offset
         if name_contains is not None:
             params["name__icontains"] = name_contains.lower()
+        if ordering is not None:
+            params["ordering"] = ordering
         logger.debug("Fetching schematisations...")
         response = self.threedi_api.schematisations_list(**params)
         schematisations_list = response.results

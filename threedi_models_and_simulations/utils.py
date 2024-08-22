@@ -124,6 +124,7 @@ def mmh_to_mmtimestep(value, timestep, units="s"):
     mmtimestep_value = value_per_second * timestep_seconds
     return mmtimestep_value
 
+
 def units_to_seconds(units="s"):
     """Converting timestep to seconds."""
     if units == "s":
@@ -136,11 +137,13 @@ def units_to_seconds(units="s"):
         raise ValueError(f"Unsupported timestep units format ({units})!")
     return seconds_per_unit
 
+
 def convert_timeseries_to_seconds(timeseries, units="s"):
     """Converting timeseries to seconds."""
     seconds_per_unit = units_to_seconds(units)
     converted_timeseries = [[t * seconds_per_unit, v] for (t, v) in timeseries]
     return converted_timeseries
+
 
 def load_saved_templates():
     """Loading parameters from saved template."""
