@@ -112,9 +112,8 @@ class SchematisationDownload(uicls, basecls):
             tc = ThreediCalls(self.threedi_api)
             offset = (self.schematisations_page_sbox.value() - 1) * self.TABLE_LIMIT
             text = self.schematisations_search_le.text()
-            ordering = "last_updated"
             schematisations, schematisations_count = tc.fetch_schematisations_with_count(
-                limit=self.TABLE_LIMIT, offset=offset, name_contains=text, ordering=ordering
+                limit=self.TABLE_LIMIT, offset=offset, name_contains=text
             )
             pages_nr = ceil(schematisations_count / self.TABLE_LIMIT) or 1
             self.schematisations_page_sbox.setMaximum(pages_nr)
