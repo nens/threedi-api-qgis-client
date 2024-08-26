@@ -3,7 +3,7 @@ from collections import OrderedDict, defaultdict
 from enum import Enum
 
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QItemSelectionModel, Qt, QThreadPool
+from qgis.PyQt.QtCore import QItemSelectionModel, QObject, Qt, QThreadPool, pyqtSignal
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QMessageBox
 
@@ -24,6 +24,13 @@ class UploadStatus(Enum):
     IN_PROGRESS = "In progress"
     SUCCESS = "Success"
     FAILURE = "Failure"
+    CANCELLED = "Cancelled"
+
+
+class UploadManagementSignals(QObject):
+    """Upload management signals."""
+
+    cancel_upload = pyqtSignal()
 
 
 class UploadOverview(uicls_log, basecls_log):
@@ -43,13 +50,15 @@ class UploadOverview(uicls_log, basecls_log):
         self.upload_thread_pool = QThreadPool()
         self.upload_thread_pool.setMaxThreadCount(self.MAX_THREAD_COUNT)
         self.ended_tasks = OrderedDict()
-        self.upload_progresses = defaultdict(lambda: ("NO TASK", 0.0, 0.0))
+        self.upload_management_signals = {}
+        self.upload_progresses = defaultdict(lambda: ("NO TASK", 0, 0))
         self.current_upload_row = 0
         self.schematisation = None
         self.schematisation_sqlite = None
         self.schematisation_id = None
         self.pb_new_upload.clicked.connect(self.upload_new_model)
         self.pb_hide.clicked.connect(self.close)
+        self.pb_cancel_upload.clicked.connect(self.on_cancel_upload)
         self.tv_model = None
         self.setup_view_model()
         self.adjustSize()
@@ -126,6 +135,9 @@ class UploadOverview(uicls_log, basecls_log):
         upload_worker.signals.thread_finished.connect(self.on_upload_finished_success)
         upload_worker.signals.upload_failed.connect(self.on_upload_failed)
         upload_worker.signals.revision_committed.connect(self.on_revision_committed)
+        management_signals = UploadManagementSignals()
+        management_signals.cancel_upload.connect(upload_worker.stop_upload_tasks)
+        self.upload_management_signals[upload_row_number] = management_signals
         self.upload_thread_pool.start(upload_worker)
 
     def upload_new_model(self):
@@ -178,6 +190,11 @@ class UploadOverview(uicls_log, basecls_log):
         """Handling actions on successful revision commit."""
         self.plugin_dock.update_schematisation_view()
 
+    def on_cancel_upload(self):
+        """Handling of canceling upload tasks."""
+        management_signals = self.upload_management_signals[self.current_upload_row]
+        management_signals.cancel_upload.emit()
+
     def on_update_upload_progress(self, upload_row_number, task_name, task_progress, total_progress):
         """Handling actions on upload progress update."""
         self.upload_progresses[upload_row_number] = (task_name, task_progress, total_progress)
@@ -185,7 +202,7 @@ class UploadOverview(uicls_log, basecls_log):
             self.lbl_current_task.setText(task_name)
             self.pbar_current_task.setValue(task_progress)
             self.pbar_total_upload.setValue(total_progress)
-            if task_progress == 100.0 and task_name != "DONE":
+            if task_progress == 100 and task_name != "DONE":
                 success = True
                 enriched_success_message = f"{task_name} ==> done"
                 ended_task_row = (enriched_success_message, success)
