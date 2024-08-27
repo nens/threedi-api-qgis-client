@@ -24,7 +24,7 @@ class UploadStatus(Enum):
     IN_PROGRESS = "In progress"
     SUCCESS = "Success"
     FAILURE = "Failure"
-    CANCELLED = "Cancelled"
+    CANCELED = "Canceled"
 
 
 class UploadManagementSignals(QObject):
@@ -92,10 +92,12 @@ class UploadOverview(uicls_log, basecls_log):
             self.feedback_logger.clear()
             try:
                 for msg, success in self.ended_tasks[self.current_upload_row]:
-                    if success:
+                    if success is True:
                         self.feedback_logger.log_info(msg)
-                    else:
+                    elif success is False:
                         self.feedback_logger.log_error(msg)
+                    else:
+                        self.feedback_logger.log_warn(msg, log_text_color=Qt.darkGray)
             except KeyError:
                 pass
             status_item = self.tv_model.item(current_row, 3)
@@ -108,6 +110,10 @@ class UploadOverview(uicls_log, basecls_log):
                 self.progress_widget.hide()
                 self.label_success.hide()
                 self.label_failure.show()
+            elif status == UploadStatus.CANCELED.value:
+                self.progress_widget.hide()
+                self.label_success.hide()
+                self.label_failure.hide()
             else:
                 self.progress_widget.show()
                 self.label_success.hide()
@@ -134,6 +140,7 @@ class UploadOverview(uicls_log, basecls_log):
         upload_worker.signals.upload_progress.connect(self.on_update_upload_progress)
         upload_worker.signals.thread_finished.connect(self.on_upload_finished_success)
         upload_worker.signals.upload_failed.connect(self.on_upload_failed)
+        upload_worker.signals.upload_canceled.connect(self.on_upload_canceled)
         upload_worker.signals.revision_committed.connect(self.on_revision_committed)
         management_signals = UploadManagementSignals()
         management_signals.cancel_upload.connect(upload_worker.stop_upload_tasks)
@@ -192,8 +199,27 @@ class UploadOverview(uicls_log, basecls_log):
 
     def on_cancel_upload(self):
         """Handling of canceling upload tasks."""
+        question = "Do you want to cancel revision upload task?"
+        yes = self.communication.ask(self, "Cancel upload?", question)
+        if not yes:
+            return
+        item = self.tv_model.item(self.current_upload_row - 1, 3)
+        item.setText("Canceling...")
         management_signals = self.upload_management_signals[self.current_upload_row]
         management_signals.cancel_upload.emit()
+
+    def on_upload_canceled(self, upload_row_number):
+        """Handling signal send when upload was canceled."""
+        item = self.tv_model.item(upload_row_number - 1, 3)
+        item.setText(UploadStatus.CANCELED.value)
+        cancel_msg, success = "Upload task canceled by the user", None
+        canceled_task_row = (cancel_msg, success)
+        if upload_row_number not in self.ended_tasks:
+            self.ended_tasks[upload_row_number] = [canceled_task_row]
+        else:
+            self.ended_tasks[upload_row_number].append(canceled_task_row)
+        self.feedback_logger.log_warn(cancel_msg, log_text_color=Qt.darkGray)
+        self.on_upload_context_change()
 
     def on_update_upload_progress(self, upload_row_number, task_name, task_progress, total_progress):
         """Handling actions on upload progress update."""

@@ -226,6 +226,7 @@ class UploadWorkerSignals(QObject):
     thread_finished = pyqtSignal(int, str)
     upload_failed = pyqtSignal(int, str)
     upload_progress = pyqtSignal(int, str, int, int)  # upload row number, task name, task progress, total progress
+    upload_canceled = pyqtSignal(int)
     revision_committed = pyqtSignal()
 
 
@@ -259,7 +260,7 @@ class UploadProgressWorker(QRunnable):
         self.upload_canceled = False
 
     def stop_upload_tasks(self):
-        """Mark the upload task as cancelled."""
+        """Mark the upload task as canceled."""
         self.upload_canceled = True
 
     @pyqtSlot()
@@ -278,7 +279,7 @@ class UploadProgressWorker(QRunnable):
         try:
             for i, task in enumerate(tasks_list, start=1):
                 if self.upload_canceled:
-                    self.signals.upload_failed.emit(self.upload_row_number, "Upload task canceled by the user")
+                    self.signals.upload_canceled.emit(self.upload_row_number)
                     return
                 task()
                 self.total_progress = progress_per_task * i
