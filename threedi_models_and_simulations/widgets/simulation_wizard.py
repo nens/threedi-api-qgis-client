@@ -12,7 +12,6 @@ from typing import List
 
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
-from qgis.gui import QgsMapToolExtent
 from qgis.core import NULL, QgsMapLayerProxyModel
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
@@ -1317,7 +1316,6 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.values = dict()
         self.potential_breaches = dict()
         self.breaches_layer = parent_page.parent_wizard.model_selection_dlg.breaches_layer
-        self.flowlines_layer = parent_page.parent_wizard.model_selection_dlg.flowlines_layer
         self.dd_breach_id = FilteredComboBox(self)
         self.breach_lout.addWidget(self.dd_breach_id)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
@@ -1351,21 +1349,18 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
     def setup_breaches(self):
         """Setup breaches data with corresponding vector layer."""
         breaches_ids = []
-        if self.flowlines_layer is not None:
-            field_names = [field.name() for field in self.flowlines_layer.fields()]
-            for feat in self.flowlines_layer.getFeatures():
-                line_id = feat["id"]
-                line_type = feat["line_type"]
-                breach_id = f"Flowline {line_id} (KCU {line_type})"
-                breaches_ids.append(breach_id)
-                self.potential_breaches[breach_id] = {field_name: feat[field_name] for field_name in field_names}
-            self.dd_breach_id.addItems(breaches_ids)
         if self.breaches_layer is not None:
             field_names = [field.name() for field in self.breaches_layer.fields()]
             for feat in self.breaches_layer.getFeatures():
-                code = feat["code"]
-                display_name = feat["display_name"]
-                breach_id = f"{code}: {display_name}"
+                line_id = feat["id"]
+                line_type = feat["line_type"]
+                if line_type == 55:
+                    # code = feat["code"]
+                    # display_name = feat["display_name"]
+                    # breach_id = f"{code}: {display_name}"
+                    breach_id = f"Breach {line_id}"
+                else:
+                    breach_id = f"Flowline {line_id} (KCU {line_type})"
                 breaches_ids.append(breach_id)
                 self.potential_breaches[breach_id] = {field_name: feat[field_name] for field_name in field_names}
             self.dd_breach_id.addItems(breaches_ids)

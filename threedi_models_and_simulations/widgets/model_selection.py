@@ -6,7 +6,7 @@ from functools import partial
 from math import ceil
 from operator import attrgetter
 
-from qgis.core import QgsMapLayer, QgsProject, QgsVectorLayer
+from qgis.core import QgsProject, QgsVectorLayer
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import (QDate, QDateTime, QItemSelectionModel,
                               QModelIndex, QSortFilterProxyModel, Qt)
@@ -68,9 +68,9 @@ class ModelSelectionDialog(uicls, basecls):
         self.simulation_templates = None
         self.current_model = None
         self.current_model_gridadmin_gpkg = None
+        self.current_model_breach_geojson = None
         self.current_simulation_template = None
         self.breaches_layer = None
-        self.flowlines_layer = None
         self.organisation = None
         self.model_is_loaded = False
         self.source_models_model = QStandardItemModel(self)
@@ -245,21 +245,14 @@ class ModelSelectionDialog(uicls, basecls):
     def load_breach_layers(self):
         """Loading breach layers into the map canvas."""
         if self.current_model_gridadmin_gpkg is not None:
-            breaches_uri = f"{self.current_model_gridadmin_gpkg}|layername=breach"
+            breaches_uri = f"{self.current_model_gridadmin_gpkg}|layername=flowline"
             breaches_layer = QgsVectorLayer(breaches_uri, "breaches", "ogr")
             if breaches_layer.isValid():
                 self.breaches_layer = breaches_layer
+                self.breaches_layer.setSubsetString('"line_type" IN (52, 54, 55)')
                 set_named_style(self.breaches_layer, "breaches.qml")
                 QgsProject.instance().addMapLayer(self.breaches_layer, False)
                 QgsProject.instance().layerTreeRoot().insertLayer(0, self.breaches_layer)
-            flowlines_uri = f"{self.current_model_gridadmin_gpkg}|layername=flowline"
-            flowlines_layer = QgsVectorLayer(flowlines_uri, "flowlines", "ogr")
-            if flowlines_layer.isValid():
-                self.flowlines_layer = flowlines_layer
-                self.flowlines_layer.setSubsetString('"line_type" IN (52, 54, 55)')
-                set_named_style(self.flowlines_layer, "breaches.qml")
-                QgsProject.instance().addMapLayer(self.flowlines_layer, False)
-                QgsProject.instance().layerTreeRoot().insertLayer(0, self.flowlines_layer)
 
     def unload_breach_layer(self):
         """Removing model related vector layers from map canvas."""
@@ -267,9 +260,6 @@ class ModelSelectionDialog(uicls, basecls):
             if self.breaches_layer is not None:
                 QgsProject.instance().removeMapLayer(self.breaches_layer)
                 self.breaches_layer = None
-            if self.flowlines_layer is not None:
-                QgsProject.instance().removeMapLayer(self.flowlines_layer)
-                self.flowlines_layer = None
             self.plugin_dock.iface.mapCanvas().refresh()
         except (AttributeError, RuntimeError):
             pass
@@ -294,6 +284,7 @@ class ModelSelectionDialog(uicls, basecls):
                 selected_model_schematisation_name,
                 selected_model_schematisation_revision,
             )
+            self.current_model_breach_geojson = self.get_breach_geojson_path("breaches")
             self.current_simulation_template = self.get_selected_template()
             self.load_breach_layers()
             self.model_is_loaded = True
@@ -380,3 +371,31 @@ class ModelSelectionDialog(uicls, basecls):
         else:
             available_gridadming_gpkg_path = expected_gridadming_gpkg_path
         return available_gridadming_gpkg_path
+
+    def get_breach_geojson_path(self, geojson_name):
+        """Get breach geojson data (should be cached)."""
+        breach_geojson_cached_file_path = None
+        try:
+            tc = ThreediCalls(self.threedi_api)
+            model_id = self.current_model.id
+            if geojson_name == "breaches":
+                download = tc.fetch_3di_model_geojson_breaches_download(model_id)
+            else:
+                return breach_geojson_cached_file_path
+            filename = f"{geojson_name}_{model_id}_{download.etag}.json"
+            file_path = os.path.join(CACHE_PATH, filename)
+            if not file_cached(file_path):
+                get_download_file(download, file_path)
+            breach_geojson_cached_file_path = file_path
+            self.communication.bar_info(f"Model {geojson_name} cached.")
+        except ApiException as e:
+            error_msg = extract_error_message(e)
+            if "geojson file not found" in error_msg:
+                pass
+            else:
+                self.communication.bar_error(error_msg)
+        except Exception as e:
+            logger.exception("Error when getting to-be-cached data")
+            error_msg = f"Error: {e}"
+            self.communication.bar_error(error_msg)
+        return breach_geojson_cached_file_path
