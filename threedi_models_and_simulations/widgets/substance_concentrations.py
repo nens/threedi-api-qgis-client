@@ -16,8 +16,8 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
 )
 
-from ..utils_ui import read_3di_settings, save_3di_settings
 from ..utils import parse_timeseries
+from ..utils_ui import read_3di_settings, save_3di_settings
 
 
 class SubstanceConcentrationsWidget(QWidget):

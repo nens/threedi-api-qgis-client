@@ -225,7 +225,8 @@ class UploadWorkerSignals(QObject):
 
     thread_finished = pyqtSignal(int, str)
     upload_failed = pyqtSignal(int, str)
-    upload_progress = pyqtSignal(int, str, float, float)  # upload row number, task name, task progress, total progress
+    upload_progress = pyqtSignal(int, str, int, int)  # upload row number, task name, task progress, total progress
+    upload_canceled = pyqtSignal(int)
     revision_committed = pyqtSignal()
 
 
@@ -250,12 +251,17 @@ class UploadProgressWorker(QRunnable):
         self.upload_specification = upload_specification
         self.upload_row_number = upload_row_number
         self.current_task = "NO TASK"
-        self.current_task_progress = 0.0
-        self.total_progress = 0.0
+        self.current_task_progress = 0
+        self.total_progress = 0
         self.tc = None
         self.schematisation = self.upload_specification["schematisation"]
         self.revision = self.upload_specification["latest_revision"]
         self.signals = UploadWorkerSignals()
+        self.upload_canceled = False
+
+    def stop_upload_tasks(self):
+        """Mark the upload task as canceled."""
+        self.upload_canceled = True
 
     @pyqtSlot()
     def run(self):
@@ -264,18 +270,21 @@ class UploadProgressWorker(QRunnable):
         tasks_list = self.build_tasks_list()
         if not tasks_list:
             self.current_task = "DONE"
-            self.current_task_progress = 100.0
-            self.total_progress = 100.0
+            self.current_task_progress = 100
+            self.total_progress = 100
             self.report_upload_progress()
             self.signals.thread_finished.emit(self.upload_row_number, "Nothing to upload or process")
             return
-        progress_per_task = 1 / len(tasks_list) * 100
+        progress_per_task = int(1 / len(tasks_list) * 100)
         try:
             for i, task in enumerate(tasks_list, start=1):
+                if self.upload_canceled:
+                    self.signals.upload_canceled.emit(self.upload_row_number)
+                    return
                 task()
                 self.total_progress = progress_per_task * i
             self.current_task = "DONE"
-            self.total_progress = 100.0
+            self.total_progress = 100
             self.report_upload_progress()
             msg = f"Schematisation '{self.schematisation.name}' (revision: {self.revision.number}) files uploaded"
             self.signals.thread_finished.emit(self.upload_row_number, msg)
@@ -320,16 +329,16 @@ class UploadProgressWorker(QRunnable):
     def create_revision_task(self):
         """Run creation of the new revision task."""
         self.current_task = "CREATE REVISION"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         self.revision = self.tc.create_schematisation_revision(self.schematisation.id)
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
 
     def upload_sqlite_task(self):
         """Run sqlite file upload task."""
         self.current_task = "UPLOAD SPATIALITE"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         schematisation_sqlite = self.upload_specification["selected_files"]["spatialite"]["filepath"]
         zipped_sqlite_filepath = zip_into_archive(schematisation_sqlite)
@@ -339,22 +348,22 @@ class UploadProgressWorker(QRunnable):
         )
         upload_file(upload.put_url, zipped_sqlite_filepath, CHUNK_SIZE, callback_func=self.monitor_upload_progress)
         os.remove(zipped_sqlite_filepath)
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
 
     def delete_sqlite_task(self):
         """Run sqlite file deletion task."""
         self.current_task = "DELETE SPATIALITE"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         self.tc.delete_schematisation_revision_sqlite(self.schematisation.id, self.revision.id)
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
 
     def upload_raster_task(self, raster_type):
         """Run raster file upload task."""
         self.current_task = f"UPLOAD RASTER ({raster_type})"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         raster_filepath = self.upload_specification["selected_files"][raster_type]["filepath"]
         raster_file = os.path.basename(raster_filepath)
@@ -365,7 +374,7 @@ class UploadProgressWorker(QRunnable):
             raster_revision.id, self.schematisation.id, self.revision.id, raster_file
         )
         upload_file(raster_upload.put_url, raster_filepath, CHUNK_SIZE, callback_func=self.monitor_upload_progress)
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
 
     def delete_raster_task(self, raster_type):
@@ -374,7 +383,7 @@ class UploadProgressWorker(QRunnable):
         if raster_type == "dem_file":
             types_to_delete.append("dem_raw_file")  # We need to remove legacy 'dem_raw_file` as well
         self.current_task = f"DELETE RASTER ({raster_type})"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         for revision_raster in self.revision.rasters:
             revision_type = revision_raster.type
@@ -383,13 +392,13 @@ class UploadProgressWorker(QRunnable):
                     revision_raster.id, self.schematisation.id, self.revision.id
                 )
                 break
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
 
     def commit_revision_task(self):
         """Run committing revision task."""
         self.current_task = "COMMIT REVISION"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         commit_ready_file_states = {FileState.UPLOADED, FileState.PROCESSED}
         for i in range(self.UPLOAD_CHECK_RETRIES):
@@ -409,7 +418,7 @@ class UploadProgressWorker(QRunnable):
         while self.revision.is_valid is None:
             time.sleep(2)
             self.revision = self.tc.fetch_schematisation_revision(self.schematisation.id, self.revision.id)
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
         self.local_schematisation.update_wip_revision(self.revision.number)
         self.signals.revision_committed.emit()
@@ -417,7 +426,7 @@ class UploadProgressWorker(QRunnable):
     def create_3di_model_task(self, inherit_templates=False):
         """Run creation of the new model out of revision data."""
         self.current_task = "MAKE 3DI MODEL"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         # Wait for the 'modelchecker' validations
         model_checker_task = None
@@ -489,7 +498,7 @@ class UploadProgressWorker(QRunnable):
 
     def monitor_upload_progress(self, chunk_size, total_size):
         """Upload progress callback method."""
-        upload_progress = chunk_size / total_size * 100
+        upload_progress = int(chunk_size / total_size * 100)
         self.current_task_progress = upload_progress
         self.report_upload_progress()
 
