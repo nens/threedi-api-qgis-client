@@ -3,10 +3,10 @@ History
 
 3.13.0 (unreleased)
 -------------------
-- Fixes/enhancements: #276
+
+- Fixes/enhancements: #276, #551
 - Fix error when trying to start a simulation with laterals (#589).
 - Updated pyqtgraph to version 0.13.7
-- Fixes/enhancements: #551.
 
 
 3.12.0 (2024-07-17)
