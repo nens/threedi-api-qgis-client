@@ -7,6 +7,7 @@ History
 - Fixes/enhancements: #276, #551
 - Fix error when trying to start a simulation with laterals (#589).
 - Updated pyqtgraph to version 0.13.7
+- Model selection: fixed bug (numeric and date columns were sorted lexicographically) (#587)
 
 
 3.12.0 (2024-07-17)
