@@ -310,8 +310,8 @@ class SchematisationDownload(uicls, basecls):
                     error_msg = extract_error_message(e)
                     if not any(ignore_error_msg in error_msg for ignore_error_msg in ignore_gridadmin_error_messages):
                         raise
-            if revision_pk in local_schematisation.revisions:
-                local_schematisation.add_revision(revision_pk)
+            if revision_number not in local_schematisation.revisions:
+                local_schematisation.add_revision(revision_number)
             zip_filepath = os.path.join(schematisation_db_dir, revision_sqlite.file.filename)
             self.pbar_download.setMaximum(number_of_steps)
             current_progress = 0
@@ -323,13 +323,15 @@ class SchematisationDownload(uicls, basecls):
             current_progress += 1
             self.pbar_download.setValue(current_progress)
             if gridadmin_download is not None:
-                grid_filepath = os.path.join(os.path.dirname(schematisation_db_dir), "grid", gridadmin_file.filename)
+                grid_filepath = os.path.join(
+                    local_schematisation.revisions[revision_number].grid_dir, gridadmin_file.filename
+                )
                 get_download_file(gridadmin_download, grid_filepath)
                 current_progress += 1
                 self.pbar_download.setValue(current_progress)
             if gridadmin_download_gpkg is not None:
                 gpkg_filepath = os.path.join(
-                    os.path.dirname(schematisation_db_dir), "grid", gridadmin_file_gpkg.filename
+                    local_schematisation.revisions[revision_number].grid_dir, gridadmin_file_gpkg.filename
                 )
                 get_download_file(gridadmin_download_gpkg, gpkg_filepath)
                 current_progress += 1
