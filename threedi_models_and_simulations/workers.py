@@ -1053,7 +1053,7 @@ class SimulationRunner(QRunnable):
             self.tc.create_simulation_breaches(
                 sim_id,
                 potential_breach=breach["url"],
-                duration_till_max_depth=self.current_simulation.breach.duration_in_units,
+                duration_till_max_depth=self.current_simulation.breach.duration_till_max_depth,
                 initial_width=self.current_simulation.breach.width,
                 offset=self.current_simulation.breach.offset,
                 discharge_coefficient_positive=self.current_simulation.breach.discharge_coefficient_positive,

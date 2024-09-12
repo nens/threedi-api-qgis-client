@@ -123,7 +123,7 @@ class DWF(SimulationElement):
 class Breach(SimulationElement):
     breach_id: str = None
     width: float = None
-    duration_in_units: float = None
+    duration_till_max_depth: float = None
     offset: float = None
     discharge_coefficient_positive: float = None
     discharge_coefficient_negative: float = None

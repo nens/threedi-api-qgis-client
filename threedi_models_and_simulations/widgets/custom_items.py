@@ -1,6 +1,5 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
-from qgis.gui import QgsMapToolExtent
 from qgis.PyQt.QtCore import QSortFilterProxyModel, Qt
 from qgis.PyQt.QtGui import QColor, QFont, QPalette
 from qgis.PyQt.QtWidgets import (
@@ -133,20 +132,3 @@ class FilteredComboBox(QComboBox):
         self.completer.setCompletionColumn(column_idx)
         self.filter_proxy_model.setFilterKeyColumn(column_idx)
         super(FilteredComboBox, self).setModelColumn(column_idx)
-
-
-class ExtentSelector(QgsMapToolExtent):
-
-    def __init__(self, selection_layer, map_canvas, parent_widget):
-        self.map_canvas = map_canvas
-        super().__init__(canvas=self.map_canvas)
-        self.selection_layer = selection_layer
-        self.parent_widget = parent_widget
-        self.parent_widget.hide()
-        self.map_canvas.setMapTool(self)
-
-    def canvasReleaseEvent(self, e):
-        """On canvas release event."""
-        self.clearRubberBand()
-        self.map_canvas.unsetMapTool(self)
-        self.parent_widget.show()

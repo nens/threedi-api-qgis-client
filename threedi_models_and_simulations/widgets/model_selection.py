@@ -6,7 +6,7 @@ from functools import partial
 from math import ceil
 from operator import attrgetter
 
-from qgis.core import QgsProject, QgsVectorLayer
+from qgis.core import QgsMapLayer, QgsProject, QgsVectorLayer
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import (QDate, QDateTime, QItemSelectionModel,
                               QModelIndex, QSortFilterProxyModel, Qt)
@@ -68,9 +68,10 @@ class ModelSelectionDialog(uicls, basecls):
         self.simulation_templates = None
         self.current_model = None
         self.current_model_gridadmin_gpkg = None
-        self.current_model_breach_geojson = None
+        self.current_model_geojson_breaches = None
         self.current_simulation_template = None
-        self.breaches_layer = None
+        self.potential_breaches_layer = None
+        self.flowlines_layer = None
         self.organisation = None
         self.model_is_loaded = False
         self.source_models_model = QStandardItemModel(self)
@@ -244,22 +245,33 @@ class ModelSelectionDialog(uicls, basecls):
 
     def load_breach_layers(self):
         """Loading breach layers into the map canvas."""
+        if self.current_model_geojson_breaches is not None:
+            potential_breaches_layer = QgsVectorLayer(self.current_model_geojson_breaches, "Potential breaches", "ogr")
+            if potential_breaches_layer.isValid() and potential_breaches_layer.featureCount() > 0:
+                self.potential_breaches_layer = potential_breaches_layer
+                set_named_style(self.potential_breaches_layer, "breaches.qml")
+                self.potential_breaches_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
+                QgsProject.instance().addMapLayer(self.potential_breaches_layer, False)
+                QgsProject.instance().layerTreeRoot().insertLayer(0, self.potential_breaches_layer)
         if self.current_model_gridadmin_gpkg is not None:
-            breaches_uri = f"{self.current_model_gridadmin_gpkg}|layername=flowline"
-            breaches_layer = QgsVectorLayer(breaches_uri, "breaches", "ogr")
-            if breaches_layer.isValid():
-                self.breaches_layer = breaches_layer
-                self.breaches_layer.setSubsetString('"line_type" IN (52, 54, 55)')
-                set_named_style(self.breaches_layer, "breaches.qml")
-                QgsProject.instance().addMapLayer(self.breaches_layer, False)
-                QgsProject.instance().layerTreeRoot().insertLayer(0, self.breaches_layer)
+            flowlines_uri = f"{self.current_model_gridadmin_gpkg}|layername=flowline"
+            flowlines_layer = QgsVectorLayer(flowlines_uri, "1D2D flowlines", "ogr")
+            flowlines_layer.setSubsetString('"line_type" IN (52, 54, 55)')
+            if flowlines_layer.isValid() and flowlines_layer.featureCount() > 0:
+                self.flowlines_layer = flowlines_layer
+                self.flowlines_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
+                QgsProject.instance().addMapLayer(self.flowlines_layer, False)
+                QgsProject.instance().layerTreeRoot().insertLayer(0, self.flowlines_layer)
 
     def unload_breach_layer(self):
         """Removing model related vector layers from map canvas."""
         try:
-            if self.breaches_layer is not None:
-                QgsProject.instance().removeMapLayer(self.breaches_layer)
-                self.breaches_layer = None
+            if self.potential_breaches_layer is not None:
+                QgsProject.instance().removeMapLayer(self.potential_breaches_layer)
+                self.potential_breaches_layer = None
+            if self.flowlines_layer is not None:
+                QgsProject.instance().removeMapLayer(self.flowlines_layer)
+                self.flowlines_layer = None
             self.plugin_dock.iface.mapCanvas().refresh()
         except (AttributeError, RuntimeError):
             pass
@@ -284,7 +296,7 @@ class ModelSelectionDialog(uicls, basecls):
                 selected_model_schematisation_name,
                 selected_model_schematisation_revision,
             )
-            self.current_model_breach_geojson = self.get_breach_geojson_path("breaches")
+            self.current_model_geojson_breaches = self.get_breach_geojson_path("breaches")
             self.current_simulation_template = self.get_selected_template()
             self.load_breach_layers()
             self.model_is_loaded = True
