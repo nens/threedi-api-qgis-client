@@ -16,53 +16,24 @@ from qgis.core import NULL, QgsMapLayerProxyModel
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
 from qgis.PyQt.QtGui import QColor, QFont, QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import (
-    QComboBox,
-    QDoubleSpinBox,
-    QFileDialog,
-    QGridLayout,
-    QGroupBox,
-    QLabel,
-    QLineEdit,
-    QRadioButton,
-    QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
-    QTableWidgetItem,
-    QWidget,
-    QWizard,
-    QWizardPage,
-)
+from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
+                                 QGridLayout, QGroupBox, QHBoxLayout, QLabel,
+                                 QLineEdit, QRadioButton, QScrollArea,
+                                 QSizePolicy, QSpacerItem, QTableWidgetItem,
+                                 QWidget, QWizard, QWizardPage)
 from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
-from ..utils import (
-    TEMPDIR,
-    EventTypes,
-    apply_24h_timeseries,
-    convert_timeseries_to_seconds,
-    extract_error_message,
-    get_download_file,
-    handle_csv_header,
-    intervals_are_even,
-    mmh_to_mmtimestep,
-    mmh_to_ms,
-    mmtimestep_to_mmh,
-    ms_to_mmh,
-    parse_timeseries,
-    read_json_data,
-)
-from ..utils_ui import (
-    NumericDelegate,
-    get_filepath,
-    qgis_layers_cbo_get_layer_uri,
-    read_3di_settings,
-    save_3di_settings,
-    scan_widgets_parameters,
-    set_widget_background_color,
-    set_widgets_parameters,
-)
+from ..utils import (TEMPDIR, EventTypes, apply_24h_timeseries,
+                     convert_timeseries_to_seconds, extract_error_message,
+                     get_download_file, handle_csv_header, intervals_are_even,
+                     mmh_to_mmtimestep, mmh_to_ms, mmtimestep_to_mmh,
+                     ms_to_mmh, parse_timeseries, read_json_data)
+from ..utils_ui import (NumericDelegate, get_filepath,
+                        qgis_layers_cbo_get_layer_uri, read_3di_settings,
+                        save_3di_settings, scan_widgets_parameters,
+                        set_widget_background_color, set_widgets_parameters)
 from .custom_items import FilteredComboBox
 from .initial_concentrations import InitialConcentrationsWidget
 from .substance_concentrations import SubstanceConcentrationsWidget
@@ -1519,6 +1490,14 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.dd_simulation.addItems(initial_conditions.simulations_list)
         self.plot_precipitation()
 
+        self.substance_widgets = {}  # map from substance dict to widget
+        self.substances = (
+            parent_page.parent_wizard.substances_page.main_widget.substances
+            if hasattr(parent_page.parent_wizard, "substances_page")
+            else []
+        )
+        self.update_substance_widgets()
+
     def connect_signals(self):
         """Connecting widgets signals."""
         self.cbo_prec_type.currentIndexChanged.connect(self.precipitation_changed)
@@ -1962,7 +1941,54 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             x_values.append(x_in_units)
             y_values.append(y)
         return x_values, y_values
+    
+    class PrecipationSubstanceWidget(QWidget):
+        def __init__(self, name:str, value:float, unit:str, parent):
+            super().__init__(parent)
+            self.setLayout(QHBoxLayout())
+            self.layout().addWidget(QLabel(name, self))
+            self.layout().addWidget(QLineEdit(str(value), self))
+            self.unit_label = QLabel(unit, self)
+            self.layout().addWidget(self.unit_label)
 
+            # TODO: value can only be numeric
+
+        def set_unit_label(self, label:str):
+            self.unit_label.setText(label)
+        
+
+    def update_substance_widgets(self):
+        # TODO: for some types of precipation, substance should be disabled.
+        logger.error("self.substances")
+        logger.error(self.substances)
+        logger.error("self.substance_widgets")
+        logger.error(self.substance_widgets)
+
+        # Check if we have something to remove
+        widgets_to_remove = []
+        for name, substance_widget in self.substance_widgets.items():
+            if len([item for item in self.substances if item["name"] == name]) == 0:
+                # It is in the widgets list, but not in the substances list, remove.
+                self.substance_widget.layout().removeWidget(substance_widget)
+                del substance_widget
+                widgets_to_remove.append(name)
+                
+        for widget_name in widgets_to_remove:
+            del self.substance_widgets[widget_name]
+
+        # Check if we have something to add
+        # TODO: fixed name and unit size for proper alignment
+        for substance in self.substances:
+            substance_name = substance["name"]
+            if substance_name not in self.substance_widgets:
+                wid = PrecipitationWidget.PrecipationSubstanceWidget(substance_name, "", substance.get("units", ""), self.substance_widget)
+                self.substance_widgets[substance_name] = wid  # name is unique
+                self.substance_widget.layout().addWidget(wid)
+            else:
+                # Set the units, these might have been changed
+                self.substance_widgets[substance_name].set_unit_label(substance.get("units", ""))
+
+    
     def plot_precipitation(self):
         """Setting up precipitation plot."""
         self.refresh_duration()
@@ -2923,6 +2949,7 @@ class SimulationWizard(QWizard):
         current_page = self.currentPage()
         if isinstance(current_page, PrecipitationPage):
             self.precipitation_page.main_widget.plot_precipitation()
+            self.precipitation_page.main_widget.update_substance_widgets()
         elif isinstance(current_page, SummaryPage):
             self.set_overview_name()
             self.set_overview_database()
