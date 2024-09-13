@@ -2,7 +2,7 @@
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 from dataclasses import dataclass
 from datetime import datetime
-
+from typing import List
 from threedi_api_client.openapi import (
     CurrentStatus,
     FileBoundaryCondition,
@@ -121,13 +121,19 @@ class DWF(SimulationElement):
 
 @dataclass
 class Breach(SimulationElement):
-    breach_id: str = None
+    breach_id: int = None
     width: float = None
     duration_till_max_depth: float = None
     offset: float = None
     discharge_coefficient_positive: float = None
     discharge_coefficient_negative: float = None
     max_breach_depth: float = None
+
+
+@dataclass
+class Breaches(SimulationElement):
+    potential_breaches: List[Breach] = None
+    flowlines: List[Breach] = None
 
 
 @dataclass
@@ -209,7 +215,7 @@ class NewSimulation:
     laterals: Laterals = None
     substances: Substances = None
     dwf: DWF = None
-    breach: Breach = None
+    breaches: Breach = None
     precipitation: Precipitation = None
     wind: Wind = None
     settings: Settings = None

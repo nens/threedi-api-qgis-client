@@ -98,7 +98,7 @@
       <layout class="QHBoxLayout" name="breach_lout"/>
      </item>
      <item row="0" column="3">
-      <widget class="QPushButton" name="pb_add_breach">
+      <widget class="QPushButton" name="pb_add_breach_from_list">
        <property name="font">
         <font>
          <family>Segoe UI</family>

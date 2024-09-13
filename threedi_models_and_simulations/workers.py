@@ -1045,21 +1045,31 @@ class SimulationRunner(QRunnable):
         """Add breaches to the new simulation."""
         sim_id = self.current_simulation.simulation.id
         threedimodel_id = self.current_simulation.threedimodel_id
-        if self.current_simulation.breach:
-            breach_obj = self.tc.fetch_3di_model_point_potential_breach(
-                threedimodel_id, int(self.current_simulation.breach.breach_id)
-            )
-            breach = breach_obj.to_dict()
-            self.tc.create_simulation_breaches(
-                sim_id,
-                potential_breach=breach["url"],
-                duration_till_max_depth=self.current_simulation.breach.duration_till_max_depth,
-                initial_width=self.current_simulation.breach.width,
-                offset=self.current_simulation.breach.offset,
-                discharge_coefficient_positive=self.current_simulation.breach.discharge_coefficient_positive,
-                discharge_coefficient_negative=self.current_simulation.breach.discharge_coefficient_negative,
-                maximum_breach_depth=self.current_simulation.breach.max_breach_depth,
-            )
+        if self.current_simulation.breaches:
+            for potential_breach in self.current_simulation.breaches.potential_breaches or []:
+                breach_obj = self.tc.fetch_3di_model_point_potential_breach(threedimodel_id, potential_breach.breach_id)
+                breach = breach_obj.to_dict()
+                self.tc.create_simulation_breaches(
+                    sim_id,
+                    potential_breach=breach["url"],
+                    duration_till_max_depth=potential_breach.duration_till_max_depth,
+                    initial_width=potential_breach.width,
+                    offset=potential_breach.offset,
+                    discharge_coefficient_positive=potential_breach.discharge_coefficient_positive,
+                    discharge_coefficient_negative=potential_breach.discharge_coefficient_negative,
+                    maximum_breach_depth=potential_breach.max_breach_depth,
+                )
+            for flowline in self.current_simulation.breaches.flowlines or []:
+                self.tc.create_simulation_breaches(
+                    sim_id,
+                    line_id=flowline.breach_id,
+                    duration_till_max_depth=flowline.duration_till_max_depth,
+                    initial_width=flowline.width,
+                    offset=flowline.offset,
+                    discharge_coefficient_positive=flowline.discharge_coefficient_positive,
+                    discharge_coefficient_negative=flowline.discharge_coefficient_negative,
+                    maximum_breach_depth=flowline.max_breach_depth,
+                )
 
     def include_precipitation(self):
         """Add precipitation to the new simulation."""

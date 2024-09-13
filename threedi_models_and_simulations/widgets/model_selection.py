@@ -263,7 +263,7 @@ class ModelSelectionDialog(uicls, basecls):
                 QgsProject.instance().addMapLayer(self.flowlines_layer, False)
                 QgsProject.instance().layerTreeRoot().insertLayer(0, self.flowlines_layer)
 
-    def unload_breach_layer(self):
+    def unload_breach_layers(self):
         """Removing model related vector layers from map canvas."""
         try:
             if self.potential_breaches_layer is not None:
@@ -281,7 +281,7 @@ class ModelSelectionDialog(uicls, basecls):
         index = self.models_tv.currentIndex()
         if index.isValid():
             self.organisation = self.organisations_box.currentData()
-            self.unload_breach_layer()
+            self.unload_breach_layers()
             source_index = self.proxy_models_model.mapToSource(index)
             current_row = source_index.row()
             name_item = self.source_models_model.item(current_row, NAME_COLUMN_IDX)
