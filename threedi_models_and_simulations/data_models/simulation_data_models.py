@@ -216,7 +216,7 @@ class NewSimulation:
     laterals: Laterals = None
     substances: Substances = None
     dwf: DWF = None
-    breaches: Breach = None
+    breaches: Breaches = None
     precipitation: Precipitation = None
     wind: Wind = None
     settings: Settings = None

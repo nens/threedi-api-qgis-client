@@ -3326,20 +3326,20 @@ class SimulationWizard(QWizard):
         if init_conditions.include_breaches:
             breaches_widget = self.breaches_page.main_widget
             if events.breach:
-                breach = events.breach[0]
+                # TODO: test breach parameters from template
                 tc = ThreediCalls(self.plugin_dock.threedi_api)
                 threedimodel_id_str = str(self.model_selection_dlg.current_model.id)
-                potential_breach_url = breach.potential_breach.rstrip("/")
-                potential_breach_id = int(potential_breach_url.split("/")[-1])
-                potential_breach = tc.fetch_3di_model_potential_breach(threedimodel_id_str, potential_breach_id)
-                breaches_widget.dd_breach_id.setCurrentText(str(potential_breach.connected_pnt_id))
-                breaches_widget.sb_width.setValue(breach.initial_width)
-                breaches_widget.sb_duration.setValue(breach.duration_till_max_depth)
-                breaches_widget.dd_units.setCurrentText("s")
-                breaches_widget.sp_start_after.setValue(breach.offset)
-                breaches_widget.sb_discharge_coefficient_positive.setValue(breach.discharge_coefficient_positive or 1)
-                breaches_widget.sb_discharge_coefficient_negative.setValue(breach.discharge_coefficient_negative or 1)
-                breaches_widget.sb_max_breach_depth.setValue(breach.maximum_breach_depth)
+                content_pks = set()
+                for breach in events.breach:
+                    potential_breach_url = breach.potential_breach.rstrip("/")
+                    potential_breach_id = int(potential_breach_url.split("/")[-1])
+                    potential_breach = tc.fetch_3di_model_potential_breach(threedimodel_id_str, potential_breach_id)
+                    content_pks.add(str(potential_breach.connected_pnt_id))
+                content_pks_str = ",".join(content_pks)
+                exp = f'"content_pk" in ({content_pks_str})'
+                self.model_selection_dlg.potential_breaches_layer.selectByExpression(exp)
+                for breach_feat in self.model_selection_dlg.potential_breaches_layer.selectedFeatures():
+                    breaches_widget.on_potential_breach_feature_identified(breach_feat)
         if init_conditions.include_precipitations:
             precipitation_widget = self.precipitation_page.main_widget
             if events.timeseriesrain:
