@@ -8,17 +8,14 @@ from operator import attrgetter
 
 from qgis.core import QgsMapLayer, QgsProject, QgsVectorLayer
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import (QDate, QDateTime, QItemSelectionModel,
-                              QModelIndex, QSortFilterProxyModel, Qt)
+from qgis.PyQt.QtCore import QDateTime, QItemSelectionModel, QModelIndex, QSortFilterProxyModel, Qt
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import LocalSchematisation, list_local_schematisations
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import (CACHE_PATH, extract_error_message, file_cached,
-                     get_download_file)
-from ..utils_ui import (read_3di_settings, save_3di_settings, set_icon,
-                        set_named_style)
+from ..utils import CACHE_PATH, extract_error_message, file_cached, get_download_file
+from ..utils_ui import read_3di_settings, save_3di_settings, set_icon, set_named_style
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "model_selection.ui"))
@@ -30,25 +27,27 @@ TABLE_LIMIT = 10
 COLUMN_ID = 0
 NAME_COLUMN_IDX = 1
 SCHEMATISATION_COLUMN_IDX = 2
-REVISION_COLUMN_IDX = 3
+SCHEMATISATION_REVISION_COLUMN_IDX = 3
 LAST_UPDATED_COLUMN_IDX = 4
 UPDATED_BY_COLUMN_IDX = 5
+
 
 class SortFilterProxyModel(QSortFilterProxyModel):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-    def lessThan(self, left:QModelIndex, right: QModelIndex):
+    def lessThan(self, left: QModelIndex, right: QModelIndex):
         leftData = self.sourceModel().data(left)
         rightData = self.sourceModel().data(right)
         if left.column() in [LAST_UPDATED_COLUMN_IDX]:
             left_datetime = QDateTime.fromString(leftData, "dd-MMMM-yyyy")
             right_datetime = QDateTime.fromString(rightData, "dd-MMMM-yyyy")
             return left_datetime < right_datetime
-        elif left.column() in [COLUMN_ID, REVISION_COLUMN_IDX]:
+        elif left.column() in [COLUMN_ID, SCHEMATISATION_REVISION_COLUMN_IDX]:
             return int(leftData) < int(rightData)
         else:
             return leftData < rightData
+
 
 class ModelSelectionDialog(uicls, basecls):
     """Dialog for model selection."""
@@ -61,10 +60,8 @@ class ModelSelectionDialog(uicls, basecls):
         self.current_user = self.plugin_dock.current_user
         self.threedi_api = self.plugin_dock.threedi_api
         self.organisations = self.plugin_dock.organisations
-
         self.working_dir = self.plugin_dock.plugin_settings.working_dir
         self.local_schematisations = list_local_schematisations(self.working_dir)
-        self.threedi_models = None
         self.simulation_templates = None
         self.current_model = None
         self.current_model_gridadmin_gpkg = None
@@ -286,10 +283,12 @@ class ModelSelectionDialog(uicls, basecls):
             current_row = source_index.row()
             name_item = self.source_models_model.item(current_row, NAME_COLUMN_IDX)
             self.current_model = name_item.data(Qt.UserRole)
-            schematisation_name_item = self.models_model.item(current_row, self.SCHEMATISATION_COLUMN_IDX)
+            schematisation_name_item = self.source_models_model.item(current_row, SCHEMATISATION_COLUMN_IDX)
             selected_model_schematisation_id = schematisation_name_item.data(Qt.UserRole)
             selected_model_schematisation_name = schematisation_name_item.text()
-            schematisation_revision_item = self.models_model.item(current_row, self.SCHEMATISATION_REVISION_COLUMN_IDX)
+            schematisation_revision_item = self.source_models_model.item(
+                current_row, SCHEMATISATION_REVISION_COLUMN_IDX
+            )
             selected_model_schematisation_revision = schematisation_revision_item.data(Qt.DisplayRole)
             self.current_model_gridadmin_gpkg = self.get_gridadmin_gpkg_path(
                 selected_model_schematisation_id,
