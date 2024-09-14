@@ -12,8 +12,8 @@ from typing import List
 
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
-from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.core import QgsMapLayerProxyModel
+from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
 from qgis.PyQt.QtGui import QColor, QFont, QStandardItem, QStandardItemModel
@@ -1316,7 +1316,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.parent_page = parent_page
         self.map_canvas = self.parent_page.parent_wizard.plugin_dock.iface.mapCanvas()
         set_widget_background_color(self)
-        self.values = dict()
+        self.added_breaches = defaultdict(dict)
         self.breaches_model = QStandardItemModel()
         self.breaches_tv.setModel(self.breaches_model)
         self.potential_breaches_layer = parent_page.parent_wizard.model_selection_dlg.potential_breaches_layer
@@ -1335,7 +1335,6 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         else:
             self.simulation_widget.hide()
         self.dd_simulation.addItems(initial_conditions.simulations_list)
-        self.selected_breaches = defaultdict(dict)
         self.setup_breaches()
 
     @property
@@ -1409,9 +1408,9 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         """Action on featureIdentified signal for potential breaches layer."""
         self.map_canvas.unsetMapTool(self.potential_breach_selection_tool)
         potential_breach_fid = potential_breach_feat.id()
-        self.potential_breaches_layer.select(potential_breach_fid)
+        self.potential_breaches_layer.selectByIds([potential_breach_fid])
         breach_key = (BreachSourceType.POTENTIAL_BREACHES, potential_breach_fid)
-        if breach_key in self.selected_breaches[self.current_simulation_number]:
+        if breach_key in self.added_breaches[self.current_simulation_number]:
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
                 "Potential breach already selected!", self
             )
@@ -1422,9 +1421,9 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         """Action on featureIdentified signal for flowlines layer."""
         self.map_canvas.unsetMapTool(self.flowline_selection_tool)
         flowline_fid = flowline_feat.id()
-        self.flowlines_layer.select(flowline_fid)
+        self.flowlines_layer.selectByIds([flowline_fid])
         breach_key = (BreachSourceType.FLOWLINES, flowline_fid)
-        if breach_key in self.selected_breaches[self.current_simulation_number]:
+        if breach_key in self.added_breaches[self.current_simulation_number]:
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn("1D2D flowline already selected!", self)
             return
         self.add_breach(BreachSourceType.FLOWLINES, flowline_feat)
@@ -1433,15 +1432,13 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         """Setup breach widgets out of the feature."""
         segoe_ui_font = QFont("Segoe UI", 8)
         maxsize = 2147483647
+        breach_fid = breach_feature.id()
+        breach_key = (breach_source_type, breach_fid)
+
         id_line_edit = QLineEdit()
         id_line_edit.setFont(segoe_ui_font)
         id_line_edit.setStyleSheet("QLineEdit {background-color: white;}")
         id_line_edit.setReadOnly(True)
-        breach_fid = breach_feature.id()
-        breach_key = (
-            breach_source_type,
-            breach_fid,
-        )
         id_line_edit.breach_key = breach_key
         id_line_edit.simulation_number = self.current_simulation_number
 
@@ -1509,6 +1506,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         duration_units_combo.setCurrentText("mins")
         discharge_coefficient_positive_spinbox.setValue(1.0)
         discharge_coefficient_negative_spinbox.setValue(1.0)
+
         if breach_source_type == BreachSourceType.POTENTIAL_BREACHES:
             id_line_edit.setText(str(breach_feature["content_pk"]))
             code_line_edit.setText(breach_feature["code"])
@@ -1518,7 +1516,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             id_line_edit.setText(str(breach_feature["id"]))
             max_breach_depth_spinbox.setValue(2.0)
 
-        breach_widgets = [
+        breach_widgets_list = [
             id_line_edit,
             code_line_edit,
             display_name_line_edit,
@@ -1531,7 +1529,8 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             discharge_coefficient_positive_spinbox,
             discharge_coefficient_negative_spinbox,
         ]
-        breach_widgets = dict(zip(self.breach_parameters.keys(), breach_widgets))
+
+        breach_widgets = dict(zip(self.breach_parameters.keys(), breach_widgets_list))
         return breach_widgets
 
     def add_breach(self, breach_source_type, breach_feature):
@@ -1547,7 +1546,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         for i in range(len(breach_widgets)):
             self.breaches_tv.resizeColumnToContents(i)
         breach_key = (breach_source_type, breach_fid)
-        self.selected_breaches[self.current_simulation_number][breach_key] = breach_widgets
+        self.added_breaches[self.current_simulation_number][breach_key] = breach_widgets
 
     def remove_breach(self):
         """Remove breach widgets from the breaches list."""
@@ -1563,7 +1562,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         breach_id_widget = self.breaches_tv.indexWidget(breach_id_index)
         breach_key = breach_id_widget.breach_key
         self.breaches_model.removeRow(row)
-        del self.selected_breaches[self.current_simulation_number][breach_key]
+        del self.added_breaches[self.current_simulation_number][breach_key]
 
     def simulation_changed(self):
         """Handle simulation change."""
@@ -1578,17 +1577,25 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
 
     def get_breaches_data(self):
         """Getting all needed data for adding breaches to the simulation."""
-        # TODO: Needs refactoring
-        return
-        breach_data = (
-            breach_id,
-            width,
-            duration_till_max_depth,
-            offset,
-            discharge_coefficient_positive,
-            discharge_coefficient_negative,
-            max_breach_depth,
-        )
+        potential_breaches, flowlines = [], []
+        simulation_breaches = self.added_breaches[self.current_simulation_number]
+        for (breach_source_type, breach_fid), breach_widgets in simulation_breaches.items():
+            duration_units = breach_widgets["duration_units"].currentText()
+            offset_units = breach_widgets["offset_units"].currentText()
+            breach_obj = dm.Breach(
+                breach_id=int(breach_widgets["id"].text()),
+                width=breach_widgets["initial_width"].value(),
+                duration_till_max_depth=breach_widgets["duration"].value() * self.SECONDS_MULTIPLIERS[duration_units],
+                offset=breach_widgets["offset"].value() * self.SECONDS_MULTIPLIERS[offset_units],
+                discharge_coefficient_positive=breach_widgets["discharge_coefficient_positive"].value(),
+                discharge_coefficient_negative=breach_widgets["discharge_coefficient_negative"].value(),
+                max_breach_depth=breach_widgets["max_breach_depth"].value(),
+            )
+            if breach_source_type == BreachSourceType.POTENTIAL_BREACHES:
+                potential_breaches.append(breach_obj)
+            else:
+                flowlines.append(breach_obj)
+        breach_data = (potential_breaches, flowlines)
         return breach_data
 
 
