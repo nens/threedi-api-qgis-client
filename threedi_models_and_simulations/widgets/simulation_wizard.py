@@ -1583,7 +1583,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             duration_units = breach_widgets["duration_units"].currentText()
             offset_units = breach_widgets["offset_units"].currentText()
             breach_obj = dm.Breach(
-                breach_id=int(breach_widgets["id"].text()),
+                breach_id=int(breach_widgets["breach_id"].text()),
                 width=breach_widgets["initial_width"].value(),
                 duration_till_max_depth=breach_widgets["duration"].value() * self.SECONDS_MULTIPLIERS[duration_units],
                 offset=breach_widgets["offset"].value() * self.SECONDS_MULTIPLIERS[offset_units],
@@ -3699,6 +3699,8 @@ class SimulationWizard(QWizard):
                 template_name = self.summary_page.main_widget.template_name.text()
                 new_simulation.template_name = template_name
             self.new_simulations.append(new_simulation)
+        self.model_selection_dlg.unload_breach_layers()
+        self.plugin_dock.simulation_overview_dlg.start_simulations(self.new_simulations)
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""
