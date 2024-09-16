@@ -55,9 +55,9 @@ class SubstanceConcentrationsWidget(QWidget):
         """Help texts for substance concentrations."""
         font = QFont("Segoe UI", 10, QFont.Normal)
         text_layout = QHBoxLayout()
-        text1 = QLabel("Specify the same constant substance concentrations for all laterals")
+        text1 = QLabel("Specify the same constant substance concentrations for all steps")
         text2 = QLabel("- or -")
-        text3 = QLabel("Upload CSV containing a specific time series for each lateral (overules the constant values)")
+        text3 = QLabel("Upload CSV containing a specific time series for each step (overules the constant values)")
         text1.setFont(font)
         text2.setFont(font)
         text3.setFont(font)
