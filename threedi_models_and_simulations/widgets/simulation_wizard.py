@@ -64,8 +64,8 @@ from ..utils_ui import (
     set_widgets_parameters,
 )
 from .custom_items import FilteredComboBox
-from .substance_concentrations import SubstanceConcentrationsWidget
 from .initial_concentrations import InitialConcentrationsWidget
+from .substance_concentrations import SubstanceConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_name.ui"))

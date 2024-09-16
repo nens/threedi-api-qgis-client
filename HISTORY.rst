@@ -1,7 +1,22 @@
 History
 =======
 
-3.11.1 (unreleased)
+3.13.1 (unreleased)
+-------------------
+
+- Nothing changed yet.
+
+
+3.13.0 (2024-09-12)
+-------------------
+
+- Fixes/enhancements: #276, #449, #551.
+- Fix error when trying to start a simulation with laterals (#589).
+- Updated pyqtgraph to version 0.13.7
+- Model selection: fixed bug (numeric and date columns were sorted lexicographically) (#587)
+
+
+3.12.0 (2024-07-17)
 -------------------
 
 - Add CSV upload support for 1D initial water level (#575).

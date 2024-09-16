@@ -1,7 +1,7 @@
+import os
 from functools import partial
 from operator import attrgetter
 from typing import Dict, List
-import os
 
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapLayerComboBox
