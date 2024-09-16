@@ -1009,9 +1009,17 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
     def handle_substance_constant_error(self, laterals_type):
         """Handle error if laterals are not uploaded yet."""
         error_message = None
-        laterals_timeseries = (
-            self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
-        )
+        laterals_timeseries = {}
+        if laterals_type == self.TYPE_1D:
+            if self.cb_use_1d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_1d_timeseries_template)
+            if self.cb_upload_1d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_1d_timeseries)
+        else:
+            if self.cb_use_2d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_2d_timeseries_template)
+            if self.cb_upload_2d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_2d_timeseries)
         if not laterals_timeseries:
             error_message = "No laterals uploaded yet!"
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
@@ -1024,9 +1032,17 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         Return None if they match or error message if not.
         """
         error_message = handle_csv_header(header)
-        laterals_timeseries = (
-            self.laterals_1d_timeseries if laterals_type == self.TYPE_1D else self.laterals_2d_timeseries
-        )
+        laterals_timeseries = {}
+        if laterals_type == self.TYPE_1D:
+            if self.cb_use_1d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_1d_timeseries_template)
+            if self.cb_upload_1d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_1d_timeseries)
+        else:
+            if self.cb_use_2d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_2d_timeseries_template)
+            if self.cb_upload_2d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_2d_timeseries)
         if not laterals_timeseries:
             error_message = "No laterals uploaded yet!"
         if not substance_list:
@@ -1102,14 +1118,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         """Recalculate laterals timeseries (timesteps in seconds)."""
         laterals_timeseries = {}
         if laterals_type == self.TYPE_1D:
-            if self.cb_use_1d_laterals:
+            if self.cb_use_1d_laterals.isChecked():
                 laterals_timeseries.update(self.laterals_1d_timeseries_template)
-            if self.cb_upload_1d_laterals:
+            if self.cb_upload_1d_laterals.isChecked():
                 laterals_timeseries.update(self.laterals_1d_timeseries)
         else:
-            if self.cb_use_2d_laterals:
+            if self.cb_use_2d_laterals.isChecked():
                 laterals_timeseries.update(self.laterals_2d_timeseries_template)
-            if self.cb_upload_2d_laterals:
+            if self.cb_upload_2d_laterals.isChecked():
                 laterals_timeseries.update(self.laterals_2d_timeseries)
         if timesteps_in_seconds is False:
             return laterals_timeseries
@@ -1181,14 +1197,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         file_laterals_1d = {}
         file_laterals_2d = {}
         if self.groupbox_1d_laterals.isChecked():
-            if self.cb_use_1d_laterals:
+            if self.cb_use_1d_laterals.isChecked():
                 constant_laterals.extend(self.laterals_1d)
             file_laterals_1d.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
             if self.substance_concentrations_1d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
                 self.update_laterals_with_substances(file_laterals_1d, substances)
         if self.groupbox_2d_laterals.isChecked():
-            if self.cb_use_2d_laterals:
+            if self.cb_use_2d_laterals.isChecked():
                 constant_laterals.extend(self.laterals_2d)
             file_laterals_2d.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
             if self.substance_concentrations_2d:
