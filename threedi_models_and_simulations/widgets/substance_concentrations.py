@@ -37,7 +37,7 @@ class SubstanceConcentrationsWidget(QWidget):
         self.substance_constants_2d = []
         self.substance_concentrations_1d = {}
         self.substance_concentrations_2d = {}
-        self.groupbox = QGroupBox("Substance concentrations", self)
+        self.groupbox = QWidget()
         self.setup_ui()
 
     def setup_ui(self):
