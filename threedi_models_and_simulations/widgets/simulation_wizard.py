@@ -3079,8 +3079,6 @@ class SimulationWizard(QWizard):
             if self.init_conditions.include_precipitations:
                 self.summary_page.main_widget.plot_overview_precipitation()
                 self.set_overview_precipitation()
-            if self.init_conditions.include_breaches:
-                self.set_overview_breaches()
         elif isinstance(current_page, LateralsPage):
             laterals_widget = self.laterals_page.main_widget
             laterals_widget.il_1d_upload.setText(laterals_widget.last_upload_1d_filepath)
@@ -3119,15 +3117,6 @@ class SimulationWizard(QWizard):
             else:
                 total_precipitation_text = "N/A"
             self.summary_page.main_widget.sim_prec_total.setText(total_precipitation_text)
-
-    def set_overview_breaches(self):
-        """Setting breaches information in the overview page."""
-        if self.breaches_page.main_widget.values.get(self.first_simulation):
-            self.summary_page.main_widget.breach_widget.show()
-            breach_id = self.breaches_page.main_widget.values.get(self.first_simulation).get("breach_id")
-            duration_of_breach = self.breaches_page.main_widget.values.get(self.first_simulation).get("duration")
-            self.summary_page.main_widget.breach_id.setText(breach_id)
-            self.summary_page.main_widget.duration_breach.setText(str(duration_of_breach))
 
     def load_template_parameters(self, simulation, settings_overview, events, lizard_post_processing_overview):
         """Loading simulation parameters from the simulation template data."""
