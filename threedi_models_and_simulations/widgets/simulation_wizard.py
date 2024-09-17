@@ -15,7 +15,8 @@ from dateutil.relativedelta import relativedelta
 from qgis.core import NULL, QgsMapLayerProxyModel
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
-from qgis.PyQt.QtGui import QColor, QFont, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtGui import (QColor, QDoubleValidator, QFont, QStandardItem,
+                             QStandardItemModel)
 from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
                                  QGridLayout, QGroupBox, QHBoxLayout, QLabel,
                                  QLineEdit, QRadioButton, QScrollArea,
@@ -1690,6 +1691,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.widget_radar.hide()
         self.refresh_current_units()
         self.plot_precipitation()
+        self.update_substance_widgets()
 
     def sync_units(self, idx):
         """Syncing units widgets."""
@@ -1946,23 +1948,33 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         def __init__(self, name:str, value:float, unit:str, parent):
             super().__init__(parent)
             self.setLayout(QHBoxLayout())
-            self.layout().addWidget(QLabel(name, self))
-            self.layout().addWidget(QLineEdit(str(value), self))
-            self.unit_label = QLabel(unit, self)
-            self.layout().addWidget(self.unit_label)
+            name_label = QLabel(name, self)
+            name_label.setFixedWidth(200)
+            self.layout().addWidget(name_label)
+            line_edit = QLineEdit(str(value), self)
 
-            # TODO: value can only be numeric
+            # Value can only be numeric
+            line_edit.setValidator(QDoubleValidator(0, 1000000, 4, line_edit))
+            self.layout().addWidget(line_edit)
+            self.unit_label = QLabel(unit, self)
+            self.unit_label.setFixedWidth(30)
+            self.layout().addWidget(self.unit_label)
 
         def set_unit_label(self, label:str):
             self.unit_label.setText(label)
-        
 
     def update_substance_widgets(self):
-        # TODO: for some types of precipation, substance should be disabled.
-        logger.error("self.substances")
-        logger.error(self.substances)
-        logger.error("self.substance_widgets")
-        logger.error(self.substance_widgets)
+
+        # For NetCDF rain, we do not apply substance concentrations        
+        precipitation_type_str = self.cbo_prec_type.currentText()
+        if precipitation_type_str == "None" or (EventTypes(precipitation_type_str) == EventTypes.FROM_NETCDF):
+            for substance_widget in self.substance_widgets.values():
+                self.substance_widget.layout().removeWidget(substance_widget)
+                del substance_widget
+            self.substance_widgets.clear()
+            self.substance_widget.hide()
+        else:
+            self.substance_widget.show()
 
         # Check if we have something to remove
         widgets_to_remove = []
@@ -1977,7 +1989,6 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             del self.substance_widgets[widget_name]
 
         # Check if we have something to add
-        # TODO: fixed name and unit size for proper alignment
         for substance in self.substances:
             substance_name = substance["name"]
             if substance_name not in self.substance_widgets:
@@ -3592,4 +3603,5 @@ class SimulationWizard(QWizard):
     def cancel_wizard(self):
         """Handling canceling wizard action."""
         self.settings.setValue("threedi/wizard_size", self.size())
+        self.reject()
         self.reject()
