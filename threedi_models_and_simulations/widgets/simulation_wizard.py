@@ -1363,8 +1363,11 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
     def setup_breaches(self):
         """Setup breaches data with corresponding vector layer."""
         if self.potential_breaches_layer is not None:
-            breach_ids_map = {str(f["content_pk"]): f.id() for f in self.potential_breaches_layer.getFeatures()}
-            for breach_id, breach_fid in sorted(breach_ids_map.items(), key=lambda i: int(i[0])):
+            breach_ids_map = {
+                f'{f["content_pk"]} | {f["code"]} | {f["display_name"]}': f.id()
+                for f in self.potential_breaches_layer.getFeatures()
+            }
+            for breach_id, breach_fid in sorted(breach_ids_map.items(), key=lambda i: i[1]):
                 self.dd_breach_id.addItem(breach_id, breach_fid)
         self.breaches_model.setHorizontalHeaderLabels(self.breach_parameters.values())
 
@@ -1417,6 +1420,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             )
             return
         self.add_breach(BreachSourceType.POTENTIAL_BREACHES, potential_breach_feat)
+        self.potential_breaches_layer.removeSelection()
 
     def on_flowline_feature_identified(self, flowline_feat):
         """Action on featureIdentified signal for flowlines layer."""
@@ -3013,6 +3017,7 @@ class SimulationWizard(QWizard):
             self.dwf_page = DWFPage(self)
             self.addPage(self.dwf_page)
         if init_conditions.include_breaches:
+            self.model_selection_dlg.load_breach_layers()
             self.breaches_page = BreachesPage(self, initial_conditions=init_conditions)
             self.addPage(self.breaches_page)
         if init_conditions.include_precipitations:

@@ -66,7 +66,72 @@
    <set>Qt::ImhDigitsOnly</set>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" rowspan="5">
+   <item row="7" column="2" colspan="2">
+    <spacer name="horizontalSpacer_4">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="5" column="2">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QPushButton" name="pb_remove_breach">
+       <property name="font">
+        <font>
+         <family>Segoe UI</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Remove selected breach</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item row="3" column="2">
+    <widget class="QTreeView" name="breaches_tv"/>
+   </item>
+   <item row="0" column="2">
+    <widget class="QLabel" name="label_9">
+     <property name="font">
+      <font>
+       <family>Segoe UI</family>
+       <pointsize>14</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+       <underline>false</underline>
+      </font>
+     </property>
+     <property name="text">
+      <string>Breaches</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" rowspan="8">
     <widget class="QWidget" name="wizard_steps_widget" native="true">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
@@ -94,11 +159,8 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
-     <item row="0" column="1" colspan="2">
-      <layout class="QHBoxLayout" name="breach_lout"/>
-     </item>
-     <item row="0" column="3">
-      <widget class="QPushButton" name="pb_add_breach_from_list">
+     <item row="2" column="1" colspan="2">
+      <widget class="QPushButton" name="pb_select_flowline">
        <property name="font">
         <font>
          <family>Segoe UI</family>
@@ -106,12 +168,12 @@
         </font>
        </property>
        <property name="text">
-        <string>Add</string>
+        <string>Choose any 1D2D flowline</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QPushButton" name="pb_remove_breach">
+     <item row="1" column="1" colspan="2">
+      <widget class="QPushButton" name="pb_select_potential_breach">
        <property name="font">
         <font>
          <family>Segoe UI</family>
@@ -119,7 +181,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Remove selected breach</string>
+        <string>Choose potential breach</string>
        </property>
       </widget>
      </item>
@@ -154,8 +216,8 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="1" colspan="2">
-      <widget class="QPushButton" name="pb_select_potential_breach">
+     <item row="0" column="3">
+      <widget class="QPushButton" name="pb_add_breach_from_list">
        <property name="font">
         <font>
          <family>Segoe UI</family>
@@ -163,20 +225,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Choose potential breach</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1" colspan="2">
-      <widget class="QPushButton" name="pb_select_flowline">
-       <property name="font">
-        <font>
-         <family>Segoe UI</family>
-         <pointsize>12</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>Choose any 1D2D flowline</string>
+        <string>Add</string>
        </property>
       </widget>
      </item>
@@ -193,38 +242,12 @@
        </property>
       </widget>
      </item>
+     <item row="0" column="1" colspan="2">
+      <layout class="QHBoxLayout" name="breach_lout"/>
+     </item>
     </layout>
    </item>
-   <item row="4" column="2" colspan="2">
-    <spacer name="horizontalSpacer_4">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="0" column="2">
-    <widget class="QLabel" name="label_9">
-     <property name="font">
-      <font>
-       <family>Segoe UI</family>
-       <pointsize>14</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-       <underline>false</underline>
-      </font>
-     </property>
-     <property name="text">
-      <string>Breaches</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1" rowspan="5">
+   <item row="0" column="1" rowspan="8">
     <widget class="Line" name="line">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
@@ -319,9 +342,6 @@
       </item>
      </layout>
     </widget>
-   </item>
-   <item row="3" column="2">
-    <widget class="QTreeView" name="breaches_tv"/>
    </item>
   </layout>
  </widget>

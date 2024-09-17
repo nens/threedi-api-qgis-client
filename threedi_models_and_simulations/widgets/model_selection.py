@@ -246,16 +246,17 @@ class ModelSelectionDialog(uicls, basecls):
             potential_breaches_layer = QgsVectorLayer(self.current_model_geojson_breaches, "Potential breaches", "ogr")
             if potential_breaches_layer.isValid() and potential_breaches_layer.featureCount() > 0:
                 self.potential_breaches_layer = potential_breaches_layer
-                set_named_style(self.potential_breaches_layer, "breaches.qml")
+                set_named_style(self.potential_breaches_layer, "Potential breach.qml")
                 self.potential_breaches_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
                 QgsProject.instance().addMapLayer(self.potential_breaches_layer, False)
                 QgsProject.instance().layerTreeRoot().insertLayer(0, self.potential_breaches_layer)
         if self.current_model_gridadmin_gpkg is not None:
             flowlines_uri = f"{self.current_model_gridadmin_gpkg}|layername=flowline"
             flowlines_layer = QgsVectorLayer(flowlines_uri, "1D2D flowlines", "ogr")
-            flowlines_layer.setSubsetString('"line_type" IN (52, 54, 55)')
+            flowlines_layer.setSubsetString('"line_type" IN (51, 52, 53, 54)')
             if flowlines_layer.isValid() and flowlines_layer.featureCount() > 0:
                 self.flowlines_layer = flowlines_layer
+                set_named_style(self.flowlines_layer, "1D2D flowline.qml")
                 self.flowlines_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
                 QgsProject.instance().addMapLayer(self.flowlines_layer, False)
                 QgsProject.instance().layerTreeRoot().insertLayer(0, self.flowlines_layer)
@@ -297,7 +298,6 @@ class ModelSelectionDialog(uicls, basecls):
             )
             self.current_model_geojson_breaches = self.get_breach_geojson_path("breaches")
             self.current_simulation_template = self.get_selected_template()
-            self.load_breach_layers()
             self.model_is_loaded = True
         self.close()
 
