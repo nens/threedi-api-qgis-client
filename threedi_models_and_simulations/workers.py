@@ -1057,6 +1057,7 @@ class SimulationRunner(QRunnable):
                     offset=potential_breach.offset,
                     discharge_coefficient_positive=potential_breach.discharge_coefficient_positive,
                     discharge_coefficient_negative=potential_breach.discharge_coefficient_negative,
+                    levee_material=potential_breach.levee_material,
                     maximum_breach_depth=potential_breach.max_breach_depth,
                 )
             for flowline in self.current_simulation.breaches.flowlines or []:
@@ -1068,6 +1069,7 @@ class SimulationRunner(QRunnable):
                     offset=flowline.offset,
                     discharge_coefficient_positive=flowline.discharge_coefficient_positive,
                     discharge_coefficient_negative=flowline.discharge_coefficient_negative,
+                    levee_material=flowline.levee_material,
                     maximum_breach_depth=flowline.max_breach_depth,
                 )
 

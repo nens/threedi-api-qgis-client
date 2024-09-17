@@ -1353,6 +1353,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             "initial_width": "Initial width",
             "duration": "Duration till max depth",
             "duration_units": "[units]",
+            "levee_material": "Levee material",
             "max_breach_depth": "Max breach depth [m]",
             "discharge_coefficient_positive": "Discharge coefficient positive",
             "discharge_coefficient_negative": "Discharge coefficient negative",
@@ -1479,6 +1480,10 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         duration_units_combo.setFont(segoe_ui_font)
         duration_units_combo.addItems(self.SECONDS_MULTIPLIERS.keys())
 
+        levee_material_combo = QComboBox()
+        levee_material_combo.setFont(segoe_ui_font)
+        levee_material_combo.addItems(["sand", "clay"])
+
         max_breach_depth_spinbox = QDoubleSpinBox()
         max_breach_depth_spinbox.setFont(segoe_ui_font)
         max_breach_depth_spinbox.setStyleSheet("QDoubleSpinBox {background-color: white;}")
@@ -1511,6 +1516,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             id_line_edit.setText(str(breach_feature["content_pk"]))
             code_line_edit.setText(breach_feature["code"])
             display_name_line_edit.setText(breach_feature["display_name"])
+            levee_material_combo.setCurrentIndex(breach_feature["levmat"] - 1)
             max_breach_depth_spinbox.setValue(breach_feature["levbr"])
         else:
             id_line_edit.setText(str(breach_feature["id"]))
@@ -1525,6 +1531,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
             initial_width_spinbox,
             duration_spinbox,
             duration_units_combo,
+            levee_material_combo,
             max_breach_depth_spinbox,
             discharge_coefficient_positive_spinbox,
             discharge_coefficient_negative_spinbox,
@@ -1589,6 +1596,7 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
                 offset=breach_widgets["offset"].value() * self.SECONDS_MULTIPLIERS[offset_units],
                 discharge_coefficient_positive=breach_widgets["discharge_coefficient_positive"].value(),
                 discharge_coefficient_negative=breach_widgets["discharge_coefficient_negative"].value(),
+                levee_material=breach_widgets["levee_material"].currentText(),
                 max_breach_depth=breach_widgets["max_breach_depth"].value(),
             )
             if breach_source_type == BreachSourceType.POTENTIAL_BREACHES:
@@ -3315,7 +3323,6 @@ class SimulationWizard(QWizard):
         if init_conditions.include_breaches:
             breaches_widget = self.breaches_page.main_widget
             if events.breach:
-                # TODO: test breach parameters from template
                 tc = ThreediCalls(self.plugin_dock.threedi_api)
                 threedimodel_id_str = str(self.model_selection_dlg.current_model.id)
                 content_pks = set()
@@ -3681,9 +3688,9 @@ class SimulationWizard(QWizard):
                 self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                 breach_data = self.breaches_page.main_widget.get_breaches_data()
                 if simulation_difference == "breaches" or i == 1:
-                    new_simulation.breach = dm.Breaches(*breach_data)
+                    new_simulation.breaches = dm.Breaches(*breach_data)
                 else:
-                    new_simulation.breach = dm.Breaches()
+                    new_simulation.breaches = dm.Breaches()
             if self.init_conditions.include_precipitations:
                 self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                 precipitation_data = self.precipitation_page.main_widget.get_precipitation_data()

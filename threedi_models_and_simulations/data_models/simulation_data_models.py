@@ -128,6 +128,7 @@ class Breach(SimulationElement):
     offset: float = None
     discharge_coefficient_positive: float = None
     discharge_coefficient_negative: float = None
+    levee_material: str = None
     max_breach_depth: float = None
 
 
