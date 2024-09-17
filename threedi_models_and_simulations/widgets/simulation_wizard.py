@@ -8,13 +8,14 @@ from copy import deepcopy
 from datetime import datetime
 from functools import partial
 from operator import attrgetter
-from typing import List
+from typing import List, Optional
 
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
 from qgis.core import NULL, QgsMapLayerProxyModel
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
+from qgis.PyQt.QtCore import (QDateTime, QSettings, QSize, Qt, QTimeZone,
+                              pyqtSignal)
 from qgis.PyQt.QtGui import (QColor, QDoubleValidator, QFont, QStandardItem,
                              QStandardItemModel)
 from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
@@ -1531,6 +1532,15 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         """Store current widget values."""
         simulation = self.dd_simulation.currentText()
         precipitation_type = self.cbo_prec_type.currentText()
+        
+        # iterate over the substance values and retrieve the values
+        substance_concentrations = []
+        for substance in self.substances:
+            substance_name = substance["name"]
+            assert substance_name in self.substance_widgets
+            value = self.substance_widgets[substance_name].get_value()
+            substance_concentrations.append({"name": substance_name, "unit": substance.get("unit", ""), "concentration": value})
+
         if precipitation_type == EventTypes.CONSTANT.value:
             start_after = self.sp_start_after_constant.value()
             start_after_units = self.start_after_constant_u.currentText()
@@ -1544,6 +1554,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "stop_after": stop_after,
                 "stop_after_units": stop_after_units,
                 "intensity": intensity,
+                "substance_concentration": substance_concentrations,
             }
         elif precipitation_type == EventTypes.FROM_CSV.value:
             start_after = self.sp_start_after_csv.value()
@@ -1560,8 +1571,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "time_series": time_series,
                 "csv_path": csv_path,
                 "interpolate": interpolate,
+                "substance_concentration": substance_concentrations,
             }
         elif precipitation_type == EventTypes.FROM_NETCDF.value:
+            # note that we do not add substance for netcdf rain
             netcdf_path = self.le_upload_netcdf.text()
             netcdf_global = self.rb_global_netcdf.isChecked()
             netcdf_raster = self.rb_raster_netcdf.isChecked()
@@ -1582,6 +1595,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "start_after_units": start_after_units,
                 "design_number": design_number,
                 "time_series": design_time_series,
+                "substance_concentration": substance_concentrations,
             }
         elif precipitation_type == EventTypes.RADAR.value:
             start_after = self.sp_start_after_radar.value()
@@ -1594,6 +1608,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "start_after_units": start_after_units,
                 "stop_after": stop_after,
                 "stop_after_units": stop_after_units,
+                "substance_concentration": substance_concentrations,
             }
 
     def simulation_changed(self):
@@ -1606,6 +1621,32 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.cbo_design.setCurrentIndex(0)
             self.plot_precipitation()
             return
+
+        # It could be that substances have been removed from the Substances page, or in a different order
+        # and this has not been set in the cached simulation values
+        for substance_widget in self.substance_widgets.values():
+            self.substance_widget.layout().removeWidget(substance_widget)
+            del substance_widget
+        self.substance_widgets.clear()
+        
+        substance_concentrations = vals["substance_concentration"]
+        new_substance_concentrations = []
+        
+        for substance in self.substances:
+            substance_name = substance["name"]
+            substance_concentration = next((x for x in substance_concentrations if x["name"] == substance["name"]), None)
+            if not substance_concentration:  # substance has been added
+                substance_concentration = {"name": substance_name, "concentration": None}
+            substance_concentration["unit"] = substance.get("unit", "")
+            wid = PrecipitationWidget.PrecipationSubstanceWidget(substance_name, substance_concentration["concentration"] or "", substance.get("units", ""), self.substance_widget)
+            wid.value_changed.connect(self.write_values_into_dict)
+            self.substance_widgets[substance_name] = wid  # name is enforce to be unique in UI
+            self.substance_widget.layout().addWidget(wid)
+            new_substance_concentrations.append(substance_concentration)
+
+        # Update the cached values
+        self.values[simulation]["substance_concentration"] = new_substance_concentrations
+
         precipitation_type = vals.get("precipitation_type")
         if precipitation_type == EventTypes.CONSTANT.value:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
@@ -1945,23 +1986,34 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         return x_values, y_values
     
     class PrecipationSubstanceWidget(QWidget):
+
+        value_changed = pyqtSignal()
+
         def __init__(self, name:str, value:float, unit:str, parent):
             super().__init__(parent)
             self.setLayout(QHBoxLayout())
             name_label = QLabel(name, self)
             name_label.setFixedWidth(200)
             self.layout().addWidget(name_label)
-            line_edit = QLineEdit(str(value), self)
+            self.line_edit = QLineEdit(str(value), self)
+            # Connect signal to signal
+            self.line_edit.textChanged.connect(self.value_changed)
 
             # Value can only be numeric
-            line_edit.setValidator(QDoubleValidator(0, 1000000, 4, line_edit))
-            self.layout().addWidget(line_edit)
+            self.line_edit.setValidator(QDoubleValidator(0, 1000000, 4, self.line_edit))
+            self.layout().addWidget(self.line_edit)
             self.unit_label = QLabel(unit, self)
             self.unit_label.setFixedWidth(30)
             self.layout().addWidget(self.unit_label)
 
         def set_unit_label(self, label:str):
             self.unit_label.setText(label)
+
+        def get_value(self) -> Optional[float]:
+            if self.line_edit.text() == "":
+                return None
+            
+            return float(self.line_edit.text())
 
     def update_substance_widgets(self):
 
@@ -1993,7 +2045,8 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             substance_name = substance["name"]
             if substance_name not in self.substance_widgets:
                 wid = PrecipitationWidget.PrecipationSubstanceWidget(substance_name, "", substance.get("units", ""), self.substance_widget)
-                self.substance_widgets[substance_name] = wid  # name is unique
+                wid.value_changed.connect(self.write_values_into_dict)
+                self.substance_widgets[substance_name] = wid  # name is enforce to be unique in UI
                 self.substance_widget.layout().addWidget(wid)
             else:
                 # Set the units, these might have been changed
@@ -2959,8 +3012,9 @@ class SimulationWizard(QWizard):
         """Extra pre-processing triggered by changes of the wizard pages."""
         current_page = self.currentPage()
         if isinstance(current_page, PrecipitationPage):
-            self.precipitation_page.main_widget.plot_precipitation()
+            # this order matters
             self.precipitation_page.main_widget.update_substance_widgets()
+            self.precipitation_page.main_widget.plot_precipitation()
         elif isinstance(current_page, SummaryPage):
             self.set_overview_name()
             self.set_overview_database()
