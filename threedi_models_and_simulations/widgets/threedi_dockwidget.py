@@ -97,7 +97,7 @@ class ThreediDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.simulation_overview_dlg is not None
                 and self.simulation_overview_dlg.model_selection_dlg is not None
             ):
-                self.simulation_overview_dlg.model_selection_dlg.unload_cached_layers()
+                self.simulation_overview_dlg.model_selection_dlg.unload_breach_layers()
                 self.simulation_overview_dlg = None
         if self.simulation_results_dlg is not None:
             self.simulation_results_dlg = None

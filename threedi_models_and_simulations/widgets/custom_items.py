@@ -96,7 +96,6 @@ class FilteredComboBox(QComboBox):
 
     def __init__(self, parent=None):
         super(FilteredComboBox, self).__init__(parent)
-
         self.setFocusPolicy(Qt.StrongFocus)
         self.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
         self.setEditable(True)

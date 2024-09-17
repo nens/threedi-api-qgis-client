@@ -156,7 +156,7 @@ class SimulationOverview(uicls, basecls):
             )
             self.simulation_init_wizard.exec_()
             if self.simulation_init_wizard.open_wizard:
-                self.new_simulation(simulation, settings_overview, events, lizard_post_processing_overview)
+                self.new_simulation_wizard(simulation, settings_overview, events, lizard_post_processing_overview)
 
     def get_simulation_data_from_template(self, template):
         """Fetching simulation, settings and events data from the simulation template."""
@@ -180,7 +180,7 @@ class SimulationOverview(uicls, basecls):
             self.plugin_dock.communication.bar_error(error_msg)
         return simulation, settings_overview, events, lizard_post_processing_overview
 
-    def new_simulation(self, simulation, settings_overview, events, lizard_post_processing_overview):
+    def new_simulation_wizard(self, simulation, settings_overview, events, lizard_post_processing_overview):
         """Opening a wizard which allows defining and running new simulations."""
         self.simulation_wizard = SimulationWizard(
             self.plugin_dock, self.model_selection_dlg, self.simulation_init_wizard
@@ -191,14 +191,15 @@ class SimulationOverview(uicls, basecls):
             )
         self.close()
         self.simulation_wizard.exec_()
-        simulations_to_run = self.simulation_wizard.new_simulations
-        if simulations_to_run:
-            upload_timeout = self.settings.value("threedi/timeout", 900, type=int)
-            simulations_runner = SimulationRunner(self.threedi_api, simulations_to_run, upload_timeout=upload_timeout)
-            simulations_runner.signals.initializing_simulations_progress.connect(self.on_initializing_progress)
-            simulations_runner.signals.initializing_simulations_failed.connect(self.on_initializing_failed)
-            simulations_runner.signals.initializing_simulations_finished.connect(self.on_initializing_finished)
-            self.simulation_runner_pool.start(simulations_runner)
+
+    def start_simulations(self, simulations_to_run):
+        """Start the simulations."""
+        upload_timeout = self.settings.value("threedi/timeout", 900, type=int)
+        simulations_runner = SimulationRunner(self.threedi_api, simulations_to_run, upload_timeout=upload_timeout)
+        simulations_runner.signals.initializing_simulations_progress.connect(self.on_initializing_progress)
+        simulations_runner.signals.initializing_simulations_failed.connect(self.on_initializing_failed)
+        simulations_runner.signals.initializing_simulations_finished.connect(self.on_initializing_finished)
+        self.simulation_runner_pool.start(simulations_runner)
 
     def stop_simulation(self):
         """Sending request to shut down currently selected simulation."""

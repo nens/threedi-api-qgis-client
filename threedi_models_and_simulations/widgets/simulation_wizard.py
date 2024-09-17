@@ -12,7 +12,8 @@ from typing import List
 
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
-from qgis.core import NULL, QgsMapLayerProxyModel
+from qgis.core import QgsMapLayerProxyModel
+from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
 from qgis.PyQt.QtGui import QColor, QFont, QStandardItem, QStandardItemModel
@@ -28,6 +29,7 @@ from qgis.PyQt.QtWidgets import (
     QScrollArea,
     QSizePolicy,
     QSpacerItem,
+    QSpinBox,
     QTableWidgetItem,
     QWidget,
     QWizard,
@@ -39,6 +41,7 @@ from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
 from ..utils import (
     TEMPDIR,
+    BreachSourceType,
     EventTypes,
     apply_24h_timeseries,
     convert_timeseries_to_seconds,
@@ -1311,21 +1314,22 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.map_canvas = self.parent_page.parent_wizard.plugin_dock.iface.mapCanvas()
         set_widget_background_color(self)
-        self.values = dict()
-        self.potential_breaches = dict()
-        self.breaches_layer = parent_page.parent_wizard.model_selection_dlg.breaches_layer
+        self.added_breaches = defaultdict(dict)
+        self.breaches_model = QStandardItemModel()
+        self.breaches_tv.setModel(self.breaches_model)
+        self.potential_breaches_layer = parent_page.parent_wizard.model_selection_dlg.potential_breaches_layer
+        self.flowlines_layer = parent_page.parent_wizard.model_selection_dlg.flowlines_layer
         self.dd_breach_id = FilteredComboBox(self)
         self.breach_lout.addWidget(self.dd_breach_id)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
-        self.dd_breach_id.currentIndexChanged.connect(self.potential_breach_changed)
-        self.dd_units.currentIndexChanged.connect(self.write_values_into_dict)
-        self.sb_duration.valueChanged.connect(self.write_values_into_dict)
-        self.sb_width.valueChanged.connect(self.write_values_into_dict)
-        self.sp_start_after.valueChanged.connect(self.write_values_into_dict)
-        self.sb_discharge_coefficient_positive.valueChanged.connect(self.write_values_into_dict)
-        self.sb_discharge_coefficient_negative.valueChanged.connect(self.write_values_into_dict)
-        self.sb_max_breach_depth.valueChanged.connect(self.write_values_into_dict)
+        self.potential_breach_selection_tool = None
+        self.flowline_selection_tool = None
+        self.pb_add_breach_from_list.clicked.connect(self.select_potential_breach_from_list)
+        self.pb_select_potential_breach.clicked.connect(self.select_potential_breach)
+        self.pb_select_flowline.clicked.connect(self.select_flowline)
+        self.pb_remove_breach.clicked.connect(self.remove_breach)
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
             self.simulation_widget.show()
         else:
@@ -1333,112 +1337,277 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.dd_simulation.addItems(initial_conditions.simulations_list)
         self.setup_breaches()
 
+    @property
+    def current_simulation_number(self):
+        return self.dd_simulation.currentIndex()
+
+    @property
+    def breach_parameters(self):
+        """Breach parameters with human-friendly labels."""
+        parameters = {
+            "breach_id": "ID",
+            "code": "Code",
+            "display_name": "Display name",
+            "offset": "Start after",
+            "offset_units": "[units]",
+            "initial_width": "Initial width",
+            "duration": "Duration till max depth",
+            "duration_units": "[units]",
+            "levee_material": "Levee material",
+            "max_breach_depth": "Max breach depth [m]",
+            "discharge_coefficient_positive": "Discharge coefficient positive",
+            "discharge_coefficient_negative": "Discharge coefficient negative",
+        }
+        return parameters
+
     def setup_breaches(self):
         """Setup breaches data with corresponding vector layer."""
-        cached_breaches = self.parent_page.parent_wizard.model_selection_dlg.current_model_breaches
-        if cached_breaches is not None:
-            field_names = [field.name() for field in self.breaches_layer.fields()]
-            if self.breaches_layer.selectedFeatureCount() > 0:
-                first_id = [str(feat["content_pk"]) for feat in self.breaches_layer.selectedFeatures()][0]
-            else:
-                first_id = None
-            breaches_ids = []
-            for feat in self.breaches_layer.getFeatures():
-                breach_id = str(feat["content_pk"])
-                breaches_ids.append(breach_id)
-                self.potential_breaches[breach_id] = {field_name: feat[field_name] for field_name in field_names}
-            breaches_ids.sort(key=lambda i: int(i))
-            self.dd_breach_id.addItems(breaches_ids)
-            if first_id is not None:
-                self.dd_breach_id.setCurrentText(first_id)
-                self.set_values_from_feature()
-        self.write_values_into_dict()
+        if self.potential_breaches_layer is not None:
+            breach_ids_map = {
+                f'{f["content_pk"]} | {f["code"]} | {f["display_name"]}': f.id()
+                for f in self.potential_breaches_layer.getFeatures()
+            }
+            for breach_id, breach_fid in sorted(breach_ids_map.items(), key=lambda i: i[1]):
+                self.dd_breach_id.addItem(breach_id, breach_fid)
+        self.breaches_model.setHorizontalHeaderLabels(self.breach_parameters.values())
 
-    def set_values_from_feature(self):
-        """Set potential breach parameters to the widgets."""
-        breach_id = self.dd_breach_id.currentText()
-        try:
-            breach_attributes = self.potential_breaches[breach_id]
-            max_breach_depth = breach_attributes["levbr"]
-            if max_breach_depth not in (None, NULL):
-                self.sb_max_breach_depth.setValue(max_breach_depth)
-        except KeyError:
-            pass
+    def select_potential_breach_from_list(self):
+        """Add potential breach from the dropdown menu to the selected breaches list."""
+        if self.potential_breaches_layer is None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                "Potential breaches are not available!", self
+            )
+            return
+        breach_fid = self.dd_breach_id.currentData()
+        potential_breach_feat = self.potential_breaches_layer.getFeature(breach_fid)
+        self.on_potential_breach_feature_identified(potential_breach_feat)
 
-    def write_values_into_dict(self):
-        """Store current widget values."""
-        simulation = self.dd_simulation.currentText()
-        breach_id = self.dd_breach_id.currentText()
-        duration = self.sb_duration.value()
-        width = self.sb_width.value()
-        units = self.dd_units.currentText()
-        offset = self.sp_start_after.value()
-        discharge_coefficient_positive = self.sb_discharge_coefficient_positive.value()
-        discharge_coefficient_negative = self.sb_discharge_coefficient_negative.value()
-        max_breach_depth = self.sb_max_breach_depth.value()
-        self.values[simulation] = {
-            "breach_id": breach_id,
-            "width": width,
-            "duration": duration,
-            "units": units,
-            "offset": offset,
-            "discharge_coefficient_positive": discharge_coefficient_positive,
-            "discharge_coefficient_negative": discharge_coefficient_negative,
-            "max_breach_depth": max_breach_depth,
-        }
-        if self.breaches_layer is not None:
-            self.parent_page.parent_wizard.plugin_dock.iface.setActiveLayer(self.breaches_layer)
-            self.breaches_layer.selectByExpression(f'"content_pk"={breach_id}')
-            self.parent_page.parent_wizard.plugin_dock.iface.actionZoomToSelected().trigger()
+    def select_potential_breach(self):
+        """Add potential breach from the map canvas to the selected breaches list."""
+        if self.potential_breaches_layer is None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                "Potential breaches are not available!", self
+            )
+            return
+        self.potential_breach_selection_tool = QgsMapToolIdentifyFeature(self.map_canvas, self.potential_breaches_layer)
+        self.potential_breach_selection_tool.activated.connect(self.parent_page.parent_wizard.hide)
+        self.potential_breach_selection_tool.deactivated.connect(self.parent_page.parent_wizard.show)
+        self.potential_breach_selection_tool.featureIdentified.connect(self.on_potential_breach_feature_identified)
+        self.map_canvas.setMapTool(self.potential_breach_selection_tool)
+
+    def select_flowline(self):
+        """Add flowline from the map canvas to the selected breaches list."""
+        if self.flowlines_layer is None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                "1D2D flowlines are not available!", self
+            )
+            return
+        self.flowline_selection_tool = QgsMapToolIdentifyFeature(self.map_canvas, self.flowlines_layer)
+        self.flowline_selection_tool.activated.connect(self.parent_page.parent_wizard.hide)
+        self.flowline_selection_tool.deactivated.connect(self.parent_page.parent_wizard.show)
+        self.flowline_selection_tool.featureIdentified.connect(self.on_flowline_feature_identified)
+        self.map_canvas.setMapTool(self.flowline_selection_tool)
+
+    def on_potential_breach_feature_identified(self, potential_breach_feat):
+        """Action on featureIdentified signal for potential breaches layer."""
+        self.map_canvas.unsetMapTool(self.potential_breach_selection_tool)
+        potential_breach_fid = potential_breach_feat.id()
+        self.potential_breaches_layer.selectByIds([potential_breach_fid])
+        breach_key = (BreachSourceType.POTENTIAL_BREACHES, potential_breach_fid)
+        if breach_key in self.added_breaches[self.current_simulation_number]:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                "Potential breach already selected!", self
+            )
+            return
+        self.add_breach(BreachSourceType.POTENTIAL_BREACHES, potential_breach_feat)
+        self.potential_breaches_layer.removeSelection()
+
+    def on_flowline_feature_identified(self, flowline_feat):
+        """Action on featureIdentified signal for flowlines layer."""
+        self.map_canvas.unsetMapTool(self.flowline_selection_tool)
+        flowline_fid = flowline_feat.id()
+        self.flowlines_layer.selectByIds([flowline_fid])
+        breach_key = (BreachSourceType.FLOWLINES, flowline_fid)
+        if breach_key in self.added_breaches[self.current_simulation_number]:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn("1D2D flowline already selected!", self)
+            return
+        self.add_breach(BreachSourceType.FLOWLINES, flowline_feat)
+
+    def breach_widgets_for_feature(self, breach_source_type, breach_feature):
+        """Setup breach widgets out of the feature."""
+        segoe_ui_font = QFont("Segoe UI", 8)
+        maxsize = 2147483647
+        breach_fid = breach_feature.id()
+        breach_key = (breach_source_type, breach_fid)
+
+        id_line_edit = QLineEdit()
+        id_line_edit.setFont(segoe_ui_font)
+        id_line_edit.setStyleSheet("QLineEdit {background-color: white;}")
+        id_line_edit.setReadOnly(True)
+        id_line_edit.breach_key = breach_key
+        id_line_edit.simulation_number = self.current_simulation_number
+
+        code_line_edit = QLineEdit()
+        code_line_edit.setFont(segoe_ui_font)
+        code_line_edit.setStyleSheet("QLineEdit {background-color: white;}")
+        code_line_edit.setReadOnly(True)
+
+        display_name_line_edit = QLineEdit()
+        display_name_line_edit.setFont(segoe_ui_font)
+        display_name_line_edit.setStyleSheet("QLineEdit {background-color: white;}")
+        display_name_line_edit.setReadOnly(True)
+
+        offset_spinbox = QSpinBox()
+        offset_spinbox.setFont(segoe_ui_font)
+        offset_spinbox.setStyleSheet("QSpinBox {background-color: white;}")
+        offset_spinbox.setMinimum(0)
+        offset_spinbox.setMaximum(maxsize)
+
+        offset_units_combo = QComboBox()
+        offset_units_combo.setFont(segoe_ui_font)
+        offset_units_combo.addItems(self.SECONDS_MULTIPLIERS.keys())
+
+        initial_width_spinbox = QDoubleSpinBox()
+        initial_width_spinbox.setFont(segoe_ui_font)
+        initial_width_spinbox.setStyleSheet("QDoubleSpinBox {background-color: white;}")
+        initial_width_spinbox.setDecimals(1)
+        initial_width_spinbox.setMinimum(0.0)
+        initial_width_spinbox.setMaximum(maxsize)
+
+        duration_spinbox = QSpinBox()
+        duration_spinbox.setFont(segoe_ui_font)
+        duration_spinbox.setStyleSheet("QSpinBox {background-color: white;}")
+        duration_spinbox.setMinimum(0)
+        duration_spinbox.setMaximum(maxsize)
+
+        duration_units_combo = QComboBox()
+        duration_units_combo.setFont(segoe_ui_font)
+        duration_units_combo.addItems(self.SECONDS_MULTIPLIERS.keys())
+
+        levee_material_combo = QComboBox()
+        levee_material_combo.setFont(segoe_ui_font)
+        levee_material_combo.addItems(["sand", "clay"])
+
+        max_breach_depth_spinbox = QDoubleSpinBox()
+        max_breach_depth_spinbox.setFont(segoe_ui_font)
+        max_breach_depth_spinbox.setStyleSheet("QDoubleSpinBox {background-color: white;}")
+        max_breach_depth_spinbox.setDecimals(3)
+        max_breach_depth_spinbox.setMinimum(0.0)
+        max_breach_depth_spinbox.setMaximum(maxsize)
+
+        discharge_coefficient_positive_spinbox = QDoubleSpinBox()
+        discharge_coefficient_positive_spinbox.setFont(segoe_ui_font)
+        discharge_coefficient_positive_spinbox.setStyleSheet("QDoubleSpinBox {background-color: white;}")
+        discharge_coefficient_positive_spinbox.setDecimals(3)
+        discharge_coefficient_positive_spinbox.setMinimum(0.0)
+        discharge_coefficient_positive_spinbox.setMaximum(maxsize)
+
+        discharge_coefficient_negative_spinbox = QDoubleSpinBox()
+        discharge_coefficient_negative_spinbox.setFont(segoe_ui_font)
+        discharge_coefficient_negative_spinbox.setStyleSheet("QDoubleSpinBox {background-color: white;}")
+        discharge_coefficient_negative_spinbox.setDecimals(3)
+        discharge_coefficient_negative_spinbox.setMinimum(0.0)
+        discharge_coefficient_negative_spinbox.setMaximum(maxsize)
+
+        offset_spinbox.setValue(0)
+        initial_width_spinbox.setValue(10.0)
+        duration_spinbox.setValue(10)
+        duration_units_combo.setCurrentText("mins")
+        discharge_coefficient_positive_spinbox.setValue(1.0)
+        discharge_coefficient_negative_spinbox.setValue(1.0)
+
+        if breach_source_type == BreachSourceType.POTENTIAL_BREACHES:
+            id_line_edit.setText(str(breach_feature["content_pk"]))
+            code_line_edit.setText(breach_feature["code"])
+            display_name_line_edit.setText(breach_feature["display_name"])
+            levee_material_combo.setCurrentIndex(breach_feature["levmat"] - 1)
+            max_breach_depth_spinbox.setValue(breach_feature["levbr"])
+        else:
+            id_line_edit.setText(str(breach_feature["id"]))
+            max_breach_depth_spinbox.setValue(2.0)
+
+        breach_widgets_list = [
+            id_line_edit,
+            code_line_edit,
+            display_name_line_edit,
+            offset_spinbox,
+            offset_units_combo,
+            initial_width_spinbox,
+            duration_spinbox,
+            duration_units_combo,
+            levee_material_combo,
+            max_breach_depth_spinbox,
+            discharge_coefficient_positive_spinbox,
+            discharge_coefficient_negative_spinbox,
+        ]
+
+        breach_widgets = dict(zip(self.breach_parameters.keys(), breach_widgets_list))
+        return breach_widgets
+
+    def add_breach(self, breach_source_type, breach_feature):
+        """Add breach widgets to the breaches list."""
+        breach_fid = breach_feature.id()
+        breach_widgets = self.breach_widgets_for_feature(breach_source_type, breach_feature)
+        breach_rows_count = self.breaches_model.rowCount()
+        row_number = breach_rows_count
+        row_items = [QStandardItem("") for _ in breach_widgets]
+        self.breaches_model.appendRow(row_items)
+        for column_idx, breach_widget in enumerate(breach_widgets.values()):
+            self.breaches_tv.setIndexWidget(self.breaches_model.index(row_number, column_idx), breach_widget)
+        for i in range(len(breach_widgets)):
+            self.breaches_tv.resizeColumnToContents(i)
+        breach_key = (breach_source_type, breach_fid)
+        self.added_breaches[self.current_simulation_number][breach_key] = breach_widgets
+
+    def remove_breach(self):
+        """Remove breach widgets from the breaches list."""
+        index = self.breaches_tv.currentIndex()
+        if not index.isValid():
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                "No breach row selected - nothing to remove!", self
+            )
+            return
+        row = index.row()
+        breach_id_item = self.breaches_model.item(row, 0)
+        breach_id_index = breach_id_item.index()
+        breach_id_widget = self.breaches_tv.indexWidget(breach_id_index)
+        breach_key = breach_id_widget.breach_key
+        self.breaches_model.removeRow(row)
+        del self.added_breaches[self.current_simulation_number][breach_key]
 
     def simulation_changed(self):
         """Handle simulation change."""
-        vals = self.values.get(self.dd_simulation.currentText())
-        if vals:
-            self.dd_breach_id.setCurrentIndex(self.dd_breach_id.findText(vals.get("breach_id")))
-            self.sb_duration.setValue(vals.get("duration"))
-            self.sb_width.setValue(vals.get("width"))
-            self.dd_units.setCurrentIndex(self.dd_units.findText(vals.get("units")))
-            self.sp_start_after.setValue(vals.get("offset"))
-            self.sb_discharge_coefficient_positive.setValue(vals.get("discharge_coefficient_positive"))
-            self.sb_discharge_coefficient_negative.setValue(vals.get("discharge_coefficient_negative"))
-            self.sb_max_breach_depth.setValue(vals.get("max_breach_depth"))
-        else:
-            self.dd_breach_id.setCurrentIndex(0)
-            self.sb_duration.setValue(0.1)
-            self.sb_width.setValue(10)
-            self.dd_units.setCurrentIndex(0)
-            self.sp_start_after.setValue(0)
-            self.sb_discharge_coefficient_positive.setValue(1.0)
-            self.sb_discharge_coefficient_negative.setValue(1.0)
-            self.sb_max_breach_depth.setValue(0)
-            self.set_values_from_feature()
-
-    def potential_breach_changed(self):
-        """Handle potential breach ID change."""
-        self.set_values_from_feature()
-        self.write_values_into_dict()
+        row_count = self.breaches_model.rowCount()
+        root_model_index = self.breaches_model.invisibleRootItem().index()
+        for row in range(row_count):
+            breach_id_item = self.breaches_model.item(row, 0)
+            breach_id_index = breach_id_item.index()
+            breach_id_widget = self.breaches_tv.indexWidget(breach_id_index)
+            hide_row = breach_id_widget.simulation_number != self.current_simulation_number
+            self.breaches_tv.setRowHidden(row, root_model_index, hide_row)
 
     def get_breaches_data(self):
         """Getting all needed data for adding breaches to the simulation."""
-        breach_id = self.dd_breach_id.currentText()
-        width = self.sb_width.value()
-        duration = self.sb_duration.value()
-        units = self.dd_units.currentText()
-        offset = self.sp_start_after.value()
-        duration_in_units = duration * self.SECONDS_MULTIPLIERS[units]
-        discharge_coefficient_positive = self.sb_discharge_coefficient_positive.value()
-        discharge_coefficient_negative = self.sb_discharge_coefficient_negative.value()
-        max_breach_depth = self.sb_max_breach_depth.value()
-        breach_data = (
-            breach_id,
-            width,
-            duration_in_units,
-            offset,
-            discharge_coefficient_positive,
-            discharge_coefficient_negative,
-            max_breach_depth,
-        )
+        potential_breaches, flowlines = [], []
+        simulation_breaches = self.added_breaches[self.current_simulation_number]
+        for (breach_source_type, breach_fid), breach_widgets in simulation_breaches.items():
+            duration_units = breach_widgets["duration_units"].currentText()
+            offset_units = breach_widgets["offset_units"].currentText()
+            breach_obj = dm.Breach(
+                breach_id=int(breach_widgets["breach_id"].text()),
+                width=breach_widgets["initial_width"].value(),
+                duration_till_max_depth=breach_widgets["duration"].value() * self.SECONDS_MULTIPLIERS[duration_units],
+                offset=breach_widgets["offset"].value() * self.SECONDS_MULTIPLIERS[offset_units],
+                discharge_coefficient_positive=breach_widgets["discharge_coefficient_positive"].value(),
+                discharge_coefficient_negative=breach_widgets["discharge_coefficient_negative"].value(),
+                levee_material=breach_widgets["levee_material"].currentText(),
+                max_breach_depth=breach_widgets["max_breach_depth"].value(),
+            )
+            if breach_source_type == BreachSourceType.POTENTIAL_BREACHES:
+                potential_breaches.append(breach_obj)
+            else:
+                flowlines.append(breach_obj)
+        breach_data = (potential_breaches, flowlines)
         return breach_data
 
 
@@ -2481,7 +2650,6 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         self.cb_save_template.stateChanged.connect(self.save_template_state_changed)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_change)
         self.precipitation_widget.hide()
-        self.breach_widget.hide()
         self.initial_conditions = initial_conditions
         if initial_conditions.multiple_simulations:
             self.simulation_widget.show()
@@ -2508,13 +2676,6 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
                     total_prec = "N/A"
                 self.sim_prec_type.setText(ptype)
                 self.sim_prec_total.setText(total_prec)
-        elif self.initial_conditions.simulations_difference == "breaches" and self.initial_conditions.include_breaches:
-            data = self.parent_page.parent_wizard.breaches_page.main_widget.values.get(self.dd_simulation.currentText())
-            if data:
-                breach_id = data.get("breach_id")
-                duration = data.get("duration")
-                self.breach_id.setText(breach_id)
-                self.duration_breach.setText(str(duration))
 
     def plot_overview_precipitation(self):
         """Setting up precipitation plot."""
@@ -2856,6 +3017,7 @@ class SimulationWizard(QWizard):
             self.dwf_page = DWFPage(self)
             self.addPage(self.dwf_page)
         if init_conditions.include_breaches:
+            self.model_selection_dlg.load_breach_layers()
             self.breaches_page = BreachesPage(self, initial_conditions=init_conditions)
             self.addPage(self.breaches_page)
         if init_conditions.include_precipitations:
@@ -2930,8 +3092,6 @@ class SimulationWizard(QWizard):
             if self.init_conditions.include_precipitations:
                 self.summary_page.main_widget.plot_overview_precipitation()
                 self.set_overview_precipitation()
-            if self.init_conditions.include_breaches:
-                self.set_overview_breaches()
         elif isinstance(current_page, LateralsPage):
             laterals_widget = self.laterals_page.main_widget
             laterals_widget.il_1d_upload.setText(laterals_widget.last_upload_1d_filepath)
@@ -2970,15 +3130,6 @@ class SimulationWizard(QWizard):
             else:
                 total_precipitation_text = "N/A"
             self.summary_page.main_widget.sim_prec_total.setText(total_precipitation_text)
-
-    def set_overview_breaches(self):
-        """Setting breaches information in the overview page."""
-        if self.breaches_page.main_widget.values.get(self.first_simulation):
-            self.summary_page.main_widget.breach_widget.show()
-            breach_id = self.breaches_page.main_widget.values.get(self.first_simulation).get("breach_id")
-            duration_of_breach = self.breaches_page.main_widget.values.get(self.first_simulation).get("duration")
-            self.summary_page.main_widget.breach_id.setText(breach_id)
-            self.summary_page.main_widget.duration_breach.setText(str(duration_of_breach))
 
     def load_template_parameters(self, simulation, settings_overview, events, lizard_post_processing_overview):
         """Loading simulation parameters from the simulation template data."""
@@ -3177,20 +3328,19 @@ class SimulationWizard(QWizard):
         if init_conditions.include_breaches:
             breaches_widget = self.breaches_page.main_widget
             if events.breach:
-                breach = events.breach[0]
                 tc = ThreediCalls(self.plugin_dock.threedi_api)
                 threedimodel_id_str = str(self.model_selection_dlg.current_model.id)
-                potential_breach_url = breach.potential_breach.rstrip("/")
-                potential_breach_id = int(potential_breach_url.split("/")[-1])
-                potential_breach = tc.fetch_3di_model_potential_breach(threedimodel_id_str, potential_breach_id)
-                breaches_widget.dd_breach_id.setCurrentText(str(potential_breach.connected_pnt_id))
-                breaches_widget.sb_width.setValue(breach.initial_width)
-                breaches_widget.sb_duration.setValue(breach.duration_till_max_depth)
-                breaches_widget.dd_units.setCurrentText("s")
-                breaches_widget.sp_start_after.setValue(breach.offset)
-                breaches_widget.sb_discharge_coefficient_positive.setValue(breach.discharge_coefficient_positive or 1)
-                breaches_widget.sb_discharge_coefficient_negative.setValue(breach.discharge_coefficient_negative or 1)
-                breaches_widget.sb_max_breach_depth.setValue(breach.maximum_breach_depth)
+                content_pks = set()
+                for breach in events.breach:
+                    potential_breach_url = breach.potential_breach.rstrip("/")
+                    potential_breach_id = int(potential_breach_url.split("/")[-1])
+                    potential_breach = tc.fetch_3di_model_potential_breach(threedimodel_id_str, potential_breach_id)
+                    content_pks.add(str(potential_breach.connected_pnt_id))
+                content_pks_str = ",".join(content_pks)
+                exp = f'"content_pk" in ({content_pks_str})'
+                self.model_selection_dlg.potential_breaches_layer.selectByExpression(exp)
+                for breach_feat in self.model_selection_dlg.potential_breaches_layer.selectedFeatures():
+                    breaches_widget.on_potential_breach_feature_identified(breach_feat)
         if init_conditions.include_precipitations:
             precipitation_widget = self.precipitation_page.main_widget
             if events.timeseriesrain:
@@ -3543,9 +3693,9 @@ class SimulationWizard(QWizard):
                 self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                 breach_data = self.breaches_page.main_widget.get_breaches_data()
                 if simulation_difference == "breaches" or i == 1:
-                    new_simulation.breach = dm.Breach(*breach_data)
+                    new_simulation.breaches = dm.Breaches(*breach_data)
                 else:
-                    new_simulation.breach = dm.Breach()
+                    new_simulation.breaches = dm.Breaches()
             if self.init_conditions.include_precipitations:
                 self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                 precipitation_data = self.precipitation_page.main_widget.get_precipitation_data()
@@ -3561,8 +3711,11 @@ class SimulationWizard(QWizard):
                 template_name = self.summary_page.main_widget.template_name.text()
                 new_simulation.template_name = template_name
             self.new_simulations.append(new_simulation)
+        self.model_selection_dlg.unload_breach_layers()
+        self.plugin_dock.simulation_overview_dlg.start_simulations(self.new_simulations)
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""
         self.settings.setValue("threedi/wizard_size", self.size())
+        self.model_selection_dlg.unload_breach_layers()
         self.reject()
