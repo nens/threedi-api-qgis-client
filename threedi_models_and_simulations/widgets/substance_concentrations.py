@@ -28,9 +28,11 @@ class SubstanceConcentrationsWidget(QWidget):
     def __init__(
         self,
         parent: QWidget,
+        widget_name: str,
     ):
         super().__init__(parent)
         self.parent_widget = parent
+        self.widget_name = widget_name
         self.csv_header = None
         self.substance_list = []
         self.substance_constants_1d = []
@@ -55,9 +57,9 @@ class SubstanceConcentrationsWidget(QWidget):
         """Help texts for substance concentrations."""
         font = QFont("Segoe UI", 10, QFont.Normal)
         text_layout = QHBoxLayout()
-        text1 = QLabel("Specify the same constant substance concentrations for all steps")
+        text1 = QLabel(f"Specify the same constant substance concentrations for all {self.widget_name}s")
         text2 = QLabel("- or -")
-        text3 = QLabel("Upload CSV containing a specific time series for each step (overules the constant values)")
+        text3 = QLabel(f"Upload CSV containing a specific time series for each {self.widget_name} (overules the constant values)")
         text1.setFont(font)
         text2.setFont(font)
         text3.setFont(font)
