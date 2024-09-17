@@ -3668,4 +3668,3 @@ class SimulationWizard(QWizard):
         """Handling canceling wizard action."""
         self.settings.setValue("threedi/wizard_size", self.size())
         self.reject()
-        self.reject()
