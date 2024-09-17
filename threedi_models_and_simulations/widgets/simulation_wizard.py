@@ -381,7 +381,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             self.groupbox.setParent(None)
         if not self.substances:
             return
-        substance_concentration_widget = SubstanceConcentrationsWidget(self)
+        substance_concentration_widget = SubstanceConcentrationsWidget(self, "boundary condition")
         self.groupbox = substance_concentration_widget.groupbox
         self.substance_constants_1d = substance_concentration_widget.substance_constants_1d
         self.substance_constants_2d = substance_concentration_widget.substance_constants_2d
@@ -997,7 +997,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.groupbox.setParent(None)
         if not self.substances:
             return
-        substance_concentration_widget = SubstanceConcentrationsWidget(self)
+        substance_concentration_widget = SubstanceConcentrationsWidget(self, "lateral")
         self.groupbox = substance_concentration_widget.groupbox
         self.substance_constants_1d = substance_concentration_widget.substance_constants_1d
         self.substance_constants_2d = substance_concentration_widget.substance_constants_2d
