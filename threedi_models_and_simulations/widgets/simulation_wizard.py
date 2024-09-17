@@ -1484,6 +1484,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.widget_design.hide()
         self.widget_radar.hide()
         self.connect_signals()
+        # Primarily used for switching simulations
         self.values = dict()
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "precipitation":
             self.simulation_widget.show()
@@ -1640,7 +1641,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             substance_concentration["unit"] = substance.get("unit", "")
             wid = PrecipitationWidget.PrecipationSubstanceWidget(substance_name, substance_concentration["concentration"] or "", substance.get("units", ""), self.substance_widget)
             wid.value_changed.connect(self.write_values_into_dict)
-            self.substance_widgets[substance_name] = wid  # name is enforce to be unique in UI
+            self.substance_widgets[substance_name] = wid  # name is enforced to be unique in UI
             self.substance_widget.layout().addWidget(wid)
             new_substance_concentrations.append(substance_concentration)
 
@@ -1926,7 +1927,12 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         return values
 
     def get_precipitation_data(self):
-        """Getting all needed data for adding precipitation to the simulation."""
+        """Getting all needed data for adding precipitation to the simulation.
+        
+            Note that the current simulation has just been selected in the combobox, so the substance widgets
+            are up to date for this current simulation
+        """
+
         precipitation_type = self.cbo_prec_type.currentText()
         offset = self.get_precipitation_offset()
         duration = self.get_precipitation_duration()
@@ -1938,6 +1944,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         netcdf_filepath = self.le_upload_netcdf.text()
         netcdf_global = self.rb_global_netcdf.isChecked()
         netcdf_raster = self.rb_raster_netcdf.isChecked()
+
+        # Retrieve substance data
+        # for self.substance_widgets
+
         return (
             precipitation_type,
             offset,
