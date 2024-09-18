@@ -25,7 +25,10 @@ uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_results
 class SimulationResults(uicls, basecls):
     """Dialog with methods for handling simulations results."""
 
-    PROGRESS_COLUMN_IDX = 2
+    SIMULATION_NAME_IDX = 0
+    EXPIRES_COLUMN_IDX = 1
+    USERNAME_COLUMN_IDX = 2
+    PROGRESS_COLUMN_IDX = 3
     MAX_THREAD_COUNT = 4
 
     def __init__(self, plugin_dock, parent=None):
@@ -33,6 +36,8 @@ class SimulationResults(uicls, basecls):
         self.setupUi(self)
         self.plugin_dock = plugin_dock
         self.api_client = self.plugin_dock.threedi_api
+        self.first_name_le.setText(self.plugin_dock.current_user_first_name)
+        self.last_name_le.setText(self.plugin_dock.current_user_last_name)
         self.download_results_pool = QThreadPool()
         self.download_results_pool.setMaxThreadCount(self.MAX_THREAD_COUNT)
         self.finished_simulations = {}
@@ -44,8 +49,12 @@ class SimulationResults(uicls, basecls):
         self.pb_cancel.clicked.connect(self.close)
         self.pb_download.clicked.connect(self.download_results)
         self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_refresh_results)
+        self.tv_finished_sim_tree.doubleClicked.connect(self.download_results)
         set_icon(self.refresh_btn, "refresh.svg")
         self.refresh_btn.clicked.connect(self.refresh_finished_simulations_list)
+        self.username_filter_grp.toggled.connect(self.filter_finished_simulations_list)
+        self.first_name_le.textChanged.connect(self.filter_finished_simulations_list)
+        self.last_name_le.textChanged.connect(self.filter_finished_simulations_list)
 
     def refresh_last_updated_label(self):
         """Refresh last update datetime label."""
@@ -56,7 +65,7 @@ class SimulationResults(uicls, basecls):
         self.tv_model = QStandardItemModel(0, 3)
         delegate = DownloadProgressDelegate(self.tv_finished_sim_tree)
         self.tv_finished_sim_tree.setItemDelegateForColumn(self.PROGRESS_COLUMN_IDX, delegate)
-        self.tv_model.setHorizontalHeaderLabels(["Simulation name", "Expires", "Download progress"])
+        self.tv_model.setHorizontalHeaderLabels(["Simulation name", "Expires", "Username", "Download progress"])
         self.tv_finished_sim_tree.setModel(self.tv_model)
 
     def refresh_finished_simulations_list(self):
@@ -67,7 +76,7 @@ class SimulationResults(uicls, basecls):
         self.finished_simulations.clear()
         self.download_progress_bars.clear()
         self.running_downloads.clear()
-        self.setup_view_model()
+        self.setup_results_overview_dialog()
         self.plugin_dock.simulations_progresses_sentinel.simulation_finished.connect(self.update_finished_list)
         self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_refresh_results)
         self.plugin_dock.simulations_progresses_sentinel.fetch_finished_simulations()
@@ -91,9 +100,13 @@ class SimulationResults(uicls, basecls):
         create_datetime = datetime.strptime(create_str, API_DATETIME_FORMAT)
         delta = relativedelta(create_datetime, ThreediCalls.EXPIRATION_TIME)
         expires_item = QStandardItem(f"{delta.days} day(s)")
+        simulation_user_first_name = sim_data["simulation_user_first_name"]
+        simulation_user_last_name = sim_data["simulation_user_last_name"]
+        username_item = QStandardItem(f"{simulation_user_first_name} {simulation_user_last_name}")
+        username_item.setData((simulation_user_first_name, simulation_user_last_name), Qt.UserRole)
         progress_item = QStandardItem()
         progress_item.setData(-1, Qt.UserRole)
-        self.tv_model.insertRow(0, [sim_name_item, expires_item, progress_item])
+        self.tv_model.insertRow(0, [sim_name_item, expires_item, username_item, progress_item])
         self.finished_simulations[sim_id] = sim_data
         self.download_progress_bars[sim_id] = progress_item
 
@@ -102,7 +115,32 @@ class SimulationResults(uicls, basecls):
         for sim_id, sim_data in sorted(finished_simulations_data.items()):
             if sim_id not in self.finished_simulations:
                 self.add_finished_simulation_to_model(sim_id, sim_data)
+        self.tv_finished_sim_tree.resizeColumnToContents(self.SIMULATION_NAME_IDX)
         self.refresh_last_updated_label()
+        self.filter_finished_simulations_list()
+
+    def filter_finished_simulations_list(self):
+        """Filter finished simulations list."""
+        filter_first_name = self.first_name_le.text().lower()
+        filter_last_name = self.last_name_le.text().lower()
+        row_count = self.tv_model.rowCount()
+        root_model_index = self.tv_model.invisibleRootItem().index()
+        if self.username_filter_grp.isChecked():
+            for row in range(row_count):
+                item = self.tv_model.item(row, self.USERNAME_COLUMN_IDX)
+                first_name, last_name = item.data(Qt.UserRole)
+                first_name_match, last_name_match = True, True
+                if filter_first_name:
+                    if filter_first_name not in first_name.lower():
+                        first_name_match = False
+                if filter_last_name:
+                    if filter_last_name not in last_name.lower():
+                        last_name_match = False
+                hide_row = not all([first_name_match, last_name_match])
+                self.tv_finished_sim_tree.setRowHidden(row, root_model_index, hide_row)
+        else:
+            for row in range(row_count):
+                self.tv_finished_sim_tree.setRowHidden(row, root_model_index, False)
 
     def on_download_progress_update(self, percentage, sim_id):
         """Update download progress bar."""
