@@ -34,6 +34,8 @@ class ThreediDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.simulations_progresses_sentinel = None
         self.threedi_api = None
         self.current_user = None
+        self.current_user_first_name = None
+        self.current_user_last_name = None
         self.current_user_full_name = None
         self.organisations = {}
         self.current_local_schematisation = None
@@ -85,6 +87,8 @@ class ThreediDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if log_in_dialog.LOGGED_IN:
             self.threedi_api = log_in_dialog.threedi_api
             self.current_user = log_in_dialog.user
+            self.current_user_first_name = log_in_dialog.user_first_name
+            self.current_user_last_name = log_in_dialog.user_last_name
             self.current_user_full_name = log_in_dialog.user_full_name
             self.organisations = log_in_dialog.organisations
             self.initialize_authorized_view()
@@ -106,6 +110,8 @@ class ThreediDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.upload_dlg = None
         self.threedi_api = None
         self.current_user = None
+        self.current_user_first_name = None
+        self.current_user_last_name = None
         self.current_user_full_name = None
         self.organisations.clear()
         self.label_user.setText("-")

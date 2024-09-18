@@ -88,7 +88,8 @@ class WSProgressesSentinel(QObject):
                     "name": status.simulation_name,
                     "progress": 100,
                     "status": status.name,
-                    "user_name": None,  # SimulationStatus does not contain information about the user
+                    "simulation_user_first_name": status.simulation_user_first_name,
+                    "simulation_user_last_name": status.simulation_user_last_name,
                 }
                 for status in finished_simulations_statuses
             }
