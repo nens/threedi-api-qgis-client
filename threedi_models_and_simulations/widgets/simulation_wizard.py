@@ -1529,7 +1529,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.le_upload_csv.clear()
             self.plot_precipitation()
 
-    def write_values_into_dict(self):
+    def store_cache(self):
         """Store current widget values."""
         simulation = self.dd_simulation.currentText()
         precipitation_type = self.cbo_prec_type.currentText()
@@ -1640,7 +1640,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 substance_concentration = {"name": substance_name, "concentration": None}
             substance_concentration["unit"] = substance.get("unit", "")
             wid = PrecipitationWidget.PrecipationSubstanceWidget(substance_name, substance_concentration["concentration"] or "", substance.get("units", ""), self.substance_widget)
-            wid.value_changed.connect(self.write_values_into_dict)
+            wid.value_changed.connect(self.store_cache)
             self.substance_widgets[substance_name] = wid  # name is enforced to be unique in UI
             self.substance_widget.layout().addWidget(wid)
             new_substance_concentrations.append(substance_concentration)
@@ -1945,8 +1945,14 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         netcdf_global = self.rb_global_netcdf.isChecked()
         netcdf_raster = self.rb_raster_netcdf.isChecked()
 
-        # Retrieve substance data
-        # for self.substance_widgets
+        # Retrieve substance data from widgets, these have been properly set in run_new_simulation
+        substances = []
+        for substance in self.substances:
+            substance_name = substance["name"]
+            substance_widget = self.substance_widgets[substance_name]
+            sub_value = substance_widget.get_value()
+            if sub_value is not None:
+                substances.append({"substance": substance_name, "substance_id": None, "substance_name": substance_name, "concentrations": [[0.0, sub_value]]})
 
         return (
             precipitation_type,
@@ -1960,6 +1966,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             netcdf_filepath,
             netcdf_global,
             netcdf_raster,
+            substances,
         )
 
     def constant_values(self):
@@ -2055,7 +2062,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             substance_name = substance["name"]
             if substance_name not in self.substance_widgets:
                 wid = PrecipitationWidget.PrecipationSubstanceWidget(substance_name, "", substance.get("units", ""), self.substance_widget)
-                wid.value_changed.connect(self.write_values_into_dict)
+                wid.value_changed.connect(self.store_cache)
                 self.substance_widgets[substance_name] = wid  # name is enforce to be unique in UI
                 self.substance_widget.layout().addWidget(wid)
             else:
@@ -2089,7 +2096,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.plot_widget.hide()
             self.plot_label.hide()
             return
-        self.write_values_into_dict()
+        self.store_cache()
         if len(x_values) < 2:
             return
         # Bar width as time series interval value
@@ -3651,6 +3658,8 @@ class SimulationWizard(QWizard):
             if self.init_conditions.include_precipitations:
                 self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                 precipitation_data = self.precipitation_page.main_widget.get_precipitation_data()
+                logger.error("-------------------")
+                logger.error(precipitation_data)
                 if simulation_difference == "precipitation" or i == 1:
                     new_simulation.precipitation = dm.Precipitation(*precipitation_data)
                 else:

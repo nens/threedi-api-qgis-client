@@ -10,7 +10,8 @@ from functools import partial
 import requests
 from PyQt5 import QtWebSockets
 from PyQt5.QtNetwork import QNetworkRequest
-from qgis.PyQt.QtCore import QByteArray, QObject, QRunnable, QUrl, pyqtSignal, pyqtSlot
+from qgis.PyQt.QtCore import (QByteArray, QObject, QRunnable, QUrl, pyqtSignal,
+                              pyqtSlot)
 from threedi_api_client.files import upload_file
 from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import bypass_max_path_limit
@@ -18,28 +19,14 @@ from threedi_mi_utils import bypass_max_path_limit
 from .api_calls.threedi_calls import ThreediCalls
 from .data_models import simulation_data_models as dm
 from .data_models.enumerators import SimulationStatusName
-from .utils import (
-    API_DATETIME_FORMAT,
-    BOUNDARY_CONDITIONS_TEMPLATE,
-    CHUNK_SIZE,
-    DWF_FILE_TEMPLATE,
-    INITIAL_WATERLEVELS_TEMPLATE,
-    LATERALS_FILE_TEMPLATE,
-    RADAR_ID,
-    TEMPDIR,
-    EventTypes,
-    FileState,
-    ThreediFileState,
-    ThreediModelTaskStatus,
-    UploadFileStatus,
-    extract_error_message,
-    get_download_file,
-    split_to_even_chunks,
-    unzip_archive,
-    upload_local_file,
-    write_json_data,
-    zip_into_archive,
-)
+from .utils import (API_DATETIME_FORMAT, BOUNDARY_CONDITIONS_TEMPLATE,
+                    CHUNK_SIZE, DWF_FILE_TEMPLATE,
+                    INITIAL_WATERLEVELS_TEMPLATE, LATERALS_FILE_TEMPLATE,
+                    RADAR_ID, TEMPDIR, EventTypes, FileState, ThreediFileState,
+                    ThreediModelTaskStatus, UploadFileStatus,
+                    extract_error_message, get_download_file,
+                    split_to_even_chunks, unzip_archive, upload_local_file,
+                    write_json_data, zip_into_archive)
 
 logger = logging.getLogger(__name__)
 
@@ -1080,9 +1067,25 @@ class SimulationRunner(QRunnable):
                 self.current_simulation.precipitation.netcdf_global,
                 self.current_simulation.precipitation.netcdf_raster,
             )
+
+            substances = self.current_simulation.precipitation.substances
+            for substance in substances:
+                substance_name = substance.get("substance")
+                substance_id = self.substances[substance_name]  # this is the substance ID returned by API
+                substance["substance_id"] = substance_id
+                # Replace substance names with substance ids (also done in laterals)
+                substance["substance"] = substance_id
+                assert len(substance["concentrations"]) == 1
+
             if precipitation_type == EventTypes.CONSTANT.value:
+                # Adjust substance timekeys for precipitation type
+                for substance in substances:
+                    concentrations = substance["concentrations"]
+                    value = concentrations[0][1]
+                    substance["concentrations"] = [[offset, value], [offset+duration, value]]
+
                 self.tc.create_simulation_constant_precipitation(
-                    sim_id, value=values, units=units, duration=duration, offset=offset
+                    sim_id, value=values, units=units, duration=duration, offset=offset, substances=substances,
                 )
             elif precipitation_type == EventTypes.FROM_CSV.value:
                 for values_chunk in split_to_even_chunks(values, 300):
@@ -1095,6 +1098,7 @@ class SimulationRunner(QRunnable):
                         duration=duration,
                         offset=offset + chunk_offset,
                         interpolate=interpolate,
+                        substances=substances,
                     )
             elif precipitation_type == EventTypes.FROM_NETCDF.value:
                 filename = os.path.basename(netcdf_filepath)
@@ -1105,7 +1109,7 @@ class SimulationRunner(QRunnable):
                 upload_local_file(upload, netcdf_filepath)
             elif precipitation_type == EventTypes.DESIGN.value:
                 self.tc.create_simulation_custom_precipitation(
-                    sim_id, values=values, units=units, duration=duration, offset=offset
+                    sim_id, values=values, units=units, duration=duration, offset=offset, substances=substances,
                 )
             elif precipitation_type == EventTypes.RADAR.value:
                 self.tc.create_simulation_radar_precipitation(
@@ -1115,6 +1119,7 @@ class SimulationRunner(QRunnable):
                     duration=duration,
                     offset=offset,
                     start_datetime=start,
+                    substances=substances,
                 )
 
     def include_wind(self):
