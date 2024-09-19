@@ -484,18 +484,20 @@ class ThreediCalls:
 
     def create_simulation_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
         
-        logger.error("last stop")
+        logger.error("last stop constant")
         logger.error(rain_data)
         for substance in rain_data["substances"]:
-            logger.error(substance)
-            sub = ForcingSubstance(**substance)
-            logger.error(sub)
+            ForcingSubstance(**substance)
         """Add ConstantRain to the given simulation."""
         constant_rain = self.threedi_api.simulations_events_rain_constant_create(str(simulation_pk), rain_data)
         return constant_rain
 
     def create_simulation_custom_precipitation(self, simulation_pk: int, **rain_data) -> TimeseriesRain:
         """Add TimeseriesRain to the given simulation."""
+        logger.error("last stop custom")
+        logger.error(rain_data)
+        for substance in rain_data["substances"]:
+            ForcingSubstance(**substance)
         time_series_rain = self.threedi_api.simulations_events_rain_timeseries_create(str(simulation_pk), rain_data)
         return time_series_rain
 
@@ -510,6 +512,10 @@ class ThreediCalls:
         return netcdf_upload
 
     def create_simulation_radar_precipitation(self, simulation_pk: int, **rain_data) -> LizardRasterRain:
+        logger.error("last stop radar")
+        logger.error(rain_data)
+        for substance in rain_data["substances"]:
+            ForcingSubstance(**substance)
         """Add LizardRasterRain to the given simulation."""
         time_series_rain = self.threedi_api.simulations_events_rain_rasters_lizard_create(str(simulation_pk), rain_data)
         return time_series_rain

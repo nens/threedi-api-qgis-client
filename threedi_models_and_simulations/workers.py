@@ -1080,9 +1080,8 @@ class SimulationRunner(QRunnable):
             if precipitation_type == EventTypes.CONSTANT.value:
                 # Adjust substance timekeys for precipitation type
                 for substance in substances:
-                    concentrations = substance["concentrations"]
-                    value = concentrations[0][1]
-                    substance["concentrations"] = [[offset, value], [offset+duration, value]]
+                    substance_value = substance["concentrations"][0][1]
+                    substance["concentrations"] = [[0, substance_value], [duration, substance_value]]  # offset should not be used
 
                 self.tc.create_simulation_constant_precipitation(
                     sim_id, value=values, units=units, duration=duration, offset=offset, substances=substances,
@@ -1091,6 +1090,12 @@ class SimulationRunner(QRunnable):
                 for values_chunk in split_to_even_chunks(values, 300):
                     chunk_offset = values_chunk[0][0]
                     values_chunk = [[t - chunk_offset, v] for t, v in values_chunk]
+
+                    # Adjust substance timekeys for precipitation type
+                    for substance in substances:
+                        substance_value = substance["concentrations"][0][1]
+                        substance["concentrations"] = [[t - chunk_offset, substance_value] for t, _ in values_chunk]
+
                     self.tc.create_simulation_custom_precipitation(
                         sim_id,
                         values=values_chunk,
@@ -1101,6 +1106,7 @@ class SimulationRunner(QRunnable):
                         substances=substances,
                     )
             elif precipitation_type == EventTypes.FROM_NETCDF.value:
+                # No substances for this type
                 filename = os.path.basename(netcdf_filepath)
                 if netcdf_global:
                     upload = self.tc.create_simulation_global_netcdf_precipitation(sim_id, filename=filename)
@@ -1108,10 +1114,18 @@ class SimulationRunner(QRunnable):
                     upload = self.tc.create_simulation_raster_netcdf_precipitation(sim_id, filename=filename)
                 upload_local_file(upload, netcdf_filepath)
             elif precipitation_type == EventTypes.DESIGN.value:
+                # Adjust substance timekeys for precipitation type
+                for substance in substances:
+                    substance_value = substance["concentrations"][0][1]
+                    substance["concentrations"] = [[t, substance_value] for t, _ in values]
+
                 self.tc.create_simulation_custom_precipitation(
                     sim_id, values=values, units=units, duration=duration, offset=offset, substances=substances,
                 )
             elif precipitation_type == EventTypes.RADAR.value:
+                for substance in substances:
+                    substance_value = substance["concentrations"][0][1]
+                    substance["concentrations"] = [[0, substance_value], [duration, substance_value]]  # offset should not be used
                 self.tc.create_simulation_radar_precipitation(
                     sim_id,
                     reference_uuid=RADAR_ID,
