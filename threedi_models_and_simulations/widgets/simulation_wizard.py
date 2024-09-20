@@ -3138,7 +3138,7 @@ class SimulationWizard(QWizard):
         simulation_duration = self.duration_page.main_widget.calculate_simulation_duration()
         init_conditions = self.init_conditions_dlg.initial_conditions
         if init_conditions.include_substances:
-            substances = [{"name": item.name, "units": item.units or ""} for item in events.substances]
+            substances = [{"name": item.name, "units": item.units or "", "decay_coefficient": str(item.decay_coefficient) or ""} for item in events.substances]
             if substances:
                 self.substances_page.main_widget.prepopulate_substances_table(substances)
         if init_conditions.include_boundary_conditions:
