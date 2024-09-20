@@ -3307,7 +3307,6 @@ class SimulationWizard(QWizard):
                 breaches_widget.sb_max_breach_depth.setValue(breach.maximum_breach_depth)
         if init_conditions.include_precipitations:
             precipitation_widget = self.precipitation_page.main_widget
-            logger.info(events)
             # Check whether we have a constant substance value
             if events.timeseriesrain:
                 rain = events.timeseriesrain[0]
@@ -3692,7 +3691,7 @@ class SimulationWizard(QWizard):
             new_simulation.new_saved_state = new_saved_state
             if self.summary_page.main_widget.cb_save_template.isChecked():
                 template_name = self.summary_page.main_widget.template_name.text()
-                new_simulation.template_name = template_name
+                new_simulation.template_name = template_name + f"_{i}"
             self.new_simulations.append(new_simulation)
 
     def cancel_wizard(self):
