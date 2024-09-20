@@ -1530,7 +1530,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.plot_precipitation()
 
     def store_cache(self):
-        """Store current widget values."""
+        """Store current widget values for a specific simulation."""
         simulation = self.dd_simulation.currentText()
         precipitation_type = self.cbo_prec_type.currentText()
         
@@ -1732,8 +1732,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.widget_design.hide()
             self.widget_radar.hide()
         self.refresh_current_units()
-        self.plot_precipitation()
         self.update_substance_widgets()
+        self.plot_precipitation()
+        
 
     def sync_units(self, idx):
         """Syncing units widgets."""
@@ -2023,7 +2024,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.unit_label.setFixedWidth(30)
             self.layout().addWidget(self.unit_label)
 
-        def set_unit_label(self, label:str):
+        def set_unit_label(self, label:str) -> None:
             self.unit_label.setText(label)
 
         def get_value(self) -> Optional[float]:
@@ -2031,6 +2032,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 return None
             
             return float(self.line_edit.text())
+
+        def set_value(self, value: float) -> None:
+            self.line_edit.setText(str(value))
+
 
     def update_substance_widgets(self):
 
@@ -3302,8 +3307,17 @@ class SimulationWizard(QWizard):
                 breaches_widget.sb_max_breach_depth.setValue(breach.maximum_breach_depth)
         if init_conditions.include_precipitations:
             precipitation_widget = self.precipitation_page.main_widget
+            logger.error(events)
+            # Check whether we have a constant substance value
             if events.timeseriesrain:
                 rain = events.timeseriesrain[0]
+                if rain.substances:
+                    for substance in rain.substances:
+                        initial_value = substance.concentrations[0][1]
+                        for _, value in substance.concentrations:
+                            assert initial_value == value
+
+            if events.timeseriesrain:
                 if rain.constant:
                     precipitation_widget.cbo_prec_type.setCurrentText(EventTypes.CONSTANT.value)
                     rain_constant_start_after = rain.offset // 3600
@@ -3315,6 +3329,8 @@ class SimulationWizard(QWizard):
                     intensity_ms = rain.values[0][-1]
                     intensity_mmh = ms_to_mmh(intensity_ms)
                     precipitation_widget.sp_intensity.setValue(intensity_mmh)
+                    # As template parameters are always a single simulation, we can just build the widgets
+                    precipitation_widget.update_substance_widgets()
                 else:
                     simulation = precipitation_widget.dd_simulation.currentText()
                     precipitation_widget.cbo_prec_type.setCurrentText(EventTypes.FROM_CSV.value)
@@ -3325,7 +3341,13 @@ class SimulationWizard(QWizard):
                     timestep = rain_values[1][0] - rain_values[0][0]
                     mm_timestep = [[t, mmh_to_mmtimestep(ms_to_mmh(v), timestep)] for t, v in rain_values]
                     precipitation_widget.custom_time_series[simulation] = mm_timestep
+                    precipitation_widget.update_substance_widgets()
                     precipitation_widget.plot_precipitation()
+
+                # We now know all substance widgets are in place, we can set the template value
+                for substance in rain.substances:
+                    precipitation_widget.substance_widgets[substance.substance_name].set_value(substance.concentrations[0][1])
+
             if events.lizardrasterrain:
                 rain = events.lizardrasterrain[0]
                 precipitation_widget.cbo_prec_type.setCurrentText(EventTypes.RADAR.value)
@@ -3335,6 +3357,8 @@ class SimulationWizard(QWizard):
                 precipitation_widget.sp_start_after_radar.setValue(rain_radar_start_after)
                 if rain.duration < simulation_duration:
                     precipitation_widget.sp_stop_after_radar.setValue(rain_radar_stop_after)
+                precipitation_widget.update_substance_widgets()
+
         if init_conditions.include_wind:
             wind_widget = self.wind_page.main_widget
             if events.wind:
