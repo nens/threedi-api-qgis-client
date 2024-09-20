@@ -1123,17 +1123,14 @@ class SimulationRunner(QRunnable):
                     sim_id, values=values, units=units, duration=duration, offset=offset, substances=substances,
                 )
             elif precipitation_type == EventTypes.RADAR.value:
-                for substance in substances:
-                    substance_value = substance["concentrations"][0][1]
-                    substance["concentrations"] = [[0, substance_value], [duration, substance_value]]  # offset should not be used
+                # No substances for this type
                 self.tc.create_simulation_radar_precipitation(
                     sim_id,
                     reference_uuid=RADAR_ID,
                     units=units,
                     duration=duration,
                     offset=offset,
-                    start_datetime=start,
-                    substances=substances,
+                    start_datetime=start
                 )
 
     def include_wind(self):

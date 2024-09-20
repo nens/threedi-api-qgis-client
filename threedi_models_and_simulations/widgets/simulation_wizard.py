@@ -2039,9 +2039,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
 
     def update_substance_widgets(self):
 
-        # For NetCDF rain, we do not apply substance concentrations        
+        # For NetCDF or radar rain, we do not apply substance concentrations        
         precipitation_type_str = self.cbo_prec_type.currentText()
-        if precipitation_type_str == "None" or (EventTypes(precipitation_type_str) == EventTypes.FROM_NETCDF):
+        if precipitation_type_str == "None" or (EventTypes(precipitation_type_str) == EventTypes.FROM_NETCDF) or (EventTypes(precipitation_type_str) == EventTypes.RADAR):
             for substance_widget in self.substance_widgets.values():
                 self.substance_widget.layout().removeWidget(substance_widget)
                 del substance_widget
@@ -3307,7 +3307,7 @@ class SimulationWizard(QWizard):
                 breaches_widget.sb_max_breach_depth.setValue(breach.maximum_breach_depth)
         if init_conditions.include_precipitations:
             precipitation_widget = self.precipitation_page.main_widget
-            logger.error(events)
+            logger.info(events)
             # Check whether we have a constant substance value
             if events.timeseriesrain:
                 rain = events.timeseriesrain[0]
@@ -3682,8 +3682,6 @@ class SimulationWizard(QWizard):
             if self.init_conditions.include_precipitations:
                 self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                 precipitation_data = self.precipitation_page.main_widget.get_precipitation_data()
-                logger.error("-------------------")
-                logger.error(precipitation_data)
                 if simulation_difference == "precipitation" or i == 1:
                     new_simulation.precipitation = dm.Precipitation(*precipitation_data)
                 else:
