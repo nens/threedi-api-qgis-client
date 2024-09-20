@@ -511,6 +511,7 @@ class ThreediCalls:
 
     def create_simulation_radar_precipitation(self, simulation_pk: int, **rain_data) -> LizardRasterRain:
         """Add LizardRasterRain to the given simulation."""
+        logger.info(rain_data)
         time_series_rain = self.threedi_api.simulations_events_rain_rasters_lizard_create(str(simulation_pk), rain_data)
         return time_series_rain
 
