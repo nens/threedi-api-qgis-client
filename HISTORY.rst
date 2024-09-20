@@ -8,6 +8,9 @@ History
 - Fix error when trying to start a simulation with laterals (#589).
 - Updated pyqtgraph to version 0.13.7
 - Model selection: fixed bug (numeric and date columns were sorted lexicographically) (#587)
+- Simulation template creation: append prefix to saved template name in case of Multiple Simulations (#613)
+- GUI: Load parameters from template: not loading substance decay coefficient (#612)
+- GUI: Add substance concentrations section to Precipitation page (#537)
 
 
 3.12.0 (2024-07-17)
