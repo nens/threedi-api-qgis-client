@@ -1599,6 +1599,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "substance_concentration": substance_concentrations,
             }
         elif precipitation_type == EventTypes.RADAR.value:
+            # note that we do not add substance for radar rain
             start_after = self.sp_start_after_radar.value()
             start_after_units = self.start_after_radar_u.currentText()
             stop_after = self.sp_stop_after_radar.value()
@@ -1609,7 +1610,6 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "start_after_units": start_after_units,
                 "stop_after": stop_after,
                 "stop_after_units": stop_after_units,
-                "substance_concentration": substance_concentrations,
             }
 
     def simulation_changed(self):
