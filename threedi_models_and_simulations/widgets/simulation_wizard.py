@@ -1209,7 +1209,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             if self.cb_use_1d_laterals.isChecked():
                 constant_laterals.extend(self.laterals_1d)
             file_laterals_1d.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
-            if  self.substance_concentrations_1d or self.substance_constants_1d:
+            if self.substance_concentrations_1d or self.substance_constants_1d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
                 self.update_laterals_with_substances(file_laterals_1d, substances)
         if self.groupbox_2d_laterals.isChecked():
