@@ -5,6 +5,7 @@ History
 -------------------
 
 - Fixes/enhancements: #368, #440
+- Add support for constant substance concentrations in laterals and boundary conditions (#588)
 
 
 3.13.0 (2024-09-12)

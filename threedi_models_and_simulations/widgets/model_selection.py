@@ -52,6 +52,10 @@ class SortFilterProxyModel(QSortFilterProxyModel):
 class ModelSelectionDialog(uicls, basecls):
     """Dialog for model selection."""
 
+    TABLE_LIMIT = 10
+    NAME_COLUMN_IDX = 1
+    SCHEMATISATION_COLUMN_IDX = 2
+
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -60,6 +64,7 @@ class ModelSelectionDialog(uicls, basecls):
         self.current_user = self.plugin_dock.current_user
         self.threedi_api = self.plugin_dock.threedi_api
         self.organisations = self.plugin_dock.organisations
+        self.threedi_models = None
         self.working_dir = self.plugin_dock.plugin_settings.working_dir
         self.local_schematisations = list_local_schematisations(self.working_dir)
         self.simulation_templates = None
@@ -71,11 +76,8 @@ class ModelSelectionDialog(uicls, basecls):
         self.flowlines_layer = None
         self.organisation = None
         self.model_is_loaded = False
-        self.source_models_model = QStandardItemModel(self)
-        # ProxyModel is a wrapper around the source model, but with filtering/sorting
-        self.proxy_models_model = SortFilterProxyModel(self)
-        self.proxy_models_model.setSourceModel(self.source_models_model)
-        self.models_tv.setModel(self.proxy_models_model)
+        self.models_model = QStandardItemModel()
+        self.models_tv.setModel(self.models_model)
         self.templates_model = QStandardItemModel()
         self.templates_tv.setModel(self.templates_model)
         self.pb_prev_page.clicked.connect(self.move_models_backward)
@@ -165,17 +167,17 @@ class ModelSelectionDialog(uicls, basecls):
         """Fetching 3Di models list."""
         try:
             tc = ThreediCalls(self.threedi_api)
-            offset = (self.page_sbox.value() - 1) * TABLE_LIMIT
+            offset = (self.page_sbox.value() - 1) * self.TABLE_LIMIT
             text = self.search_le.text()
             threedi_models, models_count = tc.fetch_3di_models_with_count(
-                limit=TABLE_LIMIT, offset=offset, name_contains=text
+                limit=self.TABLE_LIMIT, offset=offset, name_contains=text
             )
-            pages_nr = ceil(models_count / TABLE_LIMIT) or 1
+            pages_nr = ceil(models_count / self.TABLE_LIMIT) or 1
             self.page_sbox.setMaximum(pages_nr)
             self.page_sbox.setSuffix(f" / {pages_nr}")
-            self.source_models_model.clear()
+            self.models_model.clear()
             header = ["ID", "Model", "Schematisation", "Revision", "Last updated", "Updated by"]
-            self.source_models_model.setHorizontalHeaderLabels(header)
+            self.models_model.setHorizontalHeaderLabels(header)
             for sim_model in sorted(threedi_models, key=attrgetter("revision_commit_date"), reverse=True):
                 id_item = QStandardItem(str(sim_model.id))
                 name_item = QStandardItem(sim_model.name)
@@ -189,7 +191,8 @@ class ModelSelectionDialog(uicls, basecls):
                 lu_datetime = QDateTime.fromString(last_updated_day, "yyyy-MM-dd")
                 lu_item = QStandardItem(lu_datetime.toString("dd-MMMM-yyyy"))
                 ub_item = QStandardItem(sim_model.user)
-                self.source_models_model.appendRow([id_item, name_item, schema_item, rev_item, lu_item, ub_item])
+                self.models_model.appendRow([id_item, name_item, schema_item, rev_item, lu_item, ub_item])
+            self.threedi_models = threedi_models
         except ApiException as e:
             self.close()
             error_msg = extract_error_message(e)
@@ -203,14 +206,13 @@ class ModelSelectionDialog(uicls, basecls):
         """Fetching simulation templates list."""
         try:
             tc = ThreediCalls(self.threedi_api)
-            offset = (self.templates_page_sbox.value() - 1) * TABLE_LIMIT
+            offset = (self.templates_page_sbox.value() - 1) * self.TABLE_LIMIT
             selected_model = self.get_selected_model()
             model_pk = selected_model.id
-            logger.info(f"Retrieving templates from model {model_pk}")
             templates, templates_count = tc.fetch_simulation_templates_with_count(
-                model_pk, limit=TABLE_LIMIT, offset=offset
+                model_pk, limit=self.TABLE_LIMIT, offset=offset
             )
-            pages_nr = ceil(templates_count / TABLE_LIMIT) or 1
+            pages_nr = ceil(templates_count / self.TABLE_LIMIT) or 1
             self.templates_page_sbox.setMaximum(pages_nr)
             self.templates_page_sbox.setSuffix(f" / {pages_nr}")
             self.templates_model.clear()
@@ -311,9 +313,8 @@ class ModelSelectionDialog(uicls, basecls):
         """Get currently selected model."""
         index = self.models_tv.currentIndex()
         if index.isValid():
-            source_index = self.proxy_models_model.mapToSource(index)
-            current_row = source_index.row()
-            name_item = self.source_models_model.item(current_row, NAME_COLUMN_IDX)
+            current_row = index.row()
+            name_item = self.models_model.item(current_row, self.NAME_COLUMN_IDX)
             selected_model = name_item.data(Qt.UserRole)
         else:
             selected_model = None
@@ -323,9 +324,8 @@ class ModelSelectionDialog(uicls, basecls):
         """Get currently selected model schematisation."""
         index = self.models_tv.currentIndex()
         if index.isValid():
-            source_index = self.proxy_models_model.mapToSource(index)
-            current_row = source_index.row()
-            schematisation_name_item = self.source_models_model.item(current_row, SCHEMATISATION_COLUMN_IDX)
+            current_row = index.row()
+            schematisation_name_item = self.models_model.item(current_row, self.SCHEMATISATION_COLUMN_IDX)
             selected_model_schematisation_id = schematisation_name_item.data(Qt.UserRole)
         else:
             selected_model_schematisation_id = None
@@ -336,7 +336,7 @@ class ModelSelectionDialog(uicls, basecls):
         index = self.templates_tv.currentIndex()
         if index.isValid():
             current_row = index.row()
-            name_item = self.templates_model.item(current_row, NAME_COLUMN_IDX)
+            name_item = self.templates_model.item(current_row, self.NAME_COLUMN_IDX)
             selected_template = name_item.data(Qt.UserRole)
         else:
             selected_template = None
