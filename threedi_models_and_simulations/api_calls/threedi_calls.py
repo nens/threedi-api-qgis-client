@@ -554,7 +554,7 @@ class ThreediCalls:
     def create_simulation_lateral_constant(self, simulation_pk: int, **data) -> ConstantLateral:
         """Add lateral constant to the given simulation."""
         lateral_constant = self.threedi_api.simulations_events_lateral_constant_create(str(simulation_pk), data)
-        return ConstantLateral
+        return lateral_constant
 
     def create_simulation_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
         """Add lateral timeseries to the given simulation."""
