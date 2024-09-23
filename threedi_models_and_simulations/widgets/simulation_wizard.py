@@ -616,7 +616,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             return substances_data
         for bc_substances in substances_data.values():
             for substance in bc_substances:
-                units = substance["units"]
+                units = substance["time_units"]
                 substance["concentrations"] = convert_timeseries_to_seconds(substance["concentrations"], units)
         return substances_data
 
@@ -635,14 +635,14 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             boundary_conditions_data_1d = self.recalculate_boundary_conditions_timeseries(
                 self.TYPE_1D, timesteps_in_seconds
             )
-            if self.substance_concentrations_1d:
+            if self.substance_concentrations_1d or self.substance_constants_1d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
                 self.update_boundary_conditions_with_substances(boundary_conditions_data_1d, substances)
         if self.gb_upload_2d.isChecked():
             boundary_conditions_data_2d = self.recalculate_boundary_conditions_timeseries(
                 self.TYPE_2D, timesteps_in_seconds
             )
-            if self.substance_concentrations_2d:
+            if self.substance_concentrations_2d or self.substance_constants_2d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
                 self.update_boundary_conditions_with_substances(boundary_conditions_data_2d, substances)
         boundary_conditions_data = boundary_conditions_data_1d + boundary_conditions_data_2d
@@ -1137,15 +1137,24 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def recalculate_substances_timeseries(self, laterals_type, timesteps_in_seconds=False):
         """Recalculate substances timeseries (timesteps in seconds)."""
+        laterals_timeseries = {}
+        if laterals_type == self.TYPE_1D:
+            if self.cb_use_1d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_1d_timeseries_template)
+            if self.cb_upload_1d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_1d_timeseries)
+        else:
+            if self.cb_use_2d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_2d_timeseries_template)
+            if self.cb_upload_2d_laterals.isChecked():
+                laterals_timeseries.update(self.laterals_2d_timeseries)
         substance_concentrations = {}
         substance_constants = []
         substance_concentrations_constants = {}
         if laterals_type == self.TYPE_1D:
-            laterals_timeseries = self.laterals_1d_timeseries
             substance_concentrations.update(self.substance_concentrations_1d)
             substance_constants = self.substance_constants_1d
         else:
-            laterals_timeseries = self.laterals_2d_timeseries
             substance_concentrations.update(self.substance_concentrations_2d)
             substance_constants = self.substance_constants_2d
         for lat_id, lat_data in laterals_timeseries.items():
@@ -1179,7 +1188,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             return substances_data
         for lateral_substances in substances_data.values():
             for substance in lateral_substances:
-                units = substance["units"]
+                units = substance["time_units"]
                 substance["concentrations"] = convert_timeseries_to_seconds(substance["concentrations"], units)
         return substances_data
 
@@ -1200,14 +1209,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             if self.cb_use_1d_laterals.isChecked():
                 constant_laterals.extend(self.laterals_1d)
             file_laterals_1d.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
-            if self.substance_concentrations_1d:
+            if  self.substance_concentrations_1d or self.substance_constants_1d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
                 self.update_laterals_with_substances(file_laterals_1d, substances)
         if self.groupbox_2d_laterals.isChecked():
             if self.cb_use_2d_laterals.isChecked():
                 constant_laterals.extend(self.laterals_2d)
             file_laterals_2d.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
-            if self.substance_concentrations_2d:
+            if self.substance_concentrations_2d or self.substance_constants_2d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
                 self.update_laterals_with_substances(file_laterals_2d, substances)
         return constant_laterals, file_laterals_1d, file_laterals_2d
