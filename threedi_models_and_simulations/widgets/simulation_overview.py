@@ -239,6 +239,8 @@ class SimulationOverview(uicls, basecls):
                 "progress": 0,
                 "status": status_name,
                 "user_name": sim.user,
+                "simulation_user_first_name": self.plugin_dock.current_user_first_name,
+                "simulation_user_last_name": self.plugin_dock.current_user_last_name,
             }
             self.add_simulation_to_model(sim.id, sim_data)
             info_msg = f"Simulation {new_simulation.name} added to queue!"

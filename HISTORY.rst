@@ -4,7 +4,7 @@ History
 3.14.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix for the 'simulation_user_first_name' KeyError.
 
 
 3.14.0 (2024-09-24)
