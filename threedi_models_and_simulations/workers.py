@@ -152,6 +152,11 @@ class WSProgressesSentinel(QObject):
             sim_data["status"] = status_name
             if status_name == SimulationStatusName.FINISHED.value:
                 if sim_data["progress"] == 100:
+                    statuses = {status.simulation_id: status for status in self.tc.fetch_simulation_statuses()}
+                    sim_status = statuses[sim_id]
+                    sim_data["status"] = SimulationStatusName.FINISHED.value
+                    sim_data["simulation_user_first_name"] = sim_status.simulation_user_first_name
+                    sim_data["simulation_user_last_name"] = sim_status.simulation_user_last_name
                     self.simulation_finished.emit({sim_id: sim_data})
                 else:
                     sim_data["status"] = SimulationStatusName.STOPPED.value
