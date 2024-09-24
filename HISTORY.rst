@@ -1,7 +1,7 @@
 History
 =======
 
-3.13.1 (unreleased)
+3.14.0 (2024-09-24)
 -------------------
 
 - Fixes/enhancements: #368, #440
