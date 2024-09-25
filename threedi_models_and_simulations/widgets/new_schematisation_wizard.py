@@ -173,7 +173,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         """Global settings defaults."""
         defaults = {
             "id": 1,
-            "advection_1d": 3,
+            "advection_1d": 1,
             "advection_2d": 1,
             "control_group_id": None,
             "dem_file": None,
@@ -273,7 +273,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         user_settings["epsg_code"] = int(epsg.split(":")[-1]) if epsg else 0
         use_1d_checked = self.use_1d_flow_group.isChecked()
         use_2d_checked = self.use_2d_flow_group.isChecked()
-        user_settings["advection_1d"] = 3 if use_1d_checked else 0
+        user_settings["advection_1d"] = 1 if use_1d_checked else 0
         user_settings["advection_2d"] = 1 if use_2d_checked else 0
         if use_2d_checked:
             dem_file = os.path.basename(user_settings["dem_file"])
