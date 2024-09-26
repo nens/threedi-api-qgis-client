@@ -1536,11 +1536,12 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         
         # iterate over the substance values and retrieve the values
         substance_concentrations = []
-        for substance in self.substances:
-            substance_name = substance["name"]
-            assert substance_name in self.substance_widgets
-            value = self.substance_widgets[substance_name].get_value()
-            substance_concentrations.append({"name": substance_name, "unit": substance.get("unit", ""), "concentration": value})
+        if not ((precipitation_type == EventTypes.FROM_NETCDF.value) or (precipitation_type == EventTypes.RADAR.value)):
+            for substance in self.substances:
+                substance_name = substance["name"]
+                assert substance_name in self.substance_widgets
+                value = self.substance_widgets[substance_name].get_value()
+                substance_concentrations.append({"name": substance_name, "unit": substance.get("unit", ""), "concentration": value})
 
         if precipitation_type == EventTypes.CONSTANT.value:
             start_after = self.sp_start_after_constant.value()
@@ -1948,12 +1949,13 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
 
         # Retrieve substance data from widgets, these have been properly set in run_new_simulation
         substances = []
-        for substance in self.substances:
-            substance_name = substance["name"]
-            substance_widget = self.substance_widgets[substance_name]
-            sub_value = substance_widget.get_value()
-            if sub_value is not None:
-                substances.append({"substance": substance_name, "substance_id": None, "substance_name": substance_name, "concentrations": [[0.0, sub_value]]})
+        if not ((precipitation_type == EventTypes.FROM_NETCDF.value) or (precipitation_type == EventTypes.RADAR.value)):
+            for substance in self.substances:
+                substance_name = substance["name"]
+                substance_widget = self.substance_widgets[substance_name]
+                sub_value = substance_widget.get_value()
+                if sub_value is not None:
+                    substances.append({"substance": substance_name, "substance_id": None, "substance_name": substance_name, "concentrations": [[0.0, sub_value]]})
 
         return (
             precipitation_type,
@@ -2047,6 +2049,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 del substance_widget
             self.substance_widgets.clear()
             self.substance_widget.hide()
+            return
         else:
             self.substance_widget.show()
 
