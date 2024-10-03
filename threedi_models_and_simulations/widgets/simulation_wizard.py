@@ -17,55 +17,25 @@ from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
 from qgis.PyQt.QtGui import QColor, QFont, QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import (
-    QComboBox,
-    QDoubleSpinBox,
-    QFileDialog,
-    QGridLayout,
-    QGroupBox,
-    QLabel,
-    QLineEdit,
-    QRadioButton,
-    QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
-    QSpinBox,
-    QTableWidgetItem,
-    QWidget,
-    QWizard,
-    QWizardPage,
-)
+from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
+                                 QGridLayout, QGroupBox, QLabel, QLineEdit,
+                                 QRadioButton, QScrollArea, QSizePolicy,
+                                 QSpacerItem, QSpinBox, QTableWidgetItem,
+                                 QWidget, QWizard, QWizardPage)
 from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
-from ..utils import (
-    TEMPDIR,
-    BreachSourceType,
-    EventTypes,
-    apply_24h_timeseries,
-    convert_timeseries_to_seconds,
-    extract_error_message,
-    get_download_file,
-    handle_csv_header,
-    intervals_are_even,
-    mmh_to_mmtimestep,
-    mmh_to_ms,
-    mmtimestep_to_mmh,
-    ms_to_mmh,
-    parse_timeseries,
-    read_json_data,
-)
-from ..utils_ui import (
-    NumericDelegate,
-    get_filepath,
-    qgis_layers_cbo_get_layer_uri,
-    read_3di_settings,
-    save_3di_settings,
-    scan_widgets_parameters,
-    set_widget_background_color,
-    set_widgets_parameters,
-)
+from ..utils import (TEMPDIR, BreachSourceType, EventTypes,
+                     apply_24h_timeseries, convert_timeseries_to_seconds,
+                     extract_error_message, get_download_file,
+                     handle_csv_header, intervals_are_even, mmh_to_mmtimestep,
+                     mmh_to_ms, mmtimestep_to_mmh, ms_to_mmh, parse_timeseries,
+                     read_json_data)
+from ..utils_ui import (NumericDelegate, get_filepath,
+                        qgis_layers_cbo_get_layer_uri, read_3di_settings,
+                        save_3di_settings, scan_widgets_parameters,
+                        set_widget_background_color, set_widgets_parameters)
 from .custom_items import FilteredComboBox
 from .initial_concentrations import InitialConcentrationsWidget
 from .substance_concentrations import SubstanceConcentrationsWidget
@@ -715,6 +685,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.initial_saved_state = initial_conditions.initial_saved_state
         self.initial_waterlevels = {}
         self.initial_waterlevels_1d = {}
+        self.initial_waterlevels_files = {}
         self.saved_states = {}
         self.initial_concentrations_widget = QWidget()
         self.rasters = []
@@ -785,6 +756,15 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                     self.cbo_saved_states.setCurrentIndex(initial_saved_state_idx)
             initial_waterlevels = tc.fetch_3di_model_initial_waterlevels(model_id) or []
             initial_waterlevels_2d = [iw for iw in initial_waterlevels if iw.dimension == "two_d"]
+            initial_waterlevels_1d = [iw for iw in initial_waterlevels if iw.dimension == "one_d"]
+            if initial_waterlevels_1d:
+                self.rb_1d_online_file.setChecked(True)
+                logger.error("-----------")
+                logger.error(initial_waterlevels_1d)
+            for iw in sorted(initial_waterlevels_1d, key=attrgetter("id")):
+                self.initial_waterlevels_files[iw.file.filename] = iw 
+                self.cbo_1d_online_file.addItem(iw.file.filename)
+
             if initial_waterlevels_2d:
                 self.rb_2d_online_raster.setChecked(True)
                 self.rb_gw_online_raster.setChecked(True)
@@ -3532,6 +3512,10 @@ class SimulationWizard(QWizard):
                 elif self.init_conditions_page.main_widget.rb_1d_upload_csv.isChecked():
                     initial_conditions.initial_waterlevels_1d = (
                         self.init_conditions_page.main_widget.initial_waterlevels_1d
+                    )
+                elif self.init_conditions_page.main_widget.rb_1d_online_file.isChecked():
+                    initial_conditions.online_waterlevels_1d = (
+                        self.init_conditions_page.main_widget.initial_waterlevels_files[self.init_conditions_page.main_widget.cbo_1d_online_file.currentText()]
                     )
                 else:
                     initial_conditions.from_spatialite_1d = True

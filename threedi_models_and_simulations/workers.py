@@ -10,7 +10,8 @@ from functools import partial
 import requests
 from PyQt5 import QtWebSockets
 from PyQt5.QtNetwork import QNetworkRequest
-from qgis.PyQt.QtCore import QByteArray, QObject, QRunnable, QUrl, pyqtSignal, pyqtSlot
+from qgis.PyQt.QtCore import (QByteArray, QObject, QRunnable, QUrl, pyqtSignal,
+                              pyqtSlot)
 from threedi_api_client.files import upload_file
 from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import bypass_max_path_limit
@@ -18,28 +19,14 @@ from threedi_mi_utils import bypass_max_path_limit
 from .api_calls.threedi_calls import ThreediCalls
 from .data_models import simulation_data_models as dm
 from .data_models.enumerators import SimulationStatusName
-from .utils import (
-    API_DATETIME_FORMAT,
-    BOUNDARY_CONDITIONS_TEMPLATE,
-    CHUNK_SIZE,
-    DWF_FILE_TEMPLATE,
-    INITIAL_WATERLEVELS_TEMPLATE,
-    LATERALS_FILE_TEMPLATE,
-    RADAR_ID,
-    TEMPDIR,
-    EventTypes,
-    FileState,
-    ThreediFileState,
-    ThreediModelTaskStatus,
-    UploadFileStatus,
-    extract_error_message,
-    get_download_file,
-    split_to_even_chunks,
-    unzip_archive,
-    upload_local_file,
-    write_json_data,
-    zip_into_archive,
-)
+from .utils import (API_DATETIME_FORMAT, BOUNDARY_CONDITIONS_TEMPLATE,
+                    CHUNK_SIZE, DWF_FILE_TEMPLATE,
+                    INITIAL_WATERLEVELS_TEMPLATE, LATERALS_FILE_TEMPLATE,
+                    RADAR_ID, TEMPDIR, EventTypes, FileState, ThreediFileState,
+                    ThreediModelTaskStatus, UploadFileStatus,
+                    extract_error_message, get_download_file,
+                    split_to_even_chunks, unzip_archive, upload_local_file,
+                    write_json_data, zip_into_archive)
 
 logger = logging.getLogger(__name__)
 
@@ -788,14 +775,6 @@ class SimulationRunner(QRunnable):
                     threedimodel_id, initial_waterlevel_id
                 )
                 if uploaded_initial_waterlevel.state == ThreediFileState.VALID.value:
-                    # Step 4: Find & delete existing 1D water levels file of the simulation
-                    water_level_1d_files = self.tc.fetch_simulation_initial_1d_water_level_files(sim_id)
-                    for water_level_1d_file in water_level_1d_files:
-                        self.tc.delete_simulation_initial_1d_water_level_file(sim_id, water_level_1d_file.id)
-                    # Step 5: Create a new 1D initial water level file for the simulation
-                    self.tc.create_simulation_initial_1d_water_level_file(
-                        sim_id, initial_waterlevel=initial_waterlevel_id
-                    )
                     break
                 elif uploaded_initial_waterlevel.state == ThreediFileState.INVALID.value:
                     state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()
@@ -803,6 +782,31 @@ class SimulationRunner(QRunnable):
                     raise SimulationRunnerError(err_msg)
                 else:
                     time.sleep(2)
+            
+            if uploaded_initial_waterlevel.state != ThreediFileState.VALID.value:
+                    state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()
+                    err_msg = f"Failed to upload Initial Waterlevel file due to the following reasons: {state_detail}"
+                    raise SimulationRunnerError(err_msg)
+            
+        if initial_conditions.initial_waterlevels_1d is not None or initial_conditions.online_waterlevels_1d is not None:
+            # Step 4: Find & delete existing 1D water levels file of the simulation
+            water_level_1d_files = self.tc.fetch_simulation_initial_1d_water_level_files(sim_id)
+            for water_level_1d_file in water_level_1d_files:
+                self.tc.delete_simulation_initial_1d_water_level_file(sim_id, water_level_1d_file.id)
+
+            # Step 5: Create a new 1D initial water level file for the simulation
+            logger.error(f"Invoking {sim_id} with {initial_waterlevel_id}")
+            if initial_conditions.initial_waterlevels_1d is not None:
+                self.tc.create_simulation_initial_1d_water_level_file(
+                    sim_id, initial_waterlevel=initial_waterlevel_id
+                )
+            elif initial_conditions.online_waterlevels_1d is not None:
+                self.tc.create_simulation_initial_1d_water_level_file(
+                    sim_id, initial_waterlevel=initial_conditions.online_waterlevels_1d.id
+                )
+            else:
+                raise AssertionError("Both initial and online waterlevels are set")
+
         # 2D
         if initial_conditions.global_value_2d is not None:
             self.tc.create_simulation_initial_2d_water_level_constant(sim_id, value=initial_conditions.global_value_2d)
