@@ -762,9 +762,11 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                 logger.info("Retrieved 1d initial waterlevel from model")
                 logger.info(initial_waterlevels_1d)
             for iw in sorted(initial_waterlevels_1d, key=attrgetter("id")):
-                self.initial_waterlevels_files[iw.file.filename] = iw 
-                self.cbo_1d_online_file.addItem(iw.file.filename)
-
+                if iw.file:
+                    self.initial_waterlevels_files[iw.file.filename] = iw 
+                    self.cbo_1d_online_file.addItem(iw.file.filename)
+                else:
+                    logger.info(f"Water level instance {iw.id} does not have a file, skipping.")
             if initial_waterlevels_2d:
                 self.rb_2d_online_raster.setChecked(True)
                 self.rb_gw_online_raster.setChecked(True)
