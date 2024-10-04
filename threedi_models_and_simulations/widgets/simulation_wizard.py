@@ -759,8 +759,8 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             initial_waterlevels_1d = [iw for iw in initial_waterlevels if iw.dimension == "one_d"]
             if initial_waterlevels_1d:
                 self.rb_1d_online_file.setChecked(True)
-                logger.error("-----------")
-                logger.error(initial_waterlevels_1d)
+                logger.info("Retrieved 1d initial waterlevel from model")
+                logger.info(initial_waterlevels_1d)
             for iw in sorted(initial_waterlevels_1d, key=attrgetter("id")):
                 self.initial_waterlevels_files[iw.file.filename] = iw 
                 self.cbo_1d_online_file.addItem(iw.file.filename)

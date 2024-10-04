@@ -795,12 +795,13 @@ class SimulationRunner(QRunnable):
                 self.tc.delete_simulation_initial_1d_water_level_file(sim_id, water_level_1d_file.id)
 
             # Step 5: Create a new 1D initial water level file for the simulation
-            logger.error(f"Invoking {sim_id} with {initial_waterlevel_id}")
             if initial_conditions.initial_waterlevels_1d is not None:
                 self.tc.create_simulation_initial_1d_water_level_file(
                     sim_id, initial_waterlevel=initial_waterlevel_id
                 )
             elif initial_conditions.online_waterlevels_1d is not None:
+                logger.info("Setting online 1D waterlevel file")
+                logger.info(initial_conditions.online_waterlevels_1d)
                 self.tc.create_simulation_initial_1d_water_level_file(
                     sim_id, initial_waterlevel=initial_conditions.online_waterlevels_1d.id
                 )
