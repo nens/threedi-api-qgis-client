@@ -3195,6 +3195,14 @@ class SimulationWizard(QWizard):
                 if events.initial_onedwaterlevel:
                     init_conditions_widget.rb_d1_gv.setChecked(True)
                     init_conditions_widget.sp_1d_global_value.setValue(events.initial_onedwaterlevel.value)
+                elif events.initial_onedwaterlevelfile:
+                    init_conditions_widget.rb_1d_online_file.setChecked(True)
+                    # Set right value in combobox based on initial waterlevel id
+                    for file_name, iw in init_conditions_widget.initial_waterlevels_files.items():
+                        if iw.id == events.initial_onedwaterlevelfile.initial_waterlevel_id:
+                            found_water_level = True
+                            init_conditions_widget.cbo_1d_online_file.setCurrentText(file_name)
+                    assert found_water_level
                 else:
                     init_conditions_widget.rb_d1_dd.setChecked(True)
             if any([events.initial_twodwaterlevel, events.initial_twodwaterraster]):
@@ -3702,4 +3710,5 @@ class SimulationWizard(QWizard):
         """Handling canceling wizard action."""
         self.settings.setValue("threedi/wizard_size", self.size())
         self.model_selection_dlg.unload_breach_layers()
+        self.reject()
         self.reject()
