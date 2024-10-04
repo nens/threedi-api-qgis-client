@@ -787,7 +787,10 @@ class SimulationRunner(QRunnable):
                     state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()
                     err_msg = f"Failed to upload Initial Waterlevel file due to the following reasons: {state_detail}"
                     raise SimulationRunnerError(err_msg)
-            
+
+        # These options should be mutually exclusive
+        assert not(initial_conditions.initial_waterlevels_1d is not None and initial_conditions.online_waterlevels_1d is not None)
+
         if initial_conditions.initial_waterlevels_1d is not None or initial_conditions.online_waterlevels_1d is not None:
             # Step 4: Find & delete existing 1D water levels file of the simulation
             water_level_1d_files = self.tc.fetch_simulation_initial_1d_water_level_files(sim_id)
@@ -805,8 +808,6 @@ class SimulationRunner(QRunnable):
                 self.tc.create_simulation_initial_1d_water_level_file(
                     sim_id, initial_waterlevel=initial_conditions.online_waterlevels_1d.id
                 )
-            else:
-                raise AssertionError("Both initial and online waterlevels are set")
 
         # 2D
         if initial_conditions.global_value_2d is not None:
