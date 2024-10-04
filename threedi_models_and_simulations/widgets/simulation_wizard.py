@@ -3715,4 +3715,4 @@ class SimulationWizard(QWizard):
         self.settings.setValue("threedi/wizard_size", self.size())
         self.model_selection_dlg.unload_breach_layers()
         self.reject()
-        self.reject()
+
