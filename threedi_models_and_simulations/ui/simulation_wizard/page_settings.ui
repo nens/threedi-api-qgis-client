@@ -1601,22 +1601,22 @@
                </property>
                <item>
                 <property name="text">
-                 <string>0: Do not use 1D advection</string>
+                 <string>0: No 1D advection</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>1: Momentum conservative</string>
+                 <string>1: Momentum conservative scheme</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>2: Energy conservative</string>
+                 <string>2: Energy conservative scheme</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>3: Combined momentum and energy conservative</string>
+                 <string>3: Combined momentum and energy conservative scheme</string>
                 </property>
                </item>
               </widget>
