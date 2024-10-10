@@ -733,6 +733,8 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             return
         self.initial_concentrations_1d_label.show()
         initial_concentrations_widget_1D = Initial1DConcentrationsWidget(self.substances, self.parent_page)
+        self.local_data = initial_concentrations_widget_1D.local_data
+        self.online_files = initial_concentrations_widget_1D.online_files
         self.initial_concentrations_widget_1D = initial_concentrations_widget_1D.widget
         self.layout().addWidget(self.initial_concentrations_widget_1D, 5, 2)
 
@@ -3597,6 +3599,45 @@ class SimulationWizard(QWizard):
                                 break
             if initial_concentrations_2d:
                 initial_conditions.initial_concentrations_2d = initial_concentrations_2d
+
+            # TODO: Initial concentrations 1D for substances
+            widget = self.init_conditions_page.main_widget.initial_concentrations_widget_1D
+            online_files = self.init_conditions_page.main_widget.online_files
+            local_data = self.init_conditions_page.main_widget.local_data
+
+            initial_concentrations_1d = {}
+            logger.error("HELLO")
+            logger.error("local_data")
+            for substance in substances:
+                substance_name = substance.get("name")
+                logger.error("**")
+                logger.error(f"gb_initial_concentrations_1d_{substance_name}")
+                groupbox_ic_1d = widget.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                rb_local_file = widget.findChild(QRadioButton, f"rb_local_file_{substance_name}")
+                rb_online_file = widget.findChild(QRadioButton, f"rb_online_file_1d_{substance_name}")
+                # cbo_local_raster = widget.findChild(QComboBox, f"cbo_local_raster_{substance_name}")
+                # cbo_online_raster = widget.findChild(QComboBox, f"cbo_online_raster_{substance_name}").currentText()
+                if groupbox_ic_1d.isChecked():
+                    if rb_local_file.isChecked():
+                        logger.error("localdata")
+                        logger.error(local_data)
+                        initial_concentrations = {
+                            "local_data": local_data[substance_name],
+                            "online_file": None,
+                        }
+                        initial_concentrations_1d[substance_name] = initial_concentrations
+                    elif rb_online_file.isChecked():
+                #         for raster in rasters:
+                #             if raster.name == cbo_online_raster:
+                #                 initial_concentrations = {
+                #                     "local_raster_path": None,
+                #                     "online_raster": raster.id,
+                #                 }
+                #                 initial_concentrations_1d[substance_name] = initial_concentrations
+                #                 break
+                        pass
+            if initial_concentrations_1d:
+                initial_conditions.initial_concentrations_1d = initial_concentrations_1d
 
         # Laterals
         if self.init_conditions.include_laterals:

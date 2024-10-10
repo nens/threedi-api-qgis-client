@@ -1,3 +1,4 @@
+import csv
 import logging
 import os
 from functools import partial
@@ -7,12 +8,12 @@ from typing import Dict, List
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapLayerComboBox
 from qgis.PyQt.QtGui import QFont
-from qgis.PyQt.QtWidgets import (QComboBox, QGridLayout, QGroupBox, QLabel,
-                                 QRadioButton, QSizePolicy, QToolButton,
-                                 QWidget)
+from qgis.PyQt.QtWidgets import (QComboBox, QFileDialog, QGridLayout,
+                                 QGroupBox, QLabel, QLineEdit, QRadioButton,
+                                 QSizePolicy, QToolButton, QWidget)
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils_ui import get_filepath
+from ..utils_ui import get_filepath, read_3di_settings, save_3di_settings
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,9 @@ class Initial1DConcentrationsWidget(QWidget):
         self.substances = substances
         self.parent_page = parent
         self.widget = QWidget()
-        self.files = []
+        self.online_files = []
+        self.local_data = {}
+
         self.load_files()
         self.setup_ui()
         self.connect_signals()
@@ -44,90 +47,124 @@ class Initial1DConcentrationsWidget(QWidget):
             substance_name = substance["name"]
             # online file
             cbo_online_file: QComboBox = self.widget.findChild(QComboBox, f"cbo_online_file_1d_{substance_name}")
-            for file in sorted(self.files, key=attrgetter("id")):
+            for file in sorted(self.online_files, key=attrgetter("id")):
                 cbo_online_file.addItem(file.filename)
-        
+
             # local file
-            cbo_local_file = self.widget.findChild(QgsMapLayerComboBox, f"cbo_local_file_{substance_name}")
+            le_local_file = self.widget.findChild(QLineEdit, f"le_local_file_{substance_name}")
             browse_button = self.widget.findChild(QToolButton, f"btn_browse_local_file_{substance_name}")
-            browse_button.clicked.connect(partial(self.browse_for_local_file, cbo_local_file))
+            browse_button.clicked.connect(partial(self.browse_for_local_file, le_local_file, substance_name))
 
     def load_files(self):
         tc = ThreediCalls(self.parent_page.parent_wizard.plugin_dock.threedi_api)
         model_id = self.parent_page.parent_wizard.model_selection_dlg.current_model.id
-        files = tc.fetch_3di_model_initial_concentrations(model_id)
-        for file in files:
-            if file.dimension == "one_d":
-                self.files.append(file)
+        concentrations = tc.fetch_3di_model_initial_concentrations(model_id)
+        for concentration in concentrations:
+            if concentration.dimension == "one_d":
+                # TODO
+                # self.online_files.append(file)
+                pass
 
     def create_initial_concentrations(self, main_layout: QGridLayout):
         """Create initial concentrations."""
         for i, substance in enumerate(self.substances):
             name = substance["name"]
             # Substance groupbox widget
-            groupbox = QGroupBox(name)
+            groupbox = QGroupBox(name, self)
             groupbox.setFont(QFont("Segoe UI", 10))
             groupbox.setCheckable(True)
             groupbox.setChecked(False)
+            logger.error(f"gb_initial_concentrations_1d_{name}")
             groupbox.setObjectName(f"gb_initial_concentrations_1d_{name}")
             groupbox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
             # Online file upload widget
-            is_online_file_available = True if self.files else False
-            rb_online_file = QRadioButton("Online file")
+            is_online_file_available = True if self.online_files else False
+            rb_online_file = QRadioButton("Online file", self)
             rb_online_file.setObjectName(f"rb_online_file_1d_{name}")
             rb_online_file.setChecked(is_online_file_available)
-            cbo_online_file = QComboBox()
+            cbo_online_file = QComboBox(self)
             cbo_online_file.setEnabled(is_online_file_available)
             cbo_online_file.setObjectName(f"cbo_online_file_1d_{name}")
             rb_online_file.toggled.connect(lambda checked: cbo_online_file.setEnabled(checked))
 
             # Local csv upload widget
-            rb_local_file = QRadioButton("Upload CSV")
+            rb_local_file = QRadioButton("Upload CSV", self)
             rb_local_file.setObjectName(f"rb_local_file_{name}")
             rb_local_file.setChecked(not is_online_file_available)
-            cbo_local_file = QgsMapLayerComboBox()
-            # cbo_local_file.setFilters(QgsMapLayerProxyModel.RasterLayer)
-            cbo_local_file.setEnabled(not is_online_file_available)
-            cbo_local_file.setObjectName(f"cbo_local_file_{name}")
-            btn_browse_local_file = QToolButton()
+            le_local_file = QLineEdit(self)
+            le_local_file.setEnabled(not is_online_file_available)
+            le_local_file.setReadOnly(True)
+            le_local_file.setObjectName(f"le_local_file_{name}")
+            le_local_file.resize(329, le_local_file.height())
+            btn_browse_local_file = QToolButton(self)
             btn_browse_local_file.setText("...")
             btn_browse_local_file.setEnabled(not is_online_file_available)
             btn_browse_local_file.setObjectName(f"btn_browse_local_file_{name}")
             rb_local_file.toggled.connect(
-                lambda checked: (cbo_local_file.setEnabled(checked), btn_browse_local_file.setEnabled(checked))
+                lambda checked: (le_local_file.setEnabled(checked), btn_browse_local_file.setEnabled(checked))
             )
 
             # Add widgets to layout
-            groupbox_layout = QGridLayout()
+            groupbox_layout = QGridLayout(self)
             groupbox_layout.addWidget(rb_online_file, 0, 0)
             groupbox_layout.addWidget(cbo_online_file, 0, 1)
             groupbox_layout.addWidget(rb_local_file, 1, 0)
-            groupbox_layout.addWidget(cbo_local_file, 1, 1)
+            groupbox_layout.addWidget(le_local_file, 1, 1)
             groupbox_layout.addWidget(btn_browse_local_file, 1, 2)
 
             # Add groupbox to the main layout
             groupbox.setLayout(groupbox_layout)
             main_layout.addWidget(groupbox, i, 0)
 
-    def browse_for_local_file(self, widget: QgsMapLayerComboBox):
-        logger.error("browse")
-    #     """Allow user to browse for a raster layer and insert it to the widget."""
-    #     name_filter = "GeoTIFF (*.tif *.TIF *.tiff *.TIFF)"
-    #     title = "Select raster file"
-    #     raster_file = get_filepath(None, extension_filter=name_filter, dialog_title=title)
-    #     if not raster_file:
-    #         return
-    #     filename = os.path.basename(raster_file)
-    #     if filename in self.filenames:
-    #         error_message = f"Raster {filename} is already in the online rasters."
-    #         self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_message)
-    #         return
-    #     items = widget.additionalItems()
-    #     if raster_file not in items:
-    #         items.append(raster_file)
-    #     widget.setAdditionalItems(items)
+    def browse_for_local_file(self, line_edit, substance):
+        last_folder = read_3di_settings("last_1d_initial_concentrations", os.path.expanduser("~"))
+        file_filter = "CSV (*.csv );;All Files (*)"
+        filename, __ = QFileDialog.getOpenFileName(self, "1D Initial Concentration Time Series", last_folder, file_filter)
+        if len(filename) == 0:
+            return
+        save_3di_settings("last_1d_initial_concentrations", os.path.dirname(filename))
+        with open(filename, encoding="utf-8-sig") as csvfile:
+            reader = csv.DictReader(csvfile)
+            header = reader.fieldnames
+            concentration_list = list(reader)
+        error_msg = Initial1DConcentrationsWidget.handle_1D_initial_concentration_header(header)
+        if error_msg is not None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_msg)
+            return
+        
+        node_ids = []
+        values = []
+        for row in concentration_list:
+            node_id_str = row.get("id").strip()
+            value_str = row.get("value").strip()
+            if not node_id_str or not value_str:
+                error_msg = "Missing values in CSV file. Please remove these lines or fill in a value and try again."
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_msg)
+                return
+            try:
+                node_id = int(node_id_str)
+                value = float(value_str)
+                node_ids.append(node_id)
+                values.append(value)
+            except ValueError:
+                error_msg = f"Invalid data format in CSV: id='{node_id_str}', value='{value_str}'"
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_msg)
+                return
+        line_edit.setText(filename)
+        self.local_data[substance] = {
+            "node_ids": node_ids,
+            "values": values,
+        }
 
+    @staticmethod
+    def handle_1D_initial_concentration_header(header: List[str]):
+        if not header:
+            return "CSV file is empty!"
+        if "id" not in header:
+            return "Missing 'id' column in CSV file!"
+        if "value" not in header:
+            return "Missing 'value' column in CSV file!"
 
 class Initial2DConcentrationsWidget(QWidget):
     """Widget for handling initial concentrations."""
