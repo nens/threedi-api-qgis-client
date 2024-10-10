@@ -4,7 +4,7 @@ History
 3.14.2 (unreleased)
 -------------------
 
-- Fixes/enhancements: #616
+- Fixes/enhancements: #616, #622
 
 
 3.14.1 (2024-09-25)
