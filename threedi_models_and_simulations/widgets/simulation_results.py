@@ -76,7 +76,7 @@ class SimulationResults(uicls, basecls):
         self.finished_simulations.clear()
         self.download_progress_bars.clear()
         self.running_downloads.clear()
-        self.setup_results_overview_dialog()
+        self.setup_view_model()
         self.plugin_dock.simulations_progresses_sentinel.simulation_finished.connect(self.update_finished_list)
         self.tv_finished_sim_tree.selectionModel().selectionChanged.connect(self.toggle_refresh_results)
         self.plugin_dock.simulations_progresses_sentinel.fetch_finished_simulations()
