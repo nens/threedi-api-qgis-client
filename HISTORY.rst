@@ -4,7 +4,7 @@ History
 3.14.2 (unreleased)
 -------------------
 
-- Fixes/enhancements: #616
+- Fixes/enhancements: #616, #622
 - Setting 1D initial substance concentration (#609)
 - Added check for non-ascii characters in substance unit (#621)
 - Added user feedback for invalid boundary conditions file. (#624)
