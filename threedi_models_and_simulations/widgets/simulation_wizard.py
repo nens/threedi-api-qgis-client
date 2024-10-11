@@ -3600,7 +3600,6 @@ class SimulationWizard(QWizard):
             if initial_concentrations_2d:
                 initial_conditions.initial_concentrations_2d = initial_concentrations_2d
 
-            # TODO: Initial concentrations 1D for substances
             widget = self.init_conditions_page.main_widget.initial_concentrations_widget_1D
             online_files = self.init_conditions_page.main_widget.online_files
             local_data = self.init_conditions_page.main_widget.local_data
