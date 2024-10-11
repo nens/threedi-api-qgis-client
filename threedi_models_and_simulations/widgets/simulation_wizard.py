@@ -722,7 +722,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.initial_concentrations_widget = initial_concentrations_widget.widget
         self.rasters = initial_concentrations_widget.rasters
         parent_layout = self.layout()
-        parent_layout.addWidget(self.initial_concentrations_widget, 3, 2)
+        parent_layout.addWidget(self.initial_concentrations_widget, 5, 2)
 
     def setup_1d_initial_concentrations(self):
         if hasattr(self, "initial_concentrations_widget_1D"):
@@ -736,7 +736,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.local_data = initial_concentrations_widget_1D.local_data
         self.online_files = initial_concentrations_widget_1D.online_files
         self.initial_concentrations_widget_1D = initial_concentrations_widget_1D.widget
-        self.layout().addWidget(self.initial_concentrations_widget_1D, 5, 2)
+        self.layout().addWidget(self.initial_concentrations_widget_1D, 3, 2)
 
     def on_saved_state_change(self, checked):
         """Handle saved state group checkbox."""

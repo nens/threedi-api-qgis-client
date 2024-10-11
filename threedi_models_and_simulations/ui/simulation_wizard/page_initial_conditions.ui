@@ -882,7 +882,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Initial concentrations (2D)</string>
+      <string>Initial concentrations (1D)</string>
      </property>
     </widget>
    </item>
@@ -923,7 +923,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Initial concentrations (1D)</string>
+      <string>Initial concentrations (2D)</string>
      </property>
     </widget>
    </item>

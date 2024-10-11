@@ -9,8 +9,9 @@ from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapLayerComboBox
 from qgis.PyQt.QtGui import QFont
 from qgis.PyQt.QtWidgets import (QComboBox, QFileDialog, QGridLayout,
-                                 QGroupBox, QLabel, QLineEdit, QRadioButton,
-                                 QSizePolicy, QToolButton, QWidget)
+                                 QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+                                 QRadioButton, QSizePolicy, QToolButton,
+                                 QWidget)
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils_ui import get_filepath, read_3di_settings, save_3di_settings
@@ -39,6 +40,7 @@ class Initial1DConcentrationsWidget(QWidget):
 
     def setup_ui(self):
         layout = QGridLayout()
+        layout.setContentsMargins(9, 9, 0, 9)
         self.widget.setLayout(layout)
         self.create_initial_concentrations(layout)
 
@@ -67,10 +69,11 @@ class Initial1DConcentrationsWidget(QWidget):
     def create_initial_concentrations(self, main_layout: QGridLayout):
         """Create initial concentrations."""
         for i, substance in enumerate(self.substances):
+            groupbox_layout = QGridLayout(self)
             name = substance["name"]
             # Substance groupbox widget
             groupbox = QGroupBox(name, self)
-            groupbox.setFont(QFont("Segoe UI", 10))
+            groupbox.setFont(QFont("Segoe UI", 12))
             groupbox.setCheckable(True)
             groupbox.setChecked(False)
             logger.error(f"gb_initial_concentrations_1d_{name}")
@@ -82,35 +85,44 @@ class Initial1DConcentrationsWidget(QWidget):
             rb_online_file = QRadioButton("Online file", self)
             rb_online_file.setObjectName(f"rb_online_file_1d_{name}")
             rb_online_file.setChecked(is_online_file_available)
+            rb_online_file.setFont(QFont("Segoe UI", 10))
+            rb_online_file.setMinimumSize(300, rb_online_file.height())
+            rb_online_file.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             cbo_online_file = QComboBox(self)
             cbo_online_file.setEnabled(is_online_file_available)
             cbo_online_file.setObjectName(f"cbo_online_file_1d_{name}")
+            cbo_online_file.setFont(QFont("Segoe UI", 10))
             rb_online_file.toggled.connect(lambda checked: cbo_online_file.setEnabled(checked))
 
             # Local csv upload widget
             rb_local_file = QRadioButton("Upload CSV", self)
             rb_local_file.setObjectName(f"rb_local_file_{name}")
+            rb_local_file.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+            rb_local_file.setMinimumSize(300, rb_local_file.height())
             rb_local_file.setChecked(not is_online_file_available)
+            rb_local_file.setFont(QFont("Segoe UI", 10))
+            
             le_local_file = QLineEdit(self)
             le_local_file.setEnabled(not is_online_file_available)
             le_local_file.setReadOnly(True)
             le_local_file.setObjectName(f"le_local_file_{name}")
-            le_local_file.resize(329, le_local_file.height())
             btn_browse_local_file = QToolButton(self)
             btn_browse_local_file.setText("...")
+            btn_browse_local_file.setFont(QFont("Segoe UI", 10))
             btn_browse_local_file.setEnabled(not is_online_file_available)
             btn_browse_local_file.setObjectName(f"btn_browse_local_file_{name}")
             rb_local_file.toggled.connect(
                 lambda checked: (le_local_file.setEnabled(checked), btn_browse_local_file.setEnabled(checked))
             )
+            button_layout = QHBoxLayout(self)
+            button_layout.addWidget(le_local_file)
+            button_layout.addWidget(btn_browse_local_file)
 
             # Add widgets to layout
-            groupbox_layout = QGridLayout(self)
             groupbox_layout.addWidget(rb_online_file, 0, 0)
             groupbox_layout.addWidget(cbo_online_file, 0, 1)
             groupbox_layout.addWidget(rb_local_file, 1, 0)
-            groupbox_layout.addWidget(le_local_file, 1, 1)
-            groupbox_layout.addWidget(btn_browse_local_file, 1, 2)
+            groupbox_layout.addLayout(button_layout, 1, 1)
 
             # Add groupbox to the main layout
             groupbox.setLayout(groupbox_layout)
@@ -215,7 +227,7 @@ class Initial2DConcentrationsWidget(QWidget):
             name = substance["name"]
             # Substance groupbox widget
             groupbox = QGroupBox(name)
-            groupbox.setFont(QFont("Segoe UI", 10))
+            groupbox.setFont(QFont("Segoe UI", 12))
             groupbox.setCheckable(True)
             groupbox.setChecked(False)
             groupbox.setObjectName(f"gb_initial_concentrations_2d_{name}")
@@ -226,23 +238,28 @@ class Initial2DConcentrationsWidget(QWidget):
             rb_online_raster = QRadioButton("Online raster")
             rb_online_raster.setObjectName(f"rb_online_raster_{name}")
             rb_online_raster.setChecked(is_online_raster_available)
+            rb_online_raster.setFont(QFont("Segoe UI", 10))
             cbo_online_raster = QComboBox()
             cbo_online_raster.setEnabled(is_online_raster_available)
             cbo_online_raster.setObjectName(f"cbo_online_raster_{name}")
+            cbo_online_raster.setFont(QFont("Segoe UI", 10))
             rb_online_raster.toggled.connect(lambda checked: cbo_online_raster.setEnabled(checked))
 
             # Local raster upload widget
             rb_local_raster = QRadioButton("Local raster")
             rb_local_raster.setObjectName(f"rb_local_raster_{name}")
             rb_local_raster.setChecked(not is_online_raster_available)
+            rb_local_raster.setFont(QFont("Segoe UI", 10))
             cbo_local_raster = QgsMapLayerComboBox()
             cbo_local_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
             cbo_local_raster.setEnabled(not is_online_raster_available)
             cbo_local_raster.setObjectName(f"cbo_local_raster_{name}")
+            cbo_local_raster.setFont(QFont("Segoe UI", 10))
             btn_browse_local_raster = QToolButton()
             btn_browse_local_raster.setText("...")
             btn_browse_local_raster.setEnabled(not is_online_raster_available)
             btn_browse_local_raster.setObjectName(f"btn_browse_local_raster_{name}")
+            btn_browse_local_raster.setFont(QFont("Segoe UI", 10))
             rb_local_raster.toggled.connect(
                 lambda checked: (cbo_local_raster.setEnabled(checked), btn_browse_local_raster.setEnabled(checked))
             )
@@ -250,6 +267,7 @@ class Initial2DConcentrationsWidget(QWidget):
             # Aggregation method widget
             label_aggregation = QLabel("     Aggregation method:")
             cbo_aggregation = QComboBox()
+            cbo_aggregation.setFont(QFont("Segoe UI", 10))
             cbo_aggregation.addItems(["mean", "max", "min"])
             cbo_aggregation.setObjectName(f"cbo_aggregation_{name}")
 
