@@ -901,49 +901,52 @@ class SimulationRunner(QRunnable):
             saved_state_id = initial_conditions.saved_state.url.strip("/").split("/")[-1]
             self.tc.create_simulation_initial_saved_state(sim_id, saved_state=saved_state_id)
 
-        # TODO: Initial concentrations 1D for substances
+        # Initial concentrations 1D for substances
         if initial_conditions.initial_concentrations_1d:
-            logger.error("------------")
             for substance, params in initial_conditions.initial_concentrations_1d.items():
                 substance_id = self.substances[substance]
-                local_data = params.get("local_data", None)
+                local_data = params.get("local_data")
                 online_file = params.get("online_file")
-                if online_file:
-                    file_id = online_file
+                if online_file is not None:
+                    # find the initial concentration refering to this file.
+                    results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
+                    one_d_ids = [x for x in results if x.dimension == "one_d" and x.file == online_file]
+                    if len(one_d_ids) > 0:
+                        logger.error(f"Found file IC: {one_d_ids[0]}")
+                        initial_concentration_1d = one_d_ids[0]
+                        break
                 else:
-                    assert local_data
+                    assert local_data is not None
 
                     # create a new initial concentration
                     initial_concentration_1d = self.tc.create_3di_model_initial_concentration(threedimodel_id=threedimodel_id, dimension="one_d")
-                    
+
                     # create an upload url
                     initial_concentration_upload = self.tc.upload_3di_model_initial_concentration(threedimodel_id=threedimodel_id, initial_concentration_id=initial_concentration_1d.id, filename=f"{sim_name}_initial_concent_1d.json")
-                    
+
                     # now write and upload the data (in json format)
                     write_json_data(local_data, INITIAL_CONCENTRATIONS_TEMPLATE)
                     upload_local_file(initial_concentration_upload, INITIAL_CONCENTRATIONS_TEMPLATE)
-                    
+
+                    # wait until the data is processed
                     retries = 0
                     initial_concentration_1d = None
                     while not initial_concentration_1d and retries < 12:
                         results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
-                        logger.error("CHECKING")
-                        logger.error(results)
                         one_d_ids = [x for x in results if x.dimension == "one_d" and x.state == "valid"]
                         if len(one_d_ids) > 0:
                             initial_concentration_1d = one_d_ids[0]
                             break
                         retries += 1
                         time.sleep(5)
-    
-                assert initial_concentration_1d is not None
 
+                assert initial_concentration_1d is not None
                 self.tc.create_simulation_initial_1d_substance_concentrations(
                     sim_id,
                     substance=substance_id,
                     initial_concentration=initial_concentration_1d.id,
                 )
-        
+
         # Initial concentrations 2D for substances
         if initial_conditions.initial_concentrations_2d:
             for substance, params in initial_conditions.initial_concentrations_2d.items():

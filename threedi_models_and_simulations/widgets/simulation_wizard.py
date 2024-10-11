@@ -3606,36 +3606,29 @@ class SimulationWizard(QWizard):
             local_data = self.init_conditions_page.main_widget.local_data
 
             initial_concentrations_1d = {}
-            logger.error("HELLO")
-            logger.error("local_data")
             for substance in substances:
                 substance_name = substance.get("name")
-                logger.error("**")
-                logger.error(f"gb_initial_concentrations_1d_{substance_name}")
                 groupbox_ic_1d = widget.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
                 rb_local_file = widget.findChild(QRadioButton, f"rb_local_file_{substance_name}")
                 rb_online_file = widget.findChild(QRadioButton, f"rb_online_file_1d_{substance_name}")
-                # cbo_local_raster = widget.findChild(QComboBox, f"cbo_local_raster_{substance_name}")
-                # cbo_online_raster = widget.findChild(QComboBox, f"cbo_online_raster_{substance_name}").currentText()
+                cbo_online_file = widget.findChild(QComboBox, f"cbo_online_file_1d_{substance_name}")
                 if groupbox_ic_1d.isChecked():
                     if rb_local_file.isChecked():
-                        logger.error("localdata")
-                        logger.error(local_data)
                         initial_concentrations = {
                             "local_data": local_data[substance_name],
                             "online_file": None,
                         }
                         initial_concentrations_1d[substance_name] = initial_concentrations
                     elif rb_online_file.isChecked():
-                #         for raster in rasters:
-                #             if raster.name == cbo_online_raster:
-                #                 initial_concentrations = {
-                #                     "local_raster_path": None,
-                #                     "online_raster": raster.id,
-                #                 }
-                #                 initial_concentrations_1d[substance_name] = initial_concentrations
-                #                 break
-                        pass
+                        for file in online_files:
+                             if file.filename == cbo_online_file.currentText():
+                                initial_concentrations = {
+                                    "local_data": None,
+                                    "online_file": file,
+                                }
+                                initial_concentrations_1d[substance_name] = initial_concentrations
+                                break
+                    assert initial_concentrations_1d[substance_name]
             if initial_concentrations_1d:
                 initial_conditions.initial_concentrations_1d = initial_concentrations_1d
 
