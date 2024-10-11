@@ -59,7 +59,6 @@ class Initial1DConcentrationsWidget(QWidget):
         tc = ThreediCalls(self.parent_page.parent_wizard.plugin_dock.threedi_api)
         model_id = self.parent_page.parent_wizard.model_selection_dlg.current_model.id
         concentrations = tc.fetch_3di_model_initial_concentrations(model_id)
-        logger.error(concentrations)
         for concentration in concentrations:
             if concentration.dimension == "one_d":
                 if concentration.file:

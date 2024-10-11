@@ -912,9 +912,7 @@ class SimulationRunner(QRunnable):
                     results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
                     one_d_ids = [x for x in results if x.dimension == "one_d" and x.file == online_file]
                     if len(one_d_ids) > 0:
-                        logger.error(f"Found file IC: {one_d_ids[0]}")
                         initial_concentration_1d = one_d_ids[0]
-                        break
                 else:
                     assert local_data is not None
 
