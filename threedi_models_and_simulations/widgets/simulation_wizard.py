@@ -773,6 +773,23 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         if checked and self.gb_saved_state.isChecked():
             self.gb_saved_state.setChecked(False)
 
+        if self.sender() is self.gb_1d:
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                groupbox_ic_1d.setEnabled(checked)
+                if not checked:
+                    groupbox_ic_1d.setChecked(False)
+
+        if self.sender() is self.gb_2d:
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                groupbox_ic_2d.setEnabled(checked)
+                if not checked:
+                    groupbox_ic_2d.setChecked(False)
+            
+
     def setup_initial_conditions(self):
         """Setup initial conditions widget."""
         try:
