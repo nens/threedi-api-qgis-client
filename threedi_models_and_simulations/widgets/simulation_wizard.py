@@ -748,6 +748,26 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             if self.gb_groundwater.isChecked():
                 self.gb_groundwater.setChecked(False)
 
+            # Disable concentrations, if required
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                if groupbox_ic_1d.isChecked():
+                    groupbox_ic_1d.setChecked(False)
+                groupbox_ic_1d.setDisabled(True)
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                if groupbox_ic_2d.isChecked():
+                    groupbox_ic_2d.setChecked(False)
+                groupbox_ic_2d.setDisabled(True)
+        else:
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                groupbox_ic_2d.setDisabled(False)
+                groupbox_ic_1d.setDisabled(False)
+                
+
     def on_initial_waterlevel_change(self, checked):
         """Handle initial waterlevel group checkbox."""
         if checked and self.gb_saved_state.isChecked():

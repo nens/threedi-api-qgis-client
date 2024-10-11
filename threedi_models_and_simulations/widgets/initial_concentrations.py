@@ -76,7 +76,6 @@ class Initial1DConcentrationsWidget(QWidget):
             groupbox.setFont(QFont("Segoe UI", 12))
             groupbox.setCheckable(True)
             groupbox.setChecked(False)
-            logger.error(f"gb_initial_concentrations_1d_{name}")
             groupbox.setObjectName(f"gb_initial_concentrations_1d_{name}")
             groupbox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 

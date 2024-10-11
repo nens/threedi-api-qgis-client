@@ -773,7 +773,7 @@
          </font>
         </property>
         <property name="title">
-         <string>Saved state</string>
+         <string>Saved state (enabling will disable initial substance concentrations)</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
