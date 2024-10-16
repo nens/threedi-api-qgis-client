@@ -3351,7 +3351,7 @@ class SimulationWizard(QWizard):
                     rain_constant_duration = rain.duration // 3600
                     rain_constant_stop_after = rain_constant_start_after + rain_constant_duration
                     precipitation_widget.sp_start_after_constant.setValue(rain_constant_start_after)
-                    if rain.duration < simulation_duration:
+                    if rain.duration <= simulation_duration:
                         precipitation_widget.sp_stop_after_constant.setValue(rain_constant_stop_after)
                     intensity_ms = rain.values[0][-1]
                     intensity_mmh = ms_to_mmh(intensity_ms)
@@ -3374,7 +3374,7 @@ class SimulationWizard(QWizard):
                 rain_radar_duration = rain.duration // 3600
                 rain_radar_stop_after = rain_radar_start_after + rain_radar_duration
                 precipitation_widget.sp_start_after_radar.setValue(rain_radar_start_after)
-                if rain.duration < simulation_duration:
+                if rain.duration <= simulation_duration:
                     precipitation_widget.sp_stop_after_radar.setValue(rain_radar_stop_after)
         if init_conditions.include_wind:
             wind_widget = self.wind_page.main_widget
