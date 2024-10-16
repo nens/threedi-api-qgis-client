@@ -134,6 +134,12 @@ class Initial1DConcentrationsWidget(QWidget):
         if len(filename) == 0:
             return
         save_3di_settings("last_1d_initial_concentrations", os.path.dirname(filename))
+
+        # Clear previous result
+        line_edit.setText("")
+        if substance in self.local_data:
+            del self.local_data[substance]
+
         with open(filename, encoding="utf-8-sig") as csvfile:
             reader = csv.DictReader(csvfile)
             header = reader.fieldnames

@@ -689,7 +689,10 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.initial_waterlevels_1d = {}
         self.saved_states = {}
         self.initial_concentrations_widget = QWidget()
+        self.initial_concentrations_widget_1D = QWidget()
         self.rasters = []
+        self.online_files = []
+        self.local_data = {}
         self.gb_saved_state.setChecked(False)
         self.gb_1d.setChecked(False)
         self.gb_2d.setChecked(False)
@@ -727,7 +730,6 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
     def setup_1d_initial_concentrations(self):
         if hasattr(self, "initial_concentrations_widget_1D"):
             self.initial_concentrations_widget_1D.setParent(None)
-            del self.initial_concentrations_widget_1D
         if not self.substances:
             self.initial_concentrations_1d_label.hide()
             return
