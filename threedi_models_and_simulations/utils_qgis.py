@@ -72,7 +72,7 @@ def get_plugin_instance(plugin_name):
     """Return given plugin name instance."""
     try:
         plugin_instance = plugins[plugin_name]
-    except AttributeError:
+    except (AttributeError, KeyError):
         plugin_instance = None
     return plugin_instance
 
