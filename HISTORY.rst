@@ -11,6 +11,7 @@ History
 -------------------
 
 - Fix for the 'simulation_user_first_name' KeyError.
+- Add new 1D advection options
 
 
 3.14.0 (2024-09-24)
