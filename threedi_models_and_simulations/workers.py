@@ -928,10 +928,11 @@ class SimulationRunner(QRunnable):
 
                     # wait until the data is processed
                     retries = 0
+                    newly_generated_id = initial_concentration_1d.id
                     initial_concentration_1d = None
                     while not initial_concentration_1d and retries < 12:
                         results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
-                        one_d_ids = [x for x in results if x.dimension == "one_d" and x.state == "valid"]
+                        one_d_ids = [x for x in results if x.dimension == "one_d" and x.state == "valid" and x.id == newly_generated_id]
                         if len(one_d_ids) > 0:
                             initial_concentration_1d = one_d_ids[0]
                             break
