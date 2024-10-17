@@ -5,7 +5,7 @@ from enum import Enum
 
 from qgis.PyQt.QtCore import QSettings
 
-from ..utils import DynamicObject
+from ..utils import NestedObject
 from ..utils_qgis import get_schematisation_editor_instance
 from ..widgets.new_schematisation_wizard import NewSchematisationWizard
 from ..widgets.schematisation_download import SchematisationDownload
@@ -92,9 +92,9 @@ class BuildOptions:
     def load_schematisation(self, schematisation, revision):
         """Download and load a schematisation from the server."""
         if isinstance(schematisation, dict):
-            schematisation = DynamicObject(schematisation)
+            schematisation = NestedObject(schematisation)
         if isinstance(revision, dict):
-            revision = DynamicObject(revision)
+            revision = NestedObject(revision)
 
         # Download and load the schematisation
         schematisation_download = SchematisationDownload(self.plugin_dock)
