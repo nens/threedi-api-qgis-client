@@ -111,4 +111,3 @@ class BuildOptions:
             if wip_revision is not None:
                 settings = QSettings("3di", "qgisplugin")
                 settings.setValue("last_used_spatialite_path", wip_revision.schematisation_dir)
-        schematisation_download.close()
