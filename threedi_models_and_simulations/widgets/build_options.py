@@ -89,7 +89,7 @@ class BuildOptions:
                 settings.setValue("last_used_spatialite_path", wip_revision.schematisation_dir)
 
     @api_client_required
-    def load_schematisation(self, schematisation, revision):
+    def load_remote_schematisation(self, schematisation, revision):
         """Download and load a schematisation from the server."""
         if isinstance(schematisation, dict):
             schematisation = NestedObject(schematisation)
