@@ -5,6 +5,7 @@ History
 -------------------
 
 - Fixes/enhancements: #616
+- Added check for non-ascii characters in substance unit (#621)
 
 
 3.14.1 (2024-09-25)
