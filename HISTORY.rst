@@ -5,6 +5,7 @@ History
 -------------------
 
 - Fixes/enhancements: #616
+- Load remote schematisation: #626
 
 
 3.14.1 (2024-09-25)
