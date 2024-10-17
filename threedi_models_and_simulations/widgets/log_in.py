@@ -1,5 +1,6 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
+import inspect
 import logging
 import os
 from functools import wraps
@@ -22,7 +23,7 @@ def api_client_required(fn):
     """Decorator for limiting functionality access to logged-in user (with option to log in)."""
 
     @wraps(fn)
-    def wrapper(self):
+    def wrapper(self, *args, **kwargs):
         if hasattr(self, "plugin_dock"):
             plugin_dock = getattr(self, "plugin_dock")
         else:
@@ -46,7 +47,13 @@ def api_client_required(fn):
                 plugin_dock.communication.bar_warn("Logging-in canceled. Action aborted!")
                 return
 
-        return fn(self)
+        # Get the function's signature and check the number of parameters
+        sig = inspect.signature(fn)
+        num_params = len(sig.parameters)
+        if num_params == 1:
+            return fn(self)
+        else:
+            return fn(self, *args, **kwargs)
 
     return wrapper
 

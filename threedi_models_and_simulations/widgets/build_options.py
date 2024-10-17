@@ -5,6 +5,7 @@ from enum import Enum
 
 from qgis.PyQt.QtCore import QSettings
 
+from ..utils import DynamicObject
 from ..utils_qgis import get_schematisation_editor_instance
 from ..widgets.new_schematisation_wizard import NewSchematisationWizard
 from ..widgets.schematisation_download import SchematisationDownload
@@ -86,3 +87,28 @@ class BuildOptions:
             if wip_revision is not None:
                 settings = QSettings("3di", "qgisplugin")
                 settings.setValue("last_used_spatialite_path", wip_revision.schematisation_dir)
+
+    @api_client_required
+    def load_schematisation(self, schematisation, revision):
+        """Download and load a schematisation from the server."""
+        if isinstance(schematisation, dict):
+            schematisation = DynamicObject(schematisation)
+        if isinstance(revision, dict):
+            revision = DynamicObject(revision)
+
+        # Download and load the schematisation
+        schematisation_download = SchematisationDownload(self.plugin_dock)
+        schematisation_download.download_required_files(schematisation, revision, is_latest_revision=True)
+        downloaded_local_schematisation = schematisation_download.downloaded_local_schematisation
+        custom_sqlite_filepath = schematisation_download.downloaded_sqlite_filepath
+        if downloaded_local_schematisation is not None:
+            self.load_local_schematisation(
+                local_schematisation=downloaded_local_schematisation,
+                action=BuildOptionActions.DOWNLOADED,
+                custom_sqlite_filepath=custom_sqlite_filepath,
+            )
+            wip_revision = downloaded_local_schematisation.wip_revision
+            if wip_revision is not None:
+                settings = QSettings("3di", "qgisplugin")
+                settings.setValue("last_used_spatialite_path", wip_revision.schematisation_dir)
+            schematisation_download.close()

@@ -219,16 +219,17 @@ class SchematisationDownload(uicls, basecls):
         if self.downloaded_local_schematisation:
             self.close()
 
-    def download_required_files(self, schematisation, revision):
+    def download_required_files(self, schematisation, revision, is_latest_revision=False):
         """Download required schematisation revision files."""
         try:
-            latest_online_revision = max([rev.number for rev in self.revisions])
             schematisation_pk = schematisation.id
             schematisation_name = schematisation.name
             revision_pk = revision.id
             revision_number = revision.number
             revision_sqlite = revision.sqlite
-            is_latest_revision = revision_number == latest_online_revision
+            if not is_latest_revision:
+                latest_online_revision = max([rev.number for rev in self.revisions])
+                is_latest_revision = revision_number == latest_online_revision
             try:
                 local_schematisation = self.local_schematisations[schematisation_pk]
                 local_schematisation_present = True
