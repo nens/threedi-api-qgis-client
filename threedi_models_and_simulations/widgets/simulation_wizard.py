@@ -17,55 +17,25 @@ from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
 from qgis.PyQt.QtGui import QColor, QFont, QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import (
-    QComboBox,
-    QDoubleSpinBox,
-    QFileDialog,
-    QGridLayout,
-    QGroupBox,
-    QLabel,
-    QLineEdit,
-    QRadioButton,
-    QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
-    QSpinBox,
-    QTableWidgetItem,
-    QWidget,
-    QWizard,
-    QWizardPage,
-)
+from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
+                                 QGridLayout, QGroupBox, QLabel, QLineEdit,
+                                 QRadioButton, QScrollArea, QSizePolicy,
+                                 QSpacerItem, QSpinBox, QTableWidgetItem,
+                                 QWidget, QWizard, QWizardPage)
 from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
-from ..utils import (
-    TEMPDIR,
-    BreachSourceType,
-    EventTypes,
-    apply_24h_timeseries,
-    convert_timeseries_to_seconds,
-    extract_error_message,
-    get_download_file,
-    handle_csv_header,
-    intervals_are_even,
-    mmh_to_mmtimestep,
-    mmh_to_ms,
-    mmtimestep_to_mmh,
-    ms_to_mmh,
-    parse_timeseries,
-    read_json_data,
-)
-from ..utils_ui import (
-    NumericDelegate,
-    get_filepath,
-    qgis_layers_cbo_get_layer_uri,
-    read_3di_settings,
-    save_3di_settings,
-    scan_widgets_parameters,
-    set_widget_background_color,
-    set_widgets_parameters,
-)
+from ..utils import (TEMPDIR, BreachSourceType, EventTypes,
+                     apply_24h_timeseries, constains_only_ascii,
+                     convert_timeseries_to_seconds, extract_error_message,
+                     get_download_file, handle_csv_header, intervals_are_even,
+                     mmh_to_mmtimestep, mmh_to_ms, mmtimestep_to_mmh,
+                     ms_to_mmh, parse_timeseries, read_json_data)
+from ..utils_ui import (NumericDelegate, get_filepath,
+                        qgis_layers_cbo_get_layer_uri, read_3di_settings,
+                        save_3di_settings, scan_widgets_parameters,
+                        set_widget_background_color, set_widgets_parameters)
 from .custom_items import FilteredComboBox
 from .initial_concentrations import InitialConcentrationsWidget
 from .substance_concentrations import SubstanceConcentrationsWidget
@@ -306,6 +276,13 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
                     "Units length should be less than 16 characters!"
                 )
+
+            if not constains_only_ascii(item.text()):
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                    "Non-ASCII characters not allowed in units"
+                )
+                item.setText("")
+
         # Resize name column to contents and enforce minimum width
         self.tw_substances.resizeColumnToContents(0)
         if self.tw_substances.columnWidth(0) < self.MINIMUM_WIDTH:
