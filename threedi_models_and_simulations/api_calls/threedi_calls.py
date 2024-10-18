@@ -5,84 +5,50 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Tuple
 
 from threedi_api_client import ThreediApi
-from threedi_api_client.openapi import (
-    Action,
-    AggregationSettings,
-    ArrivalTimePostProcessing,
-    BasicPostProcessing,
-    Breach,
-    Commit,
-    ConstantLateral,
-    ConstantLocalRain,
-    ConstantRain,
-    ConstantWind,
-    Contract,
-    CurrentStatus,
-    DamagePostProcessing,
-    Download,
-    Event,
-    FileBoundaryCondition,
-    FileLateral,
-    FileRasterSourcesSinks,
-    FileStructureControl,
-    FileTimeseriesSourcesSinks,
-    GroundWaterLevel,
-    GroundWaterRaster,
-    InitialConcentration,
-    InitialSavedState,
-    InitialWaterlevel,
-    LizardRasterRain,
-    LizardRasterSourcesSinks,
-    LizardTimeseriesRain,
-    LizardTimeseriesSourcesSinks,
-    MemoryStructureControl,
-    NumericalSettings,
-    ObstacleEdit,
-    OneDWaterLevel,
-    OneDWaterLevelFile,
-    OneDWaterLevelPredefined,
-    Organisation,
-    PhysicalSettings,
-    PostProcessingOverview,
-    PotentialBreach,
-    Progress,
-    Raster,
-    RasterCreate,
-    RasterEdit,
-    Repository,
-    ResultFile,
-    Revision,
-    RevisionRaster,
-    RevisionTask,
-    Schematisation,
-    SchematisationRevision,
-    Simulation,
-    SimulationSettingsOverview,
-    SimulationStatus,
-    SqliteFileUpload,
-    StableThresholdSavedState,
-    Substance,
-    TableStructureControl,
-    Template,
-    ThreediModel,
-    ThreediModelSavedState,
-    ThreediModelTask,
-    TimedSavedStateUpdate,
-    TimedStructureControl,
-    TimeseriesLateral,
-    TimeseriesLocalRain,
-    TimeseriesRain,
-    TimeseriesSourcesSinks,
-    TimeseriesWind,
-    TimeStepSettings,
-    TwoDSubstanceConcentration,
-    TwoDWaterLevel,
-    TwoDWaterRaster,
-    Upload,
-    UploadEventFile,
-    User,
-    WindDragCoefficient,
-)
+from threedi_api_client.openapi import (Action, AggregationSettings,
+                                        ArrivalTimePostProcessing,
+                                        BasicPostProcessing, Breach, Commit,
+                                        ConstantLateral, ConstantLocalRain,
+                                        ConstantRain, ConstantWind, Contract,
+                                        CurrentStatus, DamagePostProcessing,
+                                        Download, Event, FileBoundaryCondition,
+                                        FileLateral, FileRasterSourcesSinks,
+                                        FileStructureControl,
+                                        FileTimeseriesSourcesSinks,
+                                        GroundWaterLevel, GroundWaterRaster,
+                                        InitialConcentration,
+                                        InitialSavedState, InitialWaterlevel,
+                                        LizardRasterRain,
+                                        LizardRasterSourcesSinks,
+                                        LizardTimeseriesRain,
+                                        LizardTimeseriesSourcesSinks,
+                                        MemoryStructureControl,
+                                        NumericalSettings, ObstacleEdit,
+                                        OneDSubstanceConcentration,
+                                        OneDWaterLevel, OneDWaterLevelFile,
+                                        OneDWaterLevelPredefined, Organisation,
+                                        PhysicalSettings,
+                                        PostProcessingOverview,
+                                        PotentialBreach, Progress, Raster,
+                                        RasterCreate, RasterEdit, Repository,
+                                        ResultFile, Revision, RevisionRaster,
+                                        RevisionTask, Schematisation,
+                                        SchematisationRevision, Simulation,
+                                        SimulationSettingsOverview,
+                                        SimulationStatus, SqliteFileUpload,
+                                        StableThresholdSavedState, Substance,
+                                        TableStructureControl, Template,
+                                        ThreediModel, ThreediModelSavedState,
+                                        ThreediModelTask,
+                                        TimedSavedStateUpdate,
+                                        TimedStructureControl,
+                                        TimeseriesLateral, TimeseriesLocalRain,
+                                        TimeseriesRain, TimeseriesSourcesSinks,
+                                        TimeseriesWind, TimeStepSettings,
+                                        TwoDSubstanceConcentration,
+                                        TwoDWaterLevel, TwoDWaterRaster,
+                                        Upload, UploadEventFile, User,
+                                        WindDragCoefficient)
 
 logger = logging.getLogger(__name__)
 
@@ -682,11 +648,23 @@ class ThreediCalls:
             str(simulation_pk), data
         )
         return substance_concentration
-
+    
+    def create_simulation_initial_1d_substance_concentrations(
+        self, simulation_pk: int, **data
+    ) -> OneDSubstanceConcentration:
+        """Link 1D initial concentrations to substance for the given simulation."""
+        substance_concentration = self.threedi_api.simulations_initial1d_substance_concentrations_create(
+            str(simulation_pk), data
+        )
+        return substance_concentration
+    
     def create_3di_model_initial_concentration(self, threedimodel_id: str, **data) -> InitialConcentration:
         """Create initial concentration for the given 3Di model."""
         initial_concentration = self.threedi_api.threedimodels_initial_concentrations_create(threedimodel_id, data)
         return initial_concentration
+    
+    def upload_3di_model_initial_concentration(self, threedimodel_id: str, initial_concentration_id: int, **data) -> Upload:
+            return self.threedi_api.threedimodels_initial_concentrations_upload(initial_concentration_id, threedimodel_id, data)
 
     def create_3di_model_raster(self, threedimodel_id: str, **data) -> Raster:
         """Create raster for the given 3Di model."""

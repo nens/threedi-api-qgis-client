@@ -17,57 +17,28 @@ from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
 from qgis.PyQt.QtGui import QColor, QFont, QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import (
-    QComboBox,
-    QDoubleSpinBox,
-    QFileDialog,
-    QGridLayout,
-    QGroupBox,
-    QLabel,
-    QLineEdit,
-    QRadioButton,
-    QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
-    QSpinBox,
-    QTableWidgetItem,
-    QWidget,
-    QWizard,
-    QWizardPage,
-)
+from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
+                                 QGridLayout, QGroupBox, QLabel, QLineEdit,
+                                 QRadioButton, QScrollArea, QSizePolicy,
+                                 QSpacerItem, QSpinBox, QTableWidgetItem,
+                                 QWidget, QWizard, QWizardPage)
 from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
-from ..utils import (
-    TEMPDIR,
-    BreachSourceType,
-    EventTypes,
-    apply_24h_timeseries,
-    convert_timeseries_to_seconds,
-    extract_error_message,
-    get_download_file,
-    handle_csv_header,
-    intervals_are_even,
-    mmh_to_mmtimestep,
-    mmh_to_ms,
-    mmtimestep_to_mmh,
-    ms_to_mmh,
-    parse_timeseries,
-    read_json_data,
-)
-from ..utils_ui import (
-    NumericDelegate,
-    get_filepath,
-    qgis_layers_cbo_get_layer_uri,
-    read_3di_settings,
-    save_3di_settings,
-    scan_widgets_parameters,
-    set_widget_background_color,
-    set_widgets_parameters,
-)
+from ..utils import (TEMPDIR, BreachSourceType, EventTypes,
+                     apply_24h_timeseries, convert_timeseries_to_seconds,
+                     extract_error_message, get_download_file,
+                     handle_csv_header, intervals_are_even, mmh_to_mmtimestep,
+                     mmh_to_ms, mmtimestep_to_mmh, ms_to_mmh, parse_timeseries,
+                     read_json_data)
+from ..utils_ui import (NumericDelegate, get_filepath,
+                        qgis_layers_cbo_get_layer_uri, read_3di_settings,
+                        save_3di_settings, scan_widgets_parameters,
+                        set_widget_background_color, set_widgets_parameters)
 from .custom_items import FilteredComboBox
-from .initial_concentrations import InitialConcentrationsWidget
+from .initial_concentrations import (Initial1DConcentrationsWidget,
+                                     Initial2DConcentrationsWidget)
 from .substance_concentrations import SubstanceConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -340,6 +311,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
         if hasattr(self.parent_page.parent_wizard, "init_conditions_page"):
             self.parent_page.parent_wizard.init_conditions_page.main_widget.setup_2d_initial_concentrations()
+            self.parent_page.parent_wizard.init_conditions_page.main_widget.setup_1d_initial_concentrations()
 
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
@@ -717,7 +689,10 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.initial_waterlevels_1d = {}
         self.saved_states = {}
         self.initial_concentrations_widget = QWidget()
+        self.initial_concentrations_widget_1D = QWidget()
         self.rasters = []
+        self.online_files = []
+        self.local_data = {}
         self.gb_saved_state.setChecked(False)
         self.gb_1d.setChecked(False)
         self.gb_2d.setChecked(False)
@@ -729,6 +704,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.btn_1d_upload_csv.clicked.connect(self.load_1d_initial_waterlevel_csv)
         self.setup_initial_conditions()
         self.setup_2d_initial_concentrations()
+        self.setup_1d_initial_concentrations()
         self.connect_signals()
 
     def connect_signals(self):
@@ -745,11 +721,24 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.initial_concentrations_2d_label.hide()
             return
         self.initial_concentrations_2d_label.show()
-        initial_concentrations_widget = InitialConcentrationsWidget(self.substances, self.parent_page)
+        initial_concentrations_widget = Initial2DConcentrationsWidget(self.substances, self.parent_page)
         self.initial_concentrations_widget = initial_concentrations_widget.widget
         self.rasters = initial_concentrations_widget.rasters
         parent_layout = self.layout()
-        parent_layout.addWidget(self.initial_concentrations_widget, 3, 2)
+        parent_layout.addWidget(self.initial_concentrations_widget, 5, 2)
+
+    def setup_1d_initial_concentrations(self):
+        if hasattr(self, "initial_concentrations_widget_1D"):
+            self.initial_concentrations_widget_1D.setParent(None)
+        if not self.substances:
+            self.initial_concentrations_1d_label.hide()
+            return
+        self.initial_concentrations_1d_label.show()
+        initial_concentrations_widget_1D = Initial1DConcentrationsWidget(self.substances, self.parent_page)
+        self.local_data = initial_concentrations_widget_1D.local_data
+        self.online_files = initial_concentrations_widget_1D.online_files
+        self.initial_concentrations_widget_1D = initial_concentrations_widget_1D.widget
+        self.layout().addWidget(self.initial_concentrations_widget_1D, 3, 2)
 
     def on_saved_state_change(self, checked):
         """Handle saved state group checkbox."""
@@ -761,10 +750,47 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             if self.gb_groundwater.isChecked():
                 self.gb_groundwater.setChecked(False)
 
+            # Disable concentrations, if required
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                if groupbox_ic_1d.isChecked():
+                    groupbox_ic_1d.setChecked(False)
+                groupbox_ic_1d.setDisabled(True)
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                if groupbox_ic_2d.isChecked():
+                    groupbox_ic_2d.setChecked(False)
+                groupbox_ic_2d.setDisabled(True)
+        else:
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                groupbox_ic_2d.setDisabled(False)
+                groupbox_ic_1d.setDisabled(False)
+                
+
     def on_initial_waterlevel_change(self, checked):
         """Handle initial waterlevel group checkbox."""
         if checked and self.gb_saved_state.isChecked():
             self.gb_saved_state.setChecked(False)
+
+        if self.sender() is self.gb_1d:
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                groupbox_ic_1d.setEnabled(checked)
+                if not checked:
+                    groupbox_ic_1d.setChecked(False)
+
+        if self.sender() is self.gb_2d:
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                groupbox_ic_2d.setEnabled(checked)
+                if not checked:
+                    groupbox_ic_2d.setChecked(False)
+            
 
     def setup_initial_conditions(self):
         """Setup initial conditions widget."""
@@ -3612,6 +3638,37 @@ class SimulationWizard(QWizard):
                                 break
             if initial_concentrations_2d:
                 initial_conditions.initial_concentrations_2d = initial_concentrations_2d
+
+            widget = self.init_conditions_page.main_widget.initial_concentrations_widget_1D
+            online_files = self.init_conditions_page.main_widget.online_files
+            local_data = self.init_conditions_page.main_widget.local_data
+
+            initial_concentrations_1d = {}
+            for substance in substances:
+                substance_name = substance.get("name")
+                groupbox_ic_1d = widget.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                rb_local_file = widget.findChild(QRadioButton, f"rb_local_file_{substance_name}")
+                rb_online_file = widget.findChild(QRadioButton, f"rb_online_file_1d_{substance_name}")
+                cbo_online_file = widget.findChild(QComboBox, f"cbo_online_file_1d_{substance_name}")
+                if groupbox_ic_1d.isChecked():
+                    if rb_local_file.isChecked():
+                        initial_concentrations = {
+                            "local_data": local_data[substance_name],
+                            "online_file": None,
+                        }
+                        initial_concentrations_1d[substance_name] = initial_concentrations
+                    elif rb_online_file.isChecked():
+                        for file in online_files:
+                             if file.filename == cbo_online_file.currentText():
+                                initial_concentrations = {
+                                    "local_data": None,
+                                    "online_file": file,
+                                }
+                                initial_concentrations_1d[substance_name] = initial_concentrations
+                                break
+                    assert initial_concentrations_1d[substance_name]
+            if initial_concentrations_1d:
+                initial_conditions.initial_concentrations_1d = initial_concentrations_1d
 
         # Laterals
         if self.init_conditions.include_laterals:
