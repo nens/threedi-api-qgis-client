@@ -5,6 +5,7 @@ History
 -------------------
 
 - Fixes/enhancements: #616
+- Setting 1D initial substance concentration (#609)
 
 
 3.14.1 (2024-09-25)
