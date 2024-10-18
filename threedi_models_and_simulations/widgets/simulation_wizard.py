@@ -3223,14 +3223,7 @@ class SimulationWizard(QWizard):
         init_conditions = self.init_conditions_dlg.initial_conditions
         if init_conditions.include_substances:
 
-            substances = []
-            for item in events.substances:
-                substance = {"name": item.name, "units": item.units or "", "decay_coefficient": item.decay_coefficient or ""}
-                if hasattr(item, "diffusion_coefficient"):
-                    substance["diffusion_coefficient"] = item.diffusion_coefficient
-
-                substances.append(substance)
-
+            substances = [{"name": item.name, "units": item.units or "", "decay_coefficient": item.decay_coefficient or "", "diffusion_coefficient": item.diffusion_coefficient or ""} for item in events.substances]
             if substances:
                 self.substances_page.main_widget.prepopulate_substances_table(substances)
         if init_conditions.include_boundary_conditions:
