@@ -9,12 +9,14 @@ from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QMessageBox
 from threedi_api_client.openapi import ApiException
 
-from threedi_models_and_simulations.widgets.simulation_init import SimulationInit
+from threedi_models_and_simulations.widgets.simulation_init import \
+    SimulationInit
 from threedi_models_and_simulations.workers import SimulationRunner
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models.enumerators import SimulationStatusName
-from ..utils import API_DATETIME_FORMAT, USER_DATETIME_FORMAT, extract_error_message
+from ..utils import (API_DATETIME_FORMAT, USER_DATETIME_FORMAT,
+                     extract_error_message)
 from ..utils_ui import set_icon
 from .custom_items import PROGRESS_ROLE, SimulationProgressDelegate
 from .model_selection import ModelSelectionDialog
@@ -152,6 +154,8 @@ class SimulationOverview(uicls, basecls):
                 settings_overview,
                 events,
                 lizard_post_processing_overview,
+                organisation=self.model_selection_dlg.organisation,
+                api=ThreediCalls(self.threedi_api),
                 parent=self,
             )
             self.simulation_init_wizard.exec_()
