@@ -10,6 +10,7 @@ History
 - Added user feedback for invalid boundary conditions file. (#624)
 - Added substance concentration section in Precipation page. (#537)
 - Added diffusion parameter to Substances page. (#602)
+- Added option to select previously uploaded 1D initial water level file. (#610)
 
 
 3.14.1 (2024-09-25)

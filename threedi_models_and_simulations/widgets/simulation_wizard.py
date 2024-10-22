@@ -718,6 +718,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.initial_saved_state = initial_conditions.initial_saved_state
         self.initial_waterlevels = {}
         self.initial_waterlevels_1d = {}
+        self.initial_waterlevels_files = {}
         self.saved_states = {}
         self.initial_concentrations_widget = QWidget()
         self.initial_concentrations_widget_1D = QWidget()
@@ -842,6 +843,17 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                     self.cbo_saved_states.setCurrentIndex(initial_saved_state_idx)
             initial_waterlevels = tc.fetch_3di_model_initial_waterlevels(model_id) or []
             initial_waterlevels_2d = [iw for iw in initial_waterlevels if iw.dimension == "two_d"]
+            initial_waterlevels_1d = [iw for iw in initial_waterlevels if iw.dimension == "one_d"]
+            if initial_waterlevels_1d:
+                self.rb_1d_online_file.setChecked(True)
+                logger.info("Retrieved 1d initial waterlevel from model")
+                logger.info(initial_waterlevels_1d)
+            for iw in sorted(initial_waterlevels_1d, key=attrgetter("id")):
+                if iw.file:
+                    self.initial_waterlevels_files[iw.file.filename] = iw 
+                    self.cbo_1d_online_file.addItem(iw.file.filename)
+                else:
+                    logger.info(f"Water level instance {iw.id} does not have a file, skipping.")
             if initial_waterlevels_2d:
                 self.rb_2d_online_raster.setChecked(True)
                 self.rb_gw_online_raster.setChecked(True)
@@ -3417,6 +3429,16 @@ class SimulationWizard(QWizard):
                 if events.initial_onedwaterlevel:
                     init_conditions_widget.rb_d1_gv.setChecked(True)
                     init_conditions_widget.sp_1d_global_value.setValue(events.initial_onedwaterlevel.value)
+                ## As the backend does not support creating templates from simulations with user-generated water
+                ## level files, we do not need this case and keep it this way for backwards compatibility.
+                # elif events.initial_onedwaterlevelfile:
+                #     init_conditions_widget.rb_1d_online_file.setChecked(True)
+                #     # Set right value in combobox based on initial waterlevel id
+                #     for file_name, iw in init_conditions_widget.initial_waterlevels_files.items():
+                #         if iw.id == events.initial_onedwaterlevelfile.initial_waterlevel_id:
+                #             found_water_level = True
+                #             init_conditions_widget.cbo_1d_online_file.setCurrentText(file_name)
+                #     assert found_water_level
                 else:
                     init_conditions_widget.rb_d1_dd.setChecked(True)
             if any([events.initial_twodwaterlevel, events.initial_twodwaterraster]):
@@ -3752,6 +3774,10 @@ class SimulationWizard(QWizard):
                 elif self.init_conditions_page.main_widget.rb_1d_upload_csv.isChecked():
                     initial_conditions.initial_waterlevels_1d = (
                         self.init_conditions_page.main_widget.initial_waterlevels_1d
+                    )
+                elif self.init_conditions_page.main_widget.rb_1d_online_file.isChecked():
+                    initial_conditions.online_waterlevels_1d = (
+                        self.init_conditions_page.main_widget.initial_waterlevels_files[self.init_conditions_page.main_widget.cbo_1d_online_file.currentText()]
                     )
                 else:
                     initial_conditions.from_spatialite_1d = True

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1000</width>
-    <height>750</height>
+    <width>1004</width>
+    <height>759</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -98,52 +98,6 @@
          <bool>true</bool>
         </property>
         <layout class="QGridLayout" name="gridLayout_7">
-         <item row="0" column="1">
-          <widget class="QDoubleSpinBox" name="sp_1d_global_value">
-           <property name="minimumSize">
-            <size>
-             <width>300</width>
-             <height>25</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QDoubleSpinBox {background-color:white; selection-background-color: lightgray;}</string>
-           </property>
-           <property name="frame">
-            <bool>false</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-           </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
-           </property>
-           <property name="prefix">
-            <string/>
-           </property>
-           <property name="suffix">
-            <string> m</string>
-           </property>
-           <property name="minimum">
-            <double>-100000000000000005366162204393472.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>100000000000000004764729344.000000000000000</double>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="0">
           <widget class="QRadioButton" name="rb_d1_dd">
            <property name="font">
@@ -157,33 +111,7 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="0">
-          <widget class="QRadioButton" name="rb_d1_gv">
-           <property name="font">
-            <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="text">
-            <string>Global value:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QRadioButton" name="rb_1d_upload_csv">
-           <property name="font">
-            <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="text">
-            <string>Upload CSV</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
+         <item row="3" column="1">
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
             <widget class="QLineEdit" name="le_1d_upload_csv">
@@ -230,6 +158,101 @@
             </widget>
            </item>
           </layout>
+         </item>
+         <item row="0" column="1">
+          <widget class="QDoubleSpinBox" name="sp_1d_global_value">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QDoubleSpinBox {background-color:white; selection-background-color: lightgray;}</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="prefix">
+            <string/>
+           </property>
+           <property name="suffix">
+            <string> m</string>
+           </property>
+           <property name="minimum">
+            <double>-100000000000000005366162204393472.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>100000000000000004764729344.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QRadioButton" name="rb_d1_gv">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Global value:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QRadioButton" name="rb_1d_upload_csv">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Upload CSV</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QRadioButton" name="rb_1d_online_file">
+           <property name="font">
+            <font>
+             <family>Segoe UI</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Online file</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QComboBox" name="cbo_1d_online_file">
+           <property name="styleSheet">
+            <string notr="true">QComboBox {background-color:white; selection-background-color: lightgray;}</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -1124,6 +1147,22 @@
     <hint type="destinationlabel">
      <x>20</x>
      <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_1d_online_file</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>cbo_1d_online_file</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>424</x>
+     <y>222</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>794</x>
+     <y>222</y>
     </hint>
    </hints>
   </connection>

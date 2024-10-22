@@ -776,14 +776,6 @@ class SimulationRunner(QRunnable):
                     threedimodel_id, initial_waterlevel_id
                 )
                 if uploaded_initial_waterlevel.state == ThreediFileState.VALID.value:
-                    # Step 4: Find & delete existing 1D water levels file of the simulation
-                    water_level_1d_files = self.tc.fetch_simulation_initial_1d_water_level_files(sim_id)
-                    for water_level_1d_file in water_level_1d_files:
-                        self.tc.delete_simulation_initial_1d_water_level_file(sim_id, water_level_1d_file.id)
-                    # Step 5: Create a new 1D initial water level file for the simulation
-                    self.tc.create_simulation_initial_1d_water_level_file(
-                        sim_id, initial_waterlevel=initial_waterlevel_id
-                    )
                     break
                 elif uploaded_initial_waterlevel.state == ThreediFileState.INVALID.value:
                     state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()
@@ -791,6 +783,33 @@ class SimulationRunner(QRunnable):
                     raise SimulationRunnerError(err_msg)
                 else:
                     time.sleep(2)
+            
+            if uploaded_initial_waterlevel.state != ThreediFileState.VALID.value:
+                    state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()
+                    err_msg = f"Failed to upload Initial Waterlevel file due to the following reasons: {state_detail}"
+                    raise SimulationRunnerError(err_msg)
+
+        # These options should be mutually exclusive
+        assert not(initial_conditions.initial_waterlevels_1d is not None and initial_conditions.online_waterlevels_1d is not None)
+
+        if initial_conditions.initial_waterlevels_1d is not None or initial_conditions.online_waterlevels_1d is not None:
+            # Step 4: Find & delete existing 1D water levels file of the simulation
+            water_level_1d_files = self.tc.fetch_simulation_initial_1d_water_level_files(sim_id)
+            for water_level_1d_file in water_level_1d_files:
+                self.tc.delete_simulation_initial_1d_water_level_file(sim_id, water_level_1d_file.id)
+
+            # Step 5: Create a new 1D initial water level file for the simulation
+            if initial_conditions.initial_waterlevels_1d is not None:
+                self.tc.create_simulation_initial_1d_water_level_file(
+                    sim_id, initial_waterlevel=initial_waterlevel_id
+                )
+            elif initial_conditions.online_waterlevels_1d is not None:
+                logger.info("Setting online 1D waterlevel file")
+                logger.info(initial_conditions.online_waterlevels_1d)
+                self.tc.create_simulation_initial_1d_water_level_file(
+                    sim_id, initial_waterlevel=initial_conditions.online_waterlevels_1d.id
+                )
+
         # 2D
         if initial_conditions.global_value_2d is not None:
             self.tc.create_simulation_initial_2d_water_level_constant(sim_id, value=initial_conditions.global_value_2d)
