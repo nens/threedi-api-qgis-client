@@ -7,6 +7,7 @@ History
 - Fixes/enhancements: #616
 - Setting 1D initial substance concentration (#609)
 - Added user feedback for invalid boundary conditions file. (#624)
+- Add substance concentration section in Precipation page. (#537)
 
 
 3.14.1 (2024-09-25)
