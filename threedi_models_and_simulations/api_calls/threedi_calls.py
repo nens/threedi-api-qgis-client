@@ -25,6 +25,7 @@ from threedi_api_client.openapi import (Action, AggregationSettings,
                                         LizardTimeseriesSourcesSinks,
                                         MemoryStructureControl,
                                         NumericalSettings, ObstacleEdit,
+                                        OneDSubstanceConcentration,
                                         OneDWaterLevel, OneDWaterLevelFile,
                                         OneDWaterLevelPredefined, Organisation,
                                         PhysicalSettings,
@@ -528,7 +529,7 @@ class ThreediCalls:
     def create_simulation_lateral_constant(self, simulation_pk: int, **data) -> ConstantLateral:
         """Add lateral constant to the given simulation."""
         lateral_constant = self.threedi_api.simulations_events_lateral_constant_create(str(simulation_pk), data)
-        return ConstantLateral
+        return lateral_constant
 
     def create_simulation_lateral_timeseries(self, simulation_pk: int, **data) -> TimeseriesLateral:
         """Add lateral timeseries to the given simulation."""
@@ -656,11 +657,23 @@ class ThreediCalls:
             str(simulation_pk), data
         )
         return substance_concentration
-
+    
+    def create_simulation_initial_1d_substance_concentrations(
+        self, simulation_pk: int, **data
+    ) -> OneDSubstanceConcentration:
+        """Link 1D initial concentrations to substance for the given simulation."""
+        substance_concentration = self.threedi_api.simulations_initial1d_substance_concentrations_create(
+            str(simulation_pk), data
+        )
+        return substance_concentration
+    
     def create_3di_model_initial_concentration(self, threedimodel_id: str, **data) -> InitialConcentration:
         """Create initial concentration for the given 3Di model."""
         initial_concentration = self.threedi_api.threedimodels_initial_concentrations_create(threedimodel_id, data)
         return initial_concentration
+    
+    def upload_3di_model_initial_concentration(self, threedimodel_id: str, initial_concentration_id: int, **data) -> Upload:
+            return self.threedi_api.threedimodels_initial_concentrations_upload(initial_concentration_id, threedimodel_id, data)
 
     def create_3di_model_raster(self, threedimodel_id: str, **data) -> Raster:
         """Create raster for the given 3Di model."""

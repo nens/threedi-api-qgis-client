@@ -1,7 +1,28 @@
 History
 =======
 
-3.13.0 (unreleased)
+3.14.2 (unreleased)
+-------------------
+
+- Fixes/enhancements: #616
+- Setting 1D initial substance concentration (#609)
+- Added user feedback for invalid boundary conditions file. (#624)
+
+
+3.14.1 (2024-09-25)
+-------------------
+
+- Fix for the 'simulation_user_first_name' KeyError.
+- Add new 1D advection options
+
+
+3.14.0 (2024-09-24)
+-------------------
+
+- Fixes/enhancements: #368, #440
+
+
+3.13.0 (2024-09-12)
 -------------------
 
 - Fixes/enhancements: #276, #449, #551.

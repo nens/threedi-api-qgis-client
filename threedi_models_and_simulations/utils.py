@@ -17,6 +17,7 @@ PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))
 CACHE_PATH = os.path.join(PLUGIN_PATH, "_cached_data")
 TEMPLATE_PATH = os.path.join(CACHE_PATH, "templates.json")
 INITIAL_WATERLEVELS_TEMPLATE = os.path.join(CACHE_PATH, "initial_waterlevels.json")
+INITIAL_CONCENTRATIONS_TEMPLATE = os.path.join(CACHE_PATH, "initial_concentrations.json")
 BOUNDARY_CONDITIONS_TEMPLATE = os.path.join(CACHE_PATH, "boundary_conditions.json")
 LATERALS_FILE_TEMPLATE = os.path.join(CACHE_PATH, "laterals.json")
 DWF_FILE_TEMPLATE = os.path.join(CACHE_PATH, "dwf.json")
@@ -81,6 +82,11 @@ class ThreediModelTaskStatus(Enum):
     SUCCESS = "success"
     FAILURE = "failure"
     REVOKED = "revoked"
+
+
+class BreachSourceType(Enum):
+    POTENTIAL_BREACHES = "Potential breaches"
+    FLOWLINES = "1D2D Flowlines"
 
 
 def mmh_to_ms(mmh_value):

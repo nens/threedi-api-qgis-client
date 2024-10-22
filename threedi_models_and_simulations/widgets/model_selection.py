@@ -8,16 +8,14 @@ from operator import attrgetter
 
 from qgis.core import QgsMapLayer, QgsProject, QgsVectorLayer
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import (QDate, QDateTime, QItemSelectionModel,
-                              QModelIndex, QSortFilterProxyModel, Qt)
+from qgis.PyQt.QtCore import QDateTime, QItemSelectionModel, QModelIndex, QSortFilterProxyModel, Qt
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from threedi_api_client.openapi import ApiException
+from threedi_mi_utils import LocalSchematisation, list_local_schematisations
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import (CACHE_PATH, extract_error_message, file_cached,
-                     get_download_file)
-from ..utils_ui import (read_3di_settings, save_3di_settings, set_icon,
-                        set_named_style)
+from ..utils import CACHE_PATH, extract_error_message, file_cached, get_download_file
+from ..utils_ui import read_3di_settings, save_3di_settings, set_icon, set_named_style
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "model_selection.ui"))
@@ -29,25 +27,27 @@ TABLE_LIMIT = 10
 COLUMN_ID = 0
 NAME_COLUMN_IDX = 1
 SCHEMATISATION_COLUMN_IDX = 2
-REVISION_COLUMN_IDX = 3
+SCHEMATISATION_REVISION_COLUMN_IDX = 3
 LAST_UPDATED_COLUMN_IDX = 4
 UPDATED_BY_COLUMN_IDX = 5
+
 
 class SortFilterProxyModel(QSortFilterProxyModel):
     def __init__(self, parent=None):
         super().__init__(parent)
- 
-    def lessThan(self, left:QModelIndex, right: QModelIndex):
+
+    def lessThan(self, left: QModelIndex, right: QModelIndex):
         leftData = self.sourceModel().data(left)
         rightData = self.sourceModel().data(right)
         if left.column() in [LAST_UPDATED_COLUMN_IDX]:
             left_datetime = QDateTime.fromString(leftData, "dd-MMMM-yyyy")
             right_datetime = QDateTime.fromString(rightData, "dd-MMMM-yyyy")
             return left_datetime < right_datetime
-        elif left.column() in [COLUMN_ID, REVISION_COLUMN_IDX]:
+        elif left.column() in [COLUMN_ID, SCHEMATISATION_REVISION_COLUMN_IDX]:
             return int(leftData) < int(rightData)
         else:
             return leftData < rightData
+
 
 class ModelSelectionDialog(uicls, basecls):
     """Dialog for model selection."""
@@ -60,12 +60,15 @@ class ModelSelectionDialog(uicls, basecls):
         self.current_user = self.plugin_dock.current_user
         self.threedi_api = self.plugin_dock.threedi_api
         self.organisations = self.plugin_dock.organisations
-
+        self.working_dir = self.plugin_dock.plugin_settings.working_dir
+        self.local_schematisations = list_local_schematisations(self.working_dir)
         self.simulation_templates = None
         self.current_model = None
-        self.current_model_breaches = None
+        self.current_model_gridadmin_gpkg = None
+        self.current_model_geojson_breaches = None
         self.current_simulation_template = None
-        self.breaches_layer = None
+        self.potential_breaches_layer = None
+        self.flowlines_layer = None
         self.organisation = None
         self.model_is_loaded = False
         self.source_models_model = QStandardItemModel(self)
@@ -237,21 +240,36 @@ class ModelSelectionDialog(uicls, basecls):
         self.page_sbox.valueChanged.connect(self.fetch_3di_models)
         self.fetch_3di_models()
 
-    def load_cached_layers(self):
-        """Loading cached layers into the map canvas."""
-        if self.current_model_breaches is not None:
-            self.breaches_layer = QgsVectorLayer(self.current_model_breaches, "breaches", "ogr")
-            set_named_style(self.breaches_layer, "breaches.qml")
-            QgsProject.instance().addMapLayer(self.breaches_layer, False)
-            QgsProject.instance().layerTreeRoot().insertLayer(0, self.breaches_layer)
-            self.breaches_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
+    def load_breach_layers(self):
+        """Loading breach layers into the map canvas."""
+        if self.current_model_geojson_breaches is not None:
+            potential_breaches_layer = QgsVectorLayer(self.current_model_geojson_breaches, "Potential breaches", "ogr")
+            if potential_breaches_layer.isValid() and potential_breaches_layer.featureCount() > 0:
+                self.potential_breaches_layer = potential_breaches_layer
+                set_named_style(self.potential_breaches_layer, "Potential breach.qml")
+                self.potential_breaches_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
+                QgsProject.instance().addMapLayer(self.potential_breaches_layer, False)
+                QgsProject.instance().layerTreeRoot().insertLayer(0, self.potential_breaches_layer)
+        if self.current_model_gridadmin_gpkg is not None:
+            flowlines_uri = f"{self.current_model_gridadmin_gpkg}|layername=flowline"
+            flowlines_layer = QgsVectorLayer(flowlines_uri, "1D2D flowlines", "ogr")
+            flowlines_layer.setSubsetString('"line_type" IN (51, 52, 53, 54)')
+            if flowlines_layer.isValid() and flowlines_layer.featureCount() > 0:
+                self.flowlines_layer = flowlines_layer
+                set_named_style(self.flowlines_layer, "1D2D flowline.qml")
+                self.flowlines_layer.setFlags(QgsMapLayer.Searchable | QgsMapLayer.Identifiable)
+                QgsProject.instance().addMapLayer(self.flowlines_layer, False)
+                QgsProject.instance().layerTreeRoot().insertLayer(0, self.flowlines_layer)
 
-    def unload_cached_layers(self):
+    def unload_breach_layers(self):
         """Removing model related vector layers from map canvas."""
         try:
-            if self.breaches_layer is not None:
-                QgsProject.instance().removeMapLayer(self.breaches_layer)
-                self.breaches_layer = None
+            if self.potential_breaches_layer is not None:
+                QgsProject.instance().removeMapLayer(self.potential_breaches_layer)
+                self.potential_breaches_layer = None
+            if self.flowlines_layer is not None:
+                QgsProject.instance().removeMapLayer(self.flowlines_layer)
+                self.flowlines_layer = None
             self.plugin_dock.iface.mapCanvas().refresh()
         except (AttributeError, RuntimeError):
             pass
@@ -261,14 +279,25 @@ class ModelSelectionDialog(uicls, basecls):
         index = self.models_tv.currentIndex()
         if index.isValid():
             self.organisation = self.organisations_box.currentData()
-            self.unload_cached_layers()
+            self.unload_breach_layers()
             source_index = self.proxy_models_model.mapToSource(index)
             current_row = source_index.row()
             name_item = self.source_models_model.item(current_row, NAME_COLUMN_IDX)
             self.current_model = name_item.data(Qt.UserRole)
-            self.current_model_breaches = self.get_cached_data("breaches")
+            schematisation_name_item = self.source_models_model.item(current_row, SCHEMATISATION_COLUMN_IDX)
+            selected_model_schematisation_id = schematisation_name_item.data(Qt.UserRole)
+            selected_model_schematisation_name = schematisation_name_item.text()
+            schematisation_revision_item = self.source_models_model.item(
+                current_row, SCHEMATISATION_REVISION_COLUMN_IDX
+            )
+            selected_model_schematisation_revision = schematisation_revision_item.data(Qt.DisplayRole)
+            self.current_model_gridadmin_gpkg = self.get_gridadmin_gpkg_path(
+                selected_model_schematisation_id,
+                selected_model_schematisation_name,
+                selected_model_schematisation_revision,
+            )
+            self.current_model_geojson_breaches = self.get_breach_geojson_path("breaches")
             self.current_simulation_template = self.get_selected_template()
-            self.load_cached_layers()
             self.model_is_loaded = True
         self.close()
 
@@ -313,21 +342,62 @@ class ModelSelectionDialog(uicls, basecls):
             selected_template = None
         return selected_template
 
-    def get_cached_data(self, geojson_name):
-        """Get model data that should be cached."""
-        cached_file_path = None
+    def get_gridadmin_gpkg_path(self, schematisation_id, schematisation_name, schematisation_revision):
+        """Get model gridadmin.gpkg file."""
+        try:
+            local_schematisation = self.local_schematisations[schematisation_id]
+        except KeyError:
+            local_schematisation = None
+        if local_schematisation is None:
+            local_schematisation = LocalSchematisation(
+                self.working_dir, schematisation_id, schematisation_name, create=True
+            )
+            self.local_schematisations[schematisation_id] = local_schematisation
+            local_revision = local_schematisation.add_revision(schematisation_revision)
+        else:
+            try:
+                local_revision = local_schematisation.revisions[schematisation_revision]
+            except KeyError:
+                local_revision = local_schematisation.add_revision(schematisation_revision)
+        available_gridadming_gpkg_path = None
+        expected_gridadming_gpkg_path = os.path.join(local_revision.grid_dir, "gridadmin.gpkg")
+        if not os.path.exists(expected_gridadming_gpkg_path):
+            try:
+                tc = ThreediCalls(self.threedi_api)
+                model_id = self.current_model.id
+                gridadmin_file_gpkg, gridadmin_download_gpkg = tc.fetch_3di_model_geopackage_download(model_id)
+                get_download_file(gridadmin_download_gpkg, expected_gridadming_gpkg_path)
+                available_gridadming_gpkg_path = expected_gridadming_gpkg_path
+                self.communication.bar_info(f"Gridadmin GeoPackage downloaded.")
+            except ApiException as e:
+                error_msg = extract_error_message(e)
+                if "Geopackage file not found" in error_msg:
+                    pass
+                else:
+                    self.communication.bar_error(error_msg)
+            except Exception as e:
+                logger.exception("Error when getting gridadmin GeoPackage")
+                error_msg = f"Error: {e}"
+                self.communication.bar_error(error_msg)
+        else:
+            available_gridadming_gpkg_path = expected_gridadming_gpkg_path
+        return available_gridadming_gpkg_path
+
+    def get_breach_geojson_path(self, geojson_name):
+        """Get breach geojson data (should be cached)."""
+        breach_geojson_cached_file_path = None
         try:
             tc = ThreediCalls(self.threedi_api)
             model_id = self.current_model.id
             if geojson_name == "breaches":
                 download = tc.fetch_3di_model_geojson_breaches_download(model_id)
             else:
-                return cached_file_path
+                return breach_geojson_cached_file_path
             filename = f"{geojson_name}_{model_id}_{download.etag}.json"
             file_path = os.path.join(CACHE_PATH, filename)
             if not file_cached(file_path):
                 get_download_file(download, file_path)
-            cached_file_path = file_path
+            breach_geojson_cached_file_path = file_path
             self.communication.bar_info(f"Model {geojson_name} cached.")
         except ApiException as e:
             error_msg = extract_error_message(e)
@@ -339,4 +409,4 @@ class ModelSelectionDialog(uicls, basecls):
             logger.exception("Error when getting to-be-cached data")
             error_msg = f"Error: {e}"
             self.communication.bar_error(error_msg)
-        return cached_file_path
+        return breach_geojson_cached_file_path

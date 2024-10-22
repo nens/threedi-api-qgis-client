@@ -21,6 +21,7 @@ from .data_models import simulation_data_models as dm
 from .data_models.enumerators import SimulationStatusName
 from .utils import (API_DATETIME_FORMAT, BOUNDARY_CONDITIONS_TEMPLATE,
                     CHUNK_SIZE, DWF_FILE_TEMPLATE,
+                    INITIAL_CONCENTRATIONS_TEMPLATE,
                     INITIAL_WATERLEVELS_TEMPLATE, LATERALS_FILE_TEMPLATE,
                     RADAR_ID, TEMPDIR, EventTypes, FileState, ThreediFileState,
                     ThreediModelTaskStatus, UploadFileStatus,
@@ -75,7 +76,8 @@ class WSProgressesSentinel(QObject):
                     "name": status.simulation_name,
                     "progress": 100,
                     "status": status.name,
-                    "user_name": None,  # SimulationStatus does not contain information about the user
+                    "simulation_user_first_name": status.simulation_user_first_name,
+                    "simulation_user_last_name": status.simulation_user_last_name,
                 }
                 for status in finished_simulations_statuses
             }
@@ -138,6 +140,11 @@ class WSProgressesSentinel(QObject):
             sim_data["status"] = status_name
             if status_name == SimulationStatusName.FINISHED.value:
                 if sim_data["progress"] == 100:
+                    statuses = {status.simulation_id: status for status in self.tc.fetch_simulation_statuses()}
+                    sim_status = statuses[sim_id]
+                    sim_data["status"] = SimulationStatusName.FINISHED.value
+                    sim_data["simulation_user_first_name"] = sim_status.simulation_user_first_name
+                    sim_data["simulation_user_last_name"] = sim_status.simulation_user_last_name
                     self.simulation_finished.emit({sim_id: sim_data})
                 else:
                     sim_data["status"] = SimulationStatusName.STOPPED.value
@@ -893,6 +900,52 @@ class SimulationRunner(QRunnable):
         if initial_conditions.saved_state:
             saved_state_id = initial_conditions.saved_state.url.strip("/").split("/")[-1]
             self.tc.create_simulation_initial_saved_state(sim_id, saved_state=saved_state_id)
+
+        # Initial concentrations 1D for substances
+        if initial_conditions.initial_concentrations_1d:
+            for substance, params in initial_conditions.initial_concentrations_1d.items():
+                substance_id = self.substances[substance]
+                local_data = params.get("local_data")
+                online_file = params.get("online_file")
+                if online_file is not None:
+                    # find the initial concentration refering to this file.
+                    results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
+                    one_d_ids = [x for x in results if x.dimension == "one_d" and x.file == online_file]
+                    if len(one_d_ids) > 0:
+                        initial_concentration_1d = one_d_ids[0]
+                else:
+                    assert local_data is not None
+
+                    # create a new initial concentration
+                    initial_concentration_1d = self.tc.create_3di_model_initial_concentration(threedimodel_id=threedimodel_id, dimension="one_d")
+
+                    # create an upload url
+                    initial_concentration_upload = self.tc.upload_3di_model_initial_concentration(threedimodel_id=threedimodel_id, initial_concentration_id=initial_concentration_1d.id, filename=f"{sim_name}_initial_concent_1d.json")
+
+                    # now write and upload the data (in json format)
+                    write_json_data(local_data, INITIAL_CONCENTRATIONS_TEMPLATE)
+                    upload_local_file(initial_concentration_upload, INITIAL_CONCENTRATIONS_TEMPLATE)
+
+                    # wait until the data is processed
+                    retries = 0
+                    newly_generated_id = initial_concentration_1d.id
+                    initial_concentration_1d = None
+                    while not initial_concentration_1d and retries < 12:
+                        results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
+                        one_d_ids = [x for x in results if x.dimension == "one_d" and x.state == "valid" and x.id == newly_generated_id]
+                        if len(one_d_ids) > 0:
+                            initial_concentration_1d = one_d_ids[0]
+                            break
+                        retries += 1
+                        time.sleep(5)
+
+                assert initial_concentration_1d is not None
+                self.tc.create_simulation_initial_1d_substance_concentrations(
+                    sim_id,
+                    substance=substance_id,
+                    initial_concentration=initial_concentration_1d.id,
+                )
+
         # Initial concentrations 2D for substances
         if initial_conditions.initial_concentrations_2d:
             for substance, params in initial_conditions.initial_concentrations_2d.items():
@@ -1032,21 +1085,33 @@ class SimulationRunner(QRunnable):
         """Add breaches to the new simulation."""
         sim_id = self.current_simulation.simulation.id
         threedimodel_id = self.current_simulation.threedimodel_id
-        if self.current_simulation.breach:
-            breach_obj = self.tc.fetch_3di_model_point_potential_breach(
-                threedimodel_id, int(self.current_simulation.breach.breach_id)
-            )
-            breach = breach_obj.to_dict()
-            self.tc.create_simulation_breaches(
-                sim_id,
-                potential_breach=breach["url"],
-                duration_till_max_depth=self.current_simulation.breach.duration_in_units,
-                initial_width=self.current_simulation.breach.width,
-                offset=self.current_simulation.breach.offset,
-                discharge_coefficient_positive=self.current_simulation.breach.discharge_coefficient_positive,
-                discharge_coefficient_negative=self.current_simulation.breach.discharge_coefficient_negative,
-                maximum_breach_depth=self.current_simulation.breach.max_breach_depth,
-            )
+        if self.current_simulation.breaches:
+            for potential_breach in self.current_simulation.breaches.potential_breaches or []:
+                breach_obj = self.tc.fetch_3di_model_point_potential_breach(threedimodel_id, potential_breach.breach_id)
+                breach = breach_obj.to_dict()
+                self.tc.create_simulation_breaches(
+                    sim_id,
+                    potential_breach=breach["url"],
+                    duration_till_max_depth=potential_breach.duration_till_max_depth,
+                    initial_width=potential_breach.width,
+                    offset=potential_breach.offset,
+                    discharge_coefficient_positive=potential_breach.discharge_coefficient_positive,
+                    discharge_coefficient_negative=potential_breach.discharge_coefficient_negative,
+                    levee_material=potential_breach.levee_material,
+                    maximum_breach_depth=potential_breach.max_breach_depth,
+                )
+            for flowline in self.current_simulation.breaches.flowlines or []:
+                self.tc.create_simulation_breaches(
+                    sim_id,
+                    line_id=flowline.breach_id,
+                    duration_till_max_depth=flowline.duration_till_max_depth,
+                    initial_width=flowline.width,
+                    offset=flowline.offset,
+                    discharge_coefficient_positive=flowline.discharge_coefficient_positive,
+                    discharge_coefficient_negative=flowline.discharge_coefficient_negative,
+                    levee_material=flowline.levee_material,
+                    maximum_breach_depth=flowline.max_breach_depth,
+                )
 
     def include_precipitation(self):
         """Add precipitation to the new simulation."""
