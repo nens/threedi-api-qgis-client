@@ -215,12 +215,16 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         """Initialize substances table."""
         NAME_COLUMN = 0
         DECAY_COEFFICIENT_COLUMN = 2
+        DIFFUSION_COEFFICIENT_COLUMN = 3
+
         # Set minimum width for the columns
         self.tw_substances.setColumnWidth(NAME_COLUMN, self.MINIMUM_WIDTH)  # Name
         self.tw_substances.setColumnWidth(DECAY_COEFFICIENT_COLUMN, 160)  # Decay coefficient
+        self.tw_substances.setColumnWidth(DIFFUSION_COEFFICIENT_COLUMN, 160)  # Diffusion coefficient
         # Set the numeric delegate for the decay coefficient column
         numeric_delegate = NumericDelegate(self.tw_substances)
         self.tw_substances.setItemDelegateForColumn(DECAY_COEFFICIENT_COLUMN, numeric_delegate)
+        self.tw_substances.setItemDelegateForColumn(DIFFUSION_COEFFICIENT_COLUMN, numeric_delegate)
 
     def prepopulate_substances_table(self, substances):
         self.tw_substances.setRowCount(0)
@@ -230,13 +234,16 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             name = substance.get("name", "")
             units = substance.get("units", "")
             decay_coefficient = substance.get("decay_coefficient", "")
+            diffusion_coefficient = substance.get("diffusion_coefficient", "")
             if name:
                 name_item = QTableWidgetItem(name)
                 units_item = QTableWidgetItem(units)
-                decay_coefficient_item = QTableWidgetItem(decay_coefficient)
+                decay_coefficient_item = QTableWidgetItem(str(decay_coefficient))
+                diffusion_coefficient_item = QTableWidgetItem(str(diffusion_coefficient))
                 self.tw_substances.setItem(row, 0, name_item)
                 self.tw_substances.setItem(row, 1, units_item)
                 self.tw_substances.setItem(row, 2, decay_coefficient_item)
+                self.tw_substances.setItem(row, 3, diffusion_coefficient_item)
         self.set_substances_data()
         self.update_substances()
 
@@ -246,6 +253,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.tw_substances.setItem(row_count, 0, QTableWidgetItem())
         self.tw_substances.setItem(row_count, 1, QTableWidgetItem())
         self.tw_substances.setItem(row_count, 2, QTableWidgetItem())
+        self.tw_substances.setItem(row_count, 3, QTableWidgetItem())
 
     def remove_items(self):
         selected_rows = set()
@@ -279,6 +287,13 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
                     "Units length should be less than 16 characters!"
                 )
+        if item.column() == 3:
+            if item.text():
+                if float(item.text()) < 0 or float(item.text()) > 1:
+                    self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                        "Diffusion coefficient should be between 0 and 1"
+                    )
+                    item.setText("")
         # Resize name column to contents and enforce minimum width
         self.tw_substances.resizeColumnToContents(0)
         if self.tw_substances.columnWidth(0) < self.MINIMUM_WIDTH:
@@ -294,16 +309,21 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             name_item = self.tw_substances.item(row, 0)
             units_item = self.tw_substances.item(row, 1)
             decay_coefficient_item = self.tw_substances.item(row, 2)
-            if name_item and units_item and decay_coefficient_item:
+            diffusion_coefficient_item = self.tw_substances.item(row, 3)
+            
+            if name_item and units_item and decay_coefficient_item and diffusion_coefficient_item:
                 name = name_item.text()
                 units = units_item.text()
                 decay_coefficient = decay_coefficient_item.text()
+                diffusion_coefficient = diffusion_coefficient_item.text()
                 if name:
                     substance = {"name": name}
                     if units:
                         substance["units"] = units
                     if decay_coefficient:
                         substance["decay_coefficient"] = decay_coefficient
+                    if diffusion_coefficient:
+                        substance["diffusion_coefficient"] = float(diffusion_coefficient)
                     self.substances.append(substance)
 
     def update_substances(self):
@@ -3348,7 +3368,8 @@ class SimulationWizard(QWizard):
         simulation_duration = self.duration_page.main_widget.calculate_simulation_duration()
         init_conditions = self.init_conditions_dlg.initial_conditions
         if init_conditions.include_substances:
-            substances = [{"name": item.name, "units": item.units or "", "decay_coefficient": str(item.decay_coefficient) or ""} for item in events.substances]
+
+            substances = [{"name": item.name, "units": item.units or "", "decay_coefficient": item.decay_coefficient or "", "diffusion_coefficient": item.diffusion_coefficient or ""} for item in events.substances]
             if substances:
                 self.substances_page.main_widget.prepopulate_substances_table(substances)
         if init_conditions.include_boundary_conditions:
