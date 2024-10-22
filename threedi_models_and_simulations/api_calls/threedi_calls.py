@@ -15,7 +15,8 @@ from threedi_api_client.openapi import (Action, AggregationSettings,
                                         FileLateral, FileRasterSourcesSinks,
                                         FileStructureControl,
                                         FileTimeseriesSourcesSinks,
-                                        GroundWaterLevel, GroundWaterRaster,
+                                        ForcingSubstance, GroundWaterLevel,
+                                        GroundWaterRaster,
                                         InitialConcentration,
                                         InitialSavedState, InitialWaterlevel,
                                         LizardRasterRain,
@@ -483,12 +484,19 @@ class ThreediCalls:
         return bc_upload_file
 
     def create_simulation_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
+        
+        logger.info(rain_data)
+        for substance in rain_data["substances"]:
+            ForcingSubstance(**substance)
         """Add ConstantRain to the given simulation."""
         constant_rain = self.threedi_api.simulations_events_rain_constant_create(str(simulation_pk), rain_data)
         return constant_rain
 
     def create_simulation_custom_precipitation(self, simulation_pk: int, **rain_data) -> TimeseriesRain:
         """Add TimeseriesRain to the given simulation."""
+        logger.info(rain_data)
+        for substance in rain_data["substances"]:
+            ForcingSubstance(**substance)
         time_series_rain = self.threedi_api.simulations_events_rain_timeseries_create(str(simulation_pk), rain_data)
         return time_series_rain
 
@@ -504,6 +512,7 @@ class ThreediCalls:
 
     def create_simulation_radar_precipitation(self, simulation_pk: int, **rain_data) -> LizardRasterRain:
         """Add LizardRasterRain to the given simulation."""
+        logger.info(rain_data)
         time_series_rain = self.threedi_api.simulations_events_rain_rasters_lizard_create(str(simulation_pk), rain_data)
         return time_series_rain
 
