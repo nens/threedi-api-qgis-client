@@ -332,6 +332,8 @@ def parse_version_number(version_str):
     version = [int(i) for i in version_str.split(".") if i.isnumeric()]
     return version
 
+def constains_only_ascii(text):
+    return all(ord(c) < 128 for c in text)
 
 def parse_timeseries(timeseries: str):
     """Parse the timeseries from the given string."""

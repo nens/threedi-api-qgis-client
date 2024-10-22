@@ -6,6 +6,7 @@ History
 
 - Fixes/enhancements: #616
 - Setting 1D initial substance concentration (#609)
+- Added check for non-ascii characters in substance unit (#621)
 - Added user feedback for invalid boundary conditions file. (#624)
 - Added substance concentration section in Precipation page. (#537)
 - Added diffusion parameter to Substances page. (#602)

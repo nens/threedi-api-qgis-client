@@ -29,7 +29,8 @@ from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
-from ..utils import (TEMPDIR, EventTypes, apply_24h_timeseries,
+from ..utils import (TEMPDIR, BreachSourceType, EventTypes,
+                     apply_24h_timeseries, constains_only_ascii,
                      convert_timeseries_to_seconds, extract_error_message,
                      get_download_file, handle_csv_header, intervals_are_even,
                      mmh_to_mmtimestep, mmh_to_ms, mmtimestep_to_mmh,
@@ -287,6 +288,13 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
                     "Units length should be less than 16 characters!"
                 )
+
+            if not constains_only_ascii(item.text()):
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                    "Non-ASCII characters not allowed in units"
+                )
+                item.setText("")
+
         if item.column() == 3:
             if item.text():
                 if float(item.text()) < 0 or float(item.text()) > 1:
