@@ -2174,7 +2174,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
 
         # Retrieve substance data from widgets, these have been properly set in run_new_simulation
         substances = []
-        if not ((precipitation_type == EventTypes.FROM_NETCDF.value) or (precipitation_type == EventTypes.RADAR.value)):
+        if not ((precipitation_type == EventTypes.FROM_NETCDF.value) or (precipitation_type == EventTypes.RADAR.value) or (precipitation_type == "None")):
             for substance in self.substances:
                 substance_name = substance["name"]
                 substance_widget = self.substance_widgets[substance_name]
@@ -3919,6 +3919,7 @@ class SimulationWizard(QWizard):
                 else:
                     new_simulation.breaches = dm.Breaches()
             if self.init_conditions.include_precipitations:
+                logger.error(simulation)
                 self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                 precipitation_data = self.precipitation_page.main_widget.get_precipitation_data()
                 if simulation_difference == "precipitation" or i == 1:
