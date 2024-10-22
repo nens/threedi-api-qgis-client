@@ -17,6 +17,7 @@ PLUGIN_PATH = os.path.dirname(os.path.realpath(__file__))
 CACHE_PATH = os.path.join(PLUGIN_PATH, "_cached_data")
 TEMPLATE_PATH = os.path.join(CACHE_PATH, "templates.json")
 INITIAL_WATERLEVELS_TEMPLATE = os.path.join(CACHE_PATH, "initial_waterlevels.json")
+INITIAL_CONCENTRATIONS_TEMPLATE = os.path.join(CACHE_PATH, "initial_concentrations.json")
 BOUNDARY_CONDITIONS_TEMPLATE = os.path.join(CACHE_PATH, "boundary_conditions.json")
 LATERALS_FILE_TEMPLATE = os.path.join(CACHE_PATH, "laterals.json")
 DWF_FILE_TEMPLATE = os.path.join(CACHE_PATH, "dwf.json")
@@ -331,6 +332,8 @@ def parse_version_number(version_str):
     version = [int(i) for i in version_str.split(".") if i.isnumeric()]
     return version
 
+def constains_only_ascii(text):
+    return all(ord(c) < 128 for c in text)
 
 def parse_timeseries(timeseries: str):
     """Parse the timeseries from the given string."""

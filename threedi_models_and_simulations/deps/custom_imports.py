@@ -7,7 +7,7 @@ from subprocess import CalledProcessError, check_call
 
 from ..utils import parse_version_number
 
-REQUIRED_API_CLIENT_VERSION = "4.1.7"
+REQUIRED_API_CLIENT_VERSION = "4.1.8"
 REQUIRED_3DI_SCHEMA_VERSION = "0.219.3"
 REQUIRED_3DI_MI_UTILS_VERSION = "0.1.4"
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
