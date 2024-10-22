@@ -10,7 +10,8 @@ from functools import partial
 import requests
 from PyQt5 import QtWebSockets
 from PyQt5.QtNetwork import QNetworkRequest
-from qgis.PyQt.QtCore import QByteArray, QObject, QRunnable, QUrl, pyqtSignal, pyqtSlot
+from qgis.PyQt.QtCore import (QByteArray, QObject, QRunnable, QUrl, pyqtSignal,
+                              pyqtSlot)
 from threedi_api_client.files import upload_file
 from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import bypass_max_path_limit
@@ -18,28 +19,15 @@ from threedi_mi_utils import bypass_max_path_limit
 from .api_calls.threedi_calls import ThreediCalls
 from .data_models import simulation_data_models as dm
 from .data_models.enumerators import SimulationStatusName
-from .utils import (
-    API_DATETIME_FORMAT,
-    BOUNDARY_CONDITIONS_TEMPLATE,
-    CHUNK_SIZE,
-    DWF_FILE_TEMPLATE,
-    INITIAL_WATERLEVELS_TEMPLATE,
-    LATERALS_FILE_TEMPLATE,
-    RADAR_ID,
-    TEMPDIR,
-    EventTypes,
-    FileState,
-    ThreediFileState,
-    ThreediModelTaskStatus,
-    UploadFileStatus,
-    extract_error_message,
-    get_download_file,
-    split_to_even_chunks,
-    unzip_archive,
-    upload_local_file,
-    write_json_data,
-    zip_into_archive,
-)
+from .utils import (API_DATETIME_FORMAT, BOUNDARY_CONDITIONS_TEMPLATE,
+                    CHUNK_SIZE, DWF_FILE_TEMPLATE,
+                    INITIAL_CONCENTRATIONS_TEMPLATE,
+                    INITIAL_WATERLEVELS_TEMPLATE, LATERALS_FILE_TEMPLATE,
+                    RADAR_ID, TEMPDIR, EventTypes, FileState, ThreediFileState,
+                    ThreediModelTaskStatus, UploadFileStatus,
+                    extract_error_message, get_download_file,
+                    split_to_even_chunks, unzip_archive, upload_local_file,
+                    write_json_data, zip_into_archive)
 
 logger = logging.getLogger(__name__)
 
@@ -912,6 +900,52 @@ class SimulationRunner(QRunnable):
         if initial_conditions.saved_state:
             saved_state_id = initial_conditions.saved_state.url.strip("/").split("/")[-1]
             self.tc.create_simulation_initial_saved_state(sim_id, saved_state=saved_state_id)
+
+        # Initial concentrations 1D for substances
+        if initial_conditions.initial_concentrations_1d:
+            for substance, params in initial_conditions.initial_concentrations_1d.items():
+                substance_id = self.substances[substance]
+                local_data = params.get("local_data")
+                online_file = params.get("online_file")
+                if online_file is not None:
+                    # find the initial concentration refering to this file.
+                    results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
+                    one_d_ids = [x for x in results if x.dimension == "one_d" and x.file == online_file]
+                    if len(one_d_ids) > 0:
+                        initial_concentration_1d = one_d_ids[0]
+                else:
+                    assert local_data is not None
+
+                    # create a new initial concentration
+                    initial_concentration_1d = self.tc.create_3di_model_initial_concentration(threedimodel_id=threedimodel_id, dimension="one_d")
+
+                    # create an upload url
+                    initial_concentration_upload = self.tc.upload_3di_model_initial_concentration(threedimodel_id=threedimodel_id, initial_concentration_id=initial_concentration_1d.id, filename=f"{sim_name}_initial_concent_1d.json")
+
+                    # now write and upload the data (in json format)
+                    write_json_data(local_data, INITIAL_CONCENTRATIONS_TEMPLATE)
+                    upload_local_file(initial_concentration_upload, INITIAL_CONCENTRATIONS_TEMPLATE)
+
+                    # wait until the data is processed
+                    retries = 0
+                    newly_generated_id = initial_concentration_1d.id
+                    initial_concentration_1d = None
+                    while not initial_concentration_1d and retries < 12:
+                        results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
+                        one_d_ids = [x for x in results if x.dimension == "one_d" and x.state == "valid" and x.id == newly_generated_id]
+                        if len(one_d_ids) > 0:
+                            initial_concentration_1d = one_d_ids[0]
+                            break
+                        retries += 1
+                        time.sleep(5)
+
+                assert initial_concentration_1d is not None
+                self.tc.create_simulation_initial_1d_substance_concentrations(
+                    sim_id,
+                    substance=substance_id,
+                    initial_concentration=initial_concentration_1d.id,
+                )
+
         # Initial concentrations 2D for substances
         if initial_conditions.initial_concentrations_2d:
             for substance, params in initial_conditions.initial_concentrations_2d.items():
@@ -1098,14 +1132,35 @@ class SimulationRunner(QRunnable):
                 self.current_simulation.precipitation.netcdf_global,
                 self.current_simulation.precipitation.netcdf_raster,
             )
+
+            substances = self.current_simulation.precipitation.substances
+            for substance in substances:
+                substance_name = substance.get("substance")
+                substance_id = self.substances[substance_name]  # this is the substance ID returned by API
+                substance["substance_id"] = substance_id
+                # Replace substance names with substance ids (also done in laterals)
+                substance["substance"] = substance_id
+                assert len(substance["concentrations"]) == 1
+
             if precipitation_type == EventTypes.CONSTANT.value:
+                # Adjust substance timekeys for precipitation type
+                for substance in substances:
+                    substance_value = substance["concentrations"][0][1]
+                    substance["concentrations"] = [[0, substance_value], [duration, substance_value]]  # offset should not be used
+
                 self.tc.create_simulation_constant_precipitation(
-                    sim_id, value=values, units=units, duration=duration, offset=offset
+                    sim_id, value=values, units=units, duration=duration, offset=offset, substances=substances,
                 )
             elif precipitation_type == EventTypes.FROM_CSV.value:
                 for values_chunk in split_to_even_chunks(values, 300):
                     chunk_offset = values_chunk[0][0]
                     values_chunk = [[t - chunk_offset, v] for t, v in values_chunk]
+
+                    # Adjust substance timekeys for precipitation type
+                    for substance in substances:
+                        substance_value = substance["concentrations"][0][1]
+                        substance["concentrations"] = [[t - chunk_offset, substance_value] for t, _ in values_chunk]
+
                     self.tc.create_simulation_custom_precipitation(
                         sim_id,
                         values=values_chunk,
@@ -1113,8 +1168,10 @@ class SimulationRunner(QRunnable):
                         duration=duration,
                         offset=offset + chunk_offset,
                         interpolate=interpolate,
+                        substances=substances,
                     )
             elif precipitation_type == EventTypes.FROM_NETCDF.value:
+                # No substances for this type
                 filename = os.path.basename(netcdf_filepath)
                 if netcdf_global:
                     upload = self.tc.create_simulation_global_netcdf_precipitation(sim_id, filename=filename)
@@ -1122,17 +1179,23 @@ class SimulationRunner(QRunnable):
                     upload = self.tc.create_simulation_raster_netcdf_precipitation(sim_id, filename=filename)
                 upload_local_file(upload, netcdf_filepath)
             elif precipitation_type == EventTypes.DESIGN.value:
+                # Adjust substance timekeys for precipitation type
+                for substance in substances:
+                    substance_value = substance["concentrations"][0][1]
+                    substance["concentrations"] = [[t, substance_value] for t, _ in values]
+
                 self.tc.create_simulation_custom_precipitation(
-                    sim_id, values=values, units=units, duration=duration, offset=offset
+                    sim_id, values=values, units=units, duration=duration, offset=offset, substances=substances,
                 )
             elif precipitation_type == EventTypes.RADAR.value:
+                # No substances for this type
                 self.tc.create_simulation_radar_precipitation(
                     sim_id,
                     reference_uuid=RADAR_ID,
                     units=units,
                     duration=duration,
                     offset=offset,
-                    start_datetime=start,
+                    start_datetime=start
                 )
 
     def include_wind(self):

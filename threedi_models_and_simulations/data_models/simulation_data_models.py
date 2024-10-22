@@ -4,29 +4,23 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List
 
-from threedi_api_client.openapi import (
-    CurrentStatus,
-    FileBoundaryCondition,
-    FileRasterLeakage,
-    FileRasterSourcesSinks,
-    FileStructureControl,
-    FileTimeseriesLeakage,
-    FileTimeseriesRain,
-    FileTimeseriesSourcesSinks,
-    InitialWaterlevel,
-    LizardRasterSourcesSinks,
-    LizardTimeseriesRain,
-    LizardTimeseriesSourcesSinks,
-    LocalRain,
-    MemoryStructureControl,
-    ObstacleEdit,
-    RasterEdit,
-    Simulation,
-    TableStructureControl,
-    TimedStructureControl,
-    TimeseriesLeakageOverview,
-    TimeseriesSourcesSinks,
-)
+from threedi_api_client.openapi import (CurrentStatus, FileBoundaryCondition,
+                                        FileRasterLeakage,
+                                        FileRasterSourcesSinks,
+                                        FileStructureControl,
+                                        FileTimeseriesLeakage,
+                                        FileTimeseriesRain,
+                                        FileTimeseriesSourcesSinks,
+                                        InitialWaterlevel,
+                                        LizardRasterSourcesSinks,
+                                        LizardTimeseriesRain,
+                                        LizardTimeseriesSourcesSinks,
+                                        LocalRain, MemoryStructureControl,
+                                        ObstacleEdit, RasterEdit, Simulation,
+                                        TableStructureControl,
+                                        TimedStructureControl,
+                                        TimeseriesLeakageOverview,
+                                        TimeseriesSourcesSinks)
 
 
 @dataclass
@@ -101,6 +95,7 @@ class InitialConditions(SimulationElement):
     aggregation_method_groundwater: str = None
     saved_state: str = None
     initial_concentrations_2d: dict = None
+    initial_concentrations_1d: dict = None
 
 
 @dataclass
@@ -151,6 +146,7 @@ class Precipitation(SimulationElement):
     netcdf_filepath: str = None
     netcdf_global: bool = None
     netcdf_raster: bool = None
+    substances: list = None
 
 
 @dataclass
