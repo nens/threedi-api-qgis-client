@@ -146,6 +146,7 @@ class Precipitation(SimulationElement):
     netcdf_filepath: str = None
     netcdf_global: bool = None
     netcdf_raster: bool = None
+    substances: list = None
 
 
 @dataclass

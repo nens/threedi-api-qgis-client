@@ -1132,14 +1132,35 @@ class SimulationRunner(QRunnable):
                 self.current_simulation.precipitation.netcdf_global,
                 self.current_simulation.precipitation.netcdf_raster,
             )
+
+            substances = self.current_simulation.precipitation.substances
+            for substance in substances:
+                substance_name = substance.get("substance")
+                substance_id = self.substances[substance_name]  # this is the substance ID returned by API
+                substance["substance_id"] = substance_id
+                # Replace substance names with substance ids (also done in laterals)
+                substance["substance"] = substance_id
+                assert len(substance["concentrations"]) == 1
+
             if precipitation_type == EventTypes.CONSTANT.value:
+                # Adjust substance timekeys for precipitation type
+                for substance in substances:
+                    substance_value = substance["concentrations"][0][1]
+                    substance["concentrations"] = [[0, substance_value], [duration, substance_value]]  # offset should not be used
+
                 self.tc.create_simulation_constant_precipitation(
-                    sim_id, value=values, units=units, duration=duration, offset=offset
+                    sim_id, value=values, units=units, duration=duration, offset=offset, substances=substances,
                 )
             elif precipitation_type == EventTypes.FROM_CSV.value:
                 for values_chunk in split_to_even_chunks(values, 300):
                     chunk_offset = values_chunk[0][0]
                     values_chunk = [[t - chunk_offset, v] for t, v in values_chunk]
+
+                    # Adjust substance timekeys for precipitation type
+                    for substance in substances:
+                        substance_value = substance["concentrations"][0][1]
+                        substance["concentrations"] = [[t - chunk_offset, substance_value] for t, _ in values_chunk]
+
                     self.tc.create_simulation_custom_precipitation(
                         sim_id,
                         values=values_chunk,
@@ -1147,8 +1168,10 @@ class SimulationRunner(QRunnable):
                         duration=duration,
                         offset=offset + chunk_offset,
                         interpolate=interpolate,
+                        substances=substances,
                     )
             elif precipitation_type == EventTypes.FROM_NETCDF.value:
+                # No substances for this type
                 filename = os.path.basename(netcdf_filepath)
                 if netcdf_global:
                     upload = self.tc.create_simulation_global_netcdf_precipitation(sim_id, filename=filename)
@@ -1156,17 +1179,23 @@ class SimulationRunner(QRunnable):
                     upload = self.tc.create_simulation_raster_netcdf_precipitation(sim_id, filename=filename)
                 upload_local_file(upload, netcdf_filepath)
             elif precipitation_type == EventTypes.DESIGN.value:
+                # Adjust substance timekeys for precipitation type
+                for substance in substances:
+                    substance_value = substance["concentrations"][0][1]
+                    substance["concentrations"] = [[t, substance_value] for t, _ in values]
+
                 self.tc.create_simulation_custom_precipitation(
-                    sim_id, values=values, units=units, duration=duration, offset=offset
+                    sim_id, values=values, units=units, duration=duration, offset=offset, substances=substances,
                 )
             elif precipitation_type == EventTypes.RADAR.value:
+                # No substances for this type
                 self.tc.create_simulation_radar_precipitation(
                     sim_id,
                     reference_uuid=RADAR_ID,
                     units=units,
                     duration=duration,
                     offset=offset,
-                    start_datetime=start,
+                    start_datetime=start
                 )
 
     def include_wind(self):
