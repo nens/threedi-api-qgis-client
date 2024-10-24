@@ -2,30 +2,25 @@
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 from dataclasses import dataclass
 from datetime import datetime
+from typing import List
 
-from threedi_api_client.openapi import (
-    CurrentStatus,
-    FileBoundaryCondition,
-    FileRasterLeakage,
-    FileRasterSourcesSinks,
-    FileStructureControl,
-    FileTimeseriesLeakage,
-    FileTimeseriesRain,
-    FileTimeseriesSourcesSinks,
-    InitialWaterlevel,
-    LizardRasterSourcesSinks,
-    LizardTimeseriesRain,
-    LizardTimeseriesSourcesSinks,
-    LocalRain,
-    MemoryStructureControl,
-    ObstacleEdit,
-    RasterEdit,
-    Simulation,
-    TableStructureControl,
-    TimedStructureControl,
-    TimeseriesLeakageOverview,
-    TimeseriesSourcesSinks,
-)
+from threedi_api_client.openapi import (CurrentStatus, FileBoundaryCondition,
+                                        FileRasterLeakage,
+                                        FileRasterSourcesSinks,
+                                        FileStructureControl,
+                                        FileTimeseriesLeakage,
+                                        FileTimeseriesRain,
+                                        FileTimeseriesSourcesSinks,
+                                        InitialWaterlevel,
+                                        LizardRasterSourcesSinks,
+                                        LizardTimeseriesRain,
+                                        LizardTimeseriesSourcesSinks,
+                                        LocalRain, MemoryStructureControl,
+                                        ObstacleEdit, RasterEdit, Simulation,
+                                        TableStructureControl,
+                                        TimedStructureControl,
+                                        TimeseriesLeakageOverview,
+                                        TimeseriesSourcesSinks)
 
 
 @dataclass
@@ -90,6 +85,7 @@ class InitialConditions(SimulationElement):
     global_value_1d: float = None
     from_spatialite_1d: bool = None
     initial_waterlevels_1d: dict = None
+    online_waterlevels_1d: InitialWaterlevel = None
     global_value_2d: float = None
     online_raster_2d: InitialWaterlevel = None
     local_raster_2d: str = None
@@ -100,6 +96,7 @@ class InitialConditions(SimulationElement):
     aggregation_method_groundwater: str = None
     saved_state: str = None
     initial_concentrations_2d: dict = None
+    initial_concentrations_1d: dict = None
 
 
 @dataclass
@@ -121,13 +118,20 @@ class DWF(SimulationElement):
 
 @dataclass
 class Breach(SimulationElement):
-    breach_id: str = None
+    breach_id: int = None
     width: float = None
-    duration_in_units: float = None
+    duration_till_max_depth: float = None
     offset: float = None
     discharge_coefficient_positive: float = None
     discharge_coefficient_negative: float = None
+    levee_material: str = None
     max_breach_depth: float = None
+
+
+@dataclass
+class Breaches(SimulationElement):
+    potential_breaches: List[Breach] = None
+    flowlines: List[Breach] = None
 
 
 @dataclass
@@ -143,6 +147,7 @@ class Precipitation(SimulationElement):
     netcdf_filepath: str = None
     netcdf_global: bool = None
     netcdf_raster: bool = None
+    substances: list = None
 
 
 @dataclass
@@ -209,7 +214,7 @@ class NewSimulation:
     laterals: Laterals = None
     substances: Substances = None
     dwf: DWF = None
-    breach: Breach = None
+    breaches: Breaches = None
     precipitation: Precipitation = None
     wind: Wind = None
     settings: Settings = None

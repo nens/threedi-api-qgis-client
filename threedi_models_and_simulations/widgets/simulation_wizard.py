@@ -8,64 +8,41 @@ from copy import deepcopy
 from datetime import datetime
 from functools import partial
 from operator import attrgetter
-from typing import List
+from typing import List, Optional
 
 import pyqtgraph as pg
 from dateutil.relativedelta import relativedelta
-from qgis.core import NULL, QgsMapLayerProxyModel
+from qgis.core import QgsMapLayerProxyModel
+from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone
-from qgis.PyQt.QtGui import QColor, QFont, QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import (
-    QComboBox,
-    QDoubleSpinBox,
-    QFileDialog,
-    QGridLayout,
-    QGroupBox,
-    QLabel,
-    QLineEdit,
-    QRadioButton,
-    QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
-    QTableWidgetItem,
-    QWidget,
-    QWizard,
-    QWizardPage,
-)
+from qgis.PyQt.QtCore import (QDateTime, QSettings, QSize, Qt, QTimeZone,
+                              pyqtSignal)
+from qgis.PyQt.QtGui import (QColor, QDoubleValidator, QFont, QStandardItem,
+                             QStandardItemModel)
+from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
+                                 QGridLayout, QGroupBox, QHBoxLayout, QLabel,
+                                 QLineEdit, QRadioButton, QScrollArea,
+                                 QSizePolicy, QSpacerItem, QSpinBox,
+                                 QTableWidgetItem, QWidget, QWizard,
+                                 QWizardPage)
 from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
-from ..utils import (
-    TEMPDIR,
-    EventTypes,
-    apply_24h_timeseries,
-    convert_timeseries_to_seconds,
-    extract_error_message,
-    get_download_file,
-    handle_csv_header,
-    intervals_are_even,
-    mmh_to_mmtimestep,
-    mmh_to_ms,
-    mmtimestep_to_mmh,
-    ms_to_mmh,
-    parse_timeseries,
-    read_json_data,
-)
-from ..utils_ui import (
-    NumericDelegate,
-    get_filepath,
-    qgis_layers_cbo_get_layer_uri,
-    read_3di_settings,
-    save_3di_settings,
-    scan_widgets_parameters,
-    set_widget_background_color,
-    set_widgets_parameters,
-)
+from ..utils import (TEMPDIR, BreachSourceType, EventTypes,
+                     apply_24h_timeseries, constains_only_ascii,
+                     convert_timeseries_to_seconds, extract_error_message,
+                     get_download_file, handle_csv_header, intervals_are_even,
+                     mmh_to_mmtimestep, mmh_to_ms, mmtimestep_to_mmh,
+                     ms_to_mmh, parse_timeseries, read_json_data)
+from ..utils_ui import (NumericDelegate, get_filepath,
+                        qgis_layers_cbo_get_layer_uri, read_3di_settings,
+                        save_3di_settings, scan_widgets_parameters,
+                        set_widget_background_color, set_widgets_parameters)
 from .custom_items import FilteredComboBox
+from .initial_concentrations import (Initial1DConcentrationsWidget,
+                                     Initial2DConcentrationsWidget)
 from .substance_concentrations import SubstanceConcentrationsWidget
-from .initial_concentrations import InitialConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_name_page, basecls_name_page = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_wizard", "page_name.ui"))
@@ -239,12 +216,16 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         """Initialize substances table."""
         NAME_COLUMN = 0
         DECAY_COEFFICIENT_COLUMN = 2
+        DIFFUSION_COEFFICIENT_COLUMN = 3
+
         # Set minimum width for the columns
         self.tw_substances.setColumnWidth(NAME_COLUMN, self.MINIMUM_WIDTH)  # Name
         self.tw_substances.setColumnWidth(DECAY_COEFFICIENT_COLUMN, 160)  # Decay coefficient
+        self.tw_substances.setColumnWidth(DIFFUSION_COEFFICIENT_COLUMN, 160)  # Diffusion coefficient
         # Set the numeric delegate for the decay coefficient column
         numeric_delegate = NumericDelegate(self.tw_substances)
         self.tw_substances.setItemDelegateForColumn(DECAY_COEFFICIENT_COLUMN, numeric_delegate)
+        self.tw_substances.setItemDelegateForColumn(DIFFUSION_COEFFICIENT_COLUMN, numeric_delegate)
 
     def prepopulate_substances_table(self, substances):
         self.tw_substances.setRowCount(0)
@@ -254,13 +235,16 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             name = substance.get("name", "")
             units = substance.get("units", "")
             decay_coefficient = substance.get("decay_coefficient", "")
+            diffusion_coefficient = substance.get("diffusion_coefficient", "")
             if name:
                 name_item = QTableWidgetItem(name)
                 units_item = QTableWidgetItem(units)
-                decay_coefficient_item = QTableWidgetItem(decay_coefficient)
+                decay_coefficient_item = QTableWidgetItem(str(decay_coefficient))
+                diffusion_coefficient_item = QTableWidgetItem(str(diffusion_coefficient))
                 self.tw_substances.setItem(row, 0, name_item)
                 self.tw_substances.setItem(row, 1, units_item)
                 self.tw_substances.setItem(row, 2, decay_coefficient_item)
+                self.tw_substances.setItem(row, 3, diffusion_coefficient_item)
         self.set_substances_data()
         self.update_substances()
 
@@ -270,6 +254,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         self.tw_substances.setItem(row_count, 0, QTableWidgetItem())
         self.tw_substances.setItem(row_count, 1, QTableWidgetItem())
         self.tw_substances.setItem(row_count, 2, QTableWidgetItem())
+        self.tw_substances.setItem(row_count, 3, QTableWidgetItem())
 
     def remove_items(self):
         selected_rows = set()
@@ -303,6 +288,20 @@ class SubstancesWidget(uicls_substances, basecls_substances):
                 self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
                     "Units length should be less than 16 characters!"
                 )
+
+            if not constains_only_ascii(item.text()):
+                self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                    "Non-ASCII characters not allowed in units"
+                )
+                item.setText("")
+
+        if item.column() == 3:
+            if item.text():
+                if float(item.text()) < 0 or float(item.text()) > 1:
+                    self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                        "Diffusion coefficient should be between 0 and 1"
+                    )
+                    item.setText("")
         # Resize name column to contents and enforce minimum width
         self.tw_substances.resizeColumnToContents(0)
         if self.tw_substances.columnWidth(0) < self.MINIMUM_WIDTH:
@@ -318,16 +317,21 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             name_item = self.tw_substances.item(row, 0)
             units_item = self.tw_substances.item(row, 1)
             decay_coefficient_item = self.tw_substances.item(row, 2)
-            if name_item and units_item and decay_coefficient_item:
+            diffusion_coefficient_item = self.tw_substances.item(row, 3)
+            
+            if name_item and units_item and decay_coefficient_item and diffusion_coefficient_item:
                 name = name_item.text()
                 units = units_item.text()
                 decay_coefficient = decay_coefficient_item.text()
+                diffusion_coefficient = diffusion_coefficient_item.text()
                 if name:
                     substance = {"name": name}
                     if units:
                         substance["units"] = units
                     if decay_coefficient:
                         substance["decay_coefficient"] = decay_coefficient
+                    if diffusion_coefficient:
+                        substance["diffusion_coefficient"] = float(diffusion_coefficient)
                     self.substances.append(substance)
 
     def update_substances(self):
@@ -337,6 +341,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             self.parent_page.parent_wizard.laterals_page.main_widget.setup_substance_concentrations()
         if hasattr(self.parent_page.parent_wizard, "init_conditions_page"):
             self.parent_page.parent_wizard.init_conditions_page.main_widget.setup_2d_initial_concentrations()
+            self.parent_page.parent_wizard.init_conditions_page.main_widget.setup_1d_initial_concentrations()
 
 
 class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_conditions):
@@ -515,6 +520,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             boundary_conditions_list = list(reader)
         error_msg = handle_csv_header(header)
         if error_msg is not None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_msg)
             return None, None
         interpolate = (
             self.cb_interpolate_bc_1d.isChecked()
@@ -760,9 +766,13 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.initial_saved_state = initial_conditions.initial_saved_state
         self.initial_waterlevels = {}
         self.initial_waterlevels_1d = {}
+        self.initial_waterlevels_files = {}
         self.saved_states = {}
         self.initial_concentrations_widget = QWidget()
+        self.initial_concentrations_widget_1D = QWidget()
         self.rasters = []
+        self.online_files = []
+        self.local_data = {}
         self.gb_saved_state.setChecked(False)
         self.gb_1d.setChecked(False)
         self.gb_2d.setChecked(False)
@@ -774,6 +784,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         self.btn_1d_upload_csv.clicked.connect(self.load_1d_initial_waterlevel_csv)
         self.setup_initial_conditions()
         self.setup_2d_initial_concentrations()
+        self.setup_1d_initial_concentrations()
         self.connect_signals()
 
     def connect_signals(self):
@@ -790,11 +801,24 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             self.initial_concentrations_2d_label.hide()
             return
         self.initial_concentrations_2d_label.show()
-        initial_concentrations_widget = InitialConcentrationsWidget(self.substances, self.parent_page)
+        initial_concentrations_widget = Initial2DConcentrationsWidget(self.substances, self.parent_page)
         self.initial_concentrations_widget = initial_concentrations_widget.widget
         self.rasters = initial_concentrations_widget.rasters
         parent_layout = self.layout()
-        parent_layout.addWidget(self.initial_concentrations_widget, 3, 2)
+        parent_layout.addWidget(self.initial_concentrations_widget, 5, 2)
+
+    def setup_1d_initial_concentrations(self):
+        if hasattr(self, "initial_concentrations_widget_1D"):
+            self.initial_concentrations_widget_1D.setParent(None)
+        if not self.substances:
+            self.initial_concentrations_1d_label.hide()
+            return
+        self.initial_concentrations_1d_label.show()
+        initial_concentrations_widget_1D = Initial1DConcentrationsWidget(self.substances, self.parent_page)
+        self.local_data = initial_concentrations_widget_1D.local_data
+        self.online_files = initial_concentrations_widget_1D.online_files
+        self.initial_concentrations_widget_1D = initial_concentrations_widget_1D.widget
+        self.layout().addWidget(self.initial_concentrations_widget_1D, 3, 2)
 
     def on_saved_state_change(self, checked):
         """Handle saved state group checkbox."""
@@ -806,10 +830,47 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             if self.gb_groundwater.isChecked():
                 self.gb_groundwater.setChecked(False)
 
+            # Disable concentrations, if required
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                if groupbox_ic_1d.isChecked():
+                    groupbox_ic_1d.setChecked(False)
+                groupbox_ic_1d.setDisabled(True)
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                if groupbox_ic_2d.isChecked():
+                    groupbox_ic_2d.setChecked(False)
+                groupbox_ic_2d.setDisabled(True)
+        else:
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                groupbox_ic_2d.setDisabled(False)
+                groupbox_ic_1d.setDisabled(False)
+                
+
     def on_initial_waterlevel_change(self, checked):
         """Handle initial waterlevel group checkbox."""
         if checked and self.gb_saved_state.isChecked():
             self.gb_saved_state.setChecked(False)
+
+        if self.sender() is self.gb_1d:
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                groupbox_ic_1d.setEnabled(checked)
+                if not checked:
+                    groupbox_ic_1d.setChecked(False)
+
+        if self.sender() is self.gb_2d:
+            for substance in self.substances:
+                substance_name = substance.get("name")
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                groupbox_ic_2d.setEnabled(checked)
+                if not checked:
+                    groupbox_ic_2d.setChecked(False)
+            
 
     def setup_initial_conditions(self):
         """Setup initial conditions widget."""
@@ -830,6 +891,17 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                     self.cbo_saved_states.setCurrentIndex(initial_saved_state_idx)
             initial_waterlevels = tc.fetch_3di_model_initial_waterlevels(model_id) or []
             initial_waterlevels_2d = [iw for iw in initial_waterlevels if iw.dimension == "two_d"]
+            initial_waterlevels_1d = [iw for iw in initial_waterlevels if iw.dimension == "one_d"]
+            if initial_waterlevels_1d:
+                self.rb_1d_online_file.setChecked(True)
+                logger.info("Retrieved 1d initial waterlevel from model")
+                logger.info(initial_waterlevels_1d)
+            for iw in sorted(initial_waterlevels_1d, key=attrgetter("id")):
+                if iw.file:
+                    self.initial_waterlevels_files[iw.file.filename] = iw 
+                    self.cbo_1d_online_file.addItem(iw.file.filename)
+                else:
+                    logger.info(f"Water level instance {iw.id} does not have a file, skipping.")
             if initial_waterlevels_2d:
                 self.rb_2d_online_raster.setChecked(True)
                 self.rb_gw_online_raster.setChecked(True)
@@ -1421,21 +1493,22 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         super().__init__()
         self.setupUi(self)
         self.parent_page = parent_page
+        self.map_canvas = self.parent_page.parent_wizard.plugin_dock.iface.mapCanvas()
         set_widget_background_color(self)
-        self.values = dict()
-        self.potential_breaches = dict()
-        self.breaches_layer = parent_page.parent_wizard.model_selection_dlg.breaches_layer
+        self.added_breaches = defaultdict(dict)
+        self.breaches_model = QStandardItemModel()
+        self.breaches_tv.setModel(self.breaches_model)
+        self.potential_breaches_layer = parent_page.parent_wizard.model_selection_dlg.potential_breaches_layer
+        self.flowlines_layer = parent_page.parent_wizard.model_selection_dlg.flowlines_layer
         self.dd_breach_id = FilteredComboBox(self)
         self.breach_lout.addWidget(self.dd_breach_id)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_changed)
-        self.dd_breach_id.currentIndexChanged.connect(self.potential_breach_changed)
-        self.dd_units.currentIndexChanged.connect(self.write_values_into_dict)
-        self.sb_duration.valueChanged.connect(self.write_values_into_dict)
-        self.sb_width.valueChanged.connect(self.write_values_into_dict)
-        self.sp_start_after.valueChanged.connect(self.write_values_into_dict)
-        self.sb_discharge_coefficient_positive.valueChanged.connect(self.write_values_into_dict)
-        self.sb_discharge_coefficient_negative.valueChanged.connect(self.write_values_into_dict)
-        self.sb_max_breach_depth.valueChanged.connect(self.write_values_into_dict)
+        self.potential_breach_selection_tool = None
+        self.flowline_selection_tool = None
+        self.pb_add_breach_from_list.clicked.connect(self.select_potential_breach_from_list)
+        self.pb_select_potential_breach.clicked.connect(self.select_potential_breach)
+        self.pb_select_flowline.clicked.connect(self.select_flowline)
+        self.pb_remove_breach.clicked.connect(self.remove_breach)
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "breaches":
             self.simulation_widget.show()
         else:
@@ -1443,112 +1516,277 @@ class BreachesWidget(uicls_breaches, basecls_breaches):
         self.dd_simulation.addItems(initial_conditions.simulations_list)
         self.setup_breaches()
 
+    @property
+    def current_simulation_number(self):
+        return self.dd_simulation.currentIndex()
+
+    @property
+    def breach_parameters(self):
+        """Breach parameters with human-friendly labels."""
+        parameters = {
+            "breach_id": "ID",
+            "code": "Code",
+            "display_name": "Display name",
+            "offset": "Start after",
+            "offset_units": "[units]",
+            "initial_width": "Initial width",
+            "duration": "Duration till max depth",
+            "duration_units": "[units]",
+            "levee_material": "Levee material",
+            "max_breach_depth": "Max breach depth [m]",
+            "discharge_coefficient_positive": "Discharge coefficient positive",
+            "discharge_coefficient_negative": "Discharge coefficient negative",
+        }
+        return parameters
+
     def setup_breaches(self):
         """Setup breaches data with corresponding vector layer."""
-        cached_breaches = self.parent_page.parent_wizard.model_selection_dlg.current_model_breaches
-        if cached_breaches is not None:
-            field_names = [field.name() for field in self.breaches_layer.fields()]
-            if self.breaches_layer.selectedFeatureCount() > 0:
-                first_id = [str(feat["content_pk"]) for feat in self.breaches_layer.selectedFeatures()][0]
-            else:
-                first_id = None
-            breaches_ids = []
-            for feat in self.breaches_layer.getFeatures():
-                breach_id = str(feat["content_pk"])
-                breaches_ids.append(breach_id)
-                self.potential_breaches[breach_id] = {field_name: feat[field_name] for field_name in field_names}
-            breaches_ids.sort(key=lambda i: int(i))
-            self.dd_breach_id.addItems(breaches_ids)
-            if first_id is not None:
-                self.dd_breach_id.setCurrentText(first_id)
-                self.set_values_from_feature()
-        self.write_values_into_dict()
+        if self.potential_breaches_layer is not None:
+            breach_ids_map = {
+                f'{f["content_pk"]} | {f["code"]} | {f["display_name"]}': f.id()
+                for f in self.potential_breaches_layer.getFeatures()
+            }
+            for breach_id, breach_fid in sorted(breach_ids_map.items(), key=lambda i: i[1]):
+                self.dd_breach_id.addItem(breach_id, breach_fid)
+        self.breaches_model.setHorizontalHeaderLabels(self.breach_parameters.values())
 
-    def set_values_from_feature(self):
-        """Set potential breach parameters to the widgets."""
-        breach_id = self.dd_breach_id.currentText()
-        try:
-            breach_attributes = self.potential_breaches[breach_id]
-            max_breach_depth = breach_attributes["levbr"]
-            if max_breach_depth not in (None, NULL):
-                self.sb_max_breach_depth.setValue(max_breach_depth)
-        except KeyError:
-            pass
+    def select_potential_breach_from_list(self):
+        """Add potential breach from the dropdown menu to the selected breaches list."""
+        if self.potential_breaches_layer is None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                "Potential breaches are not available!", self
+            )
+            return
+        breach_fid = self.dd_breach_id.currentData()
+        potential_breach_feat = self.potential_breaches_layer.getFeature(breach_fid)
+        self.on_potential_breach_feature_identified(potential_breach_feat)
 
-    def write_values_into_dict(self):
-        """Store current widget values."""
-        simulation = self.dd_simulation.currentText()
-        breach_id = self.dd_breach_id.currentText()
-        duration = self.sb_duration.value()
-        width = self.sb_width.value()
-        units = self.dd_units.currentText()
-        offset = self.sp_start_after.value()
-        discharge_coefficient_positive = self.sb_discharge_coefficient_positive.value()
-        discharge_coefficient_negative = self.sb_discharge_coefficient_negative.value()
-        max_breach_depth = self.sb_max_breach_depth.value()
-        self.values[simulation] = {
-            "breach_id": breach_id,
-            "width": width,
-            "duration": duration,
-            "units": units,
-            "offset": offset,
-            "discharge_coefficient_positive": discharge_coefficient_positive,
-            "discharge_coefficient_negative": discharge_coefficient_negative,
-            "max_breach_depth": max_breach_depth,
-        }
-        if self.breaches_layer is not None:
-            self.parent_page.parent_wizard.plugin_dock.iface.setActiveLayer(self.breaches_layer)
-            self.breaches_layer.selectByExpression(f'"content_pk"={breach_id}')
-            self.parent_page.parent_wizard.plugin_dock.iface.actionZoomToSelected().trigger()
+    def select_potential_breach(self):
+        """Add potential breach from the map canvas to the selected breaches list."""
+        if self.potential_breaches_layer is None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                "Potential breaches are not available!", self
+            )
+            return
+        self.potential_breach_selection_tool = QgsMapToolIdentifyFeature(self.map_canvas, self.potential_breaches_layer)
+        self.potential_breach_selection_tool.activated.connect(self.parent_page.parent_wizard.hide)
+        self.potential_breach_selection_tool.deactivated.connect(self.parent_page.parent_wizard.show)
+        self.potential_breach_selection_tool.featureIdentified.connect(self.on_potential_breach_feature_identified)
+        self.map_canvas.setMapTool(self.potential_breach_selection_tool)
+
+    def select_flowline(self):
+        """Add flowline from the map canvas to the selected breaches list."""
+        if self.flowlines_layer is None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                "1D2D flowlines are not available!", self
+            )
+            return
+        self.flowline_selection_tool = QgsMapToolIdentifyFeature(self.map_canvas, self.flowlines_layer)
+        self.flowline_selection_tool.activated.connect(self.parent_page.parent_wizard.hide)
+        self.flowline_selection_tool.deactivated.connect(self.parent_page.parent_wizard.show)
+        self.flowline_selection_tool.featureIdentified.connect(self.on_flowline_feature_identified)
+        self.map_canvas.setMapTool(self.flowline_selection_tool)
+
+    def on_potential_breach_feature_identified(self, potential_breach_feat):
+        """Action on featureIdentified signal for potential breaches layer."""
+        self.map_canvas.unsetMapTool(self.potential_breach_selection_tool)
+        potential_breach_fid = potential_breach_feat.id()
+        self.potential_breaches_layer.selectByIds([potential_breach_fid])
+        breach_key = (BreachSourceType.POTENTIAL_BREACHES, potential_breach_fid)
+        if breach_key in self.added_breaches[self.current_simulation_number]:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                "Potential breach already selected!", self
+            )
+            return
+        self.add_breach(BreachSourceType.POTENTIAL_BREACHES, potential_breach_feat)
+        self.potential_breaches_layer.removeSelection()
+
+    def on_flowline_feature_identified(self, flowline_feat):
+        """Action on featureIdentified signal for flowlines layer."""
+        self.map_canvas.unsetMapTool(self.flowline_selection_tool)
+        flowline_fid = flowline_feat.id()
+        self.flowlines_layer.selectByIds([flowline_fid])
+        breach_key = (BreachSourceType.FLOWLINES, flowline_fid)
+        if breach_key in self.added_breaches[self.current_simulation_number]:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn("1D2D flowline already selected!", self)
+            return
+        self.add_breach(BreachSourceType.FLOWLINES, flowline_feat)
+
+    def breach_widgets_for_feature(self, breach_source_type, breach_feature):
+        """Setup breach widgets out of the feature."""
+        segoe_ui_font = QFont("Segoe UI", 8)
+        maxsize = 2147483647
+        breach_fid = breach_feature.id()
+        breach_key = (breach_source_type, breach_fid)
+
+        id_line_edit = QLineEdit()
+        id_line_edit.setFont(segoe_ui_font)
+        id_line_edit.setStyleSheet("QLineEdit {background-color: white;}")
+        id_line_edit.setReadOnly(True)
+        id_line_edit.breach_key = breach_key
+        id_line_edit.simulation_number = self.current_simulation_number
+
+        code_line_edit = QLineEdit()
+        code_line_edit.setFont(segoe_ui_font)
+        code_line_edit.setStyleSheet("QLineEdit {background-color: white;}")
+        code_line_edit.setReadOnly(True)
+
+        display_name_line_edit = QLineEdit()
+        display_name_line_edit.setFont(segoe_ui_font)
+        display_name_line_edit.setStyleSheet("QLineEdit {background-color: white;}")
+        display_name_line_edit.setReadOnly(True)
+
+        offset_spinbox = QSpinBox()
+        offset_spinbox.setFont(segoe_ui_font)
+        offset_spinbox.setStyleSheet("QSpinBox {background-color: white;}")
+        offset_spinbox.setMinimum(0)
+        offset_spinbox.setMaximum(maxsize)
+
+        offset_units_combo = QComboBox()
+        offset_units_combo.setFont(segoe_ui_font)
+        offset_units_combo.addItems(self.SECONDS_MULTIPLIERS.keys())
+
+        initial_width_spinbox = QDoubleSpinBox()
+        initial_width_spinbox.setFont(segoe_ui_font)
+        initial_width_spinbox.setStyleSheet("QDoubleSpinBox {background-color: white;}")
+        initial_width_spinbox.setDecimals(1)
+        initial_width_spinbox.setMinimum(0.0)
+        initial_width_spinbox.setMaximum(maxsize)
+
+        duration_spinbox = QSpinBox()
+        duration_spinbox.setFont(segoe_ui_font)
+        duration_spinbox.setStyleSheet("QSpinBox {background-color: white;}")
+        duration_spinbox.setMinimum(0)
+        duration_spinbox.setMaximum(maxsize)
+
+        duration_units_combo = QComboBox()
+        duration_units_combo.setFont(segoe_ui_font)
+        duration_units_combo.addItems(self.SECONDS_MULTIPLIERS.keys())
+
+        levee_material_combo = QComboBox()
+        levee_material_combo.setFont(segoe_ui_font)
+        levee_material_combo.addItems(["sand", "clay"])
+
+        max_breach_depth_spinbox = QDoubleSpinBox()
+        max_breach_depth_spinbox.setFont(segoe_ui_font)
+        max_breach_depth_spinbox.setStyleSheet("QDoubleSpinBox {background-color: white;}")
+        max_breach_depth_spinbox.setDecimals(3)
+        max_breach_depth_spinbox.setMinimum(0.0)
+        max_breach_depth_spinbox.setMaximum(maxsize)
+
+        discharge_coefficient_positive_spinbox = QDoubleSpinBox()
+        discharge_coefficient_positive_spinbox.setFont(segoe_ui_font)
+        discharge_coefficient_positive_spinbox.setStyleSheet("QDoubleSpinBox {background-color: white;}")
+        discharge_coefficient_positive_spinbox.setDecimals(3)
+        discharge_coefficient_positive_spinbox.setMinimum(0.0)
+        discharge_coefficient_positive_spinbox.setMaximum(maxsize)
+
+        discharge_coefficient_negative_spinbox = QDoubleSpinBox()
+        discharge_coefficient_negative_spinbox.setFont(segoe_ui_font)
+        discharge_coefficient_negative_spinbox.setStyleSheet("QDoubleSpinBox {background-color: white;}")
+        discharge_coefficient_negative_spinbox.setDecimals(3)
+        discharge_coefficient_negative_spinbox.setMinimum(0.0)
+        discharge_coefficient_negative_spinbox.setMaximum(maxsize)
+
+        offset_spinbox.setValue(0)
+        initial_width_spinbox.setValue(10.0)
+        duration_spinbox.setValue(10)
+        duration_units_combo.setCurrentText("mins")
+        discharge_coefficient_positive_spinbox.setValue(1.0)
+        discharge_coefficient_negative_spinbox.setValue(1.0)
+
+        if breach_source_type == BreachSourceType.POTENTIAL_BREACHES:
+            id_line_edit.setText(str(breach_feature["content_pk"]))
+            code_line_edit.setText(breach_feature["code"])
+            display_name_line_edit.setText(breach_feature["display_name"])
+            levee_material_combo.setCurrentIndex(breach_feature["levmat"] - 1)
+            max_breach_depth_spinbox.setValue(breach_feature["levbr"])
+        else:
+            id_line_edit.setText(str(breach_feature["id"]))
+            max_breach_depth_spinbox.setValue(2.0)
+
+        breach_widgets_list = [
+            id_line_edit,
+            code_line_edit,
+            display_name_line_edit,
+            offset_spinbox,
+            offset_units_combo,
+            initial_width_spinbox,
+            duration_spinbox,
+            duration_units_combo,
+            levee_material_combo,
+            max_breach_depth_spinbox,
+            discharge_coefficient_positive_spinbox,
+            discharge_coefficient_negative_spinbox,
+        ]
+
+        breach_widgets = dict(zip(self.breach_parameters.keys(), breach_widgets_list))
+        return breach_widgets
+
+    def add_breach(self, breach_source_type, breach_feature):
+        """Add breach widgets to the breaches list."""
+        breach_fid = breach_feature.id()
+        breach_widgets = self.breach_widgets_for_feature(breach_source_type, breach_feature)
+        breach_rows_count = self.breaches_model.rowCount()
+        row_number = breach_rows_count
+        row_items = [QStandardItem("") for _ in breach_widgets]
+        self.breaches_model.appendRow(row_items)
+        for column_idx, breach_widget in enumerate(breach_widgets.values()):
+            self.breaches_tv.setIndexWidget(self.breaches_model.index(row_number, column_idx), breach_widget)
+        for i in range(len(breach_widgets)):
+            self.breaches_tv.resizeColumnToContents(i)
+        breach_key = (breach_source_type, breach_fid)
+        self.added_breaches[self.current_simulation_number][breach_key] = breach_widgets
+
+    def remove_breach(self):
+        """Remove breach widgets from the breaches list."""
+        index = self.breaches_tv.currentIndex()
+        if not index.isValid():
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(
+                "No breach row selected - nothing to remove!", self
+            )
+            return
+        row = index.row()
+        breach_id_item = self.breaches_model.item(row, 0)
+        breach_id_index = breach_id_item.index()
+        breach_id_widget = self.breaches_tv.indexWidget(breach_id_index)
+        breach_key = breach_id_widget.breach_key
+        self.breaches_model.removeRow(row)
+        del self.added_breaches[self.current_simulation_number][breach_key]
 
     def simulation_changed(self):
         """Handle simulation change."""
-        vals = self.values.get(self.dd_simulation.currentText())
-        if vals:
-            self.dd_breach_id.setCurrentIndex(self.dd_breach_id.findText(vals.get("breach_id")))
-            self.sb_duration.setValue(vals.get("duration"))
-            self.sb_width.setValue(vals.get("width"))
-            self.dd_units.setCurrentIndex(self.dd_units.findText(vals.get("units")))
-            self.sp_start_after.setValue(vals.get("offset"))
-            self.sb_discharge_coefficient_positive.setValue(vals.get("discharge_coefficient_positive"))
-            self.sb_discharge_coefficient_negative.setValue(vals.get("discharge_coefficient_negative"))
-            self.sb_max_breach_depth.setValue(vals.get("max_breach_depth"))
-        else:
-            self.dd_breach_id.setCurrentIndex(0)
-            self.sb_duration.setValue(0.1)
-            self.sb_width.setValue(10)
-            self.dd_units.setCurrentIndex(0)
-            self.sp_start_after.setValue(0)
-            self.sb_discharge_coefficient_positive.setValue(1.0)
-            self.sb_discharge_coefficient_negative.setValue(1.0)
-            self.sb_max_breach_depth.setValue(0)
-            self.set_values_from_feature()
-
-    def potential_breach_changed(self):
-        """Handle potential breach ID change."""
-        self.set_values_from_feature()
-        self.write_values_into_dict()
+        row_count = self.breaches_model.rowCount()
+        root_model_index = self.breaches_model.invisibleRootItem().index()
+        for row in range(row_count):
+            breach_id_item = self.breaches_model.item(row, 0)
+            breach_id_index = breach_id_item.index()
+            breach_id_widget = self.breaches_tv.indexWidget(breach_id_index)
+            hide_row = breach_id_widget.simulation_number != self.current_simulation_number
+            self.breaches_tv.setRowHidden(row, root_model_index, hide_row)
 
     def get_breaches_data(self):
         """Getting all needed data for adding breaches to the simulation."""
-        breach_id = self.dd_breach_id.currentText()
-        width = self.sb_width.value()
-        duration = self.sb_duration.value()
-        units = self.dd_units.currentText()
-        offset = self.sp_start_after.value()
-        duration_in_units = duration * self.SECONDS_MULTIPLIERS[units]
-        discharge_coefficient_positive = self.sb_discharge_coefficient_positive.value()
-        discharge_coefficient_negative = self.sb_discharge_coefficient_negative.value()
-        max_breach_depth = self.sb_max_breach_depth.value()
-        breach_data = (
-            breach_id,
-            width,
-            duration_in_units,
-            offset,
-            discharge_coefficient_positive,
-            discharge_coefficient_negative,
-            max_breach_depth,
-        )
+        potential_breaches, flowlines = [], []
+        simulation_breaches = self.added_breaches[self.current_simulation_number]
+        for (breach_source_type, breach_fid), breach_widgets in simulation_breaches.items():
+            duration_units = breach_widgets["duration_units"].currentText()
+            offset_units = breach_widgets["offset_units"].currentText()
+            breach_obj = dm.Breach(
+                breach_id=int(breach_widgets["breach_id"].text()),
+                width=breach_widgets["initial_width"].value(),
+                duration_till_max_depth=breach_widgets["duration"].value() * self.SECONDS_MULTIPLIERS[duration_units],
+                offset=breach_widgets["offset"].value() * self.SECONDS_MULTIPLIERS[offset_units],
+                discharge_coefficient_positive=breach_widgets["discharge_coefficient_positive"].value(),
+                discharge_coefficient_negative=breach_widgets["discharge_coefficient_negative"].value(),
+                levee_material=breach_widgets["levee_material"].currentText(),
+                max_breach_depth=breach_widgets["max_breach_depth"].value(),
+            )
+            if breach_source_type == BreachSourceType.POTENTIAL_BREACHES:
+                potential_breaches.append(breach_obj)
+            else:
+                flowlines.append(breach_obj)
+        breach_data = (potential_breaches, flowlines)
         return breach_data
 
 
@@ -1621,6 +1859,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.widget_design.hide()
         self.widget_radar.hide()
         self.connect_signals()
+        # Primarily used for switching simulations
         self.values = dict()
         if initial_conditions.multiple_simulations and initial_conditions.simulations_difference == "precipitation":
             self.simulation_widget.show()
@@ -1628,6 +1867,14 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.simulation_widget.hide()
         self.dd_simulation.addItems(initial_conditions.simulations_list)
         self.plot_precipitation()
+
+        self.substance_widgets = {}  # map from substance dict to widget
+        self.substances = (
+            parent_page.parent_wizard.substances_page.main_widget.substances
+            if hasattr(parent_page.parent_wizard, "substances_page")
+            else []
+        )
+        self.update_substance_widgets()
 
     def connect_signals(self):
         """Connecting widgets signals."""
@@ -1657,10 +1904,20 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.le_upload_csv.clear()
             self.plot_precipitation()
 
-    def write_values_into_dict(self):
-        """Store current widget values."""
+    def store_cache(self):
+        """Store current widget values for a specific simulation."""
         simulation = self.dd_simulation.currentText()
         precipitation_type = self.cbo_prec_type.currentText()
+        
+        # iterate over the substance values and retrieve the values
+        substance_concentrations = []
+        if not ((precipitation_type == EventTypes.FROM_NETCDF.value) or (precipitation_type == EventTypes.RADAR.value)):
+            for substance in self.substances:
+                substance_name = substance["name"]
+                assert substance_name in self.substance_widgets
+                value = self.substance_widgets[substance_name].get_value()
+                substance_concentrations.append({"name": substance_name, "unit": substance.get("unit", ""), "concentration": value})
+
         if precipitation_type == EventTypes.CONSTANT.value:
             start_after = self.sp_start_after_constant.value()
             start_after_units = self.start_after_constant_u.currentText()
@@ -1674,6 +1931,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "stop_after": stop_after,
                 "stop_after_units": stop_after_units,
                 "intensity": intensity,
+                "substance_concentration": substance_concentrations,
             }
         elif precipitation_type == EventTypes.FROM_CSV.value:
             start_after = self.sp_start_after_csv.value()
@@ -1690,8 +1948,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "time_series": time_series,
                 "csv_path": csv_path,
                 "interpolate": interpolate,
+                "substance_concentration": substance_concentrations,
             }
         elif precipitation_type == EventTypes.FROM_NETCDF.value:
+            # note that we do not add substance for netcdf rain
             netcdf_path = self.le_upload_netcdf.text()
             netcdf_global = self.rb_global_netcdf.isChecked()
             netcdf_raster = self.rb_raster_netcdf.isChecked()
@@ -1712,8 +1972,10 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 "start_after_units": start_after_units,
                 "design_number": design_number,
                 "time_series": design_time_series,
+                "substance_concentration": substance_concentrations,
             }
         elif precipitation_type == EventTypes.RADAR.value:
+            # note that we do not add substance for radar rain
             start_after = self.sp_start_after_radar.value()
             start_after_units = self.start_after_radar_u.currentText()
             stop_after = self.sp_stop_after_radar.value()
@@ -1736,6 +1998,32 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.cbo_design.setCurrentIndex(0)
             self.plot_precipitation()
             return
+
+        # It could be that substances have been removed from the Substances page, or in a different order
+        # and this has not been set in the cached simulation values
+        for substance_widget in self.substance_widgets.values():
+            self.substance_widget.layout().removeWidget(substance_widget)
+            del substance_widget
+        self.substance_widgets.clear()
+        
+        substance_concentrations = vals["substance_concentration"]
+        new_substance_concentrations = []
+        
+        for substance in self.substances:
+            substance_name = substance["name"]
+            substance_concentration = next((x for x in substance_concentrations if x["name"] == substance["name"]), None)
+            if not substance_concentration:  # substance has been added
+                substance_concentration = {"name": substance_name, "concentration": None}
+            substance_concentration["unit"] = substance.get("unit", "")
+            wid = PrecipitationWidget.PrecipationSubstanceWidget(substance_name, substance_concentration["concentration"] or "", substance.get("units", ""), self.substance_widget)
+            wid.value_changed.connect(self.store_cache)
+            self.substance_widgets[substance_name] = wid  # name is enforced to be unique in UI
+            self.substance_widget.layout().addWidget(wid)
+            new_substance_concentrations.append(substance_concentration)
+
+        # Update the cached values
+        self.values[simulation]["substance_concentration"] = new_substance_concentrations
+
         precipitation_type = vals.get("precipitation_type")
         if precipitation_type == EventTypes.CONSTANT.value:
             self.cbo_prec_type.setCurrentIndex(self.cbo_prec_type.findText(vals.get("precipitation_type")))
@@ -1820,7 +2108,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.widget_design.hide()
             self.widget_radar.hide()
         self.refresh_current_units()
+        self.update_substance_widgets()
         self.plot_precipitation()
+        
 
     def sync_units(self, idx):
         """Syncing units widgets."""
@@ -2014,7 +2304,12 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         return values
 
     def get_precipitation_data(self):
-        """Getting all needed data for adding precipitation to the simulation."""
+        """Getting all needed data for adding precipitation to the simulation.
+        
+            Note that the current simulation has just been selected in the combobox, so the substance widgets
+            are up to date for this current simulation
+        """
+
         precipitation_type = self.cbo_prec_type.currentText()
         offset = self.get_precipitation_offset()
         duration = self.get_precipitation_duration()
@@ -2026,6 +2321,17 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         netcdf_filepath = self.le_upload_netcdf.text()
         netcdf_global = self.rb_global_netcdf.isChecked()
         netcdf_raster = self.rb_raster_netcdf.isChecked()
+
+        # Retrieve substance data from widgets, these have been properly set in run_new_simulation
+        substances = []
+        if not ((precipitation_type == EventTypes.FROM_NETCDF.value) or (precipitation_type == EventTypes.RADAR.value) or (precipitation_type == "None")):
+            for substance in self.substances:
+                substance_name = substance["name"]
+                substance_widget = self.substance_widgets[substance_name]
+                sub_value = substance_widget.get_value()
+                if sub_value is not None:
+                    substances.append({"substance": substance_name, "substance_id": None, "substance_name": substance_name, "concentrations": [[0.0, sub_value]]})
+
         return (
             precipitation_type,
             offset,
@@ -2038,6 +2344,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             netcdf_filepath,
             netcdf_global,
             netcdf_raster,
+            substances,
         )
 
     def constant_values(self):
@@ -2072,7 +2379,80 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             x_values.append(x_in_units)
             y_values.append(y)
         return x_values, y_values
+    
+    class PrecipationSubstanceWidget(QWidget):
 
+        value_changed = pyqtSignal()
+
+        def __init__(self, name:str, value:float, unit:str, parent):
+            super().__init__(parent)
+            self.setLayout(QHBoxLayout())
+            name_label = QLabel(name, self)
+            name_label.setFixedWidth(200)
+            self.layout().addWidget(name_label)
+            self.line_edit = QLineEdit(str(value), self)
+            # Connect signal to signal
+            self.line_edit.textChanged.connect(self.value_changed)
+
+            # Value can only be numeric
+            self.line_edit.setValidator(QDoubleValidator(0, 1000000, 4, self.line_edit))
+            self.layout().addWidget(self.line_edit)
+            self.unit_label = QLabel(unit, self)
+            self.unit_label.setFixedWidth(30)
+            self.layout().addWidget(self.unit_label)
+
+        def set_unit_label(self, label:str) -> None:
+            self.unit_label.setText(label)
+
+        def get_value(self) -> Optional[float]:
+            if self.line_edit.text() == "":
+                return None
+            
+            return float(self.line_edit.text())
+
+        def set_value(self, value: float) -> None:
+            self.line_edit.setText(str(value))
+
+
+    def update_substance_widgets(self):
+
+        # For NetCDF or radar rain, we do not apply substance concentrations        
+        precipitation_type_str = self.cbo_prec_type.currentText()
+        if precipitation_type_str == "None" or (EventTypes(precipitation_type_str) == EventTypes.FROM_NETCDF) or (EventTypes(precipitation_type_str) == EventTypes.RADAR):
+            for substance_widget in self.substance_widgets.values():
+                self.substance_widget.layout().removeWidget(substance_widget)
+                del substance_widget
+            self.substance_widgets.clear()
+            self.substance_widget.hide()
+            return
+        else:
+            self.substance_widget.show()
+
+        # Check if we have something to remove
+        widgets_to_remove = []
+        for name, substance_widget in self.substance_widgets.items():
+            if len([item for item in self.substances if item["name"] == name]) == 0:
+                # It is in the widgets list, but not in the substances list, remove.
+                self.substance_widget.layout().removeWidget(substance_widget)
+                del substance_widget
+                widgets_to_remove.append(name)
+                
+        for widget_name in widgets_to_remove:
+            del self.substance_widgets[widget_name]
+
+        # Check if we have something to add
+        for substance in self.substances:
+            substance_name = substance["name"]
+            if substance_name not in self.substance_widgets:
+                wid = PrecipitationWidget.PrecipationSubstanceWidget(substance_name, "", substance.get("units", ""), self.substance_widget)
+                wid.value_changed.connect(self.store_cache)
+                self.substance_widgets[substance_name] = wid  # name is enforce to be unique in UI
+                self.substance_widget.layout().addWidget(wid)
+            else:
+                # Set the units, these might have been changed
+                self.substance_widgets[substance_name].set_unit_label(substance.get("units", ""))
+
+    
     def plot_precipitation(self):
         """Setting up precipitation plot."""
         self.refresh_duration()
@@ -2099,7 +2479,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.plot_widget.hide()
             self.plot_label.hide()
             return
-        self.write_values_into_dict()
+        self.store_cache()
         if len(x_values) < 2:
             return
         # Bar width as time series interval value
@@ -2591,7 +2971,6 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         self.cb_save_template.stateChanged.connect(self.save_template_state_changed)
         self.dd_simulation.currentIndexChanged.connect(self.simulation_change)
         self.precipitation_widget.hide()
-        self.breach_widget.hide()
         self.initial_conditions = initial_conditions
         if initial_conditions.multiple_simulations:
             self.simulation_widget.show()
@@ -2618,13 +2997,6 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
                     total_prec = "N/A"
                 self.sim_prec_type.setText(ptype)
                 self.sim_prec_total.setText(total_prec)
-        elif self.initial_conditions.simulations_difference == "breaches" and self.initial_conditions.include_breaches:
-            data = self.parent_page.parent_wizard.breaches_page.main_widget.values.get(self.dd_simulation.currentText())
-            if data:
-                breach_id = data.get("breach_id")
-                duration = data.get("duration")
-                self.breach_id.setText(breach_id)
-                self.duration_breach.setText(str(duration))
 
     def plot_overview_precipitation(self):
         """Setting up precipitation plot."""
@@ -2966,6 +3338,7 @@ class SimulationWizard(QWizard):
             self.dwf_page = DWFPage(self)
             self.addPage(self.dwf_page)
         if init_conditions.include_breaches:
+            self.model_selection_dlg.load_breach_layers()
             self.breaches_page = BreachesPage(self, initial_conditions=init_conditions)
             self.addPage(self.breaches_page)
         if init_conditions.include_precipitations:
@@ -3032,6 +3405,8 @@ class SimulationWizard(QWizard):
         """Extra pre-processing triggered by changes of the wizard pages."""
         current_page = self.currentPage()
         if isinstance(current_page, PrecipitationPage):
+            # this order matters
+            self.precipitation_page.main_widget.update_substance_widgets()
             self.precipitation_page.main_widget.plot_precipitation()
         elif isinstance(current_page, SummaryPage):
             self.set_overview_name()
@@ -3040,8 +3415,6 @@ class SimulationWizard(QWizard):
             if self.init_conditions.include_precipitations:
                 self.summary_page.main_widget.plot_overview_precipitation()
                 self.set_overview_precipitation()
-            if self.init_conditions.include_breaches:
-                self.set_overview_breaches()
         elif isinstance(current_page, LateralsPage):
             laterals_widget = self.laterals_page.main_widget
             laterals_widget.il_1d_upload.setText(laterals_widget.last_upload_1d_filepath)
@@ -3080,15 +3453,6 @@ class SimulationWizard(QWizard):
             else:
                 total_precipitation_text = "N/A"
             self.summary_page.main_widget.sim_prec_total.setText(total_precipitation_text)
-
-    def set_overview_breaches(self):
-        """Setting breaches information in the overview page."""
-        if self.breaches_page.main_widget.values.get(self.first_simulation):
-            self.summary_page.main_widget.breach_widget.show()
-            breach_id = self.breaches_page.main_widget.values.get(self.first_simulation).get("breach_id")
-            duration_of_breach = self.breaches_page.main_widget.values.get(self.first_simulation).get("duration")
-            self.summary_page.main_widget.breach_id.setText(breach_id)
-            self.summary_page.main_widget.duration_breach.setText(str(duration_of_breach))
 
     def load_template_parameters(self, simulation, settings_overview, events, lizard_post_processing_overview):
         """Loading simulation parameters from the simulation template data."""
@@ -3134,7 +3498,8 @@ class SimulationWizard(QWizard):
         simulation_duration = self.duration_page.main_widget.calculate_simulation_duration()
         init_conditions = self.init_conditions_dlg.initial_conditions
         if init_conditions.include_substances:
-            substances = [{"name": item.name, "units": item.units or ""} for item in events.substances]
+
+            substances = [{"name": item.name, "units": item.units or "", "decay_coefficient": item.decay_coefficient or "", "diffusion_coefficient": item.diffusion_coefficient or ""} for item in events.substances]
             if substances:
                 self.substances_page.main_widget.prepopulate_substances_table(substances)
         if init_conditions.include_boundary_conditions:
@@ -3174,6 +3539,16 @@ class SimulationWizard(QWizard):
                 if events.initial_onedwaterlevel:
                     init_conditions_widget.rb_d1_gv.setChecked(True)
                     init_conditions_widget.sp_1d_global_value.setValue(events.initial_onedwaterlevel.value)
+                ## As the backend does not support creating templates from simulations with user-generated water
+                ## level files, we do not need this case and keep it this way for backwards compatibility.
+                # elif events.initial_onedwaterlevelfile:
+                #     init_conditions_widget.rb_1d_online_file.setChecked(True)
+                #     # Set right value in combobox based on initial waterlevel id
+                #     for file_name, iw in init_conditions_widget.initial_waterlevels_files.items():
+                #         if iw.id == events.initial_onedwaterlevelfile.initial_waterlevel_id:
+                #             found_water_level = True
+                #             init_conditions_widget.cbo_1d_online_file.setCurrentText(file_name)
+                #     assert found_water_level
                 else:
                     init_conditions_widget.rb_d1_dd.setChecked(True)
             if any([events.initial_twodwaterlevel, events.initial_twodwaterraster]):
@@ -3287,35 +3662,44 @@ class SimulationWizard(QWizard):
         if init_conditions.include_breaches:
             breaches_widget = self.breaches_page.main_widget
             if events.breach:
-                breach = events.breach[0]
                 tc = ThreediCalls(self.plugin_dock.threedi_api)
                 threedimodel_id_str = str(self.model_selection_dlg.current_model.id)
-                potential_breach_url = breach.potential_breach.rstrip("/")
-                potential_breach_id = int(potential_breach_url.split("/")[-1])
-                potential_breach = tc.fetch_3di_model_potential_breach(threedimodel_id_str, potential_breach_id)
-                breaches_widget.dd_breach_id.setCurrentText(str(potential_breach.connected_pnt_id))
-                breaches_widget.sb_width.setValue(breach.initial_width)
-                breaches_widget.sb_duration.setValue(breach.duration_till_max_depth)
-                breaches_widget.dd_units.setCurrentText("s")
-                breaches_widget.sp_start_after.setValue(breach.offset)
-                breaches_widget.sb_discharge_coefficient_positive.setValue(breach.discharge_coefficient_positive or 1)
-                breaches_widget.sb_discharge_coefficient_negative.setValue(breach.discharge_coefficient_negative or 1)
-                breaches_widget.sb_max_breach_depth.setValue(breach.maximum_breach_depth)
+                content_pks = set()
+                for breach in events.breach:
+                    potential_breach_url = breach.potential_breach.rstrip("/")
+                    potential_breach_id = int(potential_breach_url.split("/")[-1])
+                    potential_breach = tc.fetch_3di_model_potential_breach(threedimodel_id_str, potential_breach_id)
+                    content_pks.add(str(potential_breach.connected_pnt_id))
+                content_pks_str = ",".join(content_pks)
+                exp = f'"content_pk" in ({content_pks_str})'
+                self.model_selection_dlg.potential_breaches_layer.selectByExpression(exp)
+                for breach_feat in self.model_selection_dlg.potential_breaches_layer.selectedFeatures():
+                    breaches_widget.on_potential_breach_feature_identified(breach_feat)
         if init_conditions.include_precipitations:
             precipitation_widget = self.precipitation_page.main_widget
+            # Check whether we have a constant substance value
             if events.timeseriesrain:
                 rain = events.timeseriesrain[0]
+                if rain.substances:
+                    for substance in rain.substances:
+                        initial_value = substance.concentrations[0][1]
+                        for _, value in substance.concentrations:
+                            assert initial_value == value
+
+            if events.timeseriesrain:
                 if rain.constant:
                     precipitation_widget.cbo_prec_type.setCurrentText(EventTypes.CONSTANT.value)
                     rain_constant_start_after = rain.offset // 3600
                     rain_constant_duration = rain.duration // 3600
                     rain_constant_stop_after = rain_constant_start_after + rain_constant_duration
                     precipitation_widget.sp_start_after_constant.setValue(rain_constant_start_after)
-                    if rain.duration < simulation_duration:
+                    if rain.duration <= simulation_duration:
                         precipitation_widget.sp_stop_after_constant.setValue(rain_constant_stop_after)
                     intensity_ms = rain.values[0][-1]
                     intensity_mmh = ms_to_mmh(intensity_ms)
                     precipitation_widget.sp_intensity.setValue(intensity_mmh)
+                    # As template parameters are always a single simulation, we can just build the widgets
+                    precipitation_widget.update_substance_widgets()
                 else:
                     simulation = precipitation_widget.dd_simulation.currentText()
                     precipitation_widget.cbo_prec_type.setCurrentText(EventTypes.FROM_CSV.value)
@@ -3326,7 +3710,13 @@ class SimulationWizard(QWizard):
                     timestep = rain_values[1][0] - rain_values[0][0]
                     mm_timestep = [[t, mmh_to_mmtimestep(ms_to_mmh(v), timestep)] for t, v in rain_values]
                     precipitation_widget.custom_time_series[simulation] = mm_timestep
+                    precipitation_widget.update_substance_widgets()
                     precipitation_widget.plot_precipitation()
+
+                # We now know all substance widgets are in place, we can set the template value
+                for substance in rain.substances:
+                    precipitation_widget.substance_widgets[substance.substance_name].set_value(substance.concentrations[0][1])
+
             if events.lizardrasterrain:
                 rain = events.lizardrasterrain[0]
                 precipitation_widget.cbo_prec_type.setCurrentText(EventTypes.RADAR.value)
@@ -3334,8 +3724,10 @@ class SimulationWizard(QWizard):
                 rain_radar_duration = rain.duration // 3600
                 rain_radar_stop_after = rain_radar_start_after + rain_radar_duration
                 precipitation_widget.sp_start_after_radar.setValue(rain_radar_start_after)
-                if rain.duration < simulation_duration:
+                if rain.duration <= simulation_duration:
                     precipitation_widget.sp_stop_after_radar.setValue(rain_radar_stop_after)
+                precipitation_widget.update_substance_widgets()
+
         if init_conditions.include_wind:
             wind_widget = self.wind_page.main_widget
             if events.wind:
@@ -3493,6 +3885,10 @@ class SimulationWizard(QWizard):
                     initial_conditions.initial_waterlevels_1d = (
                         self.init_conditions_page.main_widget.initial_waterlevels_1d
                     )
+                elif self.init_conditions_page.main_widget.rb_1d_online_file.isChecked():
+                    initial_conditions.online_waterlevels_1d = (
+                        self.init_conditions_page.main_widget.initial_waterlevels_files[self.init_conditions_page.main_widget.cbo_1d_online_file.currentText()]
+                    )
                 else:
                     initial_conditions.from_spatialite_1d = True
             # 2D
@@ -3572,6 +3968,37 @@ class SimulationWizard(QWizard):
                                 break
             if initial_concentrations_2d:
                 initial_conditions.initial_concentrations_2d = initial_concentrations_2d
+
+            widget = self.init_conditions_page.main_widget.initial_concentrations_widget_1D
+            online_files = self.init_conditions_page.main_widget.online_files
+            local_data = self.init_conditions_page.main_widget.local_data
+
+            initial_concentrations_1d = {}
+            for substance in substances:
+                substance_name = substance.get("name")
+                groupbox_ic_1d = widget.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                rb_local_file = widget.findChild(QRadioButton, f"rb_local_file_{substance_name}")
+                rb_online_file = widget.findChild(QRadioButton, f"rb_online_file_1d_{substance_name}")
+                cbo_online_file = widget.findChild(QComboBox, f"cbo_online_file_1d_{substance_name}")
+                if groupbox_ic_1d.isChecked():
+                    if rb_local_file.isChecked():
+                        initial_concentrations = {
+                            "local_data": local_data[substance_name],
+                            "online_file": None,
+                        }
+                        initial_concentrations_1d[substance_name] = initial_concentrations
+                    elif rb_online_file.isChecked():
+                        for file in online_files:
+                             if file.filename == cbo_online_file.currentText():
+                                initial_concentrations = {
+                                    "local_data": None,
+                                    "online_file": file,
+                                }
+                                initial_concentrations_1d[substance_name] = initial_concentrations
+                                break
+                    assert initial_concentrations_1d[substance_name]
+            if initial_concentrations_1d:
+                initial_conditions.initial_concentrations_1d = initial_concentrations_1d
 
         # Laterals
         if self.init_conditions.include_laterals:
@@ -3653,10 +4080,11 @@ class SimulationWizard(QWizard):
                 self.breaches_page.main_widget.dd_simulation.setCurrentText(simulation)
                 breach_data = self.breaches_page.main_widget.get_breaches_data()
                 if simulation_difference == "breaches" or i == 1:
-                    new_simulation.breach = dm.Breach(*breach_data)
+                    new_simulation.breaches = dm.Breaches(*breach_data)
                 else:
-                    new_simulation.breach = dm.Breach()
+                    new_simulation.breaches = dm.Breaches()
             if self.init_conditions.include_precipitations:
+                logger.error(simulation)
                 self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                 precipitation_data = self.precipitation_page.main_widget.get_precipitation_data()
                 if simulation_difference == "precipitation" or i == 1:
@@ -3669,10 +4097,13 @@ class SimulationWizard(QWizard):
             new_simulation.new_saved_state = new_saved_state
             if self.summary_page.main_widget.cb_save_template.isChecked():
                 template_name = self.summary_page.main_widget.template_name.text()
-                new_simulation.template_name = template_name
+                new_simulation.template_name = template_name + f"_{i}"
             self.new_simulations.append(new_simulation)
+        self.model_selection_dlg.unload_breach_layers()
+        self.plugin_dock.simulation_overview_dlg.start_simulations(self.new_simulations)
 
     def cancel_wizard(self):
         """Handling canceling wizard action."""
         self.settings.setValue("threedi/wizard_size", self.size())
+        self.model_selection_dlg.unload_breach_layers()
         self.reject()

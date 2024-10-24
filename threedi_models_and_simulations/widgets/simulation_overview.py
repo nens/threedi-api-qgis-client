@@ -9,12 +9,14 @@ from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QMessageBox
 from threedi_api_client.openapi import ApiException
 
-from threedi_models_and_simulations.widgets.simulation_init import SimulationInit
+from threedi_models_and_simulations.widgets.simulation_init import \
+    SimulationInit
 from threedi_models_and_simulations.workers import SimulationRunner
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models.enumerators import SimulationStatusName
-from ..utils import API_DATETIME_FORMAT, USER_DATETIME_FORMAT, extract_error_message
+from ..utils import (API_DATETIME_FORMAT, USER_DATETIME_FORMAT,
+                     extract_error_message)
 from ..utils_ui import set_icon
 from .custom_items import PROGRESS_ROLE, SimulationProgressDelegate
 from .model_selection import ModelSelectionDialog
@@ -152,11 +154,13 @@ class SimulationOverview(uicls, basecls):
                 settings_overview,
                 events,
                 lizard_post_processing_overview,
+                organisation=self.model_selection_dlg.organisation,
+                api=ThreediCalls(self.threedi_api),
                 parent=self,
             )
             self.simulation_init_wizard.exec_()
             if self.simulation_init_wizard.open_wizard:
-                self.new_simulation(simulation, settings_overview, events, lizard_post_processing_overview)
+                self.new_simulation_wizard(simulation, settings_overview, events, lizard_post_processing_overview)
 
     def get_simulation_data_from_template(self, template):
         """Fetching simulation, settings and events data from the simulation template."""
@@ -180,7 +184,7 @@ class SimulationOverview(uicls, basecls):
             self.plugin_dock.communication.bar_error(error_msg)
         return simulation, settings_overview, events, lizard_post_processing_overview
 
-    def new_simulation(self, simulation, settings_overview, events, lizard_post_processing_overview):
+    def new_simulation_wizard(self, simulation, settings_overview, events, lizard_post_processing_overview):
         """Opening a wizard which allows defining and running new simulations."""
         self.simulation_wizard = SimulationWizard(
             self.plugin_dock, self.model_selection_dlg, self.simulation_init_wizard
@@ -191,14 +195,15 @@ class SimulationOverview(uicls, basecls):
             )
         self.close()
         self.simulation_wizard.exec_()
-        simulations_to_run = self.simulation_wizard.new_simulations
-        if simulations_to_run:
-            upload_timeout = self.settings.value("threedi/timeout", 900, type=int)
-            simulations_runner = SimulationRunner(self.threedi_api, simulations_to_run, upload_timeout=upload_timeout)
-            simulations_runner.signals.initializing_simulations_progress.connect(self.on_initializing_progress)
-            simulations_runner.signals.initializing_simulations_failed.connect(self.on_initializing_failed)
-            simulations_runner.signals.initializing_simulations_finished.connect(self.on_initializing_finished)
-            self.simulation_runner_pool.start(simulations_runner)
+
+    def start_simulations(self, simulations_to_run):
+        """Start the simulations."""
+        upload_timeout = self.settings.value("threedi/timeout", 900, type=int)
+        simulations_runner = SimulationRunner(self.threedi_api, simulations_to_run, upload_timeout=upload_timeout)
+        simulations_runner.signals.initializing_simulations_progress.connect(self.on_initializing_progress)
+        simulations_runner.signals.initializing_simulations_failed.connect(self.on_initializing_failed)
+        simulations_runner.signals.initializing_simulations_finished.connect(self.on_initializing_finished)
+        self.simulation_runner_pool.start(simulations_runner)
 
     def stop_simulation(self):
         """Sending request to shut down currently selected simulation."""
@@ -238,6 +243,8 @@ class SimulationOverview(uicls, basecls):
                 "progress": 0,
                 "status": status_name,
                 "user_name": sim.user,
+                "simulation_user_first_name": self.plugin_dock.current_user_first_name,
+                "simulation_user_last_name": self.plugin_dock.current_user_last_name,
             }
             self.add_simulation_to_model(sim.id, sim_data)
             info_msg = f"Simulation {new_simulation.name} added to queue!"

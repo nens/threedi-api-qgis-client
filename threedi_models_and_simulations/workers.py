@@ -10,7 +10,8 @@ from functools import partial
 import requests
 from PyQt5 import QtWebSockets
 from PyQt5.QtNetwork import QNetworkRequest
-from qgis.PyQt.QtCore import QByteArray, QObject, QRunnable, QUrl, pyqtSignal, pyqtSlot
+from qgis.PyQt.QtCore import (QByteArray, QObject, QRunnable, QUrl, pyqtSignal,
+                              pyqtSlot)
 from threedi_api_client.files import upload_file
 from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import bypass_max_path_limit
@@ -18,28 +19,15 @@ from threedi_mi_utils import bypass_max_path_limit
 from .api_calls.threedi_calls import ThreediCalls
 from .data_models import simulation_data_models as dm
 from .data_models.enumerators import SimulationStatusName
-from .utils import (
-    API_DATETIME_FORMAT,
-    BOUNDARY_CONDITIONS_TEMPLATE,
-    CHUNK_SIZE,
-    DWF_FILE_TEMPLATE,
-    INITIAL_WATERLEVELS_TEMPLATE,
-    LATERALS_FILE_TEMPLATE,
-    RADAR_ID,
-    TEMPDIR,
-    EventTypes,
-    FileState,
-    ThreediFileState,
-    ThreediModelTaskStatus,
-    UploadFileStatus,
-    extract_error_message,
-    get_download_file,
-    split_to_even_chunks,
-    unzip_archive,
-    upload_local_file,
-    write_json_data,
-    zip_into_archive,
-)
+from .utils import (API_DATETIME_FORMAT, BOUNDARY_CONDITIONS_TEMPLATE,
+                    CHUNK_SIZE, DWF_FILE_TEMPLATE,
+                    INITIAL_CONCENTRATIONS_TEMPLATE,
+                    INITIAL_WATERLEVELS_TEMPLATE, LATERALS_FILE_TEMPLATE,
+                    RADAR_ID, TEMPDIR, EventTypes, FileState, ThreediFileState,
+                    ThreediModelTaskStatus, UploadFileStatus,
+                    extract_error_message, get_download_file,
+                    split_to_even_chunks, unzip_archive, upload_local_file,
+                    write_json_data, zip_into_archive)
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +76,8 @@ class WSProgressesSentinel(QObject):
                     "name": status.simulation_name,
                     "progress": 100,
                     "status": status.name,
-                    "user_name": None,  # SimulationStatus does not contain information about the user
+                    "simulation_user_first_name": status.simulation_user_first_name,
+                    "simulation_user_last_name": status.simulation_user_last_name,
                 }
                 for status in finished_simulations_statuses
             }
@@ -151,6 +140,11 @@ class WSProgressesSentinel(QObject):
             sim_data["status"] = status_name
             if status_name == SimulationStatusName.FINISHED.value:
                 if sim_data["progress"] == 100:
+                    statuses = {status.simulation_id: status for status in self.tc.fetch_simulation_statuses()}
+                    sim_status = statuses[sim_id]
+                    sim_data["status"] = SimulationStatusName.FINISHED.value
+                    sim_data["simulation_user_first_name"] = sim_status.simulation_user_first_name
+                    sim_data["simulation_user_last_name"] = sim_status.simulation_user_last_name
                     self.simulation_finished.emit({sim_id: sim_data})
                 else:
                     sim_data["status"] = SimulationStatusName.STOPPED.value
@@ -225,7 +219,8 @@ class UploadWorkerSignals(QObject):
 
     thread_finished = pyqtSignal(int, str)
     upload_failed = pyqtSignal(int, str)
-    upload_progress = pyqtSignal(int, str, float, float)  # upload row number, task name, task progress, total progress
+    upload_progress = pyqtSignal(int, str, int, int)  # upload row number, task name, task progress, total progress
+    upload_canceled = pyqtSignal(int)
     revision_committed = pyqtSignal()
 
 
@@ -250,12 +245,17 @@ class UploadProgressWorker(QRunnable):
         self.upload_specification = upload_specification
         self.upload_row_number = upload_row_number
         self.current_task = "NO TASK"
-        self.current_task_progress = 0.0
-        self.total_progress = 0.0
+        self.current_task_progress = 0
+        self.total_progress = 0
         self.tc = None
         self.schematisation = self.upload_specification["schematisation"]
         self.revision = self.upload_specification["latest_revision"]
         self.signals = UploadWorkerSignals()
+        self.upload_canceled = False
+
+    def stop_upload_tasks(self):
+        """Mark the upload task as canceled."""
+        self.upload_canceled = True
 
     @pyqtSlot()
     def run(self):
@@ -264,18 +264,21 @@ class UploadProgressWorker(QRunnable):
         tasks_list = self.build_tasks_list()
         if not tasks_list:
             self.current_task = "DONE"
-            self.current_task_progress = 100.0
-            self.total_progress = 100.0
+            self.current_task_progress = 100
+            self.total_progress = 100
             self.report_upload_progress()
             self.signals.thread_finished.emit(self.upload_row_number, "Nothing to upload or process")
             return
-        progress_per_task = 1 / len(tasks_list) * 100
+        progress_per_task = int(1 / len(tasks_list) * 100)
         try:
             for i, task in enumerate(tasks_list, start=1):
+                if self.upload_canceled:
+                    self.signals.upload_canceled.emit(self.upload_row_number)
+                    return
                 task()
                 self.total_progress = progress_per_task * i
             self.current_task = "DONE"
-            self.total_progress = 100.0
+            self.total_progress = 100
             self.report_upload_progress()
             msg = f"Schematisation '{self.schematisation.name}' (revision: {self.revision.number}) files uploaded"
             self.signals.thread_finished.emit(self.upload_row_number, msg)
@@ -320,16 +323,16 @@ class UploadProgressWorker(QRunnable):
     def create_revision_task(self):
         """Run creation of the new revision task."""
         self.current_task = "CREATE REVISION"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         self.revision = self.tc.create_schematisation_revision(self.schematisation.id)
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
 
     def upload_sqlite_task(self):
         """Run sqlite file upload task."""
         self.current_task = "UPLOAD SPATIALITE"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         schematisation_sqlite = self.upload_specification["selected_files"]["spatialite"]["filepath"]
         zipped_sqlite_filepath = zip_into_archive(schematisation_sqlite)
@@ -339,22 +342,22 @@ class UploadProgressWorker(QRunnable):
         )
         upload_file(upload.put_url, zipped_sqlite_filepath, CHUNK_SIZE, callback_func=self.monitor_upload_progress)
         os.remove(zipped_sqlite_filepath)
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
 
     def delete_sqlite_task(self):
         """Run sqlite file deletion task."""
         self.current_task = "DELETE SPATIALITE"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         self.tc.delete_schematisation_revision_sqlite(self.schematisation.id, self.revision.id)
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
 
     def upload_raster_task(self, raster_type):
         """Run raster file upload task."""
         self.current_task = f"UPLOAD RASTER ({raster_type})"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         raster_filepath = self.upload_specification["selected_files"][raster_type]["filepath"]
         raster_file = os.path.basename(raster_filepath)
@@ -365,7 +368,7 @@ class UploadProgressWorker(QRunnable):
             raster_revision.id, self.schematisation.id, self.revision.id, raster_file
         )
         upload_file(raster_upload.put_url, raster_filepath, CHUNK_SIZE, callback_func=self.monitor_upload_progress)
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
 
     def delete_raster_task(self, raster_type):
@@ -374,7 +377,7 @@ class UploadProgressWorker(QRunnable):
         if raster_type == "dem_file":
             types_to_delete.append("dem_raw_file")  # We need to remove legacy 'dem_raw_file` as well
         self.current_task = f"DELETE RASTER ({raster_type})"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         for revision_raster in self.revision.rasters:
             revision_type = revision_raster.type
@@ -383,13 +386,13 @@ class UploadProgressWorker(QRunnable):
                     revision_raster.id, self.schematisation.id, self.revision.id
                 )
                 break
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
 
     def commit_revision_task(self):
         """Run committing revision task."""
         self.current_task = "COMMIT REVISION"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         commit_ready_file_states = {FileState.UPLOADED, FileState.PROCESSED}
         for i in range(self.UPLOAD_CHECK_RETRIES):
@@ -409,7 +412,7 @@ class UploadProgressWorker(QRunnable):
         while self.revision.is_valid is None:
             time.sleep(2)
             self.revision = self.tc.fetch_schematisation_revision(self.schematisation.id, self.revision.id)
-        self.current_task_progress = 100.0
+        self.current_task_progress = 100
         self.report_upload_progress()
         self.local_schematisation.update_wip_revision(self.revision.number)
         self.signals.revision_committed.emit()
@@ -417,7 +420,7 @@ class UploadProgressWorker(QRunnable):
     def create_3di_model_task(self, inherit_templates=False):
         """Run creation of the new model out of revision data."""
         self.current_task = "MAKE 3DI MODEL"
-        self.current_task_progress = 0.0
+        self.current_task_progress = 0
         self.report_upload_progress()
         # Wait for the 'modelchecker' validations
         model_checker_task = None
@@ -489,7 +492,7 @@ class UploadProgressWorker(QRunnable):
 
     def monitor_upload_progress(self, chunk_size, total_size):
         """Upload progress callback method."""
-        upload_progress = chunk_size / total_size * 100
+        upload_progress = int(chunk_size / total_size * 100)
         self.current_task_progress = upload_progress
         self.report_upload_progress()
 
@@ -773,14 +776,6 @@ class SimulationRunner(QRunnable):
                     threedimodel_id, initial_waterlevel_id
                 )
                 if uploaded_initial_waterlevel.state == ThreediFileState.VALID.value:
-                    # Step 4: Find & delete existing 1D water levels file of the simulation
-                    water_level_1d_files = self.tc.fetch_simulation_initial_1d_water_level_files(sim_id)
-                    for water_level_1d_file in water_level_1d_files:
-                        self.tc.delete_simulation_initial_1d_water_level_file(sim_id, water_level_1d_file.id)
-                    # Step 5: Create a new 1D initial water level file for the simulation
-                    self.tc.create_simulation_initial_1d_water_level_file(
-                        sim_id, initial_waterlevel=initial_waterlevel_id
-                    )
                     break
                 elif uploaded_initial_waterlevel.state == ThreediFileState.INVALID.value:
                     state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()
@@ -788,6 +783,33 @@ class SimulationRunner(QRunnable):
                     raise SimulationRunnerError(err_msg)
                 else:
                     time.sleep(2)
+            
+            if uploaded_initial_waterlevel.state != ThreediFileState.VALID.value:
+                    state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()
+                    err_msg = f"Failed to upload Initial Waterlevel file due to the following reasons: {state_detail}"
+                    raise SimulationRunnerError(err_msg)
+
+        # These options should be mutually exclusive
+        assert not(initial_conditions.initial_waterlevels_1d is not None and initial_conditions.online_waterlevels_1d is not None)
+
+        if initial_conditions.initial_waterlevels_1d is not None or initial_conditions.online_waterlevels_1d is not None:
+            # Step 4: Find & delete existing 1D water levels file of the simulation
+            water_level_1d_files = self.tc.fetch_simulation_initial_1d_water_level_files(sim_id)
+            for water_level_1d_file in water_level_1d_files:
+                self.tc.delete_simulation_initial_1d_water_level_file(sim_id, water_level_1d_file.id)
+
+            # Step 5: Create a new 1D initial water level file for the simulation
+            if initial_conditions.initial_waterlevels_1d is not None:
+                self.tc.create_simulation_initial_1d_water_level_file(
+                    sim_id, initial_waterlevel=initial_waterlevel_id
+                )
+            elif initial_conditions.online_waterlevels_1d is not None:
+                logger.info("Setting online 1D waterlevel file")
+                logger.info(initial_conditions.online_waterlevels_1d)
+                self.tc.create_simulation_initial_1d_water_level_file(
+                    sim_id, initial_waterlevel=initial_conditions.online_waterlevels_1d.id
+                )
+
         # 2D
         if initial_conditions.global_value_2d is not None:
             self.tc.create_simulation_initial_2d_water_level_constant(sim_id, value=initial_conditions.global_value_2d)
@@ -897,6 +919,52 @@ class SimulationRunner(QRunnable):
         if initial_conditions.saved_state:
             saved_state_id = initial_conditions.saved_state.url.strip("/").split("/")[-1]
             self.tc.create_simulation_initial_saved_state(sim_id, saved_state=saved_state_id)
+
+        # Initial concentrations 1D for substances
+        if initial_conditions.initial_concentrations_1d:
+            for substance, params in initial_conditions.initial_concentrations_1d.items():
+                substance_id = self.substances[substance]
+                local_data = params.get("local_data")
+                online_file = params.get("online_file")
+                if online_file is not None:
+                    # find the initial concentration refering to this file.
+                    results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
+                    one_d_ids = [x for x in results if x.dimension == "one_d" and x.file == online_file]
+                    if len(one_d_ids) > 0:
+                        initial_concentration_1d = one_d_ids[0]
+                else:
+                    assert local_data is not None
+
+                    # create a new initial concentration
+                    initial_concentration_1d = self.tc.create_3di_model_initial_concentration(threedimodel_id=threedimodel_id, dimension="one_d")
+
+                    # create an upload url
+                    initial_concentration_upload = self.tc.upload_3di_model_initial_concentration(threedimodel_id=threedimodel_id, initial_concentration_id=initial_concentration_1d.id, filename=f"{sim_name}_initial_concent_1d.json")
+
+                    # now write and upload the data (in json format)
+                    write_json_data(local_data, INITIAL_CONCENTRATIONS_TEMPLATE)
+                    upload_local_file(initial_concentration_upload, INITIAL_CONCENTRATIONS_TEMPLATE)
+
+                    # wait until the data is processed
+                    retries = 0
+                    newly_generated_id = initial_concentration_1d.id
+                    initial_concentration_1d = None
+                    while not initial_concentration_1d and retries < 12:
+                        results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
+                        one_d_ids = [x for x in results if x.dimension == "one_d" and x.state == "valid" and x.id == newly_generated_id]
+                        if len(one_d_ids) > 0:
+                            initial_concentration_1d = one_d_ids[0]
+                            break
+                        retries += 1
+                        time.sleep(5)
+
+                assert initial_concentration_1d is not None
+                self.tc.create_simulation_initial_1d_substance_concentrations(
+                    sim_id,
+                    substance=substance_id,
+                    initial_concentration=initial_concentration_1d.id,
+                )
+
         # Initial concentrations 2D for substances
         if initial_conditions.initial_concentrations_2d:
             for substance, params in initial_conditions.initial_concentrations_2d.items():
@@ -994,7 +1062,8 @@ class SimulationRunner(QRunnable):
             upload_event_file = self.tc.create_simulation_lateral_file(sim_id, filename=filename, offset=0)
             upload_local_file(upload_event_file, LATERALS_FILE_TEMPLATE)
             for ti in range(int(self.upload_timeout // 2)):
-                uploaded_lateral = self.tc.fetch_lateral_files(sim_id)[0]
+                lateral_files = self.tc.fetch_lateral_files(sim_id)
+                uploaded_lateral = next((file for file in lateral_files if file.periodic != "daily"), None)
                 if uploaded_lateral.state == ThreediFileState.VALID.value:
                     break
                 elif uploaded_lateral.state == ThreediFileState.INVALID.value:
@@ -1020,7 +1089,8 @@ class SimulationRunner(QRunnable):
             )
             upload_local_file(upload_event_file, DWF_FILE_TEMPLATE)
             for ti in range(int(self.upload_timeout // 2)):
-                uploaded_dwf = self.tc.fetch_lateral_files(sim_id)[0]
+                lateral_files = self.tc.fetch_lateral_files(sim_id)
+                uploaded_dwf = next((file for file in lateral_files if file.periodic == "daily"), None)
                 if uploaded_dwf.state == ThreediFileState.VALID.value:
                     break
                 elif uploaded_dwf.state == ThreediFileState.INVALID.value:
@@ -1034,21 +1104,33 @@ class SimulationRunner(QRunnable):
         """Add breaches to the new simulation."""
         sim_id = self.current_simulation.simulation.id
         threedimodel_id = self.current_simulation.threedimodel_id
-        if self.current_simulation.breach:
-            breach_obj = self.tc.fetch_3di_model_point_potential_breach(
-                threedimodel_id, int(self.current_simulation.breach.breach_id)
-            )
-            breach = breach_obj.to_dict()
-            self.tc.create_simulation_breaches(
-                sim_id,
-                potential_breach=breach["url"],
-                duration_till_max_depth=self.current_simulation.breach.duration_in_units,
-                initial_width=self.current_simulation.breach.width,
-                offset=self.current_simulation.breach.offset,
-                discharge_coefficient_positive=self.current_simulation.breach.discharge_coefficient_positive,
-                discharge_coefficient_negative=self.current_simulation.breach.discharge_coefficient_negative,
-                maximum_breach_depth=self.current_simulation.breach.max_breach_depth,
-            )
+        if self.current_simulation.breaches:
+            for potential_breach in self.current_simulation.breaches.potential_breaches or []:
+                breach_obj = self.tc.fetch_3di_model_point_potential_breach(threedimodel_id, potential_breach.breach_id)
+                breach = breach_obj.to_dict()
+                self.tc.create_simulation_breaches(
+                    sim_id,
+                    potential_breach=breach["url"],
+                    duration_till_max_depth=potential_breach.duration_till_max_depth,
+                    initial_width=potential_breach.width,
+                    offset=potential_breach.offset,
+                    discharge_coefficient_positive=potential_breach.discharge_coefficient_positive,
+                    discharge_coefficient_negative=potential_breach.discharge_coefficient_negative,
+                    levee_material=potential_breach.levee_material,
+                    maximum_breach_depth=potential_breach.max_breach_depth,
+                )
+            for flowline in self.current_simulation.breaches.flowlines or []:
+                self.tc.create_simulation_breaches(
+                    sim_id,
+                    line_id=flowline.breach_id,
+                    duration_till_max_depth=flowline.duration_till_max_depth,
+                    initial_width=flowline.width,
+                    offset=flowline.offset,
+                    discharge_coefficient_positive=flowline.discharge_coefficient_positive,
+                    discharge_coefficient_negative=flowline.discharge_coefficient_negative,
+                    levee_material=flowline.levee_material,
+                    maximum_breach_depth=flowline.max_breach_depth,
+                )
 
     def include_precipitation(self):
         """Add precipitation to the new simulation."""
@@ -1069,14 +1151,35 @@ class SimulationRunner(QRunnable):
                 self.current_simulation.precipitation.netcdf_global,
                 self.current_simulation.precipitation.netcdf_raster,
             )
+
+            substances = self.current_simulation.precipitation.substances
+            for substance in substances:
+                substance_name = substance.get("substance")
+                substance_id = self.substances[substance_name]  # this is the substance ID returned by API
+                substance["substance_id"] = substance_id
+                # Replace substance names with substance ids (also done in laterals)
+                substance["substance"] = substance_id
+                assert len(substance["concentrations"]) == 1
+
             if precipitation_type == EventTypes.CONSTANT.value:
+                # Adjust substance timekeys for precipitation type
+                for substance in substances:
+                    substance_value = substance["concentrations"][0][1]
+                    substance["concentrations"] = [[0, substance_value], [duration, substance_value]]  # offset should not be used
+
                 self.tc.create_simulation_constant_precipitation(
-                    sim_id, value=values, units=units, duration=duration, offset=offset
+                    sim_id, value=values, units=units, duration=duration, offset=offset, substances=substances,
                 )
             elif precipitation_type == EventTypes.FROM_CSV.value:
                 for values_chunk in split_to_even_chunks(values, 300):
                     chunk_offset = values_chunk[0][0]
                     values_chunk = [[t - chunk_offset, v] for t, v in values_chunk]
+
+                    # Adjust substance timekeys for precipitation type
+                    for substance in substances:
+                        substance_value = substance["concentrations"][0][1]
+                        substance["concentrations"] = [[t - chunk_offset, substance_value] for t, _ in values_chunk]
+
                     self.tc.create_simulation_custom_precipitation(
                         sim_id,
                         values=values_chunk,
@@ -1084,8 +1187,10 @@ class SimulationRunner(QRunnable):
                         duration=duration,
                         offset=offset + chunk_offset,
                         interpolate=interpolate,
+                        substances=substances,
                     )
             elif precipitation_type == EventTypes.FROM_NETCDF.value:
+                # No substances for this type
                 filename = os.path.basename(netcdf_filepath)
                 if netcdf_global:
                     upload = self.tc.create_simulation_global_netcdf_precipitation(sim_id, filename=filename)
@@ -1093,17 +1198,23 @@ class SimulationRunner(QRunnable):
                     upload = self.tc.create_simulation_raster_netcdf_precipitation(sim_id, filename=filename)
                 upload_local_file(upload, netcdf_filepath)
             elif precipitation_type == EventTypes.DESIGN.value:
+                # Adjust substance timekeys for precipitation type
+                for substance in substances:
+                    substance_value = substance["concentrations"][0][1]
+                    substance["concentrations"] = [[t, substance_value] for t, _ in values]
+
                 self.tc.create_simulation_custom_precipitation(
-                    sim_id, values=values, units=units, duration=duration, offset=offset
+                    sim_id, values=values, units=units, duration=duration, offset=offset, substances=substances,
                 )
             elif precipitation_type == EventTypes.RADAR.value:
+                # No substances for this type
                 self.tc.create_simulation_radar_precipitation(
                     sim_id,
                     reference_uuid=RADAR_ID,
                     units=units,
                     duration=duration,
                     offset=offset,
-                    start_datetime=start,
+                    start_datetime=start
                 )
 
     def include_wind(self):
