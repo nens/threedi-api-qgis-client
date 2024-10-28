@@ -8,10 +8,19 @@ from typing import Dict, List
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapLayerComboBox
 from qgis.PyQt.QtGui import QFont
-from qgis.PyQt.QtWidgets import (QComboBox, QFileDialog, QGridLayout,
-                                 QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-                                 QRadioButton, QSizePolicy, QToolButton,
-                                 QWidget)
+from qgis.PyQt.QtWidgets import (
+    QComboBox,
+    QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QRadioButton,
+    QSizePolicy,
+    QToolButton,
+    QWidget,
+)
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils_ui import get_filepath, read_3di_settings, save_3di_settings
@@ -100,7 +109,7 @@ class Initial1DConcentrationsWidget(QWidget):
             rb_local_file.setMinimumSize(300, rb_local_file.height())
             rb_local_file.setChecked(not is_online_file_available)
             rb_local_file.setFont(QFont("Segoe UI", 10))
-            
+
             le_local_file = QLineEdit(self)
             le_local_file.setEnabled(not is_online_file_available)
             le_local_file.setReadOnly(True)
@@ -130,7 +139,9 @@ class Initial1DConcentrationsWidget(QWidget):
     def browse_for_local_file(self, line_edit, substance):
         last_folder = read_3di_settings("last_1d_initial_concentrations", os.path.expanduser("~"))
         file_filter = "CSV (*.csv );;All Files (*)"
-        filename, __ = QFileDialog.getOpenFileName(self, "1D Initial Concentration Time Series", last_folder, file_filter)
+        filename, __ = QFileDialog.getOpenFileName(
+            self, "1D Initial Concentration Time Series", last_folder, file_filter
+        )
         if len(filename) == 0:
             return
         save_3di_settings("last_1d_initial_concentrations", os.path.dirname(filename))
@@ -148,7 +159,7 @@ class Initial1DConcentrationsWidget(QWidget):
         if error_msg is not None:
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn(error_msg)
             return
-        
+
         node_ids = []
         values = []
         for row in concentration_list:
@@ -181,6 +192,7 @@ class Initial1DConcentrationsWidget(QWidget):
             return "Missing 'id' column in CSV file!"
         if "value" not in header:
             return "Missing 'value' column in CSV file!"
+
 
 class Initial2DConcentrationsWidget(QWidget):
     """Widget for handling initial concentrations."""

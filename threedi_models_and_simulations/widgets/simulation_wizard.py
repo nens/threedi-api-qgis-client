@@ -15,33 +15,61 @@ from dateutil.relativedelta import relativedelta
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import (QDateTime, QSettings, QSize, Qt, QTimeZone,
-                              pyqtSignal)
-from qgis.PyQt.QtGui import (QColor, QDoubleValidator, QFont, QStandardItem,
-                             QStandardItemModel)
-from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
-                                 QGridLayout, QGroupBox, QHBoxLayout, QLabel,
-                                 QLineEdit, QRadioButton, QScrollArea,
-                                 QSizePolicy, QSpacerItem, QSpinBox,
-                                 QTableWidgetItem, QWidget, QWizard,
-                                 QWizardPage)
+from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone, pyqtSignal
+from qgis.PyQt.QtGui import QColor, QDoubleValidator, QFont, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import (
+    QComboBox,
+    QDoubleSpinBox,
+    QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QRadioButton,
+    QScrollArea,
+    QSizePolicy,
+    QSpacerItem,
+    QSpinBox,
+    QTableWidgetItem,
+    QWidget,
+    QWizard,
+    QWizardPage,
+)
 from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
-from ..utils import (TEMPDIR, BreachSourceType, EventTypes,
-                     apply_24h_timeseries, constains_only_ascii,
-                     convert_timeseries_to_seconds, extract_error_message,
-                     get_download_file, handle_csv_header, intervals_are_even,
-                     mmh_to_mmtimestep, mmh_to_ms, mmtimestep_to_mmh,
-                     ms_to_mmh, parse_timeseries, read_json_data)
-from ..utils_ui import (NumericDelegate, get_filepath,
-                        qgis_layers_cbo_get_layer_uri, read_3di_settings,
-                        save_3di_settings, scan_widgets_parameters,
-                        set_widget_background_color, set_widgets_parameters)
+from ..utils import (
+    TEMPDIR,
+    BreachSourceType,
+    EventTypes,
+    apply_24h_timeseries,
+    constains_only_ascii,
+    convert_timeseries_to_seconds,
+    extract_error_message,
+    get_download_file,
+    handle_csv_header,
+    intervals_are_even,
+    mmh_to_mmtimestep,
+    mmh_to_ms,
+    mmtimestep_to_mmh,
+    ms_to_mmh,
+    parse_timeseries,
+    read_json_data,
+)
+from ..utils_ui import (
+    NumericDelegate,
+    get_filepath,
+    qgis_layers_cbo_get_layer_uri,
+    read_3di_settings,
+    save_3di_settings,
+    scan_widgets_parameters,
+    set_widget_background_color,
+    set_widgets_parameters,
+)
 from .custom_items import FilteredComboBox
-from .initial_concentrations import (Initial1DConcentrationsWidget,
-                                     Initial2DConcentrationsWidget)
+from .initial_concentrations import Initial1DConcentrationsWidget, Initial2DConcentrationsWidget
 from .substance_concentrations import SubstanceConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -318,7 +346,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
             units_item = self.tw_substances.item(row, 1)
             decay_coefficient_item = self.tw_substances.item(row, 2)
             diffusion_coefficient_item = self.tw_substances.item(row, 3)
-            
+
             if name_item and units_item and decay_coefficient_item and diffusion_coefficient_item:
                 name = name_item.text()
                 units = units_item.text()
@@ -785,22 +813,29 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             # Disable concentrations, if required
             for substance in self.substances:
                 substance_name = substance.get("name")
-                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(
+                    QGroupBox, f"gb_initial_concentrations_1d_{substance_name}"
+                )
                 if groupbox_ic_1d.isChecked():
                     groupbox_ic_1d.setChecked(False)
                 groupbox_ic_1d.setDisabled(True)
-                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(
+                    QGroupBox, f"gb_initial_concentrations_2d_{substance_name}"
+                )
                 if groupbox_ic_2d.isChecked():
                     groupbox_ic_2d.setChecked(False)
                 groupbox_ic_2d.setDisabled(True)
         else:
             for substance in self.substances:
                 substance_name = substance.get("name")
-                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
-                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(
+                    QGroupBox, f"gb_initial_concentrations_1d_{substance_name}"
+                )
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(
+                    QGroupBox, f"gb_initial_concentrations_2d_{substance_name}"
+                )
                 groupbox_ic_2d.setDisabled(False)
                 groupbox_ic_1d.setDisabled(False)
-                
 
     def on_initial_waterlevel_change(self, checked):
         """Handle initial waterlevel group checkbox."""
@@ -810,7 +845,9 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         if self.sender() is self.gb_1d:
             for substance in self.substances:
                 substance_name = substance.get("name")
-                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(QGroupBox, f"gb_initial_concentrations_1d_{substance_name}")
+                groupbox_ic_1d = self.initial_concentrations_widget_1D.findChild(
+                    QGroupBox, f"gb_initial_concentrations_1d_{substance_name}"
+                )
                 groupbox_ic_1d.setEnabled(checked)
                 if not checked:
                     groupbox_ic_1d.setChecked(False)
@@ -818,11 +855,12 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
         if self.sender() is self.gb_2d:
             for substance in self.substances:
                 substance_name = substance.get("name")
-                groupbox_ic_2d = self.initial_concentrations_widget.findChild(QGroupBox, f"gb_initial_concentrations_2d_{substance_name}")
+                groupbox_ic_2d = self.initial_concentrations_widget.findChild(
+                    QGroupBox, f"gb_initial_concentrations_2d_{substance_name}"
+                )
                 groupbox_ic_2d.setEnabled(checked)
                 if not checked:
                     groupbox_ic_2d.setChecked(False)
-            
 
     def setup_initial_conditions(self):
         """Setup initial conditions widget."""
@@ -850,7 +888,7 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                 logger.info(initial_waterlevels_1d)
             for iw in sorted(initial_waterlevels_1d, key=attrgetter("id")):
                 if iw.file:
-                    self.initial_waterlevels_files[iw.file.filename] = iw 
+                    self.initial_waterlevels_files[iw.file.filename] = iw
                     self.cbo_1d_online_file.addItem(iw.file.filename)
                 else:
                     logger.info(f"Water level instance {iw.id} does not have a file, skipping.")
@@ -1798,7 +1836,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         """Store current widget values for a specific simulation."""
         simulation = self.dd_simulation.currentText()
         precipitation_type = self.cbo_prec_type.currentText()
-        
+
         # iterate over the substance values and retrieve the values
         substance_concentrations = []
         if not ((precipitation_type == EventTypes.FROM_NETCDF.value) or (precipitation_type == EventTypes.RADAR.value)):
@@ -1806,7 +1844,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 substance_name = substance["name"]
                 assert substance_name in self.substance_widgets
                 value = self.substance_widgets[substance_name].get_value()
-                substance_concentrations.append({"name": substance_name, "unit": substance.get("unit", ""), "concentration": value})
+                substance_concentrations.append(
+                    {"name": substance_name, "unit": substance.get("unit", ""), "concentration": value}
+                )
 
         if precipitation_type == EventTypes.CONSTANT.value:
             start_after = self.sp_start_after_constant.value()
@@ -1895,17 +1935,24 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.substance_widget.layout().removeWidget(substance_widget)
             del substance_widget
         self.substance_widgets.clear()
-        
+
         substance_concentrations = vals["substance_concentration"]
         new_substance_concentrations = []
-        
+
         for substance in self.substances:
             substance_name = substance["name"]
-            substance_concentration = next((x for x in substance_concentrations if x["name"] == substance["name"]), None)
+            substance_concentration = next(
+                (x for x in substance_concentrations if x["name"] == substance["name"]), None
+            )
             if not substance_concentration:  # substance has been added
                 substance_concentration = {"name": substance_name, "concentration": None}
             substance_concentration["unit"] = substance.get("unit", "")
-            wid = PrecipitationWidget.PrecipationSubstanceWidget(substance_name, substance_concentration["concentration"] or "", substance.get("units", ""), self.substance_widget)
+            wid = PrecipitationWidget.PrecipationSubstanceWidget(
+                substance_name,
+                substance_concentration["concentration"] or "",
+                substance.get("units", ""),
+                self.substance_widget,
+            )
             wid.value_changed.connect(self.store_cache)
             self.substance_widgets[substance_name] = wid  # name is enforced to be unique in UI
             self.substance_widget.layout().addWidget(wid)
@@ -2000,7 +2047,6 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         self.refresh_current_units()
         self.update_substance_widgets()
         self.plot_precipitation()
-        
 
     def sync_units(self, idx):
         """Syncing units widgets."""
@@ -2195,9 +2241,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
 
     def get_precipitation_data(self):
         """Getting all needed data for adding precipitation to the simulation.
-        
-            Note that the current simulation has just been selected in the combobox, so the substance widgets
-            are up to date for this current simulation
+
+        Note that the current simulation has just been selected in the combobox, so the substance widgets
+        are up to date for this current simulation
         """
 
         precipitation_type = self.cbo_prec_type.currentText()
@@ -2214,13 +2260,24 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
 
         # Retrieve substance data from widgets, these have been properly set in run_new_simulation
         substances = []
-        if not ((precipitation_type == EventTypes.FROM_NETCDF.value) or (precipitation_type == EventTypes.RADAR.value) or (precipitation_type == "None")):
+        if not (
+            (precipitation_type == EventTypes.FROM_NETCDF.value)
+            or (precipitation_type == EventTypes.RADAR.value)
+            or (precipitation_type == "None")
+        ):
             for substance in self.substances:
                 substance_name = substance["name"]
                 substance_widget = self.substance_widgets[substance_name]
                 sub_value = substance_widget.get_value()
                 if sub_value is not None:
-                    substances.append({"substance": substance_name, "substance_id": None, "substance_name": substance_name, "concentrations": [[0.0, sub_value]]})
+                    substances.append(
+                        {
+                            "substance": substance_name,
+                            "substance_id": None,
+                            "substance_name": substance_name,
+                            "concentrations": [[0.0, sub_value]],
+                        }
+                    )
 
         return (
             precipitation_type,
@@ -2269,12 +2326,12 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             x_values.append(x_in_units)
             y_values.append(y)
         return x_values, y_values
-    
+
     class PrecipationSubstanceWidget(QWidget):
 
         value_changed = pyqtSignal()
 
-        def __init__(self, name:str, value:float, unit:str, parent):
+        def __init__(self, name: str, value: float, unit: str, parent):
             super().__init__(parent)
             self.setLayout(QHBoxLayout())
             name_label = QLabel(name, self)
@@ -2291,24 +2348,27 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.unit_label.setFixedWidth(30)
             self.layout().addWidget(self.unit_label)
 
-        def set_unit_label(self, label:str) -> None:
+        def set_unit_label(self, label: str) -> None:
             self.unit_label.setText(label)
 
         def get_value(self) -> Optional[float]:
             if self.line_edit.text() == "":
                 return None
-            
+
             return float(self.line_edit.text())
 
         def set_value(self, value: float) -> None:
             self.line_edit.setText(str(value))
 
-
     def update_substance_widgets(self):
 
-        # For NetCDF or radar rain, we do not apply substance concentrations        
+        # For NetCDF or radar rain, we do not apply substance concentrations
         precipitation_type_str = self.cbo_prec_type.currentText()
-        if precipitation_type_str == "None" or (EventTypes(precipitation_type_str) == EventTypes.FROM_NETCDF) or (EventTypes(precipitation_type_str) == EventTypes.RADAR):
+        if (
+            precipitation_type_str == "None"
+            or (EventTypes(precipitation_type_str) == EventTypes.FROM_NETCDF)
+            or (EventTypes(precipitation_type_str) == EventTypes.RADAR)
+        ):
             for substance_widget in self.substance_widgets.values():
                 self.substance_widget.layout().removeWidget(substance_widget)
                 del substance_widget
@@ -2326,7 +2386,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 self.substance_widget.layout().removeWidget(substance_widget)
                 del substance_widget
                 widgets_to_remove.append(name)
-                
+
         for widget_name in widgets_to_remove:
             del self.substance_widgets[widget_name]
 
@@ -2334,7 +2394,9 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
         for substance in self.substances:
             substance_name = substance["name"]
             if substance_name not in self.substance_widgets:
-                wid = PrecipitationWidget.PrecipationSubstanceWidget(substance_name, "", substance.get("units", ""), self.substance_widget)
+                wid = PrecipitationWidget.PrecipationSubstanceWidget(
+                    substance_name, "", substance.get("units", ""), self.substance_widget
+                )
                 wid.value_changed.connect(self.store_cache)
                 self.substance_widgets[substance_name] = wid  # name is enforce to be unique in UI
                 self.substance_widget.layout().addWidget(wid)
@@ -2342,7 +2404,6 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
                 # Set the units, these might have been changed
                 self.substance_widgets[substance_name].set_unit_label(substance.get("units", ""))
 
-    
     def plot_precipitation(self):
         """Setting up precipitation plot."""
         self.refresh_duration()
@@ -3389,7 +3450,15 @@ class SimulationWizard(QWizard):
         init_conditions = self.init_conditions_dlg.initial_conditions
         if init_conditions.include_substances:
 
-            substances = [{"name": item.name, "units": item.units or "", "decay_coefficient": item.decay_coefficient or "", "diffusion_coefficient": item.diffusion_coefficient or ""} for item in events.substances]
+            substances = [
+                {
+                    "name": item.name,
+                    "units": item.units or "",
+                    "decay_coefficient": item.decay_coefficient or "",
+                    "diffusion_coefficient": item.diffusion_coefficient or "",
+                }
+                for item in events.substances
+            ]
             if substances:
                 self.substances_page.main_widget.prepopulate_substances_table(substances)
         if init_conditions.include_boundary_conditions:
@@ -3605,7 +3674,9 @@ class SimulationWizard(QWizard):
 
                 # We now know all substance widgets are in place, we can set the template value
                 for substance in rain.substances:
-                    precipitation_widget.substance_widgets[substance.substance_name].set_value(substance.concentrations[0][1])
+                    precipitation_widget.substance_widgets[substance.substance_name].set_value(
+                        substance.concentrations[0][1]
+                    )
 
             if events.lizardrasterrain:
                 rain = events.lizardrasterrain[0]
@@ -3777,7 +3848,9 @@ class SimulationWizard(QWizard):
                     )
                 elif self.init_conditions_page.main_widget.rb_1d_online_file.isChecked():
                     initial_conditions.online_waterlevels_1d = (
-                        self.init_conditions_page.main_widget.initial_waterlevels_files[self.init_conditions_page.main_widget.cbo_1d_online_file.currentText()]
+                        self.init_conditions_page.main_widget.initial_waterlevels_files[
+                            self.init_conditions_page.main_widget.cbo_1d_online_file.currentText()
+                        ]
                     )
                 else:
                     initial_conditions.from_spatialite_1d = True
@@ -3879,7 +3952,7 @@ class SimulationWizard(QWizard):
                         initial_concentrations_1d[substance_name] = initial_concentrations
                     elif rb_online_file.isChecked():
                         for file in online_files:
-                             if file.filename == cbo_online_file.currentText():
+                            if file.filename == cbo_online_file.currentText():
                                 initial_concentrations = {
                                     "local_data": None,
                                     "online_file": file,

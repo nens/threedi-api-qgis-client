@@ -10,8 +10,7 @@ from functools import partial
 import requests
 from PyQt5 import QtWebSockets
 from PyQt5.QtNetwork import QNetworkRequest
-from qgis.PyQt.QtCore import (QByteArray, QObject, QRunnable, QUrl, pyqtSignal,
-                              pyqtSlot)
+from qgis.PyQt.QtCore import QByteArray, QObject, QRunnable, QUrl, pyqtSignal, pyqtSlot
 from threedi_api_client.files import upload_file
 from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import bypass_max_path_limit
@@ -19,15 +18,29 @@ from threedi_mi_utils import bypass_max_path_limit
 from .api_calls.threedi_calls import ThreediCalls
 from .data_models import simulation_data_models as dm
 from .data_models.enumerators import SimulationStatusName
-from .utils import (API_DATETIME_FORMAT, BOUNDARY_CONDITIONS_TEMPLATE,
-                    CHUNK_SIZE, DWF_FILE_TEMPLATE,
-                    INITIAL_CONCENTRATIONS_TEMPLATE,
-                    INITIAL_WATERLEVELS_TEMPLATE, LATERALS_FILE_TEMPLATE,
-                    RADAR_ID, TEMPDIR, EventTypes, FileState, ThreediFileState,
-                    ThreediModelTaskStatus, UploadFileStatus,
-                    extract_error_message, get_download_file,
-                    split_to_even_chunks, unzip_archive, upload_local_file,
-                    write_json_data, zip_into_archive)
+from .utils import (
+    API_DATETIME_FORMAT,
+    BOUNDARY_CONDITIONS_TEMPLATE,
+    CHUNK_SIZE,
+    DWF_FILE_TEMPLATE,
+    INITIAL_CONCENTRATIONS_TEMPLATE,
+    INITIAL_WATERLEVELS_TEMPLATE,
+    LATERALS_FILE_TEMPLATE,
+    RADAR_ID,
+    TEMPDIR,
+    EventTypes,
+    FileState,
+    ThreediFileState,
+    ThreediModelTaskStatus,
+    UploadFileStatus,
+    extract_error_message,
+    get_download_file,
+    split_to_even_chunks,
+    unzip_archive,
+    upload_local_file,
+    write_json_data,
+    zip_into_archive,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -783,16 +796,22 @@ class SimulationRunner(QRunnable):
                     raise SimulationRunnerError(err_msg)
                 else:
                     time.sleep(2)
-            
+
             if uploaded_initial_waterlevel.state != ThreediFileState.VALID.value:
-                    state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()
-                    err_msg = f"Failed to upload Initial Waterlevel file due to the following reasons: {state_detail}"
-                    raise SimulationRunnerError(err_msg)
+                state_detail = str(uploaded_initial_waterlevel.state_detail).strip("{}").strip()
+                err_msg = f"Failed to upload Initial Waterlevel file due to the following reasons: {state_detail}"
+                raise SimulationRunnerError(err_msg)
 
         # These options should be mutually exclusive
-        assert not(initial_conditions.initial_waterlevels_1d is not None and initial_conditions.online_waterlevels_1d is not None)
+        assert not (
+            initial_conditions.initial_waterlevels_1d is not None
+            and initial_conditions.online_waterlevels_1d is not None
+        )
 
-        if initial_conditions.initial_waterlevels_1d is not None or initial_conditions.online_waterlevels_1d is not None:
+        if (
+            initial_conditions.initial_waterlevels_1d is not None
+            or initial_conditions.online_waterlevels_1d is not None
+        ):
             # Step 4: Find & delete existing 1D water levels file of the simulation
             water_level_1d_files = self.tc.fetch_simulation_initial_1d_water_level_files(sim_id)
             for water_level_1d_file in water_level_1d_files:
@@ -800,9 +819,7 @@ class SimulationRunner(QRunnable):
 
             # Step 5: Create a new 1D initial water level file for the simulation
             if initial_conditions.initial_waterlevels_1d is not None:
-                self.tc.create_simulation_initial_1d_water_level_file(
-                    sim_id, initial_waterlevel=initial_waterlevel_id
-                )
+                self.tc.create_simulation_initial_1d_water_level_file(sim_id, initial_waterlevel=initial_waterlevel_id)
             elif initial_conditions.online_waterlevels_1d is not None:
                 logger.info("Setting online 1D waterlevel file")
                 logger.info(initial_conditions.online_waterlevels_1d)
@@ -936,10 +953,16 @@ class SimulationRunner(QRunnable):
                     assert local_data is not None
 
                     # create a new initial concentration
-                    initial_concentration_1d = self.tc.create_3di_model_initial_concentration(threedimodel_id=threedimodel_id, dimension="one_d")
+                    initial_concentration_1d = self.tc.create_3di_model_initial_concentration(
+                        threedimodel_id=threedimodel_id, dimension="one_d"
+                    )
 
                     # create an upload url
-                    initial_concentration_upload = self.tc.upload_3di_model_initial_concentration(threedimodel_id=threedimodel_id, initial_concentration_id=initial_concentration_1d.id, filename=f"{sim_name}_initial_concent_1d.json")
+                    initial_concentration_upload = self.tc.upload_3di_model_initial_concentration(
+                        threedimodel_id=threedimodel_id,
+                        initial_concentration_id=initial_concentration_1d.id,
+                        filename=f"{sim_name}_initial_concent_1d.json",
+                    )
 
                     # now write and upload the data (in json format)
                     write_json_data(local_data, INITIAL_CONCENTRATIONS_TEMPLATE)
@@ -951,7 +974,11 @@ class SimulationRunner(QRunnable):
                     initial_concentration_1d = None
                     while not initial_concentration_1d and retries < 12:
                         results = self.tc.fetch_3di_model_initial_concentrations(threedimodel_id)
-                        one_d_ids = [x for x in results if x.dimension == "one_d" and x.state == "valid" and x.id == newly_generated_id]
+                        one_d_ids = [
+                            x
+                            for x in results
+                            if x.dimension == "one_d" and x.state == "valid" and x.id == newly_generated_id
+                        ]
                         if len(one_d_ids) > 0:
                             initial_concentration_1d = one_d_ids[0]
                             break
@@ -1165,10 +1192,18 @@ class SimulationRunner(QRunnable):
                 # Adjust substance timekeys for precipitation type
                 for substance in substances:
                     substance_value = substance["concentrations"][0][1]
-                    substance["concentrations"] = [[0, substance_value], [duration, substance_value]]  # offset should not be used
+                    substance["concentrations"] = [
+                        [0, substance_value],
+                        [duration, substance_value],
+                    ]  # offset should not be used
 
                 self.tc.create_simulation_constant_precipitation(
-                    sim_id, value=values, units=units, duration=duration, offset=offset, substances=substances,
+                    sim_id,
+                    value=values,
+                    units=units,
+                    duration=duration,
+                    offset=offset,
+                    substances=substances,
                 )
             elif precipitation_type == EventTypes.FROM_CSV.value:
                 for values_chunk in split_to_even_chunks(values, 300):
@@ -1204,17 +1239,17 @@ class SimulationRunner(QRunnable):
                     substance["concentrations"] = [[t, substance_value] for t, _ in values]
 
                 self.tc.create_simulation_custom_precipitation(
-                    sim_id, values=values, units=units, duration=duration, offset=offset, substances=substances,
+                    sim_id,
+                    values=values,
+                    units=units,
+                    duration=duration,
+                    offset=offset,
+                    substances=substances,
                 )
             elif precipitation_type == EventTypes.RADAR.value:
                 # No substances for this type
                 self.tc.create_simulation_radar_precipitation(
-                    sim_id,
-                    reference_uuid=RADAR_ID,
-                    units=units,
-                    duration=duration,
-                    offset=offset,
-                    start_datetime=start
+                    sim_id, reference_uuid=RADAR_ID, units=units, duration=duration, offset=offset, start_datetime=start
                 )
 
     def include_wind(self):

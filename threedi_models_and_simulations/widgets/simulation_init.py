@@ -15,7 +15,15 @@ class SimulationInit(uicls, basecls):
     PROGRESS_COLUMN_IDX = 2
 
     def __init__(
-        self, current_model, simulation_template, settings_overview, events, lizard_post_processing_overview, organisation, api, parent
+        self,
+        current_model,
+        simulation_template,
+        settings_overview,
+        events,
+        lizard_post_processing_overview,
+        organisation,
+        api,
+        parent,
     ):
         super().__init__(parent)
         self.setupUi(self)
@@ -42,7 +50,7 @@ class SimulationInit(uicls, basecls):
         self.dd_number_of_simulation.addItems([str(i) for i in range(2, 10)])
         self.cb_boundary.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.cb_boundary.setFocusPolicy(Qt.NoFocus)
-        
+
         # Disable substance if not in organisation contract
         contracts = self.api.fetch_contracts(organisation__unique_id=self.organisation.unique_id)
         self.has_water_quality_license = False
@@ -50,12 +58,13 @@ class SimulationInit(uicls, basecls):
             if "waterquality" in contract.scope:
                 self.has_water_quality_license = True
                 break
-        
+
         if not self.has_water_quality_license:
             self.cb_substances.setChecked(False)
             self.cb_substances.setEnabled(False)
-            self.cb_substances.setToolTip("Your organisation's contract does not include water quality simulations. Please get in touch to be informed about the possibilities.")
-
+            self.cb_substances.setToolTip(
+                "Your organisation's contract does not include water quality simulations. Please get in touch to be informed about the possibilities."
+            )
 
     def check_template_events(self):
         """Check events that are available for the simulation template."""
