@@ -91,6 +91,7 @@ class InitialConditions(SimulationElement):
     global_value_1d: float = None
     from_spatialite_1d: bool = None
     initial_waterlevels_1d: dict = None
+    online_waterlevels_1d: InitialWaterlevel = None
     global_value_2d: float = None
     online_raster_2d: InitialWaterlevel = None
     local_raster_2d: str = None
@@ -101,6 +102,7 @@ class InitialConditions(SimulationElement):
     aggregation_method_groundwater: str = None
     saved_state: str = None
     initial_concentrations_2d: dict = None
+    initial_concentrations_1d: dict = None
 
 
 @dataclass
@@ -151,6 +153,7 @@ class Precipitation(SimulationElement):
     netcdf_filepath: str = None
     netcdf_global: bool = None
     netcdf_raster: bool = None
+    substances: list = None
 
 
 @dataclass

@@ -152,6 +152,8 @@ class SimulationOverview(uicls, basecls):
                 settings_overview,
                 events,
                 lizard_post_processing_overview,
+                organisation=self.model_selection_dlg.organisation,
+                api=ThreediCalls(self.threedi_api),
                 parent=self,
             )
             self.simulation_init_wizard.exec_()
