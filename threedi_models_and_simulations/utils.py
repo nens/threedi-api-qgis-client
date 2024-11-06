@@ -348,6 +348,17 @@ def translate_illegal_chars(text, illegal_characters=r'\/:*?"<>|', replacement_c
     return sanitized_text
 
 
+class NestedObject:
+    """A class to convert a nested dictionary into an object."""
+
+    def __init__(self, data):
+        for key, value in data.items():
+            if isinstance(value, (list, tuple)):
+                setattr(self, key, [NestedObject(x) if isinstance(x, dict) else x for x in value])
+            else:
+                setattr(self, key, NestedObject(value) if isinstance(value, dict) else value)
+
+
 class SchematisationRasterReferences:
     @staticmethod
     def global_settings_rasters():
