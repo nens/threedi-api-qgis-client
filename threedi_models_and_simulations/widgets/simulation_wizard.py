@@ -590,15 +590,26 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             bc_timeseries = self.boundary_conditions_2d_timeseries
             substance_concentrations.update(self.substance_concentrations_2d)
             substance_constants = self.substance_constants_2d
-        for bc_id, bc_data in bc_timeseries.items():
+
+        units = (
+            self.cbo_bc_units_1d.currentText()
+            if bc_type == self.TYPE_1D
+            else self.cbo_bc_units_2d.currentText()
+        )
+
+        for bc_data in bc_timeseries:
             for substance_constanst in substance_constants:
                 for name, value in substance_constanst.items():
-                    concentrations = [[t, value] for (t, v) in bc_data["values"]]
+                    bc_values = convert_timeseries_to_seconds(bc_data["values"], units)
+                    logger.error("concentrations")
+                    concentrations = [[t, value] for (t, v) in bc_values]
+                    logger.error(concentrations)
                     substance = {
                         "substance": name,
                         "concentrations": concentrations,
                         "time_units": "s",
                     }
+                    bc_id = str(bc_data["id"])
                     if bc_id not in substance_concentrations_constants:
                         substance_concentrations_constants[bc_id] = []
                     substance_concentrations_constants[bc_id].append(substance)
@@ -652,6 +663,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                 substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
                 self.update_boundary_conditions_with_substances(boundary_conditions_data_2d, substances)
         boundary_conditions_data = boundary_conditions_data_1d + boundary_conditions_data_2d
+        logger.error(boundary_conditions_data)
         return self.template_boundary_conditions, boundary_conditions_data
 
 
