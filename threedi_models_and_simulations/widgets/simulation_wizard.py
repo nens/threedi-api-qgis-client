@@ -1220,6 +1220,9 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 laterals_timeseries.update(self.laterals_2d_timeseries_template)
             if self.cb_upload_2d_laterals.isChecked():
                 laterals_timeseries.update(self.laterals_2d_timeseries)
+        
+        units = self.cbo_1d_units.currentText() if laterals_type == self.TYPE_1D else self.cbo_2d_units.currentText()
+
         substance_concentrations = {}
         substance_constants = []
         substance_concentrations_constants = {}
@@ -1232,7 +1235,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         for lat_id, lat_data in laterals_timeseries.items():
             for substance_constanst in substance_constants:
                 for name, value in substance_constanst.items():
-                    concentrations = [[t, value] for (t, v) in lat_data["values"]]
+                    lateral_values = convert_timeseries_to_seconds(lat_data["values"], units)
+                    concentrations = [[t, value] for (t, _) in lateral_values]
                     substance = {
                         "substance": name,
                         "concentrations": concentrations,
