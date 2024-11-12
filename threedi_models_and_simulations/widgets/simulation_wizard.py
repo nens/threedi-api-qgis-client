@@ -15,61 +15,33 @@ from dateutil.relativedelta import relativedelta
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone, pyqtSignal
-from qgis.PyQt.QtGui import QColor, QDoubleValidator, QFont, QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import (
-    QComboBox,
-    QDoubleSpinBox,
-    QFileDialog,
-    QGridLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QRadioButton,
-    QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
-    QSpinBox,
-    QTableWidgetItem,
-    QWidget,
-    QWizard,
-    QWizardPage,
-)
+from qgis.PyQt.QtCore import (QDateTime, QSettings, QSize, Qt, QTimeZone,
+                              pyqtSignal)
+from qgis.PyQt.QtGui import (QColor, QDoubleValidator, QFont, QStandardItem,
+                             QStandardItemModel)
+from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
+                                 QGridLayout, QGroupBox, QHBoxLayout, QLabel,
+                                 QLineEdit, QRadioButton, QScrollArea,
+                                 QSizePolicy, QSpacerItem, QSpinBox,
+                                 QTableWidgetItem, QWidget, QWizard,
+                                 QWizardPage)
 from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
-from ..utils import (
-    TEMPDIR,
-    BreachSourceType,
-    EventTypes,
-    apply_24h_timeseries,
-    constains_only_ascii,
-    convert_timeseries_to_seconds,
-    extract_error_message,
-    get_download_file,
-    handle_csv_header,
-    intervals_are_even,
-    mmh_to_mmtimestep,
-    mmh_to_ms,
-    mmtimestep_to_mmh,
-    ms_to_mmh,
-    parse_timeseries,
-    read_json_data,
-)
-from ..utils_ui import (
-    NumericDelegate,
-    get_filepath,
-    qgis_layers_cbo_get_layer_uri,
-    read_3di_settings,
-    save_3di_settings,
-    scan_widgets_parameters,
-    set_widget_background_color,
-    set_widgets_parameters,
-)
+from ..utils import (TEMPDIR, BreachSourceType, EventTypes,
+                     apply_24h_timeseries, constains_only_ascii,
+                     convert_timeseries_to_seconds, extract_error_message,
+                     get_download_file, handle_csv_header, intervals_are_even,
+                     mmh_to_mmtimestep, mmh_to_ms, mmtimestep_to_mmh,
+                     ms_to_mmh, parse_timeseries, read_json_data)
+from ..utils_ui import (NumericDelegate, get_filepath,
+                        qgis_layers_cbo_get_layer_uri, read_3di_settings,
+                        save_3di_settings, scan_widgets_parameters,
+                        set_widget_background_color, set_widgets_parameters)
 from .custom_items import FilteredComboBox
-from .initial_concentrations import Initial1DConcentrationsWidget, Initial2DConcentrationsWidget
+from .initial_concentrations import (Initial1DConcentrationsWidget,
+                                     Initial2DConcentrationsWidget)
 from .substance_concentrations import SubstanceConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -4186,7 +4158,10 @@ class SimulationWizard(QWizard):
             new_simulation.new_saved_state = new_saved_state
             if self.summary_page.main_widget.cb_save_template.isChecked():
                 template_name = self.summary_page.main_widget.template_name.text()
-                new_simulation.template_name = template_name + f"_{i}"
+                if self.init_conditions.multiple_simulations:
+                    new_simulation.template_name = template_name + f"_{i}"
+                else:
+                    new_simulation.template_name = template_name
             self.new_simulations.append(new_simulation)
         self.model_selection_dlg.unload_breach_layers()
         self.plugin_dock.simulation_overview_dlg.start_simulations(self.new_simulations)

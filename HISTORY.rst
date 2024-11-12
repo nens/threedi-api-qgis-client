@@ -13,6 +13,7 @@ History
 - Added diffusion parameter to Substances page. (#602)
 - Added option to select previously uploaded 1D initial water level file. (#610)
 - Added water quality license GUI restrictions (#625)
+- Simulation template name should only be postfixed when multiple simulations are started (#635)
 
 
 3.14.1 (2024-09-25)
