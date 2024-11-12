@@ -1256,7 +1256,7 @@
              <string>Aggregation settings</string>
             </property>
             <property name="collapsed">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <layout class="QGridLayout" name="gridLayout_4">
              <item row="0" column="0" rowspan="2" colspan="3">
@@ -1338,7 +1338,7 @@
              <string>Timestep settings</string>
             </property>
             <property name="collapsed">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <layout class="QGridLayout" name="gridLayout_3">
              <item row="0" column="0">
