@@ -2434,6 +2434,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.setLayout(QHBoxLayout())
             name_label = QLabel(name, self)
             name_label.setFixedWidth(200)
+            name_label.setFont(QFont("Segoe UI", 10, QFont.Normal))
             self.layout().addWidget(name_label)
             self.line_edit = QLineEdit(str(value), self)
             # Connect signal to signal
@@ -2444,6 +2445,7 @@ class PrecipitationWidget(uicls_precipitation_page, basecls_precipitation_page):
             self.layout().addWidget(self.line_edit)
             self.unit_label = QLabel(unit, self)
             self.unit_label.setFixedWidth(30)
+            self.unit_label.setFont(QFont("Segoe UI", 10, QFont.Normal))
             self.layout().addWidget(self.unit_label)
 
         def set_unit_label(self, label: str) -> None:

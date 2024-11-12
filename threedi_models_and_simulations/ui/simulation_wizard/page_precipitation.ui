@@ -1531,6 +1531,12 @@
      <layout class="QGridLayout" name="gridLayout_15">
       <item row="0" column="0">
        <widget class="QLabel" name="label_6">
+        <property name="font">
+         <font>
+          <family>Segoe UI</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Specify constant substance concentrations for the whole duration of the rain event</string>
         </property>
