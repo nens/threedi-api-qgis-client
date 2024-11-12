@@ -1,8 +1,8 @@
 History
 =======
 
-3.14.2 (unreleased)
--------------------
+3.15 (2024-11-12)
+-----------------
 
 - Load remote schematisation: #626
 - Fixes/enhancements: #616, #622
