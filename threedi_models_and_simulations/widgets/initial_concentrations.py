@@ -8,19 +8,10 @@ from typing import Dict, List
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapLayerComboBox
 from qgis.PyQt.QtGui import QFont
-from qgis.PyQt.QtWidgets import (
-    QComboBox,
-    QFileDialog,
-    QGridLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QRadioButton,
-    QSizePolicy,
-    QToolButton,
-    QWidget,
-)
+from qgis.PyQt.QtWidgets import (QComboBox, QFileDialog, QGridLayout,
+                                 QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+                                 QRadioButton, QSizePolicy, QToolButton,
+                                 QWidget)
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils_ui import get_filepath, read_3di_settings, save_3di_settings
@@ -283,6 +274,7 @@ class Initial2DConcentrationsWidget(QWidget):
 
             # Aggregation method widget
             label_aggregation = QLabel("     Aggregation method:")
+            label_aggregation.setFont(QFont("Segoe UI", 10, -1, True))
             cbo_aggregation = QComboBox()
             cbo_aggregation.setFont(QFont("Segoe UI", 10))
             cbo_aggregation.addItems(["mean", "max", "min"])
