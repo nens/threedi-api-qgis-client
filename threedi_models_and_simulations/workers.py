@@ -8,7 +8,6 @@ import time
 from functools import partial
 
 import requests
-from PyQt5 import QtWebSockets
 from PyQt5.QtNetwork import QNetworkRequest
 from qgis.PyQt.QtCore import QByteArray, QObject, QRunnable, QUrl, pyqtSignal, pyqtSlot
 from threedi_api_client.files import upload_file
@@ -109,6 +108,13 @@ class WSProgressesSentinel(QObject):
         api_version = self.tc.threedi_api.version
         ws_request = QNetworkRequest(QUrl(f"{self.wss_url}/{api_version}/active-simulations/"))
         ws_request.setRawHeader(QByteArray().append("Authorization"), QByteArray().append(basic_auth_token))
+        try:
+            from PyQt5 import QtWebSockets
+        except ImportError:
+            QtWebSockets = None
+        if QtWebSockets is None:
+            logger.error("QtWebSockets is not available. WebSocket will not work.")
+            return
         self.ws_client = QtWebSockets.QWebSocket(version=QtWebSockets.QWebSocketProtocol.VersionLatest)
         self.ws_client.textMessageReceived.connect(self.all_simulations_progress_web_socket)
         self.ws_client.error.connect(self.websocket_error)
