@@ -601,9 +601,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             for substance_constanst in substance_constants:
                 for name, value in substance_constanst.items():
                     bc_values = convert_timeseries_to_seconds(bc_data["values"], units)
-                    logger.error("concentrations")
                     concentrations = [[t, value] for (t, v) in bc_values]
-                    logger.error(concentrations)
                     substance = {
                         "substance": name,
                         "concentrations": concentrations,
@@ -663,7 +661,6 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                 substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
                 self.update_boundary_conditions_with_substances(boundary_conditions_data_2d, substances)
         boundary_conditions_data = boundary_conditions_data_1d + boundary_conditions_data_2d
-        logger.error(boundary_conditions_data)
         return self.template_boundary_conditions, boundary_conditions_data
 
 
@@ -3854,7 +3851,10 @@ class SimulationWizard(QWizard):
         events = self.init_conditions_dlg.events
         name = self.name_page.main_widget.le_sim_name.text().strip()
         project_name = self.name_page.main_widget.le_project.text().strip()
-        tags = [tag.strip() for tag in self.name_page.main_widget.le_tags.text().split(",")]
+        if not self.name_page.main_widget.le_tags.text():
+            tags = []
+        else:
+            tags = [tag.strip() for tag in self.name_page.main_widget.le_tags.text().split(",")]
         if project_name:
             project_name_tag = f"project: {project_name}"
             tags.append(project_name_tag)
@@ -4147,7 +4147,6 @@ class SimulationWizard(QWizard):
                 else:
                     new_simulation.breaches = dm.Breaches()
             if self.init_conditions.include_precipitations:
-                logger.error(simulation)
                 self.precipitation_page.main_widget.dd_simulation.setCurrentText(simulation)
                 precipitation_data = self.precipitation_page.main_widget.get_precipitation_data()
                 if simulation_difference == "precipitation" or i == 1:

@@ -4,7 +4,7 @@ History
 3.16 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Empty list of tags is now properly transfered to backend.
 
 
 3.15 (2024-11-12)
