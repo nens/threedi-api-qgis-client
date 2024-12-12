@@ -1,8 +1,8 @@
 History
 =======
 
-3.16 (unreleased)
------------------
+3.15.1 (2024-12-12)
+-------------------
 
 - Empty list of tags is now properly transfered to backend.
 
