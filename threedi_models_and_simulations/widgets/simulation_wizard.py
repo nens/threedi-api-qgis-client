@@ -429,12 +429,22 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             if self.rb_from_template.isChecked():
                 bc_timeseries = self.template_boundary_conditions_1d_timeseries
             else:
-                bc_timeseries = self.boundary_conditions_1d_timeseries
+                # these need to be converted to seconds, if necessary
+                units = self.cbo_bc_units_1d.currentText()
+                bc_data = deepcopy(self.boundary_conditions_1d_timeseries)
+                for val in bc_data.values():
+                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
+                bc_timeseries = bc_data
         else:
             if self.rb_from_template.isChecked():
                 bc_timeseries = self.template_boundary_conditions_2d_timeseries
             else:
-                bc_timeseries = self.boundary_conditions_2d_timeseries
+                # these need to be converted to seconds, if necessary
+                units = self.cbo_bc_units_2d.currentText()
+                bc_data = deepcopy(self.boundary_conditions_2d_timeseries)
+                for val in bc_data.values():
+                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
+                bc_timeseries = bc_data
         if not bc_timeseries:
             if self.rb_from_template.isChecked():
                 error_message = "No boundary conditions found in template file!"
@@ -451,13 +461,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                     error_message = f"Boundary condition with ID {bc_id} not found!"
                     break
                 bc_values = boundary_condition["values"]
-                bc_units = (
-                    self.cbo_bc_units_1d.currentText()
-                    if bc_type == self.TYPE_1D
-                    else self.cbo_bc_units_2d.currentText()
-                )
-                converted_bc_values = convert_timeseries_to_seconds(bc_values, bc_units)
-                bc_timesteps = [t for (t, _) in converted_bc_values]
+                bc_timesteps = [t for (t, _) in bc_values]
                 concentrations = parse_timeseries(timeseries)
                 converted_concentrations = convert_timeseries_to_seconds(concentrations, time_units)
                 concentrations_timesteps = [t for (t, _) in converted_concentrations]
@@ -1125,12 +1129,22 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             if self.cb_use_1d_laterals.isChecked():
                 laterals_timeseries.update(self.laterals_1d_timeseries_template)
             if self.cb_upload_1d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_1d_timeseries)
+                # laterals_timeseries.update(self.laterals_1d_timeseries)  # these need to be converted to seconds?
+                units = self.cbo_1d_units.currentText()
+                laterals_data = deepcopy(self.laterals_1d_timeseries)
+                for val in laterals_data.values():
+                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
+                laterals_timeseries.update(laterals_data)
         else:
             if self.cb_use_2d_laterals.isChecked():
                 laterals_timeseries.update(self.laterals_2d_timeseries_template)
             if self.cb_upload_2d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_2d_timeseries)
+                # laterals_timeseries.update(self.laterals_2d_timeseries)  # these need to be converted to seocnds?
+                units = self.cbo_2d_units.currentText()
+                laterals_data = deepcopy(self.laterals_2d_timeseries)
+                for val in laterals_data.values():
+                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
+                laterals_timeseries.update(laterals_data)
         if not laterals_timeseries:
             error_message = "No laterals uploaded yet!"
         if not substance_list:
@@ -1144,13 +1158,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     error_message = f"Laterals with ID {lat_id} not found!"
                     break
                 lateral_values = lateral["values"]
-                lateral_units = (
-                    self.cbo_1d_units.currentText()
-                    if laterals_type == self.TYPE_1D
-                    else self.cbo_2d_units.currentText()
-                )
-                converted_lateral_values = convert_timeseries_to_seconds(lateral_values, lateral_units)
-                laterals_timesteps = [t for (t, _) in converted_lateral_values]
+                laterals_timesteps = [t for (t, _) in lateral_values]
                 concentrations = parse_timeseries(timeseries)
                 converted_concentrations = convert_timeseries_to_seconds(concentrations, time_units)
                 concentrations_timesteps = [t for (t, _) in converted_concentrations]
@@ -4076,6 +4084,8 @@ class SimulationWizard(QWizard):
         if self.init_conditions.include_laterals:
             constant_laterals, file_laterals_1d, file_laterals_2d = self.laterals_page.main_widget.get_laterals_data()
             laterals = dm.Laterals(constant_laterals, file_laterals_1d, file_laterals_2d)
+            logger.error("**********")
+            logger.error(laterals)
         else:
             laterals = dm.Laterals()
         # DWF
