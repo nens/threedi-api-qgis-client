@@ -564,47 +564,51 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
 
     def recalculate_boundary_conditions_timeseries(self, boundary_conditions_type):
         """Recalculate boundary conditions timeseries (timesteps in seconds)."""
-        boundary_conditions_timeseries = (
-            self.boundary_conditions_1d_timeseries
-            if boundary_conditions_type == self.TYPE_1D
-            else self.boundary_conditions_2d_timeseries
-        )
+        bc_timeseries = []
+        if boundary_conditions_type == self.TYPE_1D:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_1d_timeseries
+            else:
+                # these need to be converted to seconds, if necessary
+                units = self.cbo_bc_units_1d.currentText()
+                bc_data = deepcopy(self.boundary_conditions_1d_timeseries)
+                for val in bc_data.values():
+                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
+                bc_timeseries = bc_data
+        else:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_2d_timeseries
+            else:
+                # these need to be converted to seconds, if necessary
+                units = self.cbo_bc_units_2d.currentText()
+                bc_data = deepcopy(self.boundary_conditions_2d_timeseries)
+                for val in bc_data.values():
+                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
+                bc_timeseries = bc_data
 
-        boundary_conditions_data = deepcopy(boundary_conditions_timeseries)
-        units = (
-            self.cbo_bc_units_1d.currentText()
-            if boundary_conditions_type == self.TYPE_1D
-            else self.cbo_bc_units_2d.currentText()
-        )
-        for val in boundary_conditions_data:
-            val["values"] = convert_timeseries_to_seconds(val["values"], units)
-        return boundary_conditions_data
+        return bc_timeseries
 
     def recalculate_substances_timeseries(self, bc_type):
         """Recalculate substances timeseries (timesteps in seconds)."""
+
+        # Recalculate timeseries to seconds, if required
+        bc_timeseries = self.recalculate_boundary_conditions_timeseries(bc_type)
+
         substance_concentrations = {}
         substance_constants = []
         substance_concentrations_constants = {}
         if bc_type == self.TYPE_1D:
-            bc_timeseries = self.boundary_conditions_1d_timeseries
             substance_concentrations.update(self.substance_concentrations_1d)
             substance_constants = self.substance_constants_1d
         else:
-            bc_timeseries = self.boundary_conditions_2d_timeseries
             substance_concentrations.update(self.substance_concentrations_2d)
             substance_constants = self.substance_constants_2d
-
-        units = (
-            self.cbo_bc_units_1d.currentText()
-            if bc_type == self.TYPE_1D
-            else self.cbo_bc_units_2d.currentText()
-        )
 
         for bc_data in bc_timeseries:
             for substance_constanst in substance_constants:
                 for name, value in substance_constanst.items():
-                    bc_values = convert_timeseries_to_seconds(bc_data["values"], units)
-                    concentrations = [[t, value] for (t, v) in bc_values]
+                    # take timestep from lateral values, already converted to seconds above
+                    concentrations = [[t, value] for (t, v) in bc_data["values"]]
                     substance = {
                         "substance": name,
                         "concentrations": concentrations,
@@ -614,6 +618,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                     if bc_id not in substance_concentrations_constants:
                         substance_concentrations_constants[bc_id] = []
                     substance_concentrations_constants[bc_id].append(substance)
+
         # Merge substance concentrations with substance_concentrations_constants
         for bc_id, substance in substance_concentrations_constants.items():
             if bc_id not in substance_concentrations:
@@ -624,6 +629,8 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                     name = sub.get("substance")
                     existing_substance.setdefault(name, sub)
                 substance_concentrations[bc_id] = list(existing_substance.values())
+        
+        # Convert to the timeseries of the substance concentration
         substances = deepcopy(substance_concentrations)
         substances_data = {}
         for bc in bc_timeseries:
@@ -1238,23 +1245,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         """Recalculate substances timeseries (timesteps in seconds)."""
         
         # Recalculate laterat timeseries to seconds, if required
-        laterals_timeseries = {}
-        if laterals_type == self.TYPE_1D:
-            units = self.cbo_1d_units.currentText()
-            if self.cb_use_1d_laterals.isChecked():
-                laterals_timeseries.update(deepcopy(self.laterals_1d_timeseries_template))
-            if self.cb_upload_1d_laterals.isChecked():
-                lat_data = deepcopy(self.laterals_1d_timeseries)
-                lateral_values = convert_timeseries_to_seconds(lat_data["values"], units)
-                laterals_timeseries.update(lateral_values)
-        else:
-            units = self.cbo_2d_units.currentText()
-            if self.cb_use_2d_laterals.isChecked():
-                laterals_timeseries.update(deepcopy(self.laterals_2d_timeseries_template))
-            if self.cb_upload_2d_laterals.isChecked():
-                lat_data = deepcopy(self.laterals_2d_timeseries)
-                lateral_values = convert_timeseries_to_seconds(lat_data["values"], units)
-                laterals_timeseries.update(lateral_values)
+        laterals_timeseries = self.recalculate_laterals_timeseries(laterals_type)
 
         substance_concentrations = {}
         substance_constants = []
