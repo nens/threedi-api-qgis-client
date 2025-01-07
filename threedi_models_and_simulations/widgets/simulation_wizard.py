@@ -424,27 +424,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         Return None if they match or error message if not.
         """
         error_message = handle_csv_header(header)
-        bc_timeseries = []
-        if bc_type == self.TYPE_1D:
-            if self.rb_from_template.isChecked():
-                bc_timeseries = self.template_boundary_conditions_1d_timeseries
-            else:
-                # these need to be converted to seconds, if necessary
-                units = self.cbo_bc_units_1d.currentText()
-                bc_data = deepcopy(self.boundary_conditions_1d_timeseries)
-                for val in bc_data.values():
-                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
-                bc_timeseries = bc_data
-        else:
-            if self.rb_from_template.isChecked():
-                bc_timeseries = self.template_boundary_conditions_2d_timeseries
-            else:
-                # these need to be converted to seconds, if necessary
-                units = self.cbo_bc_units_2d.currentText()
-                bc_data = deepcopy(self.boundary_conditions_2d_timeseries)
-                for val in bc_data.values():
-                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
-                bc_timeseries = bc_data
+        bc_timeseries = self.recalculate_boundary_conditions_timeseries(bc_type)
         if not bc_timeseries:
             if self.rb_from_template.isChecked():
                 error_message = "No boundary conditions found in template file!"
@@ -652,24 +632,20 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
 
     def get_boundary_conditions_data(self):
         """Get boundary conditions data."""
-        boundary_conditions_data_1d = []
-        boundary_conditions_data_2d = []
-        if self.gb_upload_1d.isChecked():
-            boundary_conditions_data_1d = self.recalculate_boundary_conditions_timeseries(
-                self.TYPE_1D
-            )
-            if self.substance_concentrations_1d or self.substance_constants_1d:
-                substances = self.recalculate_substances_timeseries(self.TYPE_1D)
-                self.update_boundary_conditions_with_substances(boundary_conditions_data_1d, substances)
-        if self.gb_upload_2d.isChecked():
-            boundary_conditions_data_2d = self.recalculate_boundary_conditions_timeseries(
-                self.TYPE_2D
-            )
-            if self.substance_concentrations_2d or self.substance_constants_2d:
-                substances = self.recalculate_substances_timeseries(self.TYPE_2D)
-                self.update_boundary_conditions_with_substances(boundary_conditions_data_2d, substances)
+
+        boundary_conditions_data_1d = self.recalculate_boundary_conditions_timeseries(self.TYPE_1D)
+        if self.substance_concentrations_1d or self.substance_constants_1d:
+            substances = self.recalculate_substances_timeseries(self.TYPE_1D)
+            self.update_boundary_conditions_with_substances(boundary_conditions_data_1d, substances)
+        
+        boundary_conditions_data_2d = self.recalculate_boundary_conditions_timeseries(self.TYPE_2D)
+        if self.substance_concentrations_2d or self.substance_constants_2d:
+            substances = self.recalculate_substances_timeseries(self.TYPE_2D)
+            self.update_boundary_conditions_with_substances(boundary_conditions_data_2d, substances)
+
         boundary_conditions_data = boundary_conditions_data_1d + boundary_conditions_data_2d
-        return self.template_boundary_conditions, boundary_conditions_data
+
+        return boundary_conditions_data
 
 
 class StructureControlsWidget(uicls_structure_controls, basecls_structure_controls):
@@ -1131,27 +1107,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         Return None if they match or error message if not.
         """
         error_message = handle_csv_header(header)
-        laterals_timeseries = {}
-        if laterals_type == self.TYPE_1D:
-            if self.cb_use_1d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_1d_timeseries_template)
-            if self.cb_upload_1d_laterals.isChecked():
-                # laterals_timeseries.update(self.laterals_1d_timeseries)  # these need to be converted to seconds?
-                units = self.cbo_1d_units.currentText()
-                laterals_data = deepcopy(self.laterals_1d_timeseries)
-                for val in laterals_data.values():
-                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
-                laterals_timeseries.update(laterals_data)
-        else:
-            if self.cb_use_2d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_2d_timeseries_template)
-            if self.cb_upload_2d_laterals.isChecked():
-                # laterals_timeseries.update(self.laterals_2d_timeseries)  # these need to be converted to seocnds?
-                units = self.cbo_2d_units.currentText()
-                laterals_data = deepcopy(self.laterals_2d_timeseries)
-                for val in laterals_data.values():
-                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
-                laterals_timeseries.update(laterals_data)
+        laterals_timeseries = self.recalculate_laterals_timeseries(laterals_type=laterals_type)
         if not laterals_timeseries:
             error_message = "No laterals uploaded yet!"
         if not substance_list:
@@ -3911,14 +3867,7 @@ class SimulationWizard(QWizard):
         # Boundary conditions page attributes
         boundary_conditions = dm.BoundaryConditions()
         if self.init_conditions.include_boundary_conditions:
-            (
-                temp_file_boundary_conditions,
-                boundary_conditions_data,
-            ) = self.boundary_conditions_page.main_widget.get_boundary_conditions_data()
-            if self.boundary_conditions_page.main_widget.rb_from_template.isChecked():
-                boundary_conditions.file_boundary_conditions = temp_file_boundary_conditions
-            else:
-                boundary_conditions.data = boundary_conditions_data
+            boundary_conditions.data = self.boundary_conditions_page.main_widget.get_boundary_conditions_data()
         # Structure controls page attributes
         structure_controls = dm.StructureControls()
         if self.init_conditions.include_structure_controls:

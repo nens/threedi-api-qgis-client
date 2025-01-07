@@ -9,7 +9,8 @@ from functools import partial
 
 import requests
 from PyQt5.QtNetwork import QNetworkRequest
-from qgis.PyQt.QtCore import QByteArray, QObject, QRunnable, QUrl, pyqtSignal, pyqtSlot
+from qgis.PyQt.QtCore import (QByteArray, QObject, QRunnable, QUrl, pyqtSignal,
+                              pyqtSlot)
 from threedi_api_client.files import upload_file
 from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import bypass_max_path_limit
@@ -17,29 +18,15 @@ from threedi_mi_utils import bypass_max_path_limit
 from .api_calls.threedi_calls import ThreediCalls
 from .data_models import simulation_data_models as dm
 from .data_models.enumerators import SimulationStatusName
-from .utils import (
-    API_DATETIME_FORMAT,
-    BOUNDARY_CONDITIONS_TEMPLATE,
-    CHUNK_SIZE,
-    DWF_FILE_TEMPLATE,
-    INITIAL_CONCENTRATIONS_TEMPLATE,
-    INITIAL_WATERLEVELS_TEMPLATE,
-    LATERALS_FILE_TEMPLATE,
-    RADAR_ID,
-    TEMPDIR,
-    EventTypes,
-    FileState,
-    ThreediFileState,
-    ThreediModelTaskStatus,
-    UploadFileStatus,
-    extract_error_message,
-    get_download_file,
-    split_to_even_chunks,
-    unzip_archive,
-    upload_local_file,
-    write_json_data,
-    zip_into_archive,
-)
+from .utils import (API_DATETIME_FORMAT, BOUNDARY_CONDITIONS_TEMPLATE,
+                    CHUNK_SIZE, DWF_FILE_TEMPLATE,
+                    INITIAL_CONCENTRATIONS_TEMPLATE,
+                    INITIAL_WATERLEVELS_TEMPLATE, LATERALS_FILE_TEMPLATE,
+                    RADAR_ID, TEMPDIR, EventTypes, FileState, ThreediFileState,
+                    ThreediModelTaskStatus, UploadFileStatus,
+                    extract_error_message, get_download_file,
+                    split_to_even_chunks, unzip_archive, upload_local_file,
+                    write_json_data, zip_into_archive)
 
 logger = logging.getLogger(__name__)
 
@@ -691,15 +678,6 @@ class SimulationRunner(QRunnable):
                 else:
                     time.sleep(2)
 
-        if boundary_conditions.file_boundary_conditions is not None:
-            sim_temp_id = self.current_simulation.simulation_template_id
-            bc_file = boundary_conditions.file_boundary_conditions
-            bc_file_download = self.tc.fetch_boundarycondition_file_download(sim_temp_id, bc_file.id)
-            bc_file_name = bc_file.file.filename
-            bc_temp_filepath = os.path.join(TEMPDIR, bc_file_name)
-            get_download_file(bc_file_download, bc_temp_filepath)
-            upload_file_boundary_conditions(bc_file_name, bc_temp_filepath)
-            os.remove(bc_temp_filepath)
         if boundary_conditions.data:
             boundary_conditions_data = boundary_conditions.data
             # Replace substance names with substance ids
