@@ -4,7 +4,7 @@ History
 3.15.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Bugfixes
 
 
 3.15.1 (2024-12-12)
