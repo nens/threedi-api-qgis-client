@@ -4024,8 +4024,6 @@ class SimulationWizard(QWizard):
         if self.init_conditions.include_laterals:
             constant_laterals, file_laterals_1d, file_laterals_2d = self.laterals_page.main_widget.get_laterals_data()
             laterals = dm.Laterals(constant_laterals, file_laterals_1d, file_laterals_2d)
-            logger.error("**********")
-            logger.error(laterals)
         else:
             laterals = dm.Laterals()
         # DWF
