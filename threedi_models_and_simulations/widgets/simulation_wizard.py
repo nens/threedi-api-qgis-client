@@ -552,7 +552,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                 # these need to be converted to seconds, if necessary
                 units = self.cbo_bc_units_1d.currentText()
                 bc_data = deepcopy(self.boundary_conditions_1d_timeseries)
-                for val in bc_data.values():
+                for val in bc_data:
                     val["values"] = convert_timeseries_to_seconds(val["values"], units)
                 bc_timeseries = bc_data
         else:
@@ -562,7 +562,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                 # these need to be converted to seconds, if necessary
                 units = self.cbo_bc_units_2d.currentText()
                 bc_data = deepcopy(self.boundary_conditions_2d_timeseries)
-                for val in bc_data.values():
+                for val in bc_data:
                     val["values"] = convert_timeseries_to_seconds(val["values"], units)
                 bc_timeseries = bc_data
 
@@ -1107,7 +1107,10 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         Return None if they match or error message if not.
         """
         error_message = handle_csv_header(header)
-        laterals_timeseries = self.recalculate_laterals_timeseries(laterals_type=laterals_type)
+        laterals_timeseries, warning_message = self.recalculate_laterals_timeseries(laterals_type=laterals_type)
+        if warning_message is not None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(warning_message)
+
         if not laterals_timeseries:
             error_message = "No laterals uploaded yet!"
         if not substance_list:
@@ -1172,10 +1175,15 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.laterals_2d_timeseries = values
         else:
             raise NotImplementedError
+        
+        _, warning_message =  self.recalculate_laterals_timeseries(laterals_type)
+        if warning_message:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(warning_message)
 
     def recalculate_laterals_timeseries(self, laterals_type):
         """Recalculate laterals timeseries (timesteps in seconds)."""
         laterals_timeseries = {}
+        warning = None
         if laterals_type == self.TYPE_1D:
             units = self.cbo_1d_units.currentText()
             if self.cb_use_1d_laterals.isChecked():
@@ -1184,6 +1192,15 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 laterals_data = deepcopy(self.laterals_1d_timeseries)
                 for val in laterals_data.values():
                     val["values"] = convert_timeseries_to_seconds(val["values"], units)
+
+                # check whether a lateral is already present in the template
+                duplicate_lateral_ids = []
+                for lateral_id in laterals_data:
+                    if lateral_id in laterals_timeseries:
+                        duplicate_lateral_ids.append(str(lateral_id))
+                if duplicate_lateral_ids:
+                    warning  = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
+
                 laterals_timeseries.update(laterals_data)
         else:
             units = self.cbo_2d_units.currentText()
@@ -1193,15 +1210,24 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 laterals_data = deepcopy(self.laterals_2d_timeseries)
                 for val in laterals_data.values():
                     val["values"] = convert_timeseries_to_seconds(val["values"], units)
+
+                # check whether a lateral is already present in the template
+                duplicate_lateral_ids = []
+                for lateral_id in laterals_data:
+                    if lateral_id in laterals_timeseries:
+                        duplicate_lateral_ids.append(str(lateral_id))
+                if duplicate_lateral_ids:
+                    warning  = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
+
                 laterals_timeseries.update(laterals_data)
 
-        return laterals_timeseries
+        return laterals_timeseries, warning
 
     def recalculate_substances_timeseries(self, laterals_type):
         """Recalculate substances timeseries (timesteps in seconds)."""
         
         # Recalculate laterat timeseries to seconds, if required
-        laterals_timeseries = self.recalculate_laterals_timeseries(laterals_type)
+        laterals_timeseries, _ = self.recalculate_laterals_timeseries(laterals_type)
 
         substance_concentrations = {}
         substance_constants = []
@@ -1267,14 +1293,14 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if self.groupbox_1d_laterals.isChecked():
             if self.cb_use_1d_laterals.isChecked():
                 constant_laterals.extend(self.laterals_1d)
-            file_laterals_1d.update(self.recalculate_laterals_timeseries(self.TYPE_1D))
+            file_laterals_1d.update(self.recalculate_laterals_timeseries(self.TYPE_1D)[0])
             if self.substance_concentrations_1d or self.substance_constants_1d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_1D)
                 self.update_laterals_with_substances(file_laterals_1d, substances)
         if self.groupbox_2d_laterals.isChecked():
             if self.cb_use_2d_laterals.isChecked():
                 constant_laterals.extend(self.laterals_2d)
-            file_laterals_2d.update(self.recalculate_laterals_timeseries(self.TYPE_2D))
+            file_laterals_2d.update(self.recalculate_laterals_timeseries(self.TYPE_2D)[0])
             if self.substance_concentrations_2d or self.substance_constants_2d:
                 substances = self.recalculate_substances_timeseries(self.TYPE_2D)
                 self.update_laterals_with_substances(file_laterals_2d, substances)
