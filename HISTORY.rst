@@ -1,8 +1,8 @@
 History
 =======
 
-3.15.2 (unreleased)
----------------------
+3.15.2 (2025-01-10)
+-------------------
 
 - Lateral time steps are wrongly converted when adding substance to laterals from template (#639)
 
