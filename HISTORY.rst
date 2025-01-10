@@ -1,28 +1,10 @@
 History
 =======
 
-3.15.1.4 (unreleased)
+3.15.2 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
-
-3.15.1.3 (2025-01-10)
----------------------
-
-- Bugfixes
-
-
-3.15.1.2 (2025-01-09)
----------------------
-
-- Bugfixes
-
-
-3.15.1.1 (2025-01-07)
----------------------
-
-- Bugfixes
+- Lateral time steps are wrongly converted when adding substance to laterals from template (#639)
 
 
 3.15.1 (2024-12-12)
