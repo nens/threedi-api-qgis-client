@@ -2,18 +2,10 @@ import csv
 import os
 from functools import partial
 
-from qgis.PyQt.QtGui import QFont, QDoubleValidator
-from qgis.PyQt.QtWidgets import (
-    QComboBox,
-    QFileDialog,
-    QGridLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QWidget,
-)
+from qgis.PyQt.QtGui import QDoubleValidator, QFont
+from qgis.PyQt.QtWidgets import (QComboBox, QFileDialog, QGridLayout,
+                                 QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+                                 QPushButton, QWidget)
 
 from ..utils import parse_timeseries
 from ..utils_ui import read_3di_settings, save_3di_settings
@@ -201,22 +193,23 @@ class SubstanceConcentrationsWidget(QWidget):
             self.substance_list = list(reader)
         error_msg = self.parent_widget.handle_substance_csv_errors(self.csv_header, self.substance_list, var_type, time_units)
         if error_msg is not None:
+            self.csv_header = None
+            self.substance_list = []
             return None, None
         for row in self.substance_list:
             parent_id = row["id"]
             timeseries = row["timeseries"]
-            try:
-                concentrations = parse_timeseries(timeseries)
-                substance = {
-                    "substance": name,
-                    "concentrations": concentrations,
-                    "time_units": time_units,
-                }
-                if parent_id not in substances:
-                    substances[parent_id] = []
-                substances[parent_id].append(substance)
-            except ValueError:
-                continue
+
+            concentrations = parse_timeseries(timeseries)
+            substance = {
+                "substance": name,
+                "concentrations": concentrations,
+                "time_units": time_units,
+            }
+            if parent_id not in substances:
+                substances[parent_id] = []
+            substances[parent_id].append(substance)
+            
         return substances, filename
 
     def update_time_units(self, name: str, var_type: str):
@@ -225,23 +218,30 @@ class SubstanceConcentrationsWidget(QWidget):
         time_units = combo_box.currentText()
         error_message = self.parent_widget.handle_substance_csv_errors(self.csv_header, self.substance_list, var_type, time_units)
         if error_message:
-            # clear the QLineEdit
+            # clear the QLineEdit and members
             le_substance = self.groupbox.findChild(QLineEdit, f"le_substance_csv_{var_type}_{name}")
             le_substance.clear()
-            # remove the substance from the values
+
+            self.csv_header = None
+            self.substance_list = []
+    
+            # remove the substance from the values, in place, as various pages have references to these dicts..
             if var_type == self.TYPE_1D:
-                self.substance_concentrations_1d = {
+                substance_concentrations_1d = {
                     k: [substance for substance in v if substance["substance"] != name]
                     for k, v in self.substance_concentrations_1d.items()
                 }
-                self.substance_concentrations_1d = {k: v for k, v in self.substance_concentrations_1d.items() if v}
+                substance_concentrations_1d = {k: v for k, v in substance_concentrations_1d.items() if v}
+                self.substance_concentrations_1d.clear()
+                self.substance_concentrations_1d.update(substance_concentrations_1d)
             else:
-                self.substance_concentrations_2d = {
+                substance_concentrations_2d = {
                     k: [substance for substance in v if substance["substance"] != name]
                     for k, v in self.substance_concentrations_2d.items()
                 }
-                self.substance_concentrations_2d = {k: v for k, v in self.substance_concentrations_2d.items() if v}
-            return
+                substance_concentrations_2d = {k: v for k, v in substance_concentrations_2d.items() if v}
+                self.substance_concentrations_2d.clear()
+                self.substance_concentrations_2d.update(substance_concentrations_2d)
 
     def clear_substance_constants(self, substance_name: str, var_type: str):
         """Remove the substance value from substance_constants_1d or substance_constants_2d."""

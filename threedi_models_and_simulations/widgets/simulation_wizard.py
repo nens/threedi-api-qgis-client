@@ -424,17 +424,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         Return None if they match or error message if not.
         """
         error_message = handle_csv_header(header)
-        bc_timeseries = []
-        if bc_type == self.TYPE_1D:
-            if self.rb_from_template.isChecked():
-                bc_timeseries = self.template_boundary_conditions_1d_timeseries
-            else:
-                bc_timeseries = self.boundary_conditions_1d_timeseries
-        else:
-            if self.rb_from_template.isChecked():
-                bc_timeseries = self.template_boundary_conditions_2d_timeseries
-            else:
-                bc_timeseries = self.boundary_conditions_2d_timeseries
+        bc_timeseries = self.recalculate_boundary_conditions_timeseries(bc_type)
         if not bc_timeseries:
             if self.rb_from_template.isChecked():
                 error_message = "No boundary conditions found in template file!"
@@ -451,13 +441,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                     error_message = f"Boundary condition with ID {bc_id} not found!"
                     break
                 bc_values = boundary_condition["values"]
-                bc_units = (
-                    self.cbo_bc_units_1d.currentText()
-                    if bc_type == self.TYPE_1D
-                    else self.cbo_bc_units_2d.currentText()
-                )
-                converted_bc_values = convert_timeseries_to_seconds(bc_values, bc_units)
-                bc_timesteps = [t for (t, _) in converted_bc_values]
+                bc_timesteps = [t for (t, _) in bc_values]
                 concentrations = parse_timeseries(timeseries)
                 converted_concentrations = convert_timeseries_to_seconds(concentrations, time_units)
                 concentrations_timesteps = [t for (t, _) in converted_concentrations]
@@ -558,50 +542,53 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         for val in boundary_conditions_timeseries:
             val["interpolate"] = interpolate
 
-    def recalculate_boundary_conditions_timeseries(self, boundary_conditions_type, timesteps_in_seconds=False):
+    def recalculate_boundary_conditions_timeseries(self, boundary_conditions_type):
         """Recalculate boundary conditions timeseries (timesteps in seconds)."""
-        boundary_conditions_timeseries = (
-            self.boundary_conditions_1d_timeseries
-            if boundary_conditions_type == self.TYPE_1D
-            else self.boundary_conditions_2d_timeseries
-        )
-        if timesteps_in_seconds is False:
-            return boundary_conditions_timeseries
-        boundary_conditions_data = deepcopy(boundary_conditions_timeseries)
-        units = (
-            self.cbo_bc_units_1d.currentText()
-            if boundary_conditions_type == self.TYPE_1D
-            else self.cbo_bc_units_2d.currentText()
-        )
-        for val in boundary_conditions_data:
-            val["values"] = convert_timeseries_to_seconds(val["values"], units)
-        return boundary_conditions_data
+        bc_timeseries = []
+        if boundary_conditions_type == self.TYPE_1D:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_1d_timeseries
+            else:
+                # these need to be converted to seconds, if necessary
+                units = self.cbo_bc_units_1d.currentText()
+                bc_data = deepcopy(self.boundary_conditions_1d_timeseries)
+                for val in bc_data:
+                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
+                bc_timeseries = bc_data
+        else:
+            if self.rb_from_template.isChecked():
+                bc_timeseries = self.template_boundary_conditions_2d_timeseries
+            else:
+                # these need to be converted to seconds, if necessary
+                units = self.cbo_bc_units_2d.currentText()
+                bc_data = deepcopy(self.boundary_conditions_2d_timeseries)
+                for val in bc_data:
+                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
+                bc_timeseries = bc_data
 
-    def recalculate_substances_timeseries(self, bc_type, timesteps_in_seconds=False):
+        return bc_timeseries
+
+    def recalculate_substances_timeseries(self, bc_type):
         """Recalculate substances timeseries (timesteps in seconds)."""
+
+        # Recalculate timeseries to seconds, if required
+        bc_timeseries = self.recalculate_boundary_conditions_timeseries(bc_type)
+
         substance_concentrations = {}
         substance_constants = []
         substance_concentrations_constants = {}
         if bc_type == self.TYPE_1D:
-            bc_timeseries = self.boundary_conditions_1d_timeseries
             substance_concentrations.update(self.substance_concentrations_1d)
             substance_constants = self.substance_constants_1d
         else:
-            bc_timeseries = self.boundary_conditions_2d_timeseries
             substance_concentrations.update(self.substance_concentrations_2d)
             substance_constants = self.substance_constants_2d
-
-        units = (
-            self.cbo_bc_units_1d.currentText()
-            if bc_type == self.TYPE_1D
-            else self.cbo_bc_units_2d.currentText()
-        )
 
         for bc_data in bc_timeseries:
             for substance_constanst in substance_constants:
                 for name, value in substance_constanst.items():
-                    bc_values = convert_timeseries_to_seconds(bc_data["values"], units)
-                    concentrations = [[t, value] for (t, v) in bc_values]
+                    # take timestep from lateral values, already converted to seconds above
+                    concentrations = [[t, value] for (t, v) in bc_data["values"]]
                     substance = {
                         "substance": name,
                         "concentrations": concentrations,
@@ -611,6 +598,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                     if bc_id not in substance_concentrations_constants:
                         substance_concentrations_constants[bc_id] = []
                     substance_concentrations_constants[bc_id].append(substance)
+
         # Merge substance concentrations with substance_concentrations_constants
         for bc_id, substance in substance_concentrations_constants.items():
             if bc_id not in substance_concentrations:
@@ -621,14 +609,14 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                     name = sub.get("substance")
                     existing_substance.setdefault(name, sub)
                 substance_concentrations[bc_id] = list(existing_substance.values())
+        
+        # Convert to the timeseries of the substance concentration
         substances = deepcopy(substance_concentrations)
         substances_data = {}
         for bc in bc_timeseries:
             bc_id = str(bc["id"])
             if bc_id in substances:
                 substances_data[bc_id] = substances[bc_id]
-        if timesteps_in_seconds is False:
-            return substances_data
         for bc_substances in substances_data.values():
             for substance in bc_substances:
                 units = substance["time_units"]
@@ -642,26 +630,22 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
             if bc_id in substances:
                 bc["substances"] = substances[bc_id]
 
-    def get_boundary_conditions_data(self, timesteps_in_seconds=False):
+    def get_boundary_conditions_data(self):
         """Get boundary conditions data."""
-        boundary_conditions_data_1d = []
-        boundary_conditions_data_2d = []
-        if self.gb_upload_1d.isChecked():
-            boundary_conditions_data_1d = self.recalculate_boundary_conditions_timeseries(
-                self.TYPE_1D, timesteps_in_seconds
-            )
-            if self.substance_concentrations_1d or self.substance_constants_1d:
-                substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
-                self.update_boundary_conditions_with_substances(boundary_conditions_data_1d, substances)
-        if self.gb_upload_2d.isChecked():
-            boundary_conditions_data_2d = self.recalculate_boundary_conditions_timeseries(
-                self.TYPE_2D, timesteps_in_seconds
-            )
-            if self.substance_concentrations_2d or self.substance_constants_2d:
-                substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
-                self.update_boundary_conditions_with_substances(boundary_conditions_data_2d, substances)
+
+        boundary_conditions_data_1d = self.recalculate_boundary_conditions_timeseries(self.TYPE_1D)
+        if self.substance_concentrations_1d or self.substance_constants_1d:
+            substances = self.recalculate_substances_timeseries(self.TYPE_1D)
+            self.update_boundary_conditions_with_substances(boundary_conditions_data_1d, substances)
+        
+        boundary_conditions_data_2d = self.recalculate_boundary_conditions_timeseries(self.TYPE_2D)
+        if self.substance_concentrations_2d or self.substance_constants_2d:
+            substances = self.recalculate_substances_timeseries(self.TYPE_2D)
+            self.update_boundary_conditions_with_substances(boundary_conditions_data_2d, substances)
+
         boundary_conditions_data = boundary_conditions_data_1d + boundary_conditions_data_2d
-        return self.template_boundary_conditions, boundary_conditions_data
+
+        return boundary_conditions_data
 
 
 class StructureControlsWidget(uicls_structure_controls, basecls_structure_controls):
@@ -1123,17 +1107,10 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         Return None if they match or error message if not.
         """
         error_message = handle_csv_header(header)
-        laterals_timeseries = {}
-        if laterals_type == self.TYPE_1D:
-            if self.cb_use_1d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_1d_timeseries_template)
-            if self.cb_upload_1d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_1d_timeseries)
-        else:
-            if self.cb_use_2d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_2d_timeseries_template)
-            if self.cb_upload_2d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_2d_timeseries)
+        laterals_timeseries, warning_message = self.recalculate_laterals_timeseries(laterals_type=laterals_type)
+        if warning_message is not None:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(warning_message)
+
         if not laterals_timeseries:
             error_message = "No laterals uploaded yet!"
         if not substance_list:
@@ -1147,13 +1124,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     error_message = f"Laterals with ID {lat_id} not found!"
                     break
                 lateral_values = lateral["values"]
-                lateral_units = (
-                    self.cbo_1d_units.currentText()
-                    if laterals_type == self.TYPE_1D
-                    else self.cbo_2d_units.currentText()
-                )
-                converted_lateral_values = convert_timeseries_to_seconds(lateral_values, lateral_units)
-                laterals_timesteps = [t for (t, _) in converted_lateral_values]
+                laterals_timesteps = [t for (t, _) in lateral_values]
                 concentrations = parse_timeseries(timeseries)
                 converted_concentrations = convert_timeseries_to_seconds(concentrations, time_units)
                 concentrations_timesteps = [t for (t, _) in converted_concentrations]
@@ -1204,58 +1175,76 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.laterals_2d_timeseries = values
         else:
             raise NotImplementedError
+        
+        _, warning_message =  self.recalculate_laterals_timeseries(laterals_type)
+        if warning_message:
+            self.parent_page.parent_wizard.plugin_dock.communication.show_warn(warning_message)
 
-    def recalculate_laterals_timeseries(self, laterals_type, timesteps_in_seconds=False):
+    def recalculate_laterals_timeseries(self, laterals_type):
         """Recalculate laterals timeseries (timesteps in seconds)."""
         laterals_timeseries = {}
+        warning = None
         if laterals_type == self.TYPE_1D:
+            units = self.cbo_1d_units.currentText()
             if self.cb_use_1d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_1d_timeseries_template)
+                laterals_timeseries.update(deepcopy(self.laterals_1d_timeseries_template))
             if self.cb_upload_1d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_1d_timeseries)
-        else:
-            if self.cb_use_2d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_2d_timeseries_template)
-            if self.cb_upload_2d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_2d_timeseries)
-        if timesteps_in_seconds is False:
-            return laterals_timeseries
-        laterals_data = deepcopy(laterals_timeseries)
-        units = self.cbo_1d_units.currentText() if laterals_type == self.TYPE_1D else self.cbo_2d_units.currentText()
-        for val in laterals_data.values():
-            val["values"] = convert_timeseries_to_seconds(val["values"], units)
-        return laterals_data
+                laterals_data = deepcopy(self.laterals_1d_timeseries)
+                for val in laterals_data.values():
+                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
 
-    def recalculate_substances_timeseries(self, laterals_type, timesteps_in_seconds=False):
-        """Recalculate substances timeseries (timesteps in seconds)."""
-        laterals_timeseries = {}
-        if laterals_type == self.TYPE_1D:
-            if self.cb_use_1d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_1d_timeseries_template)
-            if self.cb_upload_1d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_1d_timeseries)
+                # check whether a lateral is already present in the template
+                duplicate_lateral_ids = []
+                for lateral_id in laterals_data:
+                    if lateral_id in laterals_timeseries:
+                        duplicate_lateral_ids.append(str(lateral_id))
+                if duplicate_lateral_ids:
+                    warning  = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
+
+                laterals_timeseries.update(laterals_data)
         else:
+            units = self.cbo_2d_units.currentText()
             if self.cb_use_2d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_2d_timeseries_template)
+                laterals_timeseries.update(deepcopy(self.laterals_2d_timeseries_template))
             if self.cb_upload_2d_laterals.isChecked():
-                laterals_timeseries.update(self.laterals_2d_timeseries)
+                laterals_data = deepcopy(self.laterals_2d_timeseries)
+                for val in laterals_data.values():
+                    val["values"] = convert_timeseries_to_seconds(val["values"], units)
+
+                # check whether a lateral is already present in the template
+                duplicate_lateral_ids = []
+                for lateral_id in laterals_data:
+                    if lateral_id in laterals_timeseries:
+                        duplicate_lateral_ids.append(str(lateral_id))
+                if duplicate_lateral_ids:
+                    warning  = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
+
+                laterals_timeseries.update(laterals_data)
+
+        return laterals_timeseries, warning
+
+    def recalculate_substances_timeseries(self, laterals_type):
+        """Recalculate substances timeseries (timesteps in seconds)."""
         
-        units = self.cbo_1d_units.currentText() if laterals_type == self.TYPE_1D else self.cbo_2d_units.currentText()
+        # Recalculate laterat timeseries to seconds, if required
+        laterals_timeseries, _ = self.recalculate_laterals_timeseries(laterals_type)
 
         substance_concentrations = {}
         substance_constants = []
         substance_concentrations_constants = {}
         if laterals_type == self.TYPE_1D:
-            substance_concentrations.update(self.substance_concentrations_1d)
+            substance_concentrations.update(deepcopy(self.substance_concentrations_1d))
             substance_constants = self.substance_constants_1d
         else:
-            substance_concentrations.update(self.substance_concentrations_2d)
+            substance_concentrations.update(deepcopy(self.substance_concentrations_2d))
             substance_constants = self.substance_constants_2d
+
+        # Populate timestamps for constant substance based on lateral timestamps
         for lat_id, lat_data in laterals_timeseries.items():
             for substance_constanst in substance_constants:
                 for name, value in substance_constanst.items():
-                    lateral_values = convert_timeseries_to_seconds(lat_data["values"], units)
-                    concentrations = [[t, value] for (t, _) in lateral_values]
+                    # take timestep from lateral values, already converted to seconds above
+                    concentrations = [[t, value] for (t, _) in lat_data["values"]]
                     substance = {
                         "substance": name,
                         "concentrations": concentrations,
@@ -1264,7 +1253,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     if lat_id not in substance_concentrations_constants:
                         substance_concentrations_constants[lat_id] = []
                     substance_concentrations_constants[lat_id].append(substance)
-        # Merge substance concentrations with substance_concentrations_constants
+
+        # Merge substance concentrations with substance concentrations constants
         for lat_id, substance in substance_concentrations_constants.items():
             if lat_id not in substance_concentrations:
                 substance_concentrations[lat_id] = substance
@@ -1274,13 +1264,13 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     name = sub.get("substance")
                     existing_substance.setdefault(name, sub)
                 substance_concentrations[lat_id] = list(existing_substance.values())
+
+        # Convert to the timeseries of the substance concentration
         substances = deepcopy(substance_concentrations)
         substances_data = {}
         for lat_id in laterals_timeseries.keys():
             if lat_id in substances:
                 substances_data[lat_id] = substances[lat_id]
-        if timesteps_in_seconds is False:
-            return substances_data
         for lateral_substances in substances_data.values():
             for substance in lateral_substances:
                 units = substance["time_units"]
@@ -1295,7 +1285,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                 continue
             lat_data["substances"] = lateral_substances
 
-    def get_laterals_data(self, timesteps_in_seconds=False):
+    def get_laterals_data(self):
         """Get laterals data."""
         constant_laterals = []
         file_laterals_1d = {}
@@ -1303,16 +1293,16 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         if self.groupbox_1d_laterals.isChecked():
             if self.cb_use_1d_laterals.isChecked():
                 constant_laterals.extend(self.laterals_1d)
-            file_laterals_1d.update(self.recalculate_laterals_timeseries(self.TYPE_1D, timesteps_in_seconds))
+            file_laterals_1d.update(self.recalculate_laterals_timeseries(self.TYPE_1D)[0])
             if self.substance_concentrations_1d or self.substance_constants_1d:
-                substances = self.recalculate_substances_timeseries(self.TYPE_1D, timesteps_in_seconds)
+                substances = self.recalculate_substances_timeseries(self.TYPE_1D)
                 self.update_laterals_with_substances(file_laterals_1d, substances)
         if self.groupbox_2d_laterals.isChecked():
             if self.cb_use_2d_laterals.isChecked():
                 constant_laterals.extend(self.laterals_2d)
-            file_laterals_2d.update(self.recalculate_laterals_timeseries(self.TYPE_2D, timesteps_in_seconds))
+            file_laterals_2d.update(self.recalculate_laterals_timeseries(self.TYPE_2D)[0])
             if self.substance_concentrations_2d or self.substance_constants_2d:
-                substances = self.recalculate_substances_timeseries(self.TYPE_2D, timesteps_in_seconds)
+                substances = self.recalculate_substances_timeseries(self.TYPE_2D)
                 self.update_laterals_with_substances(file_laterals_2d, substances)
         return constant_laterals, file_laterals_1d, file_laterals_2d
 
@@ -3903,14 +3893,7 @@ class SimulationWizard(QWizard):
         # Boundary conditions page attributes
         boundary_conditions = dm.BoundaryConditions()
         if self.init_conditions.include_boundary_conditions:
-            (
-                temp_file_boundary_conditions,
-                boundary_conditions_data,
-            ) = self.boundary_conditions_page.main_widget.get_boundary_conditions_data(timesteps_in_seconds=True)
-            if self.boundary_conditions_page.main_widget.rb_from_template.isChecked():
-                boundary_conditions.file_boundary_conditions = temp_file_boundary_conditions
-            else:
-                boundary_conditions.data = boundary_conditions_data
+            boundary_conditions.data = self.boundary_conditions_page.main_widget.get_boundary_conditions_data()
         # Structure controls page attributes
         structure_controls = dm.StructureControls()
         if self.init_conditions.include_structure_controls:
@@ -4065,9 +4048,7 @@ class SimulationWizard(QWizard):
 
         # Laterals
         if self.init_conditions.include_laterals:
-            constant_laterals, file_laterals_1d, file_laterals_2d = self.laterals_page.main_widget.get_laterals_data(
-                timesteps_in_seconds=True
-            )
+            constant_laterals, file_laterals_1d, file_laterals_2d = self.laterals_page.main_widget.get_laterals_data()
             laterals = dm.Laterals(constant_laterals, file_laterals_1d, file_laterals_2d)
         else:
             laterals = dm.Laterals()
