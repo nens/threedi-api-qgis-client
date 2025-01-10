@@ -1233,10 +1233,10 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
         substance_constants = []
         substance_concentrations_constants = {}
         if laterals_type == self.TYPE_1D:
-            substance_concentrations.update(self.substance_concentrations_1d)
+            substance_concentrations.update(deepcopy(self.substance_concentrations_1d))
             substance_constants = self.substance_constants_1d
         else:
-            substance_concentrations.update(self.substance_concentrations_2d)
+            substance_concentrations.update(deepcopy(self.substance_concentrations_2d))
             substance_constants = self.substance_constants_2d
 
         # Populate timestamps for constant substance based on lateral timestamps
