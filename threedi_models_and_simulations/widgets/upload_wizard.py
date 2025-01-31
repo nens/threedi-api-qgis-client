@@ -21,8 +21,8 @@ from ..utils import (
     is_file_checksum_equal,
     zip_into_archive,
 )
-from ..utils_qgis import sqlite_layer
-from ..utils_ui import get_filepath
+from ..utils_qgis import geopackage_layer
+from ..utils_ui import get_filepath, migrate_schematisation_schema
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_start_page, basecls_start_page = uic.loadUiType(os.path.join(base_dir, "ui", "upload_wizard", "page_start.ui"))
@@ -45,7 +45,7 @@ class StartWidget(uicls_start_page, basecls_start_page):
         self.revisions_tv.setModel(self.tv_revisions_model)
         self.current_local_schematisation = self.parent_page.parent_wizard.current_local_schematisation
         self.schematisation = self.parent_page.parent_wizard.schematisation
-        self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
+        self.schematisation_filepath = self.parent_page.parent_wizard.schematisation_filepath
         self.available_revisions = self.parent_page.parent_wizard.available_revisions
         self.latest_revision = self.parent_page.parent_wizard.latest_revision
         organisation = self.parent_page.parent_wizard.plugin_dock.organisations[self.schematisation.owner]
@@ -73,7 +73,7 @@ class StartWidget(uicls_start_page, basecls_start_page):
 class CheckModelWidget(uicls_check_page, basecls_check_page):
     """Widget for the Check Model page."""
 
-    SPATIALITE_CHECKS_HEADER = ("Level", "Error code", "ID", "Table", "Column", "Value", "Description")
+    SCHEMATISATION_CHECKS_HEADER = ("Level", "Error code", "ID", "Table", "Column", "Value", "Description")
     GRID_CHECKS_HEADER = ("Level", "Description")
 
     CHECKS_PER_CODE_LIMIT = 100
@@ -83,16 +83,18 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.setupUi(self)
         self.parent_page = parent_page
         self.current_local_schematisation = self.parent_page.parent_wizard.current_local_schematisation
-        self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
+        self.schematisation_filepath = self.parent_page.parent_wizard.schematisation_filepath
         self.communication = self.parent_page.parent_wizard.plugin_dock.communication
-        self.spatialite_checker_logger = TreeViewLogger(self.tv_schema_check_result, self.SPATIALITE_CHECKS_HEADER)
+        self.schematisation_checker_logger = TreeViewLogger(
+            self.tv_schema_check_result, self.SCHEMATISATION_CHECKS_HEADER
+        )
         self.grid_checker_logger = TreeViewLogger(self.tv_grid_check_result, self.GRID_CHECKS_HEADER)
         self.pb_check_model.clicked.connect(self.run_model_checks)
-        self.btn_export_check_spatialite_results.clicked.connect(
+        self.btn_export_check_schematisation_results.clicked.connect(
             partial(
                 self.export_schematisation_checker_results,
-                self.spatialite_checker_logger,
-                self.SPATIALITE_CHECKS_HEADER,
+                self.schematisation_checker_logger,
+                self.SCHEMATISATION_CHECKS_HEADER,
             )
         )
         self.btn_export_check_grid_results.clicked.connect(
@@ -102,7 +104,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                 self.GRID_CHECKS_HEADER,
             )
         )
-        self.lbl_check_spatialite.hide()
+        self.lbl_check_schematisation.hide()
         self.lbl_check_grid.hide()
         self.lbl_on_limited_display.hide()
         self.test_external_imports()
@@ -123,13 +125,13 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
 
     def run_model_checks(self):
         """Run all available checks for a schematisation model."""
-        self.btn_export_check_spatialite_results.setDisabled(True)
-        self.lbl_check_spatialite.hide()
-        self.pbar_check_spatialite.show()
-        self.spatialite_checker_logger.initialize_view()
-        self.pbar_check_spatialite.setValue(0)
-        self.check_spatialite()
-        self.btn_export_check_spatialite_results.setEnabled(True)
+        self.btn_export_check_schematisation_results.setDisabled(True)
+        self.lbl_check_schematisation.hide()
+        self.pbar_check_schematisation.show()
+        self.schematisation_checker_logger.initialize_view()
+        self.pbar_check_schematisation.setValue(0)
+        self.check_schematisation()
+        self.btn_export_check_schematisation_results.setEnabled(True)
         self.lbl_check_grid.hide()
         self.pbar_check_grid.show()
         self.grid_checker_logger.initialize_view()
@@ -138,39 +140,31 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.btn_export_check_grid_results.setEnabled(True)
         self.communication.bar_info("Finished schematisation checks.")
 
-    def check_spatialite(self):
-        """Run spatialite database checks."""
+    def check_schematisation(self):
+        """Run schematisation database checks."""
         from sqlalchemy.exc import OperationalError
         from threedi_modelchecker import ThreediModelChecker
         from threedi_schema import ThreediDatabase, errors
 
         self.lbl_on_limited_display.hide()
-        threedi_db = ThreediDatabase(self.schematisation_sqlite)
+        threedi_db = ThreediDatabase(self.schematisation_filepath)
         schema = threedi_db.schema
         try:
             schema.validate_schema()
-            schema.set_spatial_indexes()
         except errors.MigrationMissingError:
             warn_and_ask_msg = (
-                "The selected spatialite cannot be used because its database schema version is out of date. "
-                "Would you like to migrate your spatialite to the current schema version?"
+                "The selected schematisation database cannot be used because its database schema version is out of date. "
+                "Would you like to migrate your schematisation database to the current schema version?"
             )
             do_migration = self.communication.ask(None, "Missing migration", warn_and_ask_msg)
             if not do_migration:
                 self.communication.bar_warn("Schematisation checks skipped!")
                 return
             wip_revision = self.current_local_schematisation.wip_revision
-            backup_filepath = wip_revision.backup_sqlite()
-            schema.upgrade(backup=False, upgrade_spatialite_version=True)
-            schema.set_spatial_indexes()
-            shutil.rmtree(os.path.dirname(backup_filepath))
-        except errors.UpgradeFailedError:
-            error_msg = (
-                "There are errors in the spatialite. Please re-open this file in QGIS 3.16, run the model checker and "
-                "fix error messages. Then attempt to upgrade again. For questions please contact the servicedesk."
-            )
-            self.communication.show_error(error_msg, self)
-            return
+            migration_succeed, migration_feedback_msg = migrate_schematisation_schema(wip_revision.geopackage_filepath)
+            if not migration_succeed:
+                self.communication.show_error(migration_feedback_msg, self)
+                return
         except Exception as e:
             error_msg = f"{e}"
             self.communication.show_error(error_msg, self)
@@ -186,14 +180,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             )
             self.communication.show_error(error_msg, self)
             return
-        except errors.MigrationMissingError:
-            error_msg = (
-                "The selected 3Di model does not have the latest migration.\n"
-                "The selected 3Di model does not have the latest migration,"
-                "please migrate your model to the latest version."
-            )
-            self.communication.show_error(error_msg, self)
-            return
+
         session = model_checker.db.get_session()
         session.model_checker_context = model_checker.context
         total_checks = len(model_checker.config.checks)
@@ -212,7 +199,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                         check.description(),
                     ]
                 )
-            self.pbar_check_spatialite.setValue(i)
+            self.pbar_check_schematisation.setValue(i)
         if results_rows:
             for error_code, results_per_code in results_rows.items():
                 if len(results_per_code) > self.CHECKS_PER_CODE_LIMIT:
@@ -221,10 +208,10 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                         self.lbl_on_limited_display.show()
                 for result_row in results_per_code:
                     level = result_row[0].upper()
-                    self.spatialite_checker_logger.log_result_row(result_row, level)
-        self.pbar_check_spatialite.setValue(total_checks)
-        self.pbar_check_spatialite.hide()
-        self.lbl_check_spatialite.show()
+                    self.schematisation_checker_logger.log_result_row(result_row, level)
+        self.pbar_check_schematisation.setValue(total_checks)
+        self.pbar_check_schematisation.hide()
+        self.lbl_check_schematisation.show()
 
     def check_computational_grid(self):
         """Run computational grid checks."""
@@ -237,16 +224,19 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
         self.pbar_check_grid.setMaximum(100)
         self.pbar_check_grid.setValue(0)
         try:
-            global_settings_layer = sqlite_layer(self.schematisation_sqlite, "v2_global_settings", geom_column=None)
-            global_settings_feat = next(global_settings_layer.getFeatures())
-            dem_file = global_settings_feat["dem_file"]
+            model_settings_layer = geopackage_layer(self.schematisation_filepath, "model_settings")
+            model_settings_feat = next(model_settings_layer.getFeatures())
+            dem_file = model_settings_feat["dem_file"]
             if dem_file:
-                spatialite_dir = os.path.dirname(self.schematisation_sqlite)
+                schematisation_dir = os.path.dirname(self.schematisation_filepath)
                 dem_file_name = os.path.basename(dem_file)
-                dem_path = os.path.join(spatialite_dir, "rasters", dem_file_name)
+                dem_path = os.path.join(schematisation_dir, "rasters", dem_file_name)
             else:
                 dem_path = None
-            make_gridadmin(sqlite_path=self.schematisation_sqlite, dem_path=dem_path, progress_callback=progress_logger)
+            # TODO: threedigrid_builder needs to be updated?
+            make_gridadmin(
+                sqlite_path=self.schematisation_filepath, dem_path=dem_path, progress_callback=progress_logger
+            )
         except SchematisationError as e:
             err = f"Creating grid file failed with the following error: {repr(e)}"
             self.grid_checker_logger.log_result_row([LogLevels.ERROR.value.capitalize(), err], LogLevels.ERROR.value)
@@ -292,7 +282,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         self.parent_page = parent_page
         self.latest_revision = self.parent_page.parent_wizard.latest_revision
         self.schematisation = self.parent_page.parent_wizard.schematisation
-        self.schematisation_sqlite = self.parent_page.parent_wizard.schematisation_sqlite
+        self.schematisation_filepath = self.parent_page.parent_wizard.schematisation_filepath
         self.tc = self.parent_page.parent_wizard.tc
         self.cb_make_3di_model.stateChanged.connect(self.toggle_make_3di_model)
         self.detected_files = self.check_files_states()
@@ -302,13 +292,13 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
     @property
     def general_files(self):
         """Files mapping for the General group widget."""
-        files_info = OrderedDict((("spatialite", "Spatialite"),))
+        files_info = OrderedDict((("geopackage", "GeoPackage"),))
         return files_info
 
     @property
     def terrain_model_files(self):
         """Files mapping for the Terrain Model group widget."""
-        return SchematisationRasterReferences.global_settings_rasters()
+        return SchematisationRasterReferences.model_settings_rasters()
 
     @property
     def simple_infiltration_files(self):
@@ -332,12 +322,12 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
 
     @property
     def files_reference_tables(self):
-        """Spatialite tables mapping with references to the files."""
+        """GeoPackage tables mapping with references to the files."""
         return SchematisationRasterReferences.raster_reference_tables()
 
     @property
     def file_table_mapping(self):
-        """Files to spatialite tables mapping."""
+        """Files to geopackage tables mapping."""
         return SchematisationRasterReferences.raster_table_mapping()
 
     def toggle_make_3di_model(self):
@@ -350,7 +340,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
             self.cb_inherit_templates.setEnabled(False)
 
     def check_files_states(self):
-        """Check raster (and spatialite) files presence and compare local and remote data."""
+        """Check raster (and geopackage) files presence and compare local and remote data."""
         files_states = OrderedDict()
         if self.latest_revision.number > 0:
             remote_rasters = self.tc.fetch_schematisation_revision_rasters(
@@ -362,32 +352,32 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         if "dem_raw_file" in remote_rasters_by_type:
             remote_rasters_by_type["dem_file"] = remote_rasters_by_type["dem_raw_file"]
             del remote_rasters_by_type["dem_raw_file"]
-        sqlite_localisation = os.path.dirname(self.schematisation_sqlite)
+        geopackage_dir = os.path.dirname(self.schematisation_filepath)
         if self.latest_revision.sqlite:
             try:
-                zipped_sqlite = zip_into_archive(self.schematisation_sqlite)
+                zipped_schematisation_db = zip_into_archive(self.schematisation_filepath)
                 sqlite_download = self.tc.download_schematisation_revision_sqlite(
                     self.schematisation.id, self.latest_revision.id
                 )
-                files_matching = is_file_checksum_equal(zipped_sqlite, sqlite_download.etag)
+                files_matching = is_file_checksum_equal(zipped_schematisation_db, sqlite_download.etag)
                 status = UploadFileStatus.NO_CHANGES_DETECTED if files_matching else UploadFileStatus.CHANGES_DETECTED
-                os.remove(zipped_sqlite)
+                os.remove(zipped_schematisation_db)
             except ApiException:
                 status = UploadFileStatus.CHANGES_DETECTED
         else:
             status = UploadFileStatus.NEW
-        files_states["spatialite"] = {
+        files_states["geopackage"] = {
             "status": status,
-            "filepath": self.schematisation_sqlite,
+            "filepath": self.schematisation_filepath,
             "type": UploadFileType.DB,
             "remote_raster": None,
             "make_action": True,
         }
 
-        for sqlite_table, files_fields in self.files_reference_tables.items():
-            sqlite_table_lyr = sqlite_layer(self.schematisation_sqlite, sqlite_table, geom_column=None)
+        for table_name, files_fields in self.files_reference_tables.items():
+            table_lyr = geopackage_layer(self.schematisation_filepath, table_name)
             try:
-                first_feat = next(sqlite_table_lyr.getFeatures())
+                first_feat = next(table_lyr.getFeatures())
             except StopIteration:
                 continue
             for file_field in files_fields:
@@ -398,7 +388,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
                 remote_raster = remote_rasters_by_type.get(file_field)
                 if not file_relative_path and not remote_raster:
                     continue
-                filepath = os.path.join(sqlite_localisation, file_relative_path) if file_relative_path else None
+                filepath = os.path.join(geopackage_dir, "rasters", file_relative_path) if file_relative_path else None
                 if filepath:
                     if os.path.exists(filepath):
                         if remote_raster and remote_raster.file:
@@ -561,7 +551,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         new_filepath = filepath_line_edit.text()
         if new_filepath:
             new_file = os.path.basename(new_filepath)
-            main_dir = os.path.dirname(self.schematisation_sqlite)
+            main_dir = os.path.dirname(self.schematisation_filepath)
             relative_filepath = f"rasters/{new_file}"
             target_filepath = os.path.join(main_dir, "rasters", new_file)
             filepath_exists = os.path.exists(new_filepath)
@@ -573,7 +563,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
             target_filepath = None
             filepath_exists = False
         reference_table = self.file_table_mapping[raster_type]
-        table_lyr = sqlite_layer(self.schematisation_sqlite, reference_table, geom_column=None)
+        table_lyr = geopackage_layer(self.schematisation_filepath, reference_table)
         first_feat = next(table_lyr.getFeatures())
         field_idx = table_lyr.fields().lookupField(raster_type)
         fid = first_feat.id()
@@ -581,18 +571,18 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         table_lyr.changeAttributeValue(fid, field_idx, relative_filepath)
         table_lyr.commitChanges()
         (
-            spatialite_name_label,
-            spatialite_status_label,
-            spatialite_valid_ref_widget,
-            spatialite_action_pb,
-            spatialite_invalid_ref_widget,
-            spatialite_filepath_line_edit,
-        ) = self.widgets_per_file["spatialite"]
-        spatialite_files_refs = self.detected_files["spatialite"]
-        if spatialite_files_refs["status"] != UploadFileStatus.NEW:
-            spatialite_files_refs["status"] = UploadFileStatus.CHANGES_DETECTED
-            spatialite_status_label.setText(UploadFileStatus.CHANGES_DETECTED.value)
-            spatialite_valid_ref_widget.show()
+            geopackage_name_label,
+            geopackage_status_label,
+            geopackage_valid_ref_widget,
+            geopackage_action_pb,
+            geopackage_invalid_ref_widget,
+            geopackage_filepath_line_edit,
+        ) = self.widgets_per_file["geopackage"]
+        geopackage_files_refs = self.detected_files["geopackage"]
+        if geopackage_files_refs["status"] != UploadFileStatus.NEW:
+            geopackage_files_refs["status"] = UploadFileStatus.CHANGES_DETECTED
+            geopackage_status_label.setText(UploadFileStatus.CHANGES_DETECTED.value)
+            geopackage_valid_ref_widget.show()
         files_refs = self.detected_files[raster_type]
         remote_raster = files_refs["remote_raster"]
         files_refs["filepath"] = target_filepath
@@ -681,7 +671,7 @@ class UploadWizard(QWizard):
         self.upload_dialog = upload_dialog
         self.current_local_schematisation = self.upload_dialog.current_local_schematisation
         self.schematisation = self.upload_dialog.schematisation
-        self.schematisation_sqlite = self.upload_dialog.schematisation_sqlite
+        self.schematisation_filepath = self.upload_dialog.schematisation_filepath
         self.tc = self.upload_dialog.tc
         self.available_revisions = self.tc.fetch_schematisation_revisions(self.schematisation.id)
         if self.available_revisions:

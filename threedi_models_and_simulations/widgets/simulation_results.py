@@ -194,7 +194,7 @@ class SimulationResults(uicls, basecls):
             self.plugin_dock.communication.bar_warn("The selected results are already being downloaded!")
             return
         working_dir = self.plugin_dock.plugin_settings.working_dir
-        local_schematisations = list_local_schematisations(working_dir)
+        local_schematisations = list_local_schematisations(working_dir, use_config_for_revisions=False)
         try:
             tc = ThreediCalls(self.plugin_dock.threedi_api)
             simulation = tc.fetch_simulation(sim_id)

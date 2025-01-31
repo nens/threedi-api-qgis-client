@@ -37,9 +37,9 @@ class SchematisationDownload(uicls, basecls):
         self.threedi_api = self.plugin_dock.threedi_api
         self.schematisations = None
         self.revisions = None
-        self.local_schematisations = list_local_schematisations(self.working_dir)
+        self.local_schematisations = list_local_schematisations(self.working_dir, use_config_for_revisions=False)
         self.downloaded_local_schematisation = None
-        self.downloaded_sqlite_filepath = None
+        self.downloaded_geopackage_filepath = None
         self.tv_schematisations_model = QStandardItemModel()
         self.schematisations_tv.setModel(self.tv_schematisations_model)
         self.tv_revisions_model = QStandardItemModel()
@@ -226,7 +226,7 @@ class SchematisationDownload(uicls, basecls):
             schematisation_name = schematisation.name
             revision_pk = revision.id
             revision_number = revision.number
-            revision_sqlite = revision.sqlite
+            revision_sqlite = revision.geopackage_filepath
             if not is_latest_revision:
                 latest_online_revision = max([rev.number for rev in self.revisions]) if self.revisions else None
                 is_latest_revision = revision_number == latest_online_revision
@@ -343,7 +343,7 @@ class SchematisationDownload(uicls, basecls):
                 current_progress += 1
                 self.pbar_download.setValue(current_progress)
             self.downloaded_local_schematisation = local_schematisation
-            self.downloaded_sqlite_filepath = os.path.join(schematisation_db_dir, sqlite_file)
+            self.downloaded_geopackage_filepath = os.path.join(schematisation_db_dir, sqlite_file)
             sleep(1)
             settings = QSettings()
             settings.setValue("threedi/last_schematisation_folder", schematisation_db_dir)

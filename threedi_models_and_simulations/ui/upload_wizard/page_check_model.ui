@@ -101,7 +101,7 @@
          </widget>
         </item>
         <item row="0" column="2">
-         <widget class="QLabel" name="lbl_check_spatialite">
+         <widget class="QLabel" name="lbl_check_schematisation">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -121,7 +121,7 @@
            </font>
           </property>
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; color:#00aa00;&quot;&gt;✓ Spatialite checks completed&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; color:#00aa00;&quot;&gt;✓ GeoPackage checks completed&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -129,7 +129,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QProgressBar" name="pbar_check_spatialite">
+         <widget class="QProgressBar" name="pbar_check_schematisation">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -156,7 +156,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Spatialite</string>
+           <string>GeoPackage</string>
           </property>
          </widget>
         </item>
@@ -189,7 +189,7 @@
          </widget>
         </item>
         <item row="0" column="3">
-         <widget class="QToolButton" name="btn_export_check_spatialite_results">
+         <widget class="QToolButton" name="btn_export_check_schematisation_results">
           <property name="enabled">
            <bool>false</bool>
           </property>
@@ -370,7 +370,7 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>btn_export_check_spatialite_results</tabstop>
+  <tabstop>btn_export_check_schematisation_results</tabstop>
   <tabstop>btn_export_check_grid_results</tabstop>
   <tabstop>tv_schema_check_result</tabstop>
   <tabstop>tv_grid_check_result</tabstop>

@@ -1,10 +1,10 @@
 History
 =======
 
-3.15.3 (unreleased)
+4.0 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Adjusting plugin to work with schema version >= 300.
 
 
 3.15.2 (2025-01-10)

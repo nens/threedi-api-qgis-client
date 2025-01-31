@@ -21,7 +21,6 @@ from qgis.PyQt.QtWidgets import (
     QTimeEdit,
     QWidget,
 )
-from threedi_mi_utils import bypass_max_path_limit
 
 
 def style_path(qml_filename):
@@ -153,47 +152,67 @@ def qgis_layers_cbo_get_layer_uri(qgis_map_layers_cbo):
             return lyr_path
 
 
-def ensure_valid_schema(schematisation_sqlite, communication):
+def ensure_valid_schema(schematisation_filepath, communication):
     """Check if schema version is up-to-date and migrate it if needed."""
     try:
         from threedi_schema import ThreediDatabase, errors
     except ImportError:
+        communication.show_error("Could not import `threedi-schema` library to validate database schema.")
         return
-    schematisation_dirname = os.path.dirname(schematisation_sqlite)
-    schematisation_filename = os.path.basename(schematisation_sqlite)
-    backup_folder = os.path.join(schematisation_dirname, "_backup")
-    os.makedirs(bypass_max_path_limit(backup_folder), exist_ok=True)
-    prefix = str(uuid4())[:8]
-    backup_sqlite_path = os.path.join(backup_folder, f"{prefix}_{schematisation_filename}")
-    shutil.copyfile(schematisation_sqlite, bypass_max_path_limit(backup_sqlite_path, is_file=True))
-    threedi_db = ThreediDatabase(schematisation_sqlite)
-    schema = threedi_db.schema
     try:
-        schema.validate_schema()
-        schema.set_spatial_indexes()
+        threedi_db = ThreediDatabase(schematisation_filepath)
+        # TODO: Activate when schematisations will be properly migrated and will be marked as a schema 300
+        # threedi_db.schema.validate_schema()
     except errors.MigrationMissingError:
         warn_and_ask_msg = (
-            "The selected spatialite cannot be used because its database schema version is out of date. "
-            "Would you like to migrate your spatialite to the current schema version?"
+            "The selected schematisation database cannot be used because its database schema version is out of date. "
+            "Would you like to migrate your schematisation to the current schema version?"
         )
         do_migration = communication.ask(None, "Missing migration", warn_and_ask_msg)
         if not do_migration:
             return False
-        schema.upgrade(backup=False, upgrade_spatialite_version=True)
-        schema.set_spatial_indexes()
-        shutil.rmtree(backup_folder)
-    except errors.UpgradeFailedError:
-        error_msg = (
-            "There are errors in the spatialite. Please re-open this file in QGIS 3.16, run the model checker and "
-            "fix error messages. Then attempt to upgrade again. For questions please contact the servicedesk."
-        )
-        communication.show_error(error_msg)
-        return False
+        migration_succeed, migration_feedback_msg = migrate_schematisation_schema(schematisation_filepath)
+        if not migration_succeed:
+            communication.show_error(migration_feedback_msg)
+            return False
     except Exception as e:
         error_msg = f"{e}"
         communication.show_error(error_msg)
         return False
     return True
+
+
+def backup_schematisation_file(filename):
+    """Make a backup of the schematisation file."""
+    backup_folder = os.path.join(os.path.dirname(os.path.dirname(filename)), "_backup")
+    os.makedirs(backup_folder, exist_ok=True)
+    prefix = str(uuid4())[:8]
+    backup_file_path = os.path.join(backup_folder, f"{prefix}_{os.path.basename(filename)}")
+    shutil.copyfile(filename, backup_file_path)
+    return backup_file_path
+
+
+def migrate_schematisation_schema(schematisation_filepath):
+    migration_succeed = False
+    try:
+        from threedi_schema import ThreediDatabase, errors
+
+        backup_filepath = backup_schematisation_file(schematisation_filepath)
+        threedi_db = ThreediDatabase(schematisation_filepath)
+        threedi_db.schema.upgrade(backup=False)
+        shutil.rmtree(os.path.dirname(backup_filepath))
+        migration_succeed = True
+        migration_feedback_msg = "Migration succeed."
+    except ImportError:
+        migration_feedback_msg = "Missing threedi-schema library (or its dependencies). Schema migration failed."
+    except errors.UpgradeFailedError:
+        migration_feedback_msg = (
+            "The schematisation database schema cannot be migrated to the current version. "
+            "Please contact the service desk for assistance."
+        )
+    except Exception as e:
+        migration_feedback_msg = f"{e}"
+    return migration_succeed, migration_feedback_msg
 
 
 def save_3di_settings(entry_name, value):

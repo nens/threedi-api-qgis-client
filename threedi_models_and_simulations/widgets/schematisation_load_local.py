@@ -24,7 +24,7 @@ class SchematisationLoad(uicls, basecls):
         self.plugin_dock = plugin_dock
         self.working_dir = self.plugin_dock.plugin_settings.working_dir
         self.communication = self.plugin_dock.communication
-        self.local_schematisations = list_local_schematisations(self.working_dir)
+        self.local_schematisations = list_local_schematisations(self.working_dir, use_config_for_revisions=False)
         self.tv_schematisations_model = QStandardItemModel()
         self.schematisations_tv.setModel(self.tv_schematisations_model)
         self.tv_revisions_model = QStandardItemModel()

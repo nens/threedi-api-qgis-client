@@ -3,9 +3,17 @@ import os
 from functools import partial
 
 from qgis.PyQt.QtGui import QDoubleValidator, QFont
-from qgis.PyQt.QtWidgets import (QComboBox, QFileDialog, QGridLayout,
-                                 QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-                                 QPushButton, QWidget)
+from qgis.PyQt.QtWidgets import (
+    QComboBox,
+    QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QWidget,
+)
 
 from ..utils import parse_timeseries
 from ..utils_ui import read_3di_settings, save_3di_settings
@@ -51,7 +59,9 @@ class SubstanceConcentrationsWidget(QWidget):
         text_layout = QHBoxLayout()
         text1 = QLabel(f"Specify the same constant substance concentrations for all {self.widget_name}s")
         text2 = QLabel("- or -")
-        text3 = QLabel(f"Upload CSV containing a specific time series for each {self.widget_name} (overules the constant values)")
+        text3 = QLabel(
+            f"Upload CSV containing a specific time series for each {self.widget_name} (overules the constant values)"
+        )
         text1.setFont(font)
         text2.setFont(font)
         text3.setFont(font)
@@ -191,7 +201,9 @@ class SubstanceConcentrationsWidget(QWidget):
             reader = csv.DictReader(csvfile)
             self.csv_header = reader.fieldnames
             self.substance_list = list(reader)
-        error_msg = self.parent_widget.handle_substance_csv_errors(self.csv_header, self.substance_list, var_type, time_units)
+        error_msg = self.parent_widget.handle_substance_csv_errors(
+            self.csv_header, self.substance_list, var_type, time_units
+        )
         if error_msg is not None:
             self.csv_header = None
             self.substance_list = []
@@ -209,14 +221,16 @@ class SubstanceConcentrationsWidget(QWidget):
             if parent_id not in substances:
                 substances[parent_id] = []
             substances[parent_id].append(substance)
-            
+
         return substances, filename
 
     def update_time_units(self, name: str, var_type: str):
         """Update time units for substance concentrations."""
         combo_box = self.groupbox.findChild(QComboBox, f"cb_time_units_{var_type}_{name}")
         time_units = combo_box.currentText()
-        error_message = self.parent_widget.handle_substance_csv_errors(self.csv_header, self.substance_list, var_type, time_units)
+        error_message = self.parent_widget.handle_substance_csv_errors(
+            self.csv_header, self.substance_list, var_type, time_units
+        )
         if error_message:
             # clear the QLineEdit and members
             le_substance = self.groupbox.findChild(QLineEdit, f"le_substance_csv_{var_type}_{name}")
@@ -224,7 +238,7 @@ class SubstanceConcentrationsWidget(QWidget):
 
             self.csv_header = None
             self.substance_list = []
-    
+
             # remove the substance from the values, in place, as various pages have references to these dicts..
             if var_type == self.TYPE_1D:
                 substance_concentrations_1d = {
@@ -246,6 +260,10 @@ class SubstanceConcentrationsWidget(QWidget):
     def clear_substance_constants(self, substance_name: str, var_type: str):
         """Remove the substance value from substance_constants_1d or substance_constants_2d."""
         if var_type == self.TYPE_1D:
-            self.substance_constants_1d = [substance for substance in self.substance_constants_1d if substance_name not in substance]
+            self.substance_constants_1d = [
+                substance for substance in self.substance_constants_1d if substance_name not in substance
+            ]
         else:
-            self.substance_constants_2d = [substance for substance in self.substance_constants_2d if substance_name not in substance]
+            self.substance_constants_2d = [
+                substance for substance in self.substance_constants_2d if substance_name not in substance
+            ]

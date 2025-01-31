@@ -15,33 +15,61 @@ from dateutil.relativedelta import relativedelta
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import (QDateTime, QSettings, QSize, Qt, QTimeZone,
-                              pyqtSignal)
-from qgis.PyQt.QtGui import (QColor, QDoubleValidator, QFont, QStandardItem,
-                             QStandardItemModel)
-from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
-                                 QGridLayout, QGroupBox, QHBoxLayout, QLabel,
-                                 QLineEdit, QRadioButton, QScrollArea,
-                                 QSizePolicy, QSpacerItem, QSpinBox,
-                                 QTableWidgetItem, QWidget, QWizard,
-                                 QWizardPage)
+from qgis.PyQt.QtCore import QDateTime, QSettings, QSize, Qt, QTimeZone, pyqtSignal
+from qgis.PyQt.QtGui import QColor, QDoubleValidator, QFont, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import (
+    QComboBox,
+    QDoubleSpinBox,
+    QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QRadioButton,
+    QScrollArea,
+    QSizePolicy,
+    QSpacerItem,
+    QSpinBox,
+    QTableWidgetItem,
+    QWidget,
+    QWizard,
+    QWizardPage,
+)
 from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
-from ..utils import (TEMPDIR, BreachSourceType, EventTypes,
-                     apply_24h_timeseries, constains_only_ascii,
-                     convert_timeseries_to_seconds, extract_error_message,
-                     get_download_file, handle_csv_header, intervals_are_even,
-                     mmh_to_mmtimestep, mmh_to_ms, mmtimestep_to_mmh,
-                     ms_to_mmh, parse_timeseries, read_json_data)
-from ..utils_ui import (NumericDelegate, get_filepath,
-                        qgis_layers_cbo_get_layer_uri, read_3di_settings,
-                        save_3di_settings, scan_widgets_parameters,
-                        set_widget_background_color, set_widgets_parameters)
+from ..utils import (
+    TEMPDIR,
+    BreachSourceType,
+    EventTypes,
+    apply_24h_timeseries,
+    constains_only_ascii,
+    convert_timeseries_to_seconds,
+    extract_error_message,
+    get_download_file,
+    handle_csv_header,
+    intervals_are_even,
+    mmh_to_mmtimestep,
+    mmh_to_ms,
+    mmtimestep_to_mmh,
+    ms_to_mmh,
+    parse_timeseries,
+    read_json_data,
+)
+from ..utils_ui import (
+    NumericDelegate,
+    get_filepath,
+    qgis_layers_cbo_get_layer_uri,
+    read_3di_settings,
+    save_3di_settings,
+    scan_widgets_parameters,
+    set_widget_background_color,
+    set_widgets_parameters,
+)
 from .custom_items import FilteredComboBox
-from .initial_concentrations import (Initial1DConcentrationsWidget,
-                                     Initial2DConcentrationsWidget)
+from .initial_concentrations import Initial1DConcentrationsWidget, Initial2DConcentrationsWidget
 from .substance_concentrations import SubstanceConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -609,7 +637,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                     name = sub.get("substance")
                     existing_substance.setdefault(name, sub)
                 substance_concentrations[bc_id] = list(existing_substance.values())
-        
+
         # Convert to the timeseries of the substance concentration
         substances = deepcopy(substance_concentrations)
         substances_data = {}
@@ -637,7 +665,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         if self.substance_concentrations_1d or self.substance_constants_1d:
             substances = self.recalculate_substances_timeseries(self.TYPE_1D)
             self.update_boundary_conditions_with_substances(boundary_conditions_data_1d, substances)
-        
+
         boundary_conditions_data_2d = self.recalculate_boundary_conditions_timeseries(self.TYPE_2D)
         if self.substance_concentrations_2d or self.substance_constants_2d:
             substances = self.recalculate_substances_timeseries(self.TYPE_2D)
@@ -1175,8 +1203,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.laterals_2d_timeseries = values
         else:
             raise NotImplementedError
-        
-        _, warning_message =  self.recalculate_laterals_timeseries(laterals_type)
+
+        _, warning_message = self.recalculate_laterals_timeseries(laterals_type)
         if warning_message:
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn(warning_message)
 
@@ -1199,7 +1227,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     if lateral_id in laterals_timeseries:
                         duplicate_lateral_ids.append(str(lateral_id))
                 if duplicate_lateral_ids:
-                    warning  = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
+                    warning = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
 
                 laterals_timeseries.update(laterals_data)
         else:
@@ -1217,7 +1245,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     if lateral_id in laterals_timeseries:
                         duplicate_lateral_ids.append(str(lateral_id))
                 if duplicate_lateral_ids:
-                    warning  = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
+                    warning = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
 
                 laterals_timeseries.update(laterals_data)
 
@@ -1225,7 +1253,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def recalculate_substances_timeseries(self, laterals_type):
         """Recalculate substances timeseries (timesteps in seconds)."""
-        
+
         # Recalculate laterat timeseries to seconds, if required
         laterals_timeseries, _ = self.recalculate_laterals_timeseries(laterals_type)
 
@@ -3936,7 +3964,7 @@ class SimulationWizard(QWizard):
                         ]
                     )
                 else:
-                    initial_conditions.from_spatialite_1d = True
+                    initial_conditions.from_geopackage_1d = True
             # 2D
             if self.init_conditions_page.main_widget.gb_2d.isChecked():
                 if self.init_conditions_page.main_widget.rb_2d_global_value.isChecked():

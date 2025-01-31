@@ -61,7 +61,7 @@ class ModelSelectionDialog(uicls, basecls):
         self.threedi_api = self.plugin_dock.threedi_api
         self.organisations = self.plugin_dock.organisations
         self.working_dir = self.plugin_dock.plugin_settings.working_dir
-        self.local_schematisations = list_local_schematisations(self.working_dir)
+        self.local_schematisations = list_local_schematisations(self.working_dir, use_config_for_revisions=False)
         self.simulation_templates = None
         self.current_model = None
         self.current_model_gridadmin_gpkg = None

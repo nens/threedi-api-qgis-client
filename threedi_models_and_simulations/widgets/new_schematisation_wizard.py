@@ -18,7 +18,7 @@ from threedi_mi_utils import LocalSchematisation
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import EMPTY_DB_PATH, SchematisationRasterReferences, extract_error_message
-from ..utils_qgis import execute_sqlite_queries, sqlite_layer
+from ..utils_qgis import geopackage_layer
 from ..utils_ui import ensure_valid_schema, get_filepath, read_3di_settings, save_3di_settings, scan_widgets_parameters
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -37,7 +37,7 @@ class CommitErrors(Exception):
     pass
 
 
-class SpatialiteError(Exception):
+class GeoPackageError(Exception):
     pass
 
 
@@ -50,7 +50,7 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
         self.parent_page = parent_page
         self.organisations = self.parent_page.organisations
         self.populate_organisations()
-        self.btn_browse_spatialite.clicked.connect(self.browse_existing_spatialite)
+        self.btn_browse_geopackage.clicked.connect(self.browse_existing_geopackage)
         self.cbo_organisations.currentTextChanged.connect(partial(save_3di_settings, "threedi/last_used_organisation"))
 
     def populate_organisations(self):
@@ -70,15 +70,16 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
         owner = organisation.unique_id
         return name, description, tags, owner
 
-    def browse_existing_spatialite(self):
-        """Show dialog for choosing an existing Spatialite file path."""
-        spatialite_path = get_filepath(self, dialog_title="Select Spatialite file")
-        if spatialite_path is not None:
+    def browse_existing_geopackage(self):
+        """Show dialog for choosing an existing GeoPackage file path."""
+        gpkg_filter = "GeoPackage (*.gpkg *.GPKG)"
+        geopackage_path = get_filepath(self, dialog_title="Select GeoPackage file", extension_filter=gpkg_filter)
+        if geopackage_path is not None:
             schema_is_valid = ensure_valid_schema(
-                spatialite_path, self.parent_page.parent_wizard.plugin_dock.communication
+                geopackage_path, self.parent_page.parent_wizard.plugin_dock.communication
             )
             if schema_is_valid is True:
-                self.le_spatialite_path.setText(spatialite_path)
+                self.le_geopackage_path.setText(geopackage_path)
 
 
 class SchematisationExplainWidget(uicls_schema_explain_page, basecls_schema_explain_page):
@@ -137,39 +138,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             self.crs.setCrs(raster_crs)
 
     @property
-    def aggregation_settings_queries(self):
-        """Aggregation settings query."""
-        sql_qry = """
-            DELETE FROM v2_aggregation_settings;
-            INSERT INTO v2_aggregation_settings(global_settings_id, var_name, flow_variable, aggregation_method, timestep)
-            SELECT id, 'pump_discharge_cum', 'pump_discharge', 'cum', output_time_step FROM v2_global_settings
-            UNION
-            SELECT id, 'lateral_discharge_cum', 'lateral_discharge', 'cum', output_time_step FROM v2_global_settings
-            UNION
-            SELECT id, 'simple_infiltration_cum', 'simple_infiltration', 'cum', output_time_step FROM v2_global_settings
-            UNION
-            SELECT id, 'rain_cum', 'rain', 'cum', output_time_step FROM v2_global_settings
-            UNION
-            SELECT id, 'leakage_cum', 'leakage', 'cum', output_time_step FROM v2_global_settings
-            UNION
-            SELECT id, 'interception_current', 'interception', 'current', output_time_step FROM v2_global_settings
-            UNION
-            SELECT id, 'discharge_cum', 'discharge', 'cum', output_time_step FROM v2_global_settings
-            UNION
-            SELECT id, 'discharge_cum_neg', 'discharge', 'cum_negative', output_time_step FROM v2_global_settings
-            UNION
-            SELECT id, 'discharge_cum_pos', 'discharge', 'cum_positive', output_time_step FROM v2_global_settings
-            UNION
-            SELECT id, 'volume_current', 'volume', 'current', output_time_step  FROM v2_global_settings
-            UNION
-            SELECT id, 'qsss_cum_pos', 'surface_source_sink_discharge', 'cum_positive', output_time_step FROM v2_global_settings
-            UNION
-            SELECT id, 'qsss_cum_neg', 'surface_source_sink_discharge', 'cum_negative', output_time_step FROM v2_global_settings
-            ;"""
-        return sql_qry
-
-    @property
-    def global_settings_defaults(self):
+    def model_settings_defaults(self):
         """Global settings defaults."""
         defaults = {
             "id": 1,
@@ -259,7 +228,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
     def settings_tables_defaults(self):
         """Settings tables defaults map."""
         tables_defaults = {
-            "v2_global_settings": self.global_settings_defaults,
+            "model_settings": self.model_settings_defaults,
             "v2_numerical_settings": self.numerical_settings_defaults,
         }
         return tables_defaults
@@ -358,36 +327,36 @@ class SchematisationNamePage(QWizardPage):
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.registerField("schematisation_name*", self.main_widget.le_schematisation_name)
-        self.registerField("from_spatialite", self.main_widget.rb_existing_spatialite)
-        self.registerField("spatialite_path", self.main_widget.le_spatialite_path)
-        self.main_widget.rb_existing_spatialite.toggled.connect(self.update_pages_order)
+        self.registerField("from_geopackage", self.main_widget.rb_existing_geopackage)
+        self.registerField("geopackage_path", self.main_widget.le_geopackage_path)
+        self.main_widget.rb_existing_geopackage.toggled.connect(self.update_pages_order)
         self.main_widget.le_schematisation_name.textChanged.connect(self.update_pages_order)
-        self.main_widget.le_spatialite_path.textChanged.connect(self.update_pages_order)
+        self.main_widget.le_geopackage_path.textChanged.connect(self.update_pages_order)
         self.adjustSize()
 
     def update_pages_order(self):
-        """Check if user wants to use an existing Spatialite and finalize the wizard, if needed."""
-        if self.main_widget.rb_existing_spatialite.isChecked():
-            self.main_widget.le_spatialite_path.setEnabled(True)
-            self.main_widget.btn_browse_spatialite.setEnabled(True)
-            if self.field("spatialite_path"):
+        """Check if user wants to use an existing GeoPackage and finalize the wizard, if needed."""
+        if self.main_widget.rb_existing_geopackage.isChecked():
+            self.main_widget.le_geopackage_path.setEnabled(True)
+            self.main_widget.btn_browse_geopackage.setEnabled(True)
+            if self.field("geopackage_path"):
                 self.setFinalPage(True)
         else:
-            self.main_widget.le_spatialite_path.setEnabled(False)
-            self.main_widget.btn_browse_spatialite.setEnabled(False)
+            self.main_widget.le_geopackage_path.setEnabled(False)
+            self.main_widget.btn_browse_geopackage.setEnabled(False)
             self.setFinalPage(False)
         self.completeChanged.emit()
 
     def nextId(self):
-        if self.main_widget.rb_existing_spatialite.isChecked() and self.field("spatialite_path"):
+        if self.main_widget.rb_existing_geopackage.isChecked() and self.field("geopackage_path"):
             return -1
         else:
             return 1
 
     def isComplete(self):
         if self.field("schematisation_name") and (
-            self.main_widget.rb_new_spatialite.isChecked()
-            or (self.main_widget.rb_existing_spatialite.isChecked() and self.field("spatialite_path"))
+            self.main_widget.rb_new_geopackage.isChecked()
+            or (self.main_widget.rb_existing_geopackage.isChecked() and self.field("geopackage_path"))
         ):
             return True
 
@@ -499,8 +468,8 @@ class NewSchematisationWizard(QWizard):
         self.resize(self.settings.value("threedi/new_schematisation_wizard_size", QSize(790, 700)))
 
     def create_schematisation(self):
-        if self.schematisation_name_page.field("from_spatialite"):
-            self.create_schematisation_from_spatialite()
+        if self.schematisation_name_page.field("from_geopackage"):
+            self.create_schematisation_from_geopackage()
         else:
             self.create_new_schematisation()
 
@@ -518,15 +487,15 @@ class NewSchematisationWizard(QWizard):
                 self.working_dir, schematisation.id, name, parent_revision_number=0, create=True
             )
             wip_revision = local_schematisation.wip_revision
-            sqlite_filename = f"{name}.sqlite"
-            sqlite_filepath = os.path.join(wip_revision.schematisation_dir, sqlite_filename)
-            shutil.copyfile(EMPTY_DB_PATH, sqlite_filepath)
+            sqlite_filename = f"{name}.gpkg"
+            geopackage_filepath = os.path.join(wip_revision.schematisation_dir, sqlite_filename)
+            shutil.copyfile(EMPTY_DB_PATH, geopackage_filepath)
             for raster_filepath in raster_filepaths:
                 if raster_filepath:
                     new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_filepath))
                     shutil.copyfile(raster_filepath, new_raster_filepath)
             for table_name, table_settings in schematisation_settings.items():
-                table_layer = sqlite_layer(wip_revision.sqlite, table_name, geom_column=None)
+                table_layer = geopackage_layer(wip_revision.geopackage_filepath, table_name)
                 table_layer.startEditing()
                 table_fields = table_layer.fields()
                 table_fields_names = {f.name() for f in table_fields}
@@ -543,7 +512,6 @@ class NewSchematisationWizard(QWizard):
                     error = CommitErrors(f"{table_name} commit errors:\n{errors_str}")
                     raise error
             time.sleep(0.5)
-            execute_sqlite_queries(wip_revision.sqlite, aggregation_settings_queries)
             self.new_schematisation = schematisation
             self.new_local_schematisation = local_schematisation
             msg = f"Schematisation '{name} ({schematisation.id})' created!"
@@ -560,14 +528,14 @@ class NewSchematisationWizard(QWizard):
             self.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
 
     @staticmethod
-    def get_paths_from_sqlite(sqlite_path):
-        """Search SQLite database tables for attributes with file paths."""
+    def get_paths_from_geopackage(geopackage_path):
+        """Search GeoPackage database tables for attributes with file paths."""
         paths = defaultdict(dict)
         for table_name, raster_info in SchematisationRasterReferences.raster_reference_tables().items():
             settings_fields = list(raster_info.keys())
-            settings_lyr = sqlite_layer(sqlite_path, table_name, geom_column=None)
+            settings_lyr = geopackage_layer(geopackage_path, table_name)
             if not settings_lyr.isValid():
-                raise SpatialiteError(f"'{table_name}' table could not be loaded from {sqlite_path}")
+                raise GeoPackageError(f"'{table_name}' table could not be loaded from {geopackage_path}")
             try:
                 set_feat = next(settings_lyr.getFeatures())
             except StopIteration:
@@ -577,8 +545,8 @@ class NewSchematisationWizard(QWizard):
                 paths[table_name][field_name] = field_value if field_value else None
         return paths
 
-    def create_schematisation_from_spatialite(self):
-        """Get settings from existing Spatialite and create new schematisation (locally and remotely)."""
+    def create_schematisation_from_geopackage(self):
+        """Get settings from existing GeoPackage and create new schematisation (locally and remotely)."""
         try:
             name, description, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_data()
             schematisation = self.tc.create_schematisation(name, owner, tags=tags, meta={"description": description})
@@ -586,12 +554,12 @@ class NewSchematisationWizard(QWizard):
                 self.working_dir, schematisation.id, name, parent_revision_number=0, create=True
             )
             wip_revision = local_schematisation.wip_revision
-            sqlite_filename = f"{name}.sqlite"
-            sqlite_filepath = os.path.join(wip_revision.schematisation_dir, sqlite_filename)
-            src_db = self.schematisation_name_page.field("spatialite_path")
-            raster_paths = self.get_paths_from_sqlite(src_db)
+            sqlite_filename = f"{name}.gpkg"
+            geopackage_filepath = os.path.join(wip_revision.schematisation_dir, sqlite_filename)
+            src_db = self.schematisation_name_page.field("geopackage_path")
+            raster_paths = self.get_paths_from_geopackage(src_db)
             src_dir = os.path.dirname(src_db)
-            shutil.copyfile(src_db, sqlite_filepath)
+            shutil.copyfile(src_db, geopackage_filepath)
             new_paths = defaultdict(dict)
             missing_rasters = []
             for table_name, raster_paths_info in raster_paths.items():
@@ -616,7 +584,9 @@ class NewSchematisationWizard(QWizard):
                 self.plugin_dock.communication.bar_warn("Schematisation creation aborted!")
                 return
             for settings_table_name, new_raster_paths_info in new_paths.items():
-                settings_layer = sqlite_layer(wip_revision.sqlite, settings_table_name, geom_column=None)
+                settings_layer = geopackage_layer(
+                    wip_revision.geopackage_filepath, settings_table_name, geom_column=None
+                )
                 settings_layer.startEditing()
                 s_fields = settings_layer.fields()
                 s_feat = next(settings_layer.getFeatures())

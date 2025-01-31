@@ -9,8 +9,7 @@ from functools import partial
 
 import requests
 from PyQt5.QtNetwork import QNetworkRequest
-from qgis.PyQt.QtCore import (QByteArray, QObject, QRunnable, QUrl, pyqtSignal,
-                              pyqtSlot)
+from qgis.PyQt.QtCore import QByteArray, QObject, QRunnable, QUrl, pyqtSignal, pyqtSlot
 from threedi_api_client.files import upload_file
 from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import bypass_max_path_limit
@@ -18,15 +17,29 @@ from threedi_mi_utils import bypass_max_path_limit
 from .api_calls.threedi_calls import ThreediCalls
 from .data_models import simulation_data_models as dm
 from .data_models.enumerators import SimulationStatusName
-from .utils import (API_DATETIME_FORMAT, BOUNDARY_CONDITIONS_TEMPLATE,
-                    CHUNK_SIZE, DWF_FILE_TEMPLATE,
-                    INITIAL_CONCENTRATIONS_TEMPLATE,
-                    INITIAL_WATERLEVELS_TEMPLATE, LATERALS_FILE_TEMPLATE,
-                    RADAR_ID, TEMPDIR, EventTypes, FileState, ThreediFileState,
-                    ThreediModelTaskStatus, UploadFileStatus,
-                    extract_error_message, get_download_file,
-                    split_to_even_chunks, unzip_archive, upload_local_file,
-                    write_json_data, zip_into_archive)
+from .utils import (
+    API_DATETIME_FORMAT,
+    BOUNDARY_CONDITIONS_TEMPLATE,
+    CHUNK_SIZE,
+    DWF_FILE_TEMPLATE,
+    INITIAL_CONCENTRATIONS_TEMPLATE,
+    INITIAL_WATERLEVELS_TEMPLATE,
+    LATERALS_FILE_TEMPLATE,
+    RADAR_ID,
+    TEMPDIR,
+    EventTypes,
+    FileState,
+    ThreediFileState,
+    ThreediModelTaskStatus,
+    UploadFileStatus,
+    extract_error_message,
+    get_download_file,
+    split_to_even_chunks,
+    unzip_archive,
+    upload_local_file,
+    write_json_data,
+    zip_into_archive,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -306,12 +319,12 @@ class UploadProgressWorker(QRunnable):
             if make_action_on_file is False:
                 continue
             if file_status == UploadFileStatus.NEW:
-                if file_name == "spatialite":
+                if file_name == "geopackage":
                     tasks.append(self.upload_sqlite_task)
                 else:
                     tasks.append(partial(self.upload_raster_task, file_name))
             elif file_status == UploadFileStatus.CHANGES_DETECTED:
-                if file_name == "spatialite":
+                if file_name == "geopackage":
                     tasks.append(self.delete_sqlite_task)
                     tasks.append(self.upload_sqlite_task)
                 else:
@@ -337,23 +350,23 @@ class UploadProgressWorker(QRunnable):
 
     def upload_sqlite_task(self):
         """Run sqlite file upload task."""
-        self.current_task = "UPLOAD SPATIALITE"
+        self.current_task = "UPLOAD SCHEMATISATION DATABASE"
         self.current_task_progress = 0
         self.report_upload_progress()
-        schematisation_sqlite = self.upload_specification["selected_files"]["spatialite"]["filepath"]
-        zipped_sqlite_filepath = zip_into_archive(schematisation_sqlite)
-        zipped_sqlite_file = os.path.basename(zipped_sqlite_filepath)
+        schematisation_sqlite = self.upload_specification["selected_files"]["geopackage"]["filepath"]
+        zipped_geopackage_filepath = zip_into_archive(schematisation_sqlite)
+        zipped_sqlite_file = os.path.basename(zipped_geopackage_filepath)
         upload = self.tc.upload_schematisation_revision_sqlite(
             self.schematisation.id, self.revision.id, zipped_sqlite_file
         )
-        upload_file(upload.put_url, zipped_sqlite_filepath, CHUNK_SIZE, callback_func=self.monitor_upload_progress)
-        os.remove(zipped_sqlite_filepath)
+        upload_file(upload.put_url, zipped_geopackage_filepath, CHUNK_SIZE, callback_func=self.monitor_upload_progress)
+        os.remove(zipped_geopackage_filepath)
         self.current_task_progress = 100
         self.report_upload_progress()
 
     def delete_sqlite_task(self):
         """Run sqlite file deletion task."""
-        self.current_task = "DELETE SPATIALITE"
+        self.current_task = "DELETE SCHEMATISATION DATABASE"
         self.current_task_progress = 0
         self.report_upload_progress()
         self.tc.delete_schematisation_revision_sqlite(self.schematisation.id, self.revision.id)
@@ -753,7 +766,7 @@ class SimulationRunner(QRunnable):
         # 1D
         if initial_conditions.global_value_1d is not None:
             self.tc.create_simulation_initial_1d_water_level_constant(sim_id, value=initial_conditions.global_value_1d)
-        if initial_conditions.from_spatialite_1d:
+        if initial_conditions.from_geopackage_1d:
             self.tc.create_simulation_initial_1d_water_level_predefined(sim_id)
         if initial_conditions.initial_waterlevels_1d is not None:
             write_json_data(initial_conditions.initial_waterlevels_1d, INITIAL_WATERLEVELS_TEMPLATE)
