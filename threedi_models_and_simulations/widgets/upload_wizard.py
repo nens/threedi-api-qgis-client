@@ -153,7 +153,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             schema.validate_schema()
         except errors.MigrationMissingError:
             warn_and_ask_msg = (
-                "The selected schematisation database cannot be used because its database schema version is out of date. "
+                "The selected schematisation DB cannot be used, because its database schema version is out of date. "
                 "Would you like to migrate your schematisation database to the current schema version?"
             )
             do_migration = self.communication.ask(None, "Missing migration", warn_and_ask_msg)
@@ -550,16 +550,15 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         ) = self.widgets_per_file[raster_type]
         new_filepath = filepath_line_edit.text()
         if new_filepath:
-            new_file = os.path.basename(new_filepath)
+            new_file_name = os.path.basename(new_filepath)
             main_dir = os.path.dirname(self.schematisation_filepath)
-            relative_filepath = f"rasters/{new_file}"
-            target_filepath = os.path.join(main_dir, "rasters", new_file)
+            target_filepath = os.path.join(main_dir, "rasters", new_file_name)
             filepath_exists = os.path.exists(new_filepath)
             if filepath_exists:
                 if not os.path.exists(target_filepath):
                     shutil.copyfile(new_filepath, target_filepath)
         else:
-            relative_filepath = None
+            new_file_name = ""
             target_filepath = None
             filepath_exists = False
         reference_table = self.file_table_mapping[raster_type]
@@ -568,7 +567,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         field_idx = table_lyr.fields().lookupField(raster_type)
         fid = first_feat.id()
         table_lyr.startEditing()
-        table_lyr.changeAttributeValue(fid, field_idx, relative_filepath)
+        table_lyr.changeAttributeValue(fid, field_idx, new_file_name)
         table_lyr.commitChanges()
         (
             geopackage_name_label,
@@ -586,7 +585,7 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
         files_refs = self.detected_files[raster_type]
         remote_raster = files_refs["remote_raster"]
         files_refs["filepath"] = target_filepath
-        if not relative_filepath:
+        if not new_file_name:
             if not remote_raster:
                 files_refs["status"] = UploadFileStatus.NO_CHANGES_DETECTED
                 status_label.setText(UploadFileStatus.NO_CHANGES_DETECTED.value)

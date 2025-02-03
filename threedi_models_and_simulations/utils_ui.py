@@ -161,8 +161,7 @@ def ensure_valid_schema(schematisation_filepath, communication):
         return
     try:
         threedi_db = ThreediDatabase(schematisation_filepath)
-        # TODO: Activate when schematisations will be properly migrated and will be marked as a schema 300
-        # threedi_db.schema.validate_schema()
+        threedi_db.schema.validate_schema()
     except errors.MigrationMissingError:
         warn_and_ask_msg = (
             "The selected schematisation database cannot be used because its database schema version is out of date. "

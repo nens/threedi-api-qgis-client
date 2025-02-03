@@ -203,7 +203,7 @@
           </spacer>
          </item>
          <item row="0" column="2">
-          <widget class="QSpinBox" name="sim_time_step">
+          <widget class="QSpinBox" name="time_step">
            <property name="minimumSize">
             <size>
              <width>150</width>
@@ -346,7 +346,7 @@
           </widget>
          </item>
          <item row="1" column="2" colspan="2">
-          <widget class="QDoubleSpinBox" name="grid_space">
+          <widget class="QDoubleSpinBox" name="minimum_cell_size">
            <property name="minimumSize">
             <size>
              <width>150</width>
@@ -382,7 +382,7 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="QRadioButton" name="frict_shallow_water_correction_flat">
+            <widget class="QRadioButton" name="friction_shallow_water_depth_correction_flat">
              <property name="font">
               <font>
                <family>Segoe UI</family>
@@ -401,7 +401,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QRadioButton" name="frict_shallow_water_correction_sloping">
+            <widget class="QRadioButton" name="friction_shallow_water_depth_correction_sloping">
              <property name="font">
               <font>
                <family>Segoe UI</family>
@@ -475,7 +475,7 @@
           </spacer>
          </item>
          <item row="0" column="2" colspan="2">
-          <widget class="QSpinBox" name="manhole_storage_area">
+          <widget class="QSpinBox" name="manhole_aboveground_storage_area">
            <property name="minimumSize">
             <size>
              <width>150</width>
@@ -750,7 +750,7 @@
           </spacer>
          </item>
          <item row="0" column="1" colspan="2">
-          <widget class="QComboBox" name="frict_type_text">
+          <widget class="QComboBox" name="friction_type_text">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -779,7 +779,7 @@
           </widget>
          </item>
          <item row="2" column="1" colspan="2">
-          <widget class="QgsFileWidget" name="frict_coef_file">
+          <widget class="QgsFileWidget" name="friction_coefficient_file">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -804,7 +804,7 @@
           </widget>
          </item>
          <item row="3" column="2">
-          <widget class="QDoubleSpinBox" name="frict_coef">
+          <widget class="QDoubleSpinBox" name="friction_coefficient">
            <property name="minimumSize">
             <size>
              <width>150</width>
@@ -854,17 +854,17 @@
  <tabstops>
   <tabstop>crs</tabstop>
   <tabstop>use_2d_flow_group</tabstop>
-  <tabstop>grid_space</tabstop>
-  <tabstop>frict_shallow_water_correction_flat</tabstop>
-  <tabstop>frict_shallow_water_correction_sloping</tabstop>
+  <tabstop>minimum_cell_size</tabstop>
+  <tabstop>friction_shallow_water_depth_correction_flat</tabstop>
+  <tabstop>friction_shallow_water_depth_correction_sloping</tabstop>
   <tabstop>use_1d_flow_group</tabstop>
-  <tabstop>manhole_storage_area</tabstop>
+  <tabstop>manhole_aboveground_storage_area</tabstop>
   <tabstop>use_0d_inflow_group</tabstop>
   <tabstop>use_0d_inflow_surfaces</tabstop>
   <tabstop>use_0d_inflow_impervious_surfaces</tabstop>
-  <tabstop>frict_type_text</tabstop>
-  <tabstop>frict_coef</tabstop>
-  <tabstop>sim_time_step</tabstop>
+  <tabstop>friction_type_text</tabstop>
+  <tabstop>friction_coefficient</tabstop>
+  <tabstop>time_step</tabstop>
   <tabstop>output_time_step_text</tabstop>
  </tabstops>
  <resources/>

@@ -140,57 +140,49 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
     @property
     def model_settings_defaults(self):
         """Global settings defaults."""
+        # TODO: Move commented variables to appropriate settings tables (schema 300)
         defaults = {
             "id": 1,
-            "advection_1d": 3,
-            "advection_2d": 1,
-            "control_group_id": None,
+            # "use_advection_1d": 3,
+            # "use_advection_2d": 1,
+            # "use_structure_control": None,
             "dem_file": None,
-            "dem_obstacle_detection": 0,
-            "dem_obstacle_height": None,
-            "dist_calc_points": 1000.0,
+            "calculation_point_distance": 1000.0,
             "embedded_cutoff_threshold": 0.05,
             "epsg_code": None,
-            "flooding_threshold": 0.0001,
-            "frict_avg": 0,
-            "frict_coef": None,
-            "frict_coef_file": None,
-            "frict_type": None,
-            "grid_space": 0.0,
-            "groundwater_settings_id": None,
-            "initial_groundwater_level": None,
-            "initial_groundwater_level_file": None,
-            "initial_groundwater_level_type": None,
-            "initial_waterlevel": -99.0,
-            "initial_waterlevel_file": None,
-            "interflow_settings_id": None,
-            "interception_global": None,
-            "interception_file": None,
-            "max_interception": None,
-            "max_interception_file": None,
-            "kmax": 1,
-            "manhole_storage_area": None,
+            # "name": "default",
+            # "flooding_threshold": 0.0001,
+            "friction_averaging": 0,
+            "friction_coefficient": None,
+            "friction_coefficient_file": None,
+            "friction_type": None,
+            "minimum_cell_size": 0.0,
+            "use_groundwater_flow": None,
+            # "initial_groundwater_level": None,
+            # "initial_groundwater_level_file": None,
+            # "initial_groundwater_level_aggregation": None,
+            # "initial_water_level_aggregation": None,
+            # "initial_water_level": -99.0,
+            # "initial_water_level_file": None,
+            "use_interflow": None,
+            # "interception": None,
+            # "interception_file": None,
+            "nr_grid_levels": 1,
+            "manhole_aboveground_storage_area": None,
             "max_angle_1d_advection": 1.570795,
-            "maximum_sim_time_step": None,
+            # "min_time_step": 0.01,
+            # "max_time_step": None,
             "maximum_table_step_size": None,
-            "minimum_sim_time_step": 0.01,
-            "name": "default",
-            "nr_timesteps": 9999,
-            "numerical_settings_id": 1,
-            "output_time_step": None,
-            "sim_time_step": None,
-            "simple_infiltration_settings_id": None,
-            "start_date": QDate.fromString("2000-01-01", "yyyy-MM-dd"),
-            "start_time": QTime.fromString("00:00:00", "HH:MM:SS"),
-            "table_step_size": 0.05,
+            # "time_step": None,
+            # "output_time_step": None,
+            "use_simple_infiltration": None,
+            "minimum_table_step_size": 0.05,
             "table_step_size_1d": 0.01,
-            "timestep_plus": 0,
-            "use_0d_inflow": None,
+            # "use_time_step_stretch": 0,
+            # "use_0d_inflow": None,
             "use_1d_flow": None,
             "use_2d_flow": None,
             "use_2d_rain": None,
-            "water_level_ini_type": None,
-            "wind_shielding_file": None,
         }
         return defaults
 
@@ -204,23 +196,23 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "convergence_cg": 0.000000001,
             "convergence_eps": 0.00001,
             "flow_direction_threshold": 0.000001,
-            "frict_shallow_water_correction": None,
+            "friction_shallow_water_depth_correction": None,
             "general_numerical_threshold": 0.00000001,
-            "integration_method": 0,
-            "limiter_grad_1d": 1,
-            "limiter_grad_2d": None,
+            "time_integration_method": 0,
+            "limiter_waterlevel_gradient_1d": 1,
+            "limiter_waterlevel_gradient_2d": None,
             "limiter_slope_crossectional_area_2d": None,
             "limiter_slope_friction_2d": None,
-            "max_degree": None,
-            "max_nonlin_iterations": 20,
-            "minimum_friction_velocity": 0.005,
-            "minimum_surface_area": 0.00000001,
-            "precon_cg": 1,
+            "max_degree_gauss_seidel": None,
+            "max_non_linear_newton_iterations": 20,
+            "min_friction_velocity": 0.005,
+            "min_surface_area": 0.00000001,
+            "use_preconditioner_cg": 1,
             "preissmann_slot": 0.0,
             "pump_implicit_ratio": 1.0,
-            "thin_water_layer_definition": None,
+            "limiter_slope_thin_water_layer": None,
             "use_of_cg": 20,
-            "use_of_nested_newton": None,
+            "use_nested_newton": None,
         }
         return defaults
 
@@ -229,7 +221,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         """Settings tables defaults map."""
         tables_defaults = {
             "model_settings": self.model_settings_defaults,
-            "v2_numerical_settings": self.numerical_settings_defaults,
+            "numerical_settings": self.numerical_settings_defaults,
         }
         return tables_defaults
 
@@ -242,41 +234,30 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         user_settings["epsg_code"] = int(epsg.split(":")[-1]) if epsg else 0
         use_1d_checked = self.use_1d_flow_group.isChecked()
         use_2d_checked = self.use_2d_flow_group.isChecked()
-        user_settings["advection_1d"] = 3 if use_1d_checked else 0
-        user_settings["advection_2d"] = 1 if use_2d_checked else 0
+        user_settings["use_advection_1d"] = 3 if use_1d_checked else 0
+        user_settings["use_advection_2d"] = 1 if use_2d_checked else 0
         if use_2d_checked:
             dem_file = os.path.basename(user_settings["dem_file"])
-            user_settings["dem_file"] = f"rasters/{dem_file}" if dem_file else None
-            sloping_checked = user_settings["frict_shallow_water_correction_sloping"]
-            user_settings["frict_shallow_water_correction"] = 3 if sloping_checked else 0
-            user_settings["limiter_grad_2d"] = 0 if sloping_checked else 1
+            user_settings["dem_file"] = dem_file if dem_file else None
+            sloping_checked = user_settings["friction_shallow_water_depth_correction_sloping"]
+            user_settings["friction_shallow_water_depth_correction"] = 3 if sloping_checked else 0
+            user_settings["limiter_waterlevel_gradient_2d"] = 0 if sloping_checked else 1
             user_settings["limiter_slope_crossectional_area_2d"] = 3 if sloping_checked else 0
             user_settings["limiter_slope_friction_2d"] = 1 if sloping_checked else 0
-            user_settings["limiter_slope_friction_2d"] = 1 if sloping_checked else 0
-            user_settings["thin_water_layer_definition"] = 0.1 if sloping_checked else None
-        frict_type_text = user_settings["frict_type_text"]
-        user_settings["frict_type"] = int(frict_type_text.split(":")[0])
-        frict_coef_file = os.path.basename(user_settings["frict_coef_file"])
-        user_settings["frict_coef_file"] = f"rasters/{frict_coef_file}" if frict_coef_file else None
+            user_settings["limiter_slope_thin_water_layer"] = 0.1 if sloping_checked else None
+        friction_type_text = user_settings["friction_type_text"]
+        user_settings["friction_type"] = int(friction_type_text.split(":")[0])
+        friction_coefficient_file = os.path.basename(user_settings["friction_coefficient_file"])
+        user_settings["friction_coefficient_file"] = friction_coefficient_file if friction_coefficient_file else None
         if not use_1d_checked or use_2d_checked:
-            user_settings["manhole_storage_area"] = None
-        sim_time_step = user_settings["sim_time_step"]
+            user_settings["manhole_aboveground_storage_area"] = None
+        sim_time_step = user_settings["time_step"]
         output_time_step_text = user_settings["output_time_step_text"]
         output_time_step_map = {"0-3 hours": 300, "3-12 hours": 900, "12-24 hours": 1800, "> 24 hours": 3600}
         suggested_ots = output_time_step_map[output_time_step_text]
         out_timestep_mod = suggested_ots % sim_time_step
         output_time_step = suggested_ots + (sim_time_step - out_timestep_mod) if out_timestep_mod else suggested_ots
         user_settings["output_time_step"] = output_time_step
-        number_of_time_step_map = {
-            "0-3 hours": 3 * 3600,
-            "3-12 hours": 12 * 3600,
-            "12-24 hours": 24 * 3600,
-            "> 24 hours": 48 * 3600,
-        }
-        suggested_nts = number_of_time_step_map[output_time_step_text]
-        num_timesteps_mod = suggested_nts % sim_time_step
-        timesteps_duration = suggested_nts + (sim_time_step - num_timesteps_mod) if num_timesteps_mod else suggested_nts
-        user_settings["nr_timesteps"] = timesteps_duration // sim_time_step
         if self.use_0d_inflow_group.isChecked():
             use_0d_inflow_surfaces = user_settings["use_0d_inflow_surfaces"]
             user_settings["use_0d_inflow"] = 2 if use_0d_inflow_surfaces else 1
@@ -285,14 +266,14 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         user_settings["use_1d_flow"] = 1 if use_1d_checked else 0
         user_settings["use_2d_flow"] = 1 if use_2d_checked else 0
         user_settings["use_2d_rain"] = 1 if use_2d_checked else 0
-        user_settings["use_of_nested_newton"] = 1 if use_1d_checked else 0
+        user_settings["use_nested_newton"] = 1 if use_1d_checked else 0
         if use_1d_checked and not use_2d_checked:
             max_degree = 700
         elif use_1d_checked and use_2d_checked:
             max_degree = 7
         else:
             max_degree = 5
-        user_settings["max_degree"] = max_degree
+        user_settings["max_degree_gauss_seidel"] = max_degree
         return user_settings
 
     def raster_filepaths(self):
@@ -566,7 +547,7 @@ class NewSchematisationWizard(QWizard):
                 for raster_name, raster_rel_path in raster_paths_info.items():
                     if not raster_rel_path:
                         continue
-                    raster_full_path = os.path.join(src_dir, raster_rel_path)
+                    raster_full_path = os.path.join(src_dir, "rasters", raster_rel_path)
                     if os.path.exists(raster_full_path):
                         new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_rel_path))
                         shutil.copyfile(raster_full_path, new_raster_filepath)
@@ -583,26 +564,6 @@ class NewSchematisationWizard(QWizard):
                 self.plugin_dock.communication.show_warn(warn_msg)
                 self.plugin_dock.communication.bar_warn("Schematisation creation aborted!")
                 return
-            for settings_table_name, new_raster_paths_info in new_paths.items():
-                settings_layer = geopackage_layer(
-                    wip_revision.geopackage_filepath, settings_table_name, geom_column=None
-                )
-                settings_layer.startEditing()
-                s_fields = settings_layer.fields()
-                s_feat = next(settings_layer.getFeatures())
-                new_values = dict()
-                for field_name, field_value in new_raster_paths_info.items():
-                    f_idx = s_fields.lookupField(field_name)
-                    if f_idx > 0 and field_value is not None:
-                        new_values[f_idx] = field_value
-                settings_layer.changeAttributeValues(s_feat.id(), new_values)
-                success = settings_layer.commitChanges()
-                if not success:
-                    commit_errors = settings_layer.commitErrors()
-                    errors_str = "\n".join(commit_errors)
-                    error = CommitErrors(f"{settings_table_name} commit errors:\n{errors_str}")
-                    raise error
-                time.sleep(0.5)
             self.new_schematisation = schematisation
             self.new_local_schematisation = local_schematisation
             msg = f"Schematisation '{name} ({schematisation.id})' created!"
