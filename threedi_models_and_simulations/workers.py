@@ -376,7 +376,7 @@ class UploadProgressWorker(QRunnable):
     @staticmethod
     def api_raster_type(legacy_raster_type):
         raster_type_map = {
-            "friction_coefficient_file": "frict_coef_file",
+            "friction_coefficient_file": "friction_coefficient_file",
             "max_infiltration_volume_file": "max_infiltration_capacity_file",
             "groundwater_hydraulic_conductivity_file": "groundwater_hydro_connectivity_file",
         }

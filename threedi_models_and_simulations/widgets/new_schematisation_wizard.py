@@ -10,7 +10,7 @@ from pathlib import Path
 
 from qgis.core import QgsFeature, QgsRasterLayer
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QDate, QSettings, QSize, Qt, QTime
+from qgis.PyQt.QtCore import QSettings, QSize, Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QGridLayout, QSizePolicy, QWizard, QWizardPage
 from threedi_api_client.openapi import ApiException
@@ -115,16 +115,16 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
     def on_2d_flow_toggled(self, on):
         """Logic for checking/unchecking 2D Flow settings group."""
         if on:
-            self.frict_coef_label.setEnabled(True)
-            self.frict_coef_file.setEnabled(True)
-            self.grid_space.setValue(0.0)
+            self.friction_coefficient_label.setEnabled(True)
+            self.friction_coefficient_file.setEnabled(True)
+            self.minimum_cell_size.setValue(0.0)
             if self.use_1d_flow_group.isChecked():
                 self.manhole_storage_area_label.setDisabled(True)
                 self.manhole_storage_area.setDisabled(True)
         else:
-            self.frict_coef_label.setDisabled(True)
-            self.frict_coef_file.setDisabled(True)
-            self.grid_space.setValue(9999.0)
+            self.friction_coefficient_label.setDisabled(True)
+            self.friction_coefficient_file.setDisabled(True)
+            self.minimum_cell_size.setValue(9999.0)
             if self.use_1d_flow_group.isChecked():
                 self.manhole_storage_area_label.setEnabled(True)
                 self.manhole_storage_area.setEnabled(True)
@@ -139,47 +139,26 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
 
     @property
     def model_settings_defaults(self):
-        """Global settings defaults."""
-        # TODO: Move commented variables to appropriate settings tables (schema 300)
+        """Model settings defaults."""
         defaults = {
-            "id": 1,
-            # "use_advection_1d": 3,
-            # "use_advection_2d": 1,
-            # "use_structure_control": None,
             "dem_file": None,
             "calculation_point_distance": 1000.0,
             "embedded_cutoff_threshold": 0.05,
             "epsg_code": None,
-            # "name": "default",
-            # "flooding_threshold": 0.0001,
             "friction_averaging": 0,
             "friction_coefficient": None,
             "friction_coefficient_file": None,
             "friction_type": None,
             "minimum_cell_size": 0.0,
             "use_groundwater_flow": None,
-            # "initial_groundwater_level": None,
-            # "initial_groundwater_level_file": None,
-            # "initial_groundwater_level_aggregation": None,
-            # "initial_water_level_aggregation": None,
-            # "initial_water_level": -99.0,
-            # "initial_water_level_file": None,
             "use_interflow": None,
-            # "interception": None,
-            # "interception_file": None,
             "nr_grid_levels": 1,
             "manhole_aboveground_storage_area": None,
             "max_angle_1d_advection": 1.570795,
-            # "min_time_step": 0.01,
-            # "max_time_step": None,
             "maximum_table_step_size": None,
-            # "time_step": None,
-            # "output_time_step": None,
             "use_simple_infiltration": None,
             "minimum_table_step_size": 0.05,
             "table_step_size_1d": 0.01,
-            # "use_time_step_stretch": 0,
-            # "use_0d_inflow": None,
             "use_1d_flow": None,
             "use_2d_flow": None,
             "use_2d_rain": None,
@@ -190,11 +169,11 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
     def numerical_settings_defaults(self):
         """Numerical settings defaults."""
         defaults = {
-            "id": 1,
             "cfl_strictness_factor_1d": 1.0,
             "cfl_strictness_factor_2d": 1.0,
             "convergence_cg": 0.000000001,
             "convergence_eps": 0.00001,
+            "flooding_threshold": 0.0001,
             "flow_direction_threshold": 0.000001,
             "friction_shallow_water_depth_correction": None,
             "general_numerical_threshold": 0.00000001,
@@ -217,11 +196,69 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         return defaults
 
     @property
+    def simulation_template_settings_defaults(self):
+        """Simulation template settings defaults."""
+        defaults = {
+            "name": "default",
+            "use_structure_control": None,
+        }
+        return defaults
+
+    @property
+    def time_step_settings_defaults(self):
+        """Time step settings defaults."""
+        defaults = {
+            "time_step": None,
+            "min_time_step": 0.01,
+            "max_time_step": None,
+            "output_time_step": None,
+            "use_time_step_stretch": 0,
+            "use_0d_inflow": None,
+        }
+        return defaults
+
+    @property
+    def physical_settings_defaults(self):
+        """Physical settings defaults."""
+        defaults = {
+            "use_advection_1d": 3,
+            "use_advection_2d": 1,
+        }
+        return defaults
+
+    @property
+    def initial_conditions_defaults(self):
+        """Initial conditions defaults."""
+        defaults = {
+            "initial_groundwater_level": None,
+            "initial_groundwater_level_file": None,
+            "initial_groundwater_level_aggregation": None,
+            "initial_water_level_aggregation": None,
+            "initial_water_level": -99.0,
+            "initial_water_level_file": None,
+        }
+        return defaults
+
+    @property
+    def interception_defaults(self):
+        """Interception defaults."""
+        defaults = {
+            "interception": None,
+            "interception_file": None,
+        }
+        return defaults
+
+    @property
     def settings_tables_defaults(self):
         """Settings tables defaults map."""
         tables_defaults = {
             "model_settings": self.model_settings_defaults,
             "numerical_settings": self.numerical_settings_defaults,
+            "simulation_template_settings": self.simulation_template_settings_defaults,
+            "time_step_settings": self.time_step_settings_defaults,
+            "physical_settings": self.physical_settings_defaults,
+            "initial_conditions": self.initial_conditions_defaults,
+            "interception_settings": self.interception_defaults,
         }
         return tables_defaults
 
@@ -251,12 +288,12 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         user_settings["friction_coefficient_file"] = friction_coefficient_file if friction_coefficient_file else None
         if not use_1d_checked or use_2d_checked:
             user_settings["manhole_aboveground_storage_area"] = None
-        sim_time_step = user_settings["time_step"]
+        time_step = user_settings["time_step"]
         output_time_step_text = user_settings["output_time_step_text"]
         output_time_step_map = {"0-3 hours": 300, "3-12 hours": 900, "12-24 hours": 1800, "> 24 hours": 3600}
         suggested_ots = output_time_step_map[output_time_step_text]
-        out_timestep_mod = suggested_ots % sim_time_step
-        output_time_step = suggested_ots + (sim_time_step - out_timestep_mod) if out_timestep_mod else suggested_ots
+        out_timestep_mod = suggested_ots % time_step
+        output_time_step = suggested_ots + (time_step - out_timestep_mod) if out_timestep_mod else suggested_ots
         user_settings["output_time_step"] = output_time_step
         if self.use_0d_inflow_group.isChecked():
             use_0d_inflow_surfaces = user_settings["use_0d_inflow_surfaces"]
@@ -279,8 +316,8 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
     def raster_filepaths(self):
         """Get raster filepaths."""
         dem_file = self.dem_file.filePath()
-        frict_coef_file = self.frict_coef_file.filePath()
-        return dem_file, frict_coef_file
+        friction_coefficient_file = self.friction_coefficient_file.filePath()
+        return dem_file, friction_coefficient_file
 
     def collect_new_schematisation_settings(self):
         """Get all needed settings."""
@@ -380,12 +417,14 @@ class SchematisationSettingsPage(QWizardPage):
         self.settings_are_valid = True
         # Check non-zero settings
         non_zero_required_widgets = [
-            ("Simulation timestep", self.main_widget.sim_time_step),
+            ("Simulation timestep", self.main_widget.time_step),
         ]
         if self.main_widget.use_2d_flow_group.isChecked():
-            non_zero_required_widgets.append(("Computational Cell Size", self.main_widget.grid_space))
-            if not self.main_widget.frict_coef_file.filePath():
-                non_zero_required_widgets.append(("Global 2D friction coefficient", self.main_widget.frict_coef))
+            non_zero_required_widgets.append(("Computational Cell Size", self.main_widget.minimum_cell_size))
+            if not self.main_widget.friction_coefficient_file.filePath():
+                non_zero_required_widgets.append(
+                    ("Global 2D friction coefficient", self.main_widget.friction_coefficient)
+                )
         invalid_zero_settings = []
         for setting_name, setting_widget in non_zero_required_widgets:
             if not setting_widget.value() > 0:
@@ -401,8 +440,8 @@ class SchematisationSettingsPage(QWizardPage):
         if self.main_widget.use_2d_flow_group.isChecked():
             if self.main_widget.dem_file.filePath():
                 valid_path_required_widgets.append(("DEM", self.main_widget.dem_file))
-            if self.main_widget.frict_coef.value() == 0.0:
-                valid_path_required_widgets.append(("friction", self.main_widget.frict_coef_file))
+            if self.main_widget.friction_coefficient.value() == 0.0:
+                valid_path_required_widgets.append(("friction", self.main_widget.friction_coefficient_file))
         invalid_path_settings = []
         for setting_name, setting_widget in valid_path_required_widgets:
             raster_filepath = Path(setting_widget.filePath())
@@ -461,7 +500,6 @@ class NewSchematisationWizard(QWizard):
         name, description, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_data()
         schematisation_settings = self.schematisation_settings_page.main_widget.collect_new_schematisation_settings()
         raster_filepaths = self.schematisation_settings_page.main_widget.raster_filepaths()
-        aggregation_settings_queries = self.schematisation_settings_page.main_widget.aggregation_settings_queries
         try:
             schematisation = self.tc.create_schematisation(name, owner, tags=tags, meta={"description": description})
             local_schematisation = LocalSchematisation(
