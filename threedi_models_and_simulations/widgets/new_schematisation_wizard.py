@@ -258,7 +258,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "time_step_settings": self.time_step_settings_defaults,
             "physical_settings": self.physical_settings_defaults,
             "initial_conditions": self.initial_conditions_defaults,
-            "interception_settings": self.interception_defaults,
+            "interception": self.interception_defaults,
         }
         return tables_defaults
 
