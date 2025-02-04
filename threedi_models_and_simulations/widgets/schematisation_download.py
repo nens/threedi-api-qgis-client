@@ -226,7 +226,7 @@ class SchematisationDownload(uicls, basecls):
             schematisation_name = schematisation.name
             revision_pk = revision.id
             revision_number = revision.number
-            revision_sqlite = revision.geopackage_filepath
+            revision_sqlite = revision.sqlite
             if not is_latest_revision:
                 latest_online_revision = max([rev.number for rev in self.revisions]) if self.revisions else None
                 is_latest_revision = revision_number == latest_online_revision

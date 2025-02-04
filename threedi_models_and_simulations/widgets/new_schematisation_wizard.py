@@ -72,13 +72,15 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
 
     def browse_existing_geopackage(self):
         """Show dialog for choosing an existing GeoPackage file path."""
-        gpkg_filter = "GeoPackage (*.gpkg *.GPKG)"
-        geopackage_path = get_filepath(self, dialog_title="Select GeoPackage file", extension_filter=gpkg_filter)
+        gpkg_filter = "GeoPackage/SQLite (*.gpkg *.GPKG *.sqlite *SQLITE)"
+        geopackage_path = get_filepath(self, dialog_title="Select Schematisation file", extension_filter=gpkg_filter)
         if geopackage_path is not None:
             schema_is_valid = ensure_valid_schema(
                 geopackage_path, self.parent_page.parent_wizard.plugin_dock.communication
             )
             if schema_is_valid is True:
+                if geopackage_path.lower().endswith(".sqlite"):
+                    geopackage_path = geopackage_path.rsplit(".", 1)[0] + ".gpkg"
                 self.le_geopackage_path.setText(geopackage_path)
 
 
