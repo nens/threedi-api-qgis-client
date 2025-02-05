@@ -108,11 +108,11 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         """Logic for checking/unchecking 1D Flow settings group."""
         if on:
             if self.use_2d_flow_group.isChecked():
-                self.manhole_storage_area_label.setDisabled(True)
-                self.manhole_storage_area.setDisabled(True)
+                self.manhole_aboveground_storage_area_label.setDisabled(True)
+                self.manhole_aboveground_storage_area.setDisabled(True)
             else:
-                self.manhole_storage_area_label.setEnabled(True)
-                self.manhole_storage_area.setEnabled(True)
+                self.manhole_aboveground_storage_area_label.setEnabled(True)
+                self.manhole_aboveground_storage_area.setEnabled(True)
 
     def on_2d_flow_toggled(self, on):
         """Logic for checking/unchecking 2D Flow settings group."""
@@ -121,15 +121,15 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             self.friction_coefficient_file.setEnabled(True)
             self.minimum_cell_size.setValue(0.0)
             if self.use_1d_flow_group.isChecked():
-                self.manhole_storage_area_label.setDisabled(True)
-                self.manhole_storage_area.setDisabled(True)
+                self.manhole_aboveground_storage_area_label.setDisabled(True)
+                self.manhole_aboveground_storage_area.setDisabled(True)
         else:
             self.friction_coefficient_label.setDisabled(True)
             self.friction_coefficient_file.setDisabled(True)
             self.minimum_cell_size.setValue(9999.0)
             if self.use_1d_flow_group.isChecked():
-                self.manhole_storage_area_label.setEnabled(True)
-                self.manhole_storage_area.setEnabled(True)
+                self.manhole_aboveground_storage_area_label.setEnabled(True)
+                self.manhole_aboveground_storage_area.setEnabled(True)
 
     def on_dem_file_change(self):
         """Extra logic for changing DEM file path."""
