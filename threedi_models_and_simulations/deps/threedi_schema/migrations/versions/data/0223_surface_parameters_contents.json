@@ -1,0 +1,167 @@
+[
+    {
+        "id": 101,
+        "description": "gesloten verharding, hellend",
+        "outflow_delay": 0.5,
+        "surface_layer_thickness": 0.0,
+        "infiltration": 0,
+        "max_infiltration_capacity": 0,
+        "min_infiltration_capacity": 0.0,
+        "infiltration_decay_constant": 0,
+        "infiltration_recovery_constant": 0.0
+    },
+    {
+        "id": 102,
+        "description": "gesloten verharding, vlak",
+        "outflow_delay": 0.2,
+        "surface_layer_thickness": 0.5,
+        "infiltration": 0,
+        "max_infiltration_capacity": 0,
+        "min_infiltration_capacity": 0.0,
+        "infiltration_decay_constant": 0,
+        "infiltration_recovery_constant": 0.0
+    },
+    {
+        "id": 103,
+        "description": "gesloten verharding, vlak uitgestrekt",
+        "outflow_delay": 0.1,
+        "surface_layer_thickness": 1.0,
+        "infiltration": 0,
+        "max_infiltration_capacity": 0,
+        "min_infiltration_capacity": 0.0,
+        "infiltration_decay_constant": 0,
+        "infiltration_recovery_constant": 0.0
+    },
+    {
+        "id": 104,
+        "description": "open verharding, hellend",
+        "outflow_delay": 0.5,
+        "surface_layer_thickness": 0.0,
+        "infiltration": 1,
+        "max_infiltration_capacity": 2,
+        "min_infiltration_capacity": 0.5,
+        "infiltration_decay_constant": 3,
+        "infiltration_recovery_constant": 0.1
+    },
+    {
+        "id": 105,
+        "description": "open verharding, vlak",
+        "outflow_delay": 0.2,
+        "surface_layer_thickness": 0.5,
+        "infiltration": 1,
+        "max_infiltration_capacity": 2,
+        "min_infiltration_capacity": 0.5,
+        "infiltration_decay_constant": 3,
+        "infiltration_recovery_constant": 0.1
+    },
+    {
+        "id": 106,
+        "description": "open verharding, vlak uitgestrekt",
+        "outflow_delay": 0.1,
+        "surface_layer_thickness": 1.0,
+        "infiltration": 1,
+        "max_infiltration_capacity": 2,
+        "min_infiltration_capacity": 0.5,
+        "infiltration_decay_constant": 3,
+        "infiltration_recovery_constant": 0.1
+    },
+    {
+        "id": 107,
+        "description": "dak, hellend",
+        "outflow_delay": 0.5,
+        "surface_layer_thickness": 0.0,
+        "infiltration": 0,
+        "max_infiltration_capacity": 0,
+        "min_infiltration_capacity": 0.0,
+        "infiltration_decay_constant": 0,
+        "infiltration_recovery_constant": 0.0
+    },
+    {
+        "id": 108,
+        "description": "dak, vlak",
+        "outflow_delay": 0.2,
+        "surface_layer_thickness": 2.0,
+        "infiltration": 0,
+        "max_infiltration_capacity": 0,
+        "min_infiltration_capacity": 0.0,
+        "infiltration_decay_constant": 0,
+        "infiltration_recovery_constant": 0.0
+    },
+    {
+        "id": 109,
+        "description": "dak, vlak uitgestrekt",
+        "outflow_delay": 0.1,
+        "surface_layer_thickness": 4.0,
+        "infiltration": 0,
+        "max_infiltration_capacity": 0,
+        "min_infiltration_capacity": 0.0,
+        "infiltration_decay_constant": 0,
+        "infiltration_recovery_constant": 0.0
+    },
+    {
+        "id": 110,
+        "description": "onverhard, hellend",
+        "outflow_delay": 0.5,
+        "surface_layer_thickness": 2.0,
+        "infiltration": 1,
+        "max_infiltration_capacity": 5,
+        "min_infiltration_capacity": 1.0,
+        "infiltration_decay_constant": 3,
+        "infiltration_recovery_constant": 0.1
+    },
+    {
+        "id": 111,
+        "description": "onverhard, vlak",
+        "outflow_delay": 0.2,
+        "surface_layer_thickness": 4.0,
+        "infiltration": 1,
+        "max_infiltration_capacity": 5,
+        "min_infiltration_capacity": 1.0,
+        "infiltration_decay_constant": 3,
+        "infiltration_recovery_constant": 0.1
+    },
+    {
+        "id": 112,
+        "description": "onverhard, vlak uitgestrekt",
+        "outflow_delay": 0.1,
+        "surface_layer_thickness": 6.0,
+        "infiltration": 1,
+        "max_infiltration_capacity": 5,
+        "min_infiltration_capacity": 1.0,
+        "infiltration_decay_constant": 3,
+        "infiltration_recovery_constant": 0.1
+    },
+    {
+        "id": 113,
+        "description": "half verhard, hellend",
+        "outflow_delay": 0.5,
+        "surface_layer_thickness": 2.0,
+        "infiltration": 1,
+        "max_infiltration_capacity": 5,
+        "min_infiltration_capacity": 1.0,
+        "infiltration_decay_constant": 3,
+        "infiltration_recovery_constant": 0.1
+    },
+    {
+        "id": 114,
+        "description": "half verhard, vlak",
+        "outflow_delay": 0.2,
+        "surface_layer_thickness": 4.0,
+        "infiltration": 1,
+        "max_infiltration_capacity": 5,
+        "min_infiltration_capacity": 1.0,
+        "infiltration_decay_constant": 3,
+        "infiltration_recovery_constant": 0.1
+    },
+    {
+        "id": 115,
+        "description": "half verhard, vlak uitgestrekt",
+        "outflow_delay": 0.1,
+        "surface_layer_thickness": 6.0,
+        "infiltration": 1,
+        "max_infiltration_capacity": 5,
+        "min_infiltration_capacity": 1.0,
+        "infiltration_decay_constant": 3,
+        "infiltration_recovery_constant": 0.1
+    }
+]

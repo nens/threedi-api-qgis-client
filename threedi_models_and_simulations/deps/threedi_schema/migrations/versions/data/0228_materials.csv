@@ -1,0 +1,10 @@
+id,description,friction_type,friction_coefficient
+0,Concrete,2,0.0145
+1,PVC,2,0.011
+2,Gres,2,0.0115
+3,Cast iron,2,0.0135
+4,Brickwork,2,0.016
+5,HPE,2,0.011
+6,HDPE,2,0.011
+7,Plate iron,2,0.0135
+8,Steel,2,0.013

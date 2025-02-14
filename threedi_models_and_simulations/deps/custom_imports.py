@@ -9,11 +9,21 @@ from ..utils import parse_version_number
 
 REQUIRED_API_CLIENT_VERSION = "4.1.8"
 REQUIRED_3DI_SCHEMA_VERSION = "0.300.8"
-REQUIRED_3DI_MI_UTILS_VERSION = "0.1.5"
+REQUIRED_3DI_MI_UTILS_VERSION = "0.1.6.dev0"
+REQUIRED_GEOALCHEMY2_VERSION = "0.14.0"
+REQUIRED_SQLALCHEMY_VERSION = "2.0.6"
+REQUIRED_ALEMBIC_VERSION = "1.14.1"
+REQUIRED_MAKO_VERSION = "1.3.9"
+
+
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 API_CLIENT_WHEEL = os.path.join(MAIN_DIR, f"threedi_api_client-{REQUIRED_API_CLIENT_VERSION}-py2.py3-none-any.whl")
 SCHEMA_WHEEL = os.path.join(MAIN_DIR, f"threedi_schema-{REQUIRED_3DI_SCHEMA_VERSION}-py3-none-any.whl")
 MI_UTILS_WHEEL = os.path.join(MAIN_DIR, f"threedi_mi_utils-{REQUIRED_3DI_MI_UTILS_VERSION}-py3-none-any.whl")
+GEOALCHEMY2_WHEEL = os.path.join(MAIN_DIR, f"GeoAlchemy2-{REQUIRED_GEOALCHEMY2_VERSION}-py3-none-any.whl")
+SQLALCHEMY_WHEEL = os.path.join(MAIN_DIR, f"SQLAlchemy-{REQUIRED_SQLALCHEMY_VERSION}-py3-none-any.whl")
+ALEMBIC_WHEEL = os.path.join(MAIN_DIR, f"alembic-{REQUIRED_ALEMBIC_VERSION}-py3-none-any.whl")
+MAKO_WHEEL = os.path.join(MAIN_DIR, f"Mako-{REQUIRED_MAKO_VERSION}-py3-none-any.whl")
 
 
 def patch_wheel_imports():
@@ -64,10 +74,29 @@ def patch_wheel_imports():
         sys.path.append(deps_path)
 
     try:
+        import sqlalchemy
+    except ImportError:
+        deps_path = SQLALCHEMY_WHEEL
+        sys.path.append(deps_path)
+
+    try:
+        import geoalchemy2
+    except ImportError:
+        deps_path = GEOALCHEMY2_WHEEL
+        sys.path.append(deps_path)
+
+    try:
+        import alembic
+    except ImportError:
+        deps_path = ALEMBIC_WHEEL
+        sys.path.append(deps_path)
+
+    try:
         import threedi_schema
     except ImportError:
-        deps_path = SCHEMA_WHEEL
-        sys.path.append(deps_path)
+         # We no longer directly use the wheels as this caused issues with Alembic and temp files. That's
+         # why we add the deps folder (containing threedi_schema) to the path.
+        sys.path.append(MAIN_DIR)
 
     try:
         import openapi_client
@@ -76,11 +105,19 @@ def patch_wheel_imports():
         deps_path = API_CLIENT_WHEEL
         sys.path.append(deps_path)
 
-    try:
+    try: 
         import threedi_mi_utils
     except ImportError:
         deps_path = MI_UTILS_WHEEL
         sys.path.append(deps_path)
+
+    try:
+        import mako
+    except ImportError:
+        deps_path = MAKO_WHEEL
+        sys.path.append(deps_path)
+
+
 
 
 def api_client_version_matches(exact_match=False):
