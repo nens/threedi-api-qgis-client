@@ -348,7 +348,9 @@ class SelectFilesWidget(uicls_files_page, basecls_files_page):
             )
         else:
             remote_rasters = []
-        remote_rasters_by_type = {raster.type: raster for raster in remote_rasters}
+        remote_rasters_by_type = {
+            SchematisationRasterReferences.settings_raster_type(raster.type): raster for raster in remote_rasters
+        }
         if "dem_raw_file" in remote_rasters_by_type:
             remote_rasters_by_type["dem_file"] = remote_rasters_by_type["dem_raw_file"]
             del remote_rasters_by_type["dem_raw_file"]

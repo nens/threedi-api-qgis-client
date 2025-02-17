@@ -94,8 +94,8 @@ def patch_wheel_imports():
     try:
         import threedi_schema
     except ImportError:
-         # We no longer directly use the wheels as this caused issues with Alembic and temp files. That's
-         # why we add the deps folder (containing threedi_schema) to the path.
+        # We no longer directly use the wheels as this caused issues with Alembic and temp files. That's
+        # why we add the deps folder (containing threedi_schema) to the path.
         sys.path.append(MAIN_DIR)
 
     try:
@@ -105,7 +105,7 @@ def patch_wheel_imports():
         deps_path = API_CLIENT_WHEEL
         sys.path.append(deps_path)
 
-    try: 
+    try:
         import threedi_mi_utils
     except ImportError:
         deps_path = MI_UTILS_WHEEL
@@ -116,8 +116,6 @@ def patch_wheel_imports():
     except ImportError:
         deps_path = MAKO_WHEEL
         sys.path.append(deps_path)
-
-
 
 
 def api_client_version_matches(exact_match=False):

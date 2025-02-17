@@ -360,6 +360,35 @@ class NestedObject:
 
 
 class SchematisationRasterReferences:
+
+    @staticmethod
+    def settings_to_api_raster_types():
+        raster_type_map = {
+            "friction_coefficient_file": "frict_coef_file",
+            "max_infiltration_volume_file": "max_infiltration_capacity_file",
+            "groundwater_hydraulic_conductivity_file": "groundwater_hydro_connectivity_file",
+        }
+        return raster_type_map
+
+    @staticmethod
+    def api_to_settings_raster_types():
+        raster_type_map = {v: k for k, v in SchematisationRasterReferences.settings_to_api_raster_types().items()}
+        return raster_type_map
+
+    @staticmethod
+    def api_client_raster_type(settings_raster_type):
+        try:
+            return SchematisationRasterReferences.settings_to_api_raster_types()[settings_raster_type]
+        except KeyError:
+            return settings_raster_type
+
+    @staticmethod
+    def settings_raster_type(api_raster_type):
+        try:
+            return SchematisationRasterReferences.api_to_settings_raster_types()[api_raster_type]
+        except KeyError:
+            return api_raster_type
+
     @staticmethod
     def model_settings_rasters():
         """Rasters mapping from the Model settings layer."""

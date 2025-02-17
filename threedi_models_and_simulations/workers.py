@@ -29,6 +29,7 @@ from .utils import (
     TEMPDIR,
     EventTypes,
     FileState,
+    SchematisationRasterReferences,
     ThreediFileState,
     ThreediModelTaskStatus,
     UploadFileStatus,
@@ -373,18 +374,6 @@ class UploadProgressWorker(QRunnable):
         self.current_task_progress = 100
         self.report_upload_progress()
 
-    @staticmethod
-    def api_raster_type(legacy_raster_type):
-        raster_type_map = {
-            "friction_coefficient_file": "friction_coefficient_file",
-            "max_infiltration_volume_file": "max_infiltration_capacity_file",
-            "groundwater_hydraulic_conductivity_file": "groundwater_hydro_connectivity_file",
-        }
-        try:
-            return raster_type_map[legacy_raster_type]
-        except KeyError:
-            return legacy_raster_type
-
     def upload_raster_task(self, raster_type):
         """Run raster file upload task."""
         self.current_task = f"UPLOAD RASTER ({raster_type})"
@@ -393,7 +382,10 @@ class UploadProgressWorker(QRunnable):
         raster_filepath = self.upload_specification["selected_files"][raster_type]["filepath"]
         raster_file = os.path.basename(raster_filepath)
         raster_revision = self.tc.create_schematisation_revision_raster(
-            self.schematisation.id, self.revision.id, raster_file, raster_type=self.api_raster_type(raster_type)
+            self.schematisation.id,
+            self.revision.id,
+            raster_file,
+            raster_type=SchematisationRasterReferences.api_client_raster_type(raster_type),
         )
         raster_upload = self.tc.upload_schematisation_revision_raster(
             raster_revision.id, self.schematisation.id, self.revision.id, raster_file
@@ -404,7 +396,7 @@ class UploadProgressWorker(QRunnable):
 
     def delete_raster_task(self, raster_type):
         """Run raster file deletion task."""
-        types_to_delete = [self.api_raster_type(raster_type)]
+        types_to_delete = [SchematisationRasterReferences.api_client_raster_type(raster_type)]
         if raster_type == "dem_file":
             types_to_delete.append("dem_raw_file")  # We need to remove legacy 'dem_raw_file` as well
         self.current_task = f"DELETE RASTER ({raster_type})"
