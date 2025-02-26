@@ -921,6 +921,8 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                 if initial_saved_state_idx >= 0:
                     self.cbo_saved_states.setCurrentIndex(initial_saved_state_idx)
             initial_waterlevels = tc.fetch_3di_model_initial_waterlevels(model_id) or []
+            for initial_waterlevel in initial_waterlevels:
+                print(initial_waterlevel.to_dict())
             initial_waterlevels_2d = [iw for iw in initial_waterlevels if iw.dimension == "two_d"]
             initial_waterlevels_1d = [iw for iw in initial_waterlevels if iw.dimension == "one_d"]
             if initial_waterlevels_1d:
@@ -933,15 +935,21 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                     self.cbo_1d_online_file.addItem(iw.file.filename)
                 else:
                     logger.info(f"Water level instance {iw.id} does not have a file, skipping.")
-            if initial_waterlevels_2d:
-                self.rb_2d_online_raster.setChecked(True)
-                self.rb_gw_online_raster.setChecked(True)
             for iw in sorted(initial_waterlevels_2d, key=attrgetter("id")):
                 raster = tc.fetch_3di_model_raster(model_id, iw.source_raster_id)
                 raster_filename = raster.file.filename
+                raster_type = raster.type
                 self.initial_waterlevels[raster_filename] = iw
-                self.cbo_2d_online_raster.addItem(raster_filename)
-                self.cbo_gw_online_raster.addItem(raster_filename)
+                if raster_type == "initial_waterlevel_file":
+                    if not self.rb_2d_online_raster.isChecked():
+                        self.rb_2d_online_raster.setChecked(True)
+                    self.cbo_2d_online_raster.addItem(raster_filename)
+                elif raster_type == "initial_groundwater_level_file":
+                    if not self.rb_gw_online_raster.isChecked():
+                        self.rb_gw_online_raster.setChecked(True)
+                    self.cbo_gw_online_raster.addItem(raster_filename)
+                else:
+                    continue
         except ApiException as e:
             error_msg = extract_error_message(e)
             self.parent_page.parent_wizard.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))

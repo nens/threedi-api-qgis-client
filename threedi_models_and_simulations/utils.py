@@ -367,6 +367,7 @@ class SchematisationRasterReferences:
             "friction_coefficient_file": "frict_coef_file",
             "max_infiltration_volume_file": "max_infiltration_capacity_file",
             "groundwater_hydraulic_conductivity_file": "groundwater_hydro_connectivity_file",
+            "initial_water_level_file":  "initial_waterlevel_file",
         }
         return raster_type_map
 
