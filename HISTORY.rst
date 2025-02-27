@@ -4,7 +4,7 @@ History
 3.15.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fixed schematisation tag setting (#640)
 
 
 3.15.2 (2025-01-10)

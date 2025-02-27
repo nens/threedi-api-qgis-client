@@ -17,9 +17,11 @@ from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import LocalSchematisation
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import EMPTY_DB_PATH, SchematisationRasterReferences, extract_error_message
-from ..utils_qgis import execute_sqlite_queries, sqlite_layer
-from ..utils_ui import ensure_valid_schema, get_filepath, read_3di_settings, save_3di_settings, scan_widgets_parameters
+from ..utils import (EMPTY_DB_PATH, SchematisationRasterReferences,
+                     extract_error_message)
+from ..utils_qgis import geopackage_layer
+from ..utils_ui import (ensure_valid_schema, get_filepath, read_3di_settings,
+                        save_3di_settings, scan_widgets_parameters)
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_schema_name_page, basecls_schema_name_page = uic.loadUiType(
@@ -65,7 +67,10 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
         """Return new schematisation name, tags and owner."""
         name = self.le_schematisation_name.text()
         description = self.le_description.text()
-        tags = self.le_tags.text()
+        if not self.le_tags.text():
+            tags = []
+        else:
+            tags = [tag.strip() for tag in self.le_tags.text().split(",")]
         organisation = self.cbo_organisations.currentData()
         owner = organisation.unique_id
         return name, description, tags, owner
