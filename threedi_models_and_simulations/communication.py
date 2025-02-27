@@ -5,7 +5,8 @@ from enum import Enum
 from qgis.core import Qgis
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QBrush, QColor, QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import QInputDialog, QMessageBox, QProgressBar, QPushButton
+from qgis.PyQt.QtWidgets import (QInputDialog, QMessageBox, QProgressBar,
+                                 QPushButton)
 
 
 class UICommunication(object):
@@ -194,6 +195,7 @@ class TreeViewLogger(object):
             LogLevels.INFO.value: QColor(Qt.black),
             LogLevels.WARNING.value: QColor(229, 144, 80),
             LogLevels.ERROR.value: QColor(Qt.red),
+            LogLevels.FUTURE_ERROR.value: QColor(102, 51, 153)
         }
         self.initialize_view()
 
@@ -229,3 +231,4 @@ class LogLevels(Enum):
     INFO = "INFO"
     WARNING = "WARNING"
     ERROR = "ERROR"
+    FUTURE_ERROR = "FUTURE_ERROR"
