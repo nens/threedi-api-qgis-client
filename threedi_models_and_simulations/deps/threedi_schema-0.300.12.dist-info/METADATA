@@ -1,6 +1,6 @@
 Metadata-Version: 2.2
 Name: threedi-schema
-Version: 0.300.8
+Version: 0.300.12
 Summary: The schema of 3Di schematization files
 Author-email: Nelen & Schuurmans <info@nelen-schuurmans.nl>
 License: MIT
@@ -90,6 +90,30 @@ Changelog of threedi-schema
 ===================================================
 
 
+0.300.12 (2025-02-27)
+---------------------
+
+- Delete temporary model settings row after it is set for the EPSG code
+
+
+0.300.11 (2025-02-20)
+---------------------
+
+- Fix EPSG code setting on empty databases
+
+
+0.300.10 (2025-02-18)
+---------------------
+
+- schema.epsg_code returns None if EPSG code could not be determined from database
+
+
+0.300.9 (2025-02-18)
+--------------------
+
+- Make schema.epsg_code work for all migration versions.
+  Raises threedi_schema.migrations.exceptions.InvalidSRIDException if the epsg_code is unusable or not set.
+
 0.300.8 (2025-02-11)
 --------------------
 
@@ -175,7 +199,7 @@ Changelog of threedi-schema
 0.229.2 (2025-01-16)
 --------------------
 
-- Rewrite geopackage conversion to use gdal.VectorTranslate instead of ogr2ogr 
+- Rewrite geopackage conversion to use gdal.VectorTranslate instead of ogr2ogr
 
 
 0.229.1 (2025-01-15)

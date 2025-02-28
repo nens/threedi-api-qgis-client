@@ -1,7 +1,6 @@
 import warnings
-from functools import cached_property
 from pathlib import Path
-from typing import Tuple
+from typing import Optional, Tuple
 
 # This import is needed for alembic to recognize the geopackage dialect
 import geoalchemy2.alembic_helpers  # noqa: F401
@@ -16,9 +15,12 @@ from osgeo import gdal
 from sqlalchemy import Column, Integer, MetaData, Table, text
 from sqlalchemy.exc import IntegrityError
 
+from threedi_schema.migrations.exceptions import InvalidSRIDException
+
 from ..domain import constants, models
 from ..infrastructure.spatial_index import ensure_spatial_indexes
 from ..infrastructure.spatialite_versions import copy_models, get_spatialite_version
+from ..migrations.utils import get_model_srid
 from .errors import MigrationMissingError, UpgradeFailedError
 from .upgrade_utils import setup_logging
 
@@ -94,7 +96,7 @@ class ModelSchema:
         else:
             return self._get_version_old()
 
-    def _get_epsg_data(self) -> Tuple[int, str]:
+    def _get_epsg_data(self) -> Tuple[Optional[int], str]:
         """
         Retrieve epsg code for schematisation loaded in session. This is done by
         iterating over all geometries in the declared models and all raster files, and
@@ -103,6 +105,21 @@ class ModelSchema:
         Returns the epsg code and the name (table.column) of the source.
         """
         session = self.db.get_session()
+        version = self.get_version()
+
+        if version is not None and version < 230:
+            try:
+                epsg_code = get_model_srid(version < 222, session=session)
+            except InvalidSRIDException:
+                return None, ""
+
+            return (
+                epsg_code,
+                "v2_global_settings.epsg_code"
+                if version < 222
+                else "model_settings.epsg_code",
+            )
+
         for model in self.declared_models:
             if hasattr(model, "geom"):
                 srids = [item[0] for item in session.query(ST_SRID(model.geom)).all()]
@@ -110,12 +127,18 @@ class ModelSchema:
                     return srids[0], f"{model.__tablename__}.geom"
         return None, ""
 
-    @cached_property
+    @property
     def epsg_code(self):
+        """
+        Raises threedi_schema.migrations.exceptions.InvalidSRIDException if the epsg_code count not be determined or is invalid.
+        """
         return self._get_epsg_data()[0]
 
-    @cached_property
+    @property
     def epsg_source(self):
+        """
+        Raises threedi_schema.migrations.exceptions.InvalidSRIDException if the epsg_code count not be determined or is invalid.
+        """
         return self._get_epsg_data()[1]
 
     @property
@@ -146,7 +169,7 @@ class ModelSchema:
         backup=True,
         upgrade_spatialite_version=False,
         progress_func=None,
-        custom_epsg_code=None,
+        epsg_code_override=None,
     ):
         """Upgrade the database to the latest version.
 
@@ -166,8 +189,8 @@ class ModelSchema:
         Specify a 'progress_func' to handle progress updates. `progress_func` should
         expect a single argument representing the fraction of progress
 
-        Specify a `custom_epsg_code` to set the model epsg_code before migration. This
-        should only be used for testing!
+        Specify a `epsg_code_override` to set the model epsg_code before migration.
+        This can be used for testing and for setting the DEM epsg_code when self.epsg_code is None.
         """
         try:
             rev_nr = get_schema_version() if revision == "head" else int(revision)
@@ -217,21 +240,21 @@ class ModelSchema:
                     progress_func=progress_func,
                 )
 
-        if custom_epsg_code is not None:
+        if epsg_code_override is not None:
             if self.get_version() is not None and self.get_version() > 229:
                 warnings.warn(
-                    "Cannot set custom_epsg_code when upgrading from 230 or newer"
+                    "Cannot set epsg_code_override when upgrading from 230 or newer"
                 )
             elif rev_nr < 230:
                 warnings.warn(
-                    "Warning: cannot set custom_epgs_code when not upgrading to 229 or older."
+                    "Warning: cannot set epsg_code_override when upgrading to 229 or older."
                 )
             else:
                 if self.get_version() is None or self.get_version() < 229:
                     run_upgrade("0229")
-                self._set_custom_epsg_code(custom_epsg_code)
+                self._set_custom_epsg_code(epsg_code_override)
                 run_upgrade("0230")
-                self._remove_custom_epsg_code()
+                self._remove_temporary_model_settings()
         # First upgrade to LAST_SPTL_SCHEMA_VERSION.
         # When the requested revision <= LAST_SPTL_SCHEMA_VERSION, this is the only upgrade step
         run_upgrade(
@@ -248,6 +271,7 @@ class ModelSchema:
             run_upgrade(revision)
 
     def _set_custom_epsg_code(self, custom_epsg_code: int):
+        """Temporarily set epsg code in model settings for migration 230"""
         if (
             self.get_version() is None
             or self.get_version() < 222
@@ -256,21 +280,26 @@ class ModelSchema:
             raise ValueError(f"Cannot set epsg code for revision {self.get_version()}")
         # modify epsg_code
         with self.db.get_session() as session:
-            session.execute(
-                text(
-                    f"INSERT INTO model_settings (id, epsg_code) VALUES (999999, {custom_epsg_code});"
+            settings_row_count = session.execute(
+                text("SELECT COUNT(id) FROM model_settings;")
+            ).scalar()
+            # to update empty databases, they must have model_settings.epsg_code set
+            if settings_row_count == 0:
+                session.execute(
+                    text(
+                        f"INSERT INTO model_settings (id, epsg_code) VALUES (99999, {custom_epsg_code});"
+                    )
                 )
-            )
+            else:
+                session.execute(
+                    text(f"UPDATE model_settings SET epsg_code = {custom_epsg_code};")
+                )
             session.commit()
 
-    def _remove_custom_epsg_code(self):
-        if self.get_version() != 230:
-            raise ValueError(
-                f"Removing the custom epsg code should only be done on revision = 230, not {self.get_version()}"
-            )
-        # Remove row added by upgrade with custom_epsg_code
+    def _remove_temporary_model_settings(self):
+        """Remove temporary model settings entry introduced for the epsg code"""
         with self.db.get_session() as session:
-            session.execute(text("DELETE FROM model_settings WHERE id = 999999;"))
+            session.execute(text("DELETE FROM model_settings WHERE id = 99999;"))
             session.commit()
 
     def validate_schema(self):

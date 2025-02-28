@@ -8,7 +8,7 @@ from subprocess import CalledProcessError, check_call
 from ..utils import parse_version_number
 
 REQUIRED_API_CLIENT_VERSION = "4.1.8"
-REQUIRED_3DI_SCHEMA_VERSION = "0.300.8"
+REQUIRED_3DI_SCHEMA_VERSION = "0.300.12"
 REQUIRED_3DI_MI_UTILS_VERSION = "0.1.6.dev0"
 REQUIRED_GEOALCHEMY2_VERSION = "0.15.2"
 REQUIRED_SQLALCHEMY_VERSION = "2.0.6"

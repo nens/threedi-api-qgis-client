@@ -5,13 +5,12 @@ Revises:
 Create Date: 2024-11-12 12:30
 
 """
-import sqlite3
 import uuid
 
 import sqlalchemy as sa
 from alembic import op
 
-from threedi_schema.migrations.exceptions import InvalidSRIDException
+from threedi_schema.migrations.utils import get_model_srid
 
 # revision identifiers, used by Alembic.
 revision = "0230"
@@ -24,41 +23,6 @@ GEOM_TABLES = ['boundary_condition_1d', 'boundary_condition_2d', 'channel', 'con
                'dem_average_area', 'dry_weather_flow', 'dry_weather_flow_map', 'exchange_line', 'grid_refinement_line',
                'grid_refinement_area', 'lateral_1d', 'lateral_2d', 'obstacle', 'orifice', 'pipe', 'potential_breach',
                'pump', 'pump_map', 'surface', 'surface_map', 'weir', 'windshielding_1d']
-
-
-def get_crs_info(srid):
-    # Create temporary spatialite to find crs unit and projection
-    conn = sqlite3.connect(":memory:")
-    conn.enable_load_extension(True)
-    conn.load_extension("mod_spatialite")
-    # Initialite spatialite without any meta data
-    conn.execute("SELECT InitSpatialMetaData(1, 'NONE');")
-    # Add CRS
-    success = conn.execute(f"SELECT InsertEpsgSrid({srid})").fetchone()[0]
-    if not success:
-        raise InvalidSRIDException(srid, "the supplied epsg_code is invalid")
-    # retrieve units and is_projected
-    unit = conn.execute(f'SELECT SridGetUnit({srid})').fetchone()[0]
-    is_projected = conn.execute(f'SELECT SridIsProjected({srid})').fetchone()[0]
-    return unit, is_projected
-
-
-def get_model_srid() -> int:
-    # Note: this will not work for models which are allowed to have no CRS (no geometries)
-    conn = op.get_bind()
-    srid_str = conn.execute(sa.text("SELECT epsg_code FROM model_settings")).fetchone()
-    if srid_str is None or srid_str[0] is None:
-        raise InvalidSRIDException(None, "no epsg_code is defined")
-    try:
-        srid = int(srid_str[0])
-    except TypeError:
-        raise InvalidSRIDException(srid_str[0], "the epsg_code must be an integer")
-    unit, is_projected = get_crs_info(srid)
-    if unit != "metre":
-        raise InvalidSRIDException(srid, f"the CRS must be in metres, not {unit}")
-    if not is_projected:
-        raise InvalidSRIDException(srid, "the CRS must be in projected")
-    return srid
 
 
 def get_geom_type(table_name, geo_col_name):
@@ -110,7 +74,7 @@ def transform_column(table_name, srid):
     # Copy transformed geometry and other columns to temp table
     col_str = ','.join(['id'] + col_names)
     query = op.execute(sa.text(f"""
-        INSERT INTO {temp_table_name} ({col_str}, geom) 
+        INSERT INTO {temp_table_name} ({col_str}, geom)
         SELECT {col_str}, ST_Transform(geom, {srid}) AS geom FROM {table_name}
         """))
     # Discard geometry column in old table
