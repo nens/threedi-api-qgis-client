@@ -149,12 +149,12 @@ class UploadOverview(uicls_log, basecls_log):
 
     def upload_new_model(self):
         """Initializing new upload wizard."""
-        if not self.current_local_schematisation or not self.current_local_schematisation.geopackage_filepath:
+        if not self.current_local_schematisation or not self.current_local_schematisation.schematisation_db_filepath:
             warn_msg = "Please load the schematisation first before starting the upload."
             self.communication.show_warn(warn_msg, parent=self)
             self.plugin_dock.build_options.load_local_schematisation()
             return
-        self.schematisation_filepath = self.current_local_schematisation.geopackage_filepath
+        self.schematisation_filepath = self.current_local_schematisation.schematisation_db_filepath
         schema_gpkg_loaded = is_loaded_in_schematisation_editor(self.schematisation_filepath)
         if schema_gpkg_loaded is False:
             title = "Warning"

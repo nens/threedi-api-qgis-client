@@ -516,7 +516,7 @@ class NewSchematisationWizard(QWizard):
                     new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_filepath))
                     shutil.copyfile(raster_filepath, new_raster_filepath)
             for table_name, table_settings in schematisation_settings.items():
-                table_layer = geopackage_layer(wip_revision.geopackage_filepath, table_name)
+                table_layer = geopackage_layer(wip_revision.schematisation_db_filepath, table_name)
                 table_layer.startEditing()
                 table_fields = table_layer.fields()
                 table_fields_names = {f.name() for f in table_fields}

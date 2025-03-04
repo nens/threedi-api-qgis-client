@@ -161,7 +161,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                 self.communication.bar_warn("Schematisation checks skipped!")
                 return
             wip_revision = self.current_local_schematisation.wip_revision
-            migration_succeed, migration_feedback_msg = migrate_schematisation_schema(wip_revision.geopackage_filepath)
+            migration_succeed, migration_feedback_msg = migrate_schematisation_schema(wip_revision.schematisation_db_filepath)
             if not migration_succeed:
                 self.communication.show_error(migration_feedback_msg, self)
                 return

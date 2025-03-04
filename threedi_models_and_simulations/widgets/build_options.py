@@ -46,12 +46,12 @@ class BuildOptions:
             schematisation_load = SchematisationLoad(self.plugin_dock)
             schematisation_load.exec_()
             local_schematisation = schematisation_load.selected_local_schematisation
-        if local_schematisation and local_schematisation.geopackage_filepath:
+        if local_schematisation and local_schematisation.schematisation_db_filepath:
             try:
                 self.plugin_dock.current_local_schematisation = local_schematisation
                 self.plugin_dock.update_schematisation_view()
                 geopackage_filepath = (
-                    local_schematisation.geopackage_filepath
+                    local_schematisation.schematisation_db_filepath
                     if not custom_geopackage_filepath
                     else custom_geopackage_filepath
                 )
