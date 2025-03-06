@@ -7,7 +7,7 @@ name=3Di Models and Simulations
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 description=3Di Models and Simulations
-version=3.99.13
+version=3.99.14
 author=Lutra Consulting for 3Di Water Management
 email=servicedesk@nelen-schuurmans.nl
 
