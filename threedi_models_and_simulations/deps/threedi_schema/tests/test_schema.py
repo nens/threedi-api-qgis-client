@@ -404,3 +404,10 @@ def test_epsg_code(oldest_sqlite):
     assert schema.get_version() == 230
     assert schema.epsg_code == 28992
     assert schema.epsg_source == "boundary_condition_1d.geom"
+
+
+def test_epsg_code_from_dem(sqlite_with_dem):
+    schema = ModelSchema(sqlite_with_dem)
+    assert schema._get_dem_epsg() == 28991
+    schema.upgrade(epsg_code_override=schema._get_dem_epsg())
+    assert schema._get_dem_epsg() == 28991

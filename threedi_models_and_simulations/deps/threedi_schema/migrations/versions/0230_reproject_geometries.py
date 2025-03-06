@@ -73,10 +73,21 @@ def transform_column(table_name, srid):
     add_geometry_column(temp_table_name, 'geom', srid, geom_type)
     # Copy transformed geometry and other columns to temp table
     col_str = ','.join(['id'] + col_names)
-    query = op.execute(sa.text(f"""
+    op.execute(sa.text(f"""
         INSERT INTO {temp_table_name} ({col_str}, geom)
         SELECT {col_str}, ST_Transform(geom, {srid}) AS geom FROM {table_name}
         """))
+    # Short linestrings may become too short, and invalid, after the transformation
+    # By moving the second point 1 centimeter this issue is solved
+    if geom_type == "LINESTRING":
+        op.execute(sa.text(f"""
+            UPDATE {temp_table_name}
+            SET geom = MakeLine(
+                ST_PointN(geom, 1),
+                ST_Translate(ST_PointN(geom, 2), 0.01, 0, 0)
+            )
+            WHERE ST_Length(geom) = 0
+            """))
     # Discard geometry column in old table
     op.execute(sa.text(f"SELECT DiscardGeometryColumn('{table_name}', 'geom')"))
     op.execute(sa.text(f"SELECT DiscardGeometryColumn('{temp_table_name}', 'geom')"))

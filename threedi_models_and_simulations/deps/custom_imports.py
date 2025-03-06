@@ -8,8 +8,8 @@ from subprocess import CalledProcessError, check_call
 from ..utils import parse_version_number
 
 REQUIRED_API_CLIENT_VERSION = "4.1.8"
-REQUIRED_3DI_SCHEMA_VERSION = "0.300.12"
-REQUIRED_3DI_MI_UTILS_VERSION = "0.1.7.dev0"
+REQUIRED_3DI_SCHEMA_VERSION = "0.300.14"
+REQUIRED_3DI_MI_UTILS_VERSION = "0.1.7"
 REQUIRED_GEOALCHEMY2_VERSION = "0.15.2"
 REQUIRED_SQLALCHEMY_VERSION = "2.0.6"
 REQUIRED_ALEMBIC_VERSION = "1.14.1"
@@ -18,7 +18,6 @@ REQUIRED_MAKO_VERSION = "1.3.9"
 
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 API_CLIENT_WHEEL = os.path.join(MAIN_DIR, f"threedi_api_client-{REQUIRED_API_CLIENT_VERSION}-py2.py3-none-any.whl")
-SCHEMA_WHEEL = os.path.join(MAIN_DIR, f"threedi_schema-{REQUIRED_3DI_SCHEMA_VERSION}-py3-none-any.whl")
 MI_UTILS_WHEEL = os.path.join(MAIN_DIR, f"threedi_mi_utils-{REQUIRED_3DI_MI_UTILS_VERSION}-py3-none-any.whl")
 GEOALCHEMY2_WHEEL = os.path.join(MAIN_DIR, f"GeoAlchemy2-{REQUIRED_GEOALCHEMY2_VERSION}-py3-none-any.whl")
 SQLALCHEMY_WHEEL = os.path.join(MAIN_DIR, f"SQLAlchemy-{REQUIRED_SQLALCHEMY_VERSION}-py3-none-any.whl")

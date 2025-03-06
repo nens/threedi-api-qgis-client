@@ -1,6 +1,6 @@
 Metadata-Version: 2.2
 Name: threedi-schema
-Version: 0.300.12
+Version: 0.300.14
 Summary: The schema of 3Di schematization files
 Author-email: Nelen & Schuurmans <info@nelen-schuurmans.nl>
 License: MIT
@@ -88,6 +88,18 @@ Install with::
 
 Changelog of threedi-schema
 ===================================================
+
+
+0.300.14 (2025-03-05)
+---------------------
+
+- Ensure linestrings are valid (length > 0) after crs transformation
+
+
+0.300.13 (2025-03-05)
+---------------------
+
+- Add ModelSchema._get_dem_epsg() to fetch EPSG from DEM.
 
 
 0.300.12 (2025-02-27)

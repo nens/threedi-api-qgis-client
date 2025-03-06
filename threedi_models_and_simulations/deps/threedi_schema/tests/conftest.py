@@ -50,6 +50,15 @@ def oldest_sqlite(tmp_path):
 
 
 @pytest.fixture
+def sqlite_with_dem(tmp_path):
+    """An empty SQLite containing only a reference to a DEM GeoTIFF"""
+    tmp_sqlite_dir = tmp_path / "dem_test"
+    tmp_sqlite = tmp_sqlite_dir / "empty_v4_0221_with_dem.sqlite"
+    shutil.copytree(data_dir / "dem_test", tmp_sqlite_dir)
+    return ThreediDatabase(tmp_sqlite)
+
+
+@pytest.fixture
 def in_memory_sqlite():
     """An in-memory database with no schema"""
     return ThreediDatabase("")

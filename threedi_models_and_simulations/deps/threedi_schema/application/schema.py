@@ -11,7 +11,7 @@ from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from geoalchemy2.admin.dialects.geopackage import create_spatial_ref_sys_view
 from geoalchemy2.functions import ST_SRID
-from osgeo import gdal
+from osgeo import gdal, osr
 from sqlalchemy import Column, Integer, MetaData, Table, text
 from sqlalchemy.exc import IntegrityError
 
@@ -23,6 +23,8 @@ from ..infrastructure.spatialite_versions import copy_models, get_spatialite_ver
 from ..migrations.utils import get_model_srid
 from .errors import MigrationMissingError, UpgradeFailedError
 from .upgrade_utils import setup_logging
+
+gdal.UseExceptions()
 
 __all__ = ["ModelSchema"]
 
@@ -126,6 +128,36 @@ class ModelSchema:
                 if len(srids) > 0:
                     return srids[0], f"{model.__tablename__}.geom"
         return None, ""
+
+    def _get_dem_epsg(self, raster_path: str = None) -> int:
+        """
+        Extract EPSG code from DEM.
+
+        Only works in local filesystem. The raster path references do not resolve correctly in the object store.
+        """
+        if not raster_path:
+            with self.db.get_session() as session:
+                settings_table = (
+                    "v2_global_settings"
+                    if self.get_version() < 222
+                    else "model_settings"
+                )
+                raster_path = session.execute(
+                    text(f"SELECT dem_file FROM {settings_table};")
+                ).scalar()
+            if raster_path is None:
+                raise InvalidSRIDException(None, "no DEM is provided")
+        # old dem paths include rasters/ but new ones do not
+        # to work around this, we remove "rasters/" if present and then add it again
+        raster_path = raster_path.replace("\\", "/").split("/")[-1]
+        directory = self.db.path.parent
+        raster_path = str(directory / "rasters" / Path(raster_path))
+        try:
+            dataset = gdal.Open(raster_path)
+        except RuntimeError as e:
+            raise InvalidSRIDException(f"Cannot open filepath {raster_path}") from e
+        proj = osr.SpatialReference(wkt=dataset.GetProjection())
+        return int(proj.GetAuthorityCode("PROJCS"))
 
     @property
     def epsg_code(self):
