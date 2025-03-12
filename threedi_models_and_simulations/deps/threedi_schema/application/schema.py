@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 
 # This import is needed for alembic to recognize the geopackage dialect
 import geoalchemy2.alembic_helpers  # noqa: F401
+import sqlalchemy as sa
 from alembic import command as alembic_command
 from alembic.config import Config
 from alembic.environment import EnvironmentContext
@@ -11,14 +12,13 @@ from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from geoalchemy2.admin.dialects.geopackage import create_spatial_ref_sys_view
 from geoalchemy2.functions import ST_SRID
-from osgeo import gdal, osr
+from osgeo import gdal, ogr, osr
 from sqlalchemy import Column, Integer, MetaData, Table, text
 from sqlalchemy.exc import IntegrityError
 
 from ..domain import constants, models
 from ..infrastructure.spatial_index import ensure_spatial_indexes
 from ..infrastructure.spatialite_versions import copy_models, get_spatialite_version
-from ..migrations.utils import get_model_srid
 from .errors import InvalidSRIDException, MigrationMissingError, UpgradeFailedError
 from .upgrade_utils import setup_logging
 
@@ -107,9 +107,12 @@ class ModelSchema:
         session = self.db.get_session()
         version = self.get_version()
 
+        # for revision < 230 read explicit epsg from schematisation
         if version is not None and version < 230:
             try:
-                epsg_code = get_model_srid(version < 222, session=session)
+                epsg_code = get_model_srid(
+                    connection=session, v2_global_settings=version < 222
+                )
             except InvalidSRIDException:
                 return None, ""
 
@@ -119,13 +122,26 @@ class ModelSchema:
                 if version < 222
                 else "model_settings.epsg_code",
             )
-
-        for model in self.declared_models:
-            if hasattr(model, "geom"):
-                srids = [item[0] for item in session.query(ST_SRID(model.geom)).all()]
-                if len(srids) > 0:
-                    return srids[0], f"{model.__tablename__}.geom"
-        return None, ""
+        # for version 230 (implicit crs in spatialite) get epsg from first geometry object found in the model
+        elif version == 230:
+            for model in self.declared_models:
+                if hasattr(model, "geom"):
+                    srids = [
+                        item[0] for item in session.query(ST_SRID(model.geom)).all()
+                    ]
+                    if len(srids) > 0:
+                        return srids[0], f"{model.__tablename__}.geom"
+            return None, ""
+        # for version >= 300 (implicit crs in geopackage) get epsg from connection_node table in geopackage
+        else:
+            datasource = ogr.Open(str(self.db.path))
+            layer = datasource.GetLayerByName("connection_node")
+            epsg = layer.GetSpatialRef().GetAuthorityCode(None)
+            try:
+                epsg = int(epsg)
+            except TypeError:
+                raise InvalidSRIDException(epsg, "the epsg_code must be an integer")
+            return epsg, ""
 
     def _get_dem_epsg(self, raster_path: str = None) -> int:
         """
@@ -524,3 +540,15 @@ class ModelSchema:
             )
             create_spatial_ref_sys_view(session)
         ensure_spatial_indexes(self.db.engine, models.DECLARED_MODELS)
+
+
+def get_model_srid(connection, v2_global_settings: bool = False) -> int:
+    table = "v2_global_settings" if v2_global_settings else "model_settings"
+    srid_str = connection.execute(sa.text(f"SELECT epsg_code FROM {table}")).fetchone()
+    if srid_str is None or srid_str[0] is None:
+        raise InvalidSRIDException(None, "no epsg_code is defined")
+    try:
+        srid = int(srid_str[0])
+    except TypeError:
+        raise InvalidSRIDException(srid_str[0], "the epsg_code must be an integer")
+    return srid

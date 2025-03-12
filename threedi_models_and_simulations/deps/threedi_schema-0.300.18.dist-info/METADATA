@@ -1,6 +1,6 @@
 Metadata-Version: 2.2
 Name: threedi-schema
-Version: 0.300.17
+Version: 0.300.18
 Summary: The schema of 3Di schematization files
 Author-email: Nelen & Schuurmans <info@nelen-schuurmans.nl>
 License: MIT
@@ -88,6 +88,12 @@ Install with::
 
 Changelog of threedi-schema
 ===================================================
+
+
+0.300.18 (2025-03-12)
+---------------------
+
+- Read EPSG code for geopackage schematisations using gdal ogr (this also works on empy schematisations)
 
 
 0.300.17 (2025-03-11)

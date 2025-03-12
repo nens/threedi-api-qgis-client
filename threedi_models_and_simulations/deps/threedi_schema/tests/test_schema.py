@@ -350,22 +350,6 @@ def test_set_spatial_indexes(in_memory_sqlite):
     assert check_result == 1
 
 
-class TestGetEPSGData:
-    def test_no_epsg(self, empty_sqlite_v4):
-        schema = ModelSchema(empty_sqlite_v4)
-        schema.upgrade(
-            backup=False, upgrade_spatialite_version=False, epsg_code_override=28992
-        )
-        assert schema.epsg_code is None
-        assert schema.epsg_source == ""
-
-    def test_with_epsg(self, oldest_sqlite):
-        schema = ModelSchema(oldest_sqlite)
-        schema.upgrade(backup=False, upgrade_spatialite_version=False)
-        assert schema.epsg_code == 28992
-        assert schema.epsg_source == "boundary_condition_1d.geom"
-
-
 def test_is_spatialite(in_memory_sqlite):
     schema = ModelSchema(in_memory_sqlite)
     schema.upgrade(
@@ -389,21 +373,39 @@ def test_is_geopackage(oldest_sqlite):
     assert schema.is_geopackage
 
 
-def test_epsg_code(oldest_sqlite):
+@pytest.mark.filterwarnings("ignore::UserWarning")
+@pytest.mark.parametrize(
+    "revision, expected_epsg_code", [("0229", None), ("0230", None), ("head", 28992)]
+)
+def test_get_epsg_data_empty(empty_sqlite_v4, revision, expected_epsg_code):
+    schema = ModelSchema(empty_sqlite_v4)
+    schema.upgrade(
+        backup=False,
+        revision=revision,
+        upgrade_spatialite_version=False,
+        epsg_code_override=28992,
+    )
+    if expected_epsg_code is None:
+        assert schema.epsg_code is None
+    else:
+        assert schema.epsg_code == expected_epsg_code
+    assert schema.epsg_source == ""
+
+
+@pytest.mark.parametrize(
+    "revision, expected_epsg_source",
+    [
+        ("0220", "v2_global_settings.epsg_code"),
+        ("0229", "model_settings.epsg_code"),
+        ("0230", "boundary_condition_1d.geom"),
+        ("head", ""),
+    ],
+)
+def test_get_epsg_data(oldest_sqlite, revision, expected_epsg_source):
     schema = ModelSchema(oldest_sqlite)
-    schema.upgrade(revision="0221", backup=False)
+    schema.upgrade(backup=False, upgrade_spatialite_version=False, revision=revision)
     assert schema.epsg_code == 28992
-    assert schema.epsg_source == "v2_global_settings.epsg_code"
-
-    schema.upgrade(revision="0229", backup=False)
-    assert schema.get_version() == 229
-    assert schema.epsg_code == 28992
-    assert schema.epsg_source == "model_settings.epsg_code"
-
-    schema.upgrade(revision="0230", backup=False)
-    assert schema.get_version() == 230
-    assert schema.epsg_code == 28992
-    assert schema.epsg_source == "boundary_condition_1d.geom"
+    assert schema.epsg_source == expected_epsg_source
 
 
 def test_epsg_code_from_dem(sqlite_with_dem):
