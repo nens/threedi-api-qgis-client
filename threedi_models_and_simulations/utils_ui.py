@@ -193,24 +193,40 @@ def backup_schematisation_file(filename):
 
 def migrate_schematisation_schema(schematisation_filepath):
     migration_succeed = False
+
     try:
         from threedi_schema import ThreediDatabase, errors
 
         backup_filepath = backup_schematisation_file(schematisation_filepath)
         threedi_db = ThreediDatabase(schematisation_filepath)
-        threedi_db.schema.upgrade(backup=False)
-        shutil.rmtree(os.path.dirname(backup_filepath))
-        migration_succeed = True
-        migration_feedback_msg = "Migration succeed."
+        schema = threedi_db.schema
+        srid, _ = schema._get_epsg_data()
+        if srid is None:
+            try:
+                srid = schema._get_dem_epsg()
+            except errors.InvalidSRIDException:
+                srid = None
+        if srid is None:
+            migration_feedback_msg = "Could not fetch valid EPSG code from database or DEM; aborting database migration."
     except ImportError:
         migration_feedback_msg = "Missing threedi-schema library (or its dependencies). Schema migration failed."
-    except errors.UpgradeFailedError:
-        migration_feedback_msg = (
-            "The schematisation database schema cannot be migrated to the current version. "
-            "Please contact the service desk for assistance."
-        )
     except Exception as e:
         migration_feedback_msg = f"{e}"
+
+    if srid is not None:
+        try:
+            schema.upgrade(backup=False)
+            shutil.rmtree(os.path.dirname(backup_filepath))
+            migration_succeed = True
+            migration_feedback_msg = "Migration succeeded."
+        except errors.UpgradeFailedError:
+            migration_feedback_msg = (
+                "The schematisation database schema cannot be migrated to the current version. "
+                "Please contact the service desk for assistance."
+            )
+        except Exception as e:
+            migration_feedback_msg = f"{e}"
+
     return migration_succeed, migration_feedback_msg
 
 
