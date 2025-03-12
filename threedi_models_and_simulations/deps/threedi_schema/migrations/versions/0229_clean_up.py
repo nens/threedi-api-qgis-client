@@ -1,4 +1,4 @@
-"""
+"""Clean up some issues from migrations 222 to 228
 
 Revision ID: 022
 9Revises:

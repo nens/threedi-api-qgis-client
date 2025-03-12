@@ -3,7 +3,7 @@ import sqlite3
 import pytest
 
 from threedi_schema import ModelSchema
-from threedi_schema.migrations.exceptions import InvalidSRIDException
+from threedi_schema.application.errors import InvalidSRIDException
 
 
 @pytest.mark.parametrize("epsg_code", [

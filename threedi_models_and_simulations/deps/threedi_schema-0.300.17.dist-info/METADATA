@@ -1,6 +1,6 @@
 Metadata-Version: 2.2
 Name: threedi-schema
-Version: 0.300.14
+Version: 0.300.17
 Summary: The schema of 3Di schematization files
 Author-email: Nelen & Schuurmans <info@nelen-schuurmans.nl>
 License: MIT
@@ -88,6 +88,26 @@ Install with::
 
 Changelog of threedi-schema
 ===================================================
+
+
+0.300.17 (2025-03-11)
+---------------------
+
+- Fix progress handler for upgrades with 0 steps
+
+
+0.300.16 (2025-03-11)
+---------------------
+
+- Move InvalidSRIDException to application.errors
+
+
+0.300.15 (2025-03-11)
+---------------------
+
+- Fix incorrect geometry in measure_location table in migration 0224
+- Correct names of several migrations
+- Convert ModelSchema.db.path to pathlib.Path in ModelSchema._get_dem_epsg()
 
 
 0.300.14 (2025-03-05)

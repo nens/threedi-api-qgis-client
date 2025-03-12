@@ -1,4 +1,4 @@
-"""Upgrade settings in schema
+"""Upgrade inflow settings
 
 Revision ID: 0223
 Revises:

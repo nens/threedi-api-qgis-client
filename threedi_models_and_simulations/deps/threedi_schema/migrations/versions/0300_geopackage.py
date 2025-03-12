@@ -1,4 +1,4 @@
-"""Reproject geometries to model CRS
+"""Convert to geopackage
 
 Revision ID: 0230
 Revises:
@@ -11,7 +11,7 @@ import uuid
 import sqlalchemy as sa
 from alembic import op
 
-from threedi_schema.migrations.exceptions import InvalidSRIDException
+from threedi_schema.application.errors import InvalidSRIDException
 
 # revision identifiers, used by Alembic.
 revision = "0300"

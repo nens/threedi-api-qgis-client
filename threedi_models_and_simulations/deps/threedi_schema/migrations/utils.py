@@ -4,7 +4,7 @@ from typing import List
 import sqlalchemy as sa
 from alembic import op
 
-from threedi_schema.migrations.exceptions import InvalidSRIDException
+from threedi_schema.application.errors import InvalidSRIDException
 
 
 def drop_geo_table(op, table_name: str):

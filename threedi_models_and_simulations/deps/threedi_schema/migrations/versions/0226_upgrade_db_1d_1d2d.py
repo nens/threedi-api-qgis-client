@@ -1,4 +1,4 @@
-"""Upgrade settings in schema
+"""Upgrade 1d and 1d2d settings
 
 Revision ID: 0225
 Revises:

@@ -1,4 +1,4 @@
-"""Upgrade settings in schema
+"""Upgrade structure control
 
 Revision ID: 0224
 Revises:
@@ -273,19 +273,14 @@ def populate_control_measure_location():
         v2_control_measure_map;
     """
     op.execute(sa.text(query))
+    # set geometries
     query = """
-    UPDATE control_measure_location   
+    UPDATE control_measure_location
     SET geom = (
         SELECT v2_connection_nodes.the_geom
         FROM v2_connection_nodes
-        JOIN control_measure_location
-        ON v2_connection_nodes.id = control_measure_location.connection_node_id
-    )
-    WHERE EXISTS (
-        SELECT 1
-        FROM v2_connection_nodes
         WHERE v2_connection_nodes.id = control_measure_location.connection_node_id
-    );    
+    )
     """
     op.execute(sa.text(query))
 

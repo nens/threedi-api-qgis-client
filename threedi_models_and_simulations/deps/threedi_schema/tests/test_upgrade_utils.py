@@ -21,6 +21,16 @@ def test_progress_handler():
     assert progress_func.call_args_list == expected_calls
 
 
+def test_progress_handler_zero_steps():
+    progress_func = MagicMock()
+    mock_record = MagicMock(levelno=logging.INFO, percent=40)
+    expected_calls = 5 * [call(100)]
+    handler = upgrade_utils.ProgressHandler(progress_func, total_steps=0)
+    for _ in range(5):
+        handler.handle(mock_record)
+    assert progress_func.call_args_list == expected_calls
+
+
 @pytest.mark.parametrize(
     "target_revision, nsteps_expected", [("0226", 5), ("0200", 0), (None, 0)]
 )
