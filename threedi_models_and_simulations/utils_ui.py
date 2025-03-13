@@ -193,6 +193,7 @@ def backup_schematisation_file(filename):
 
 def migrate_schematisation_schema(schematisation_filepath):
     migration_succeed = False
+    srid = None
 
     try:
         from threedi_schema import ThreediDatabase, errors
