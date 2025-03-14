@@ -2820,7 +2820,8 @@ class SettingsWidget(uicls_settings_page, basecls_settings_page):
         physical_settings = scan_widgets_parameters(self.group_physical, get_combobox_text=False)
         numerical_settings = scan_widgets_parameters(self.group_numerical, get_combobox_text=False)
         time_step_settings = scan_widgets_parameters(self.group_timestep, get_combobox_text=False)
-        return physical_settings, numerical_settings, time_step_settings
+        water_quality_settings = scan_widgets_parameters(self.group_water_quality, get_combobox_text=False, remove_postfix=True)
+        return physical_settings, numerical_settings, time_step_settings, water_quality_settings
 
     def collect_aggregation_settings(self):
         """Get data from the aggregation settings rows."""
@@ -4072,9 +4073,9 @@ class SimulationWizard(QWizard):
 
         # Settings page attributes
         main_settings = self.settings_page.main_widget.collect_single_settings()
-        physical_settings, numerical_settings, time_step_settings = main_settings
+        physical_settings, numerical_settings, time_step_settings, water_quality_settings = main_settings
         aggregation_settings_list = self.settings_page.main_widget.collect_aggregation_settings()
-        settings = dm.Settings(physical_settings, numerical_settings, time_step_settings, aggregation_settings_list)
+        settings = dm.Settings(physical_settings, numerical_settings, time_step_settings, aggregation_settings_list, water_quality_settings)
         # Post-processing in Lizard
         lizard_post_processing = dm.LizardPostProcessing()
         if self.init_conditions.include_lizard_post_processing:

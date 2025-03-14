@@ -5,86 +5,52 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Tuple
 
 from threedi_api_client import ThreediApi
-from threedi_api_client.openapi import (
-    Action,
-    AggregationSettings,
-    ArrivalTimePostProcessing,
-    BasicPostProcessing,
-    Breach,
-    Commit,
-    ConstantLateral,
-    ConstantLocalRain,
-    ConstantRain,
-    ConstantWind,
-    Contract,
-    CurrentStatus,
-    DamagePostProcessing,
-    Download,
-    Event,
-    FileBoundaryCondition,
-    FileLateral,
-    FileRasterSourcesSinks,
-    FileStructureControl,
-    FileTimeseriesSourcesSinks,
-    ForcingSubstance,
-    GroundWaterLevel,
-    GroundWaterRaster,
-    InitialConcentration,
-    InitialSavedState,
-    InitialWaterlevel,
-    LizardRasterRain,
-    LizardRasterSourcesSinks,
-    LizardTimeseriesRain,
-    LizardTimeseriesSourcesSinks,
-    MemoryStructureControl,
-    NumericalSettings,
-    ObstacleEdit,
-    OneDSubstanceConcentration,
-    OneDWaterLevel,
-    OneDWaterLevelFile,
-    OneDWaterLevelPredefined,
-    Organisation,
-    PhysicalSettings,
-    PostProcessingOverview,
-    PotentialBreach,
-    Progress,
-    Raster,
-    RasterCreate,
-    RasterEdit,
-    Repository,
-    ResultFile,
-    Revision,
-    RevisionRaster,
-    RevisionTask,
-    Schematisation,
-    SchematisationRevision,
-    Simulation,
-    SimulationSettingsOverview,
-    SimulationStatus,
-    SqliteFileUpload,
-    StableThresholdSavedState,
-    Substance,
-    TableStructureControl,
-    Template,
-    ThreediModel,
-    ThreediModelSavedState,
-    ThreediModelTask,
-    TimedSavedStateUpdate,
-    TimedStructureControl,
-    TimeseriesLateral,
-    TimeseriesLocalRain,
-    TimeseriesRain,
-    TimeseriesSourcesSinks,
-    TimeseriesWind,
-    TimeStepSettings,
-    TwoDSubstanceConcentration,
-    TwoDWaterLevel,
-    TwoDWaterRaster,
-    Upload,
-    UploadEventFile,
-    User,
-    WindDragCoefficient,
-)
+from threedi_api_client.openapi import (Action, AggregationSettings,
+                                        ArrivalTimePostProcessing,
+                                        BasicPostProcessing, Breach, Commit,
+                                        ConstantLateral, ConstantLocalRain,
+                                        ConstantRain, ConstantWind, Contract,
+                                        CurrentStatus, DamagePostProcessing,
+                                        Download, Event, FileBoundaryCondition,
+                                        FileLateral, FileRasterSourcesSinks,
+                                        FileStructureControl,
+                                        FileTimeseriesSourcesSinks,
+                                        ForcingSubstance, GroundWaterLevel,
+                                        GroundWaterRaster,
+                                        InitialConcentration,
+                                        InitialSavedState, InitialWaterlevel,
+                                        LizardRasterRain,
+                                        LizardRasterSourcesSinks,
+                                        LizardTimeseriesRain,
+                                        LizardTimeseriesSourcesSinks,
+                                        MemoryStructureControl,
+                                        NumericalSettings, ObstacleEdit,
+                                        OneDSubstanceConcentration,
+                                        OneDWaterLevel, OneDWaterLevelFile,
+                                        OneDWaterLevelPredefined, Organisation,
+                                        PhysicalSettings,
+                                        PostProcessingOverview,
+                                        PotentialBreach, Progress, Raster,
+                                        RasterCreate, RasterEdit, Repository,
+                                        ResultFile, Revision, RevisionRaster,
+                                        RevisionTask, Schematisation,
+                                        SchematisationRevision, Simulation,
+                                        SimulationSettingsOverview,
+                                        SimulationStatus, SqliteFileUpload,
+                                        StableThresholdSavedState, Substance,
+                                        TableStructureControl, Template,
+                                        ThreediModel, ThreediModelSavedState,
+                                        ThreediModelTask,
+                                        TimedSavedStateUpdate,
+                                        TimedStructureControl,
+                                        TimeseriesLateral, TimeseriesLocalRain,
+                                        TimeseriesRain, TimeseriesSourcesSinks,
+                                        TimeseriesWind, TimeStepSettings,
+                                        TwoDSubstanceConcentration,
+                                        TwoDWaterLevel, TwoDWaterRaster,
+                                        Upload, UploadEventFile, User,
+                                        WaterQualitySettings,
+                                        WindDragCoefficient)
 
 logger = logging.getLogger(__name__)
 
@@ -1129,6 +1095,13 @@ class ThreediCalls:
             str(simulation_pk), data
         )
         return simulations_settings_aggregation
+    
+    def create_simulation_settings_water_quality(self, simulation_pk: int, **data) -> WaterQualitySettings:
+        """Create a simulation water quality settings."""
+        simulations_settings_wq = self.threedi_api.simulations_settings_water_quality_create(
+            str(simulation_pk), data
+        )
+        return simulations_settings_wq
 
     def update_simulation_settings_physical(self, simulation_pk: int, **data) -> None:
         """Update a simulation physical settings."""
@@ -1145,6 +1118,10 @@ class ThreediCalls:
     def update_simulation_settings_aggregation(self, setting_id: int, simulation_pk: int, **data) -> None:
         """Update a simulation aggregation settings."""
         self.threedi_api.simulations_settings_aggregation_partial_update(setting_id, str(simulation_pk), data)
+
+    def update_simulation_settings_water_quality(self, setting_id: int, simulation_pk: int, **data) -> None:
+        """Update a simulation water quality settings."""
+        self.threedi_api.simulations_settings_water_quality_partial_update(setting_id, str(simulation_pk), data)
 
     def fetch_contracts(self, **data) -> List[Contract]:
         """Get valid 3Di contracts list."""
