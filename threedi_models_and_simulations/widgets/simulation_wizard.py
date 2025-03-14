@@ -3531,6 +3531,19 @@ class SimulationWizard(QWizard):
             **numerical_settings,
             **time_step_settings,
         )
+        # Water quality settings is tricky, as the widgets in these settings do not have unique object names, therefore
+        # we need to do explicit mapping
+        logger.error(settings_overview)
+        if settings_overview.water_quality_settings is not None:
+            self.settings_page.main_widget.time_step_2.setValue(settings_overview.water_quality_settings.time_step)
+            self.settings_page.main_widget.min_time_step_2.setValue(settings_overview.water_quality_settings.min_time_step)
+            self.settings_page.main_widget.max_time_step_2.setValue(settings_overview.water_quality_settings.max_time_step)
+            self.settings_page.main_widget.general_numerical_threshold_2.setValue(settings_overview.water_quality_settings.general_numerical_threshold)
+            self.settings_page.main_widget.max_number_of_multi_step.setValue(settings_overview.water_quality_settings.max_number_of_multi_step)
+            self.settings_page.main_widget.max_gs_sweep_iterations.setValue(settings_overview.water_quality_settings.max_gs_sweep_iterations)
+            self.settings_page.main_widget.convergence_eps_2.setValue(settings_overview.water_quality_settings.convergence_eps)
+            self.settings_page.main_widget.diffusion_coefficient.setValue(settings_overview.water_quality_settings.diffusion_coefficient)
+        
         aggregation_settings_list = [settings.to_dict() for settings in settings_overview.aggregation_settings]
         self.settings_page.main_widget.populate_aggregation_settings(aggregation_settings_list)
         # Simulation events
