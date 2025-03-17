@@ -15,9 +15,10 @@ from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QGridLayout, QSizePolicy, QWizard, QWizardPage
 from threedi_api_client.openapi import ApiException
 from threedi_mi_utils import LocalSchematisation
+from threedi_schema import ThreediDatabase
 
 from ..api_calls.threedi_calls import ThreediCalls
-from ..utils import EMPTY_DB_PATH, SchematisationRasterReferences, extract_error_message
+from ..utils import SchematisationRasterReferences, extract_error_message
 from ..utils_qgis import geopackage_layer
 from ..utils_ui import ensure_valid_schema, get_filepath, read_3di_settings, save_3di_settings, scan_widgets_parameters
 
@@ -512,9 +513,12 @@ class NewSchematisationWizard(QWizard):
                 self.working_dir, schematisation.id, name, parent_revision_number=0, create=True
             )
             wip_revision = local_schematisation.wip_revision
-            sqlite_filename = f"{name}.gpkg"
-            geopackage_filepath = os.path.join(wip_revision.schematisation_dir, sqlite_filename)
-            shutil.copyfile(EMPTY_DB_PATH, geopackage_filepath)
+
+            schematisation_filename = f"{name}.gpkg"
+            geopackage_filepath = os.path.join(wip_revision.schematisation_dir, schematisation_filename)
+            empty_db = ThreediDatabase(geopackage_filepath)
+            empty_db.schema.upgrade(epsg_code_override=schematisation_settings["model_settings"]["epsg_code"])
+
             for raster_filepath in raster_filepaths:
                 if raster_filepath:
                     new_raster_filepath = os.path.join(wip_revision.raster_dir, os.path.basename(raster_filepath))
