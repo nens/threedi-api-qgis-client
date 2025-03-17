@@ -5,6 +5,7 @@ History
 -------------------
 
 - Adjusting plugin to work with schema version >= 300.
+- Fixed schematisation tag setting (#640)
 
 
 3.15.2 (2025-01-10)
