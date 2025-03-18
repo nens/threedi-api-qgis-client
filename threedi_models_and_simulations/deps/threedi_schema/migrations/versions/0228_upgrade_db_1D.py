@@ -96,6 +96,9 @@ ADD_COLUMNS = [
     ("weir", Column("tags", Text)),
     ("weir", Column("material_id", Integer)),
     ("windshielding_1d", Column("tags", Text)),
+    ("windshielding_1d", Column("code", String(100))),
+    ("windshielding_1d", Column("display_name", Text)),
+    ("cross_section_location", Column("display_name", Text)),
 ]
 
 RETYPE_COLUMNS = {}

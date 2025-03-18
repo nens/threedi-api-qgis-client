@@ -485,6 +485,8 @@ class Windshielding1D(Base):
     geom = Column(Geometry("POINT"), nullable=False)
     channel_id = Column(Integer)
     tags = Column(CSVText)
+    code = Column(String(100))
+    display_name = Column(String(255))
 
 
 class CrossSectionLocation(Base):
@@ -508,6 +510,7 @@ class CrossSectionLocation(Base):
     vegetation_drag_coefficient = Column(Float)
     geom = Column(Geometry("POINT"), nullable=False)
     channel_id = Column(Integer)
+    display_name = Column(String(255))
 
 
 class Pipe(Base):

@@ -1,6 +1,6 @@
 Metadata-Version: 2.2
 Name: threedi-schema
-Version: 0.300.18
+Version: 0.300.19
 Summary: The schema of 3Di schematization files
 Author-email: Nelen & Schuurmans <info@nelen-schuurmans.nl>
 License: MIT
@@ -88,6 +88,13 @@ Install with::
 
 Changelog of threedi-schema
 ===================================================
+
+
+0.300.19 (2025-03-17)
+---------------------
+
+- Add display_name to CrossSectionLocation
+- Add display_name and code to Windshielding1D
 
 
 0.300.18 (2025-03-12)
