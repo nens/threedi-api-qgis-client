@@ -9,6 +9,7 @@ from operator import itemgetter
 from pathlib import Path
 
 from qgis.core import QgsFeature, QgsRasterLayer
+from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QSettings, QSize, Qt
 from qgis.PyQt.QtGui import QColor
@@ -104,6 +105,8 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
     def __init__(self, parent_page):
         super().__init__()
         self.setupUi(self)
+        self.crs.setCrs(QgsCoordinateReferenceSystem("EPSG:28992"))
+
         self.parent_page = parent_page
         self.use_1d_flow_group.toggled.connect(self.on_1d_flow_toggled)
         self.use_2d_flow_group.toggled.connect(self.on_2d_flow_toggled)
