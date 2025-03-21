@@ -583,7 +583,7 @@
          </font>
         </property>
         <property name="toolTip">
-         <string>Check this box if you want to include rainfall-runoff from surfaces or impervious surfaces in your schematisation.</string>
+         <string>Check this box if you want to include rainfall-runoff from surfaces and/or urban wastewater production (dry weather flow) in your schematisation.</string>
         </property>
         <property name="title">
          <string>0D Inflow</string>
