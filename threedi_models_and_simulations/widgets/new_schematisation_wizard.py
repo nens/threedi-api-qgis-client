@@ -256,6 +256,15 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         return defaults
 
     @property
+    def dry_weather_flow_distribution_defaults(self):
+        print('hhhhhhhhhhhhiiiiiiiiiiiiiiiiiiiiiiiiiii')
+        defaults = {
+            "description": "Kennisbank Stichting Rioned - https://www.riool.net/huishoudelijk-afvalwater",
+            "distribution": "3,1.5,1,1,0.5,0.5,2.5,8,7.5,6,5.5,5,4.5,4,4,3.5,3.5,4,5.5,8,7,5.5,4.5,4"
+        }
+        return defaults
+
+    @property
     def settings_tables_defaults(self):
         """Settings tables defaults map."""
         tables_defaults = {
@@ -266,6 +275,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "physical_settings": self.physical_settings_defaults,
             "initial_conditions": self.initial_conditions_defaults,
             "interception": self.interception_defaults,
+            "dry_weather_flow_distribution": self.dry_weather_flow_distribution_defaults,
         }
         return tables_defaults
 
