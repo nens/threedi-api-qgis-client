@@ -99,7 +99,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Timestep settings</string>
+         <string>Time step settings</string>
         </property>
        </widget>
       </item>
@@ -121,10 +121,10 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Simulation timestep [s]</string>
+            <string>Simulation time step [s]</string>
            </property>
            <property name="text">
-            <string>Simulation timestep [s]:</string>
+            <string>Simulation time step [s]:</string>
            </property>
           </widget>
          </item>
@@ -137,7 +137,7 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Used to set the output timestep</string>
+            <string>Used to set the output time step</string>
            </property>
            <property name="text">
             <string>Typical simulation duration:</string>
@@ -165,7 +165,7 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Used to set the output timestep</string>
+            <string>Used to set the output time step</string>
            </property>
            <item>
             <property name="text">
