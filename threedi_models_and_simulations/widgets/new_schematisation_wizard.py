@@ -257,12 +257,44 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
 
     @property
     def dry_weather_flow_distribution_defaults(self):
-        print('hhhhhhhhhhhhiiiiiiiiiiiiiiiiiiiiiiiiiii')
         defaults = {
             "description": "Kennisbank Stichting Rioned - https://www.riool.net/huishoudelijk-afvalwater",
             "distribution": "3,1.5,1,1,0.5,0.5,2.5,8,7.5,6,5.5,5,4.5,4,4,3.5,3.5,4,5.5,8,7,5.5,4.5,4"
         }
         return defaults
+
+    @property
+    def surface_parameters_defaults(self):
+        return {'id': ['101', '102', '103', '104', '105', '106', '107', '108', '109', '110', '111', '112', '113', '114',
+                       '115'], 'description': ['gesloten verharding, hellend', 'gesloten verharding, vlak',
+                                               'gesloten verharding, vlak uitgestrekt', 'open verharding, hellend',
+                                               'open verharding, vlak', 'open verharding, vlak uitgestrekt',
+                                               'dak, hellend', 'dak, vlak', 'dak, vlak uitgestrekt',
+                                               'onverhard, hellend', 'onverhard, vlak', 'onverhard, vlak uitgestrekt',
+                                               'half verhard, hellend', 'half verhard, vlak',
+                                               'half verhard, vlak uitgestrekt'],
+                'outflow_delay': ['0.5', '0.2', '0.1', '0.5', '0.2', '0.1', '0.5', '0.2', '0.1', '0.5', '0.2', '0.1',
+                                  '0.5', '0.2', '0.1'],
+                'surface_layer_thickness': ['0', '0.5', '1', '0', '0.5', '1', '0', '2', '4', '2', '4', '6', '2', '4',
+                                            '6'],
+                'infiltration': ['0', '0', '0', '1', '1', '1', '0', '0', '0', '1', '1', '1', '1', '1', '1'],
+                'max_infiltration_capacity': ['0', '0', '0', '2', '2', '2', '0', '0', '0', '5', '5', '5', '5', '5',
+                                              '5'],
+                'min_infiltration_capacity': ['0', '0', '0', '0.5', '0.5', '0.5', '0', '0', '0', '1', '1', '1', '1',
+                                              '1', '1'],
+                'infiltration_decay_constant': ['0', '0', '0', '3', '3', '3', '0', '0', '0', '3', '3', '3', '3', '3',
+                                                '3'],
+                'infiltration_recovery_constant': ['0', '0', '0', '0.1', '0.1', '0.1', '0', '0', '0', '0.1', '0.1',
+                                                   '0.1', '0.1', '0.1', '0.1']}
+
+    @property
+    def materials_defaults(self):
+        return {'id': ['0', '1', '2', '3', '4', '5', '6', '7', '8'],
+                'description': ['Concrete', 'PVC', 'Gres', 'Cast iron', 'Brickwork', 'HPE', 'HDPE', 'Plate iron',
+                                'Steel'],
+                'friction_type': ['2', '2', '2', '2', '2', '2', '2', '2', '2'],
+                'friction_coefficient': ['0.0145', '0.011', '0.0115', '0.0135', '0.016', '0.011', '0.011', '0.0135',
+                                         '0.013']}
 
     @property
     def settings_tables_defaults(self):
@@ -276,6 +308,8 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "initial_conditions": self.initial_conditions_defaults,
             "interception": self.interception_defaults,
             "dry_weather_flow_distribution": self.dry_weather_flow_distribution_defaults,
+            "material": self.materials_defaults,
+            "surface_parameters": self.surface_parameters_defaults,
         }
         return tables_defaults
 
@@ -538,11 +572,18 @@ class NewSchematisationWizard(QWizard):
                 table_layer.startEditing()
                 table_fields = table_layer.fields()
                 table_fields_names = {f.name() for f in table_fields}
-                new_settings_feat = QgsFeature(table_fields)
-                for field_name, field_value in table_settings.items():
-                    if field_name in table_fields_names:
-                        new_settings_feat[field_name] = field_value
-                table_layer.addFeature(new_settings_feat)
+                # Note that this assumes that all columns have the same length!!!
+                nrows = len(list(table_settings.values())[0]) if isinstance(list(table_settings.values())[0],
+                                                                            list) else 1
+                for i in range(nrows):
+                    new_settings_feat = QgsFeature(table_fields)
+                    for field_name, field_value in table_settings.items():
+                        if field_name in table_fields_names:
+                            if isinstance(field_value, list):
+                                new_settings_feat[field_name] = field_value[i]
+                            else:
+                                new_settings_feat[field_name] = field_value
+                    table_layer.addFeature(new_settings_feat)
                 success = table_layer.commitChanges()
 
                 if not success:
