@@ -4,29 +4,23 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List
 
-from threedi_api_client.openapi import (
-    CurrentStatus,
-    FileBoundaryCondition,
-    FileRasterLeakage,
-    FileRasterSourcesSinks,
-    FileStructureControl,
-    FileTimeseriesLeakage,
-    FileTimeseriesRain,
-    FileTimeseriesSourcesSinks,
-    InitialWaterlevel,
-    LizardRasterSourcesSinks,
-    LizardTimeseriesRain,
-    LizardTimeseriesSourcesSinks,
-    LocalRain,
-    MemoryStructureControl,
-    ObstacleEdit,
-    RasterEdit,
-    Simulation,
-    TableStructureControl,
-    TimedStructureControl,
-    TimeseriesLeakageOverview,
-    TimeseriesSourcesSinks,
-)
+from threedi_api_client.openapi import (CurrentStatus, FileBoundaryCondition,
+                                        FileRasterLeakage,
+                                        FileRasterSourcesSinks,
+                                        FileStructureControl,
+                                        FileTimeseriesLeakage,
+                                        FileTimeseriesRain,
+                                        FileTimeseriesSourcesSinks,
+                                        InitialWaterlevel,
+                                        LizardRasterSourcesSinks,
+                                        LizardTimeseriesRain,
+                                        LizardTimeseriesSourcesSinks,
+                                        LocalRain, MemoryStructureControl,
+                                        ObstacleEdit, RasterEdit, Simulation,
+                                        TableStructureControl,
+                                        TimedStructureControl,
+                                        TimeseriesLeakageOverview,
+                                        TimeseriesSourcesSinks)
 
 
 @dataclass
@@ -176,6 +170,7 @@ class Settings(SimulationElement):
     numerical_settings: dict = None
     time_step_settings: dict = None
     aggregation_settings_list: list = None
+    water_quality_settings: dict = None
 
 
 @dataclass
