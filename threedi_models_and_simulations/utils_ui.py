@@ -216,7 +216,7 @@ def migrate_schematisation_schema(schematisation_filepath):
 
     if srid is not None:
         try:
-            schema.upgrade(backup=False)
+            schema.upgrade(backup=False, epsg_code_override=srid)
             shutil.rmtree(os.path.dirname(backup_filepath))
             migration_succeed = True
             migration_feedback_msg = "Migration succeeded."
