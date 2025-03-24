@@ -465,6 +465,11 @@ class SchematisationSettingsPage(QWizardPage):
         """Overriding page validation logic."""
         warning_messages = []
         self.settings_are_valid = True
+        # Check validity of CRS
+        crs = self.main_widget.crs.crs()
+        if not crs.isValid() or crs.isGeographic() or crs.mapUnits() != QgsUnitTypes.DistanceMeters:
+            self.settings_are_valid = False
+            warning_messages.append("CRS must be a projected coordinate system using meters as units.")
         # Check non-zero settings
         non_zero_required_widgets = [
             ("Simulation timestep", self.main_widget.time_step),
