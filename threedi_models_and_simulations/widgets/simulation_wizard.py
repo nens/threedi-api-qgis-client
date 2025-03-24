@@ -15,8 +15,8 @@ from dateutil.relativedelta import relativedelta
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import (QDateTime, QSettings, QSize, Qt, QTimeZone,
-                              pyqtSignal)
+from qgis.PyQt.QtCore import (QDateTime, QLocale, QSettings, QSize, Qt,
+                              QTimeZone, pyqtSignal)
 from qgis.PyQt.QtGui import (QColor, QDoubleValidator, QFont, QStandardItem,
                              QStandardItemModel)
 from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
@@ -2748,6 +2748,20 @@ class SettingsWidget(uicls_settings_page, basecls_settings_page):
             "surface_source_sink_discharge",
         ]
         self.flow_methods = ["min", "max", "avg", "cum", "cum_positive", "cum_negative", "current", "sum"]
+
+        wq_validator = QDoubleValidator(0.0, 100.0, 14, self)
+        wq_validator.setNotation(QDoubleValidator.ScientificNotation)
+        self.time_step_2.setValidator(wq_validator)
+        self.time_step_2.setText(QLocale().toString(1.0))
+        self.min_time_step_2.setValidator(wq_validator)
+        self.max_time_step_2.setValidator(wq_validator)
+        self.general_numerical_threshold_2.setValidator(wq_validator)
+        self.general_numerical_threshold_2.setText(QLocale().toString(0.000000001))
+        self.convergence_eps_2.setValidator(wq_validator)
+        self.convergence_eps_2.setText(QLocale().toString(0.0000000001))
+        self.max_number_of_multi_step.setValue(3)
+        self.max_gs_sweep_iterations.setValue(100)
+
         self.connect_signals()
         self.populate_aggregation_settings()
 
@@ -2817,10 +2831,11 @@ class SettingsWidget(uicls_settings_page, basecls_settings_page):
 
     def collect_single_settings(self):
         """Get data from the single settings groupboxes."""
-        physical_settings = scan_widgets_parameters(self.group_physical, get_combobox_text=False)
-        numerical_settings = scan_widgets_parameters(self.group_numerical, get_combobox_text=False)
-        time_step_settings = scan_widgets_parameters(self.group_timestep, get_combobox_text=False)
-        return physical_settings, numerical_settings, time_step_settings
+        physical_settings = scan_widgets_parameters(self.group_physical, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False)
+        numerical_settings = scan_widgets_parameters(self.group_numerical, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False)
+        time_step_settings = scan_widgets_parameters(self.group_timestep, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False)
+        water_quality_settings = scan_widgets_parameters(self.group_water_quality, get_combobox_text=False, remove_postfix=True, lineedits_as_float_or_none=True)
+        return physical_settings, numerical_settings, time_step_settings, water_quality_settings
 
     def collect_aggregation_settings(self):
         """Get data from the aggregation settings rows."""
@@ -3530,6 +3545,19 @@ class SimulationWizard(QWizard):
             **numerical_settings,
             **time_step_settings,
         )
+        # Water quality settings is tricky, as the widgets in these settings do not have unique object names, therefore
+        # we need to do explicit mapping
+        if settings_overview.water_quality_settings is not None:
+            self.settings_page.main_widget.time_step_2.setText(QLocale().toString(settings_overview.water_quality_settings.time_step))
+            if settings_overview.water_quality_settings.min_time_step:
+                self.settings_page.main_widget.min_time_step_2.setText(QLocale().toString(settings_overview.water_quality_settings.min_time_step))
+            if settings_overview.water_quality_settings.max_time_step:
+                self.settings_page.main_widget.max_time_step_2.setText(QLocale().toString(settings_overview.water_quality_settings.max_time_step))
+            self.settings_page.main_widget.general_numerical_threshold_2.setText(QLocale().toString(settings_overview.water_quality_settings.general_numerical_threshold))
+            self.settings_page.main_widget.max_number_of_multi_step.setValue(settings_overview.water_quality_settings.max_number_of_multi_step)
+            self.settings_page.main_widget.max_gs_sweep_iterations.setValue(settings_overview.water_quality_settings.max_gs_sweep_iterations)
+            self.settings_page.main_widget.convergence_eps_2.setText(QLocale().toString(settings_overview.water_quality_settings.convergence_eps))
+        
         aggregation_settings_list = [settings.to_dict() for settings in settings_overview.aggregation_settings]
         self.settings_page.main_widget.populate_aggregation_settings(aggregation_settings_list)
         # Simulation events
@@ -4072,9 +4100,9 @@ class SimulationWizard(QWizard):
 
         # Settings page attributes
         main_settings = self.settings_page.main_widget.collect_single_settings()
-        physical_settings, numerical_settings, time_step_settings = main_settings
+        physical_settings, numerical_settings, time_step_settings, water_quality_settings = main_settings
         aggregation_settings_list = self.settings_page.main_widget.collect_aggregation_settings()
-        settings = dm.Settings(physical_settings, numerical_settings, time_step_settings, aggregation_settings_list)
+        settings = dm.Settings(physical_settings, numerical_settings, time_step_settings, aggregation_settings_list, water_quality_settings)
         # Post-processing in Lizard
         lizard_post_processing = dm.LizardPostProcessing()
         if self.init_conditions.include_lizard_post_processing:
