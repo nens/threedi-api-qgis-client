@@ -6,7 +6,7 @@ import shutil
 from uuid import uuid4
 
 from qgis.gui import QgsFileWidget, QgsProjectionSelectionWidget
-from qgis.PyQt.QtCore import QDate, QSettings, QTime
+from qgis.PyQt.QtCore import QDate, QLocale, QSettings, QTime
 from qgis.PyQt.QtGui import QColor, QDoubleValidator, QIcon
 from qgis.PyQt.QtWidgets import (QCheckBox, QComboBox, QDateEdit,
                                  QDoubleSpinBox, QFileDialog, QGroupBox,
@@ -47,7 +47,7 @@ def set_widget_background_color(widget, hex_color="#F0F0F0"):
     widget.setPalette(palette)
 
 
-def scan_widgets_parameters(main_widget, get_combobox_text, remove_postfix = False):
+def scan_widgets_parameters(main_widget, get_combobox_text, remove_postfix, lineedits_as_float_or_none):
     """Scan widget children and get their values.
     
     In Qt Designer, widgets in the same UI file need to have an unique object name. When an object
@@ -62,7 +62,18 @@ def scan_widgets_parameters(main_widget, get_combobox_text, remove_postfix = Fal
                 obj_name = result.group(1)
 
         if isinstance(widget, QLineEdit):
-            parameters[obj_name] = widget.text()
+            if lineedits_as_float_or_none:
+                if widget.text():
+                    val, to_float_possible = QLocale().toFloat(widget.text())
+                    assert to_float_possible  # Should be handled by validators
+                    if "e" in widget.text().lower():  # we use python buildin for scientific notation
+                       parameters[obj_name] = float(widget.text()) 
+                    else:
+                        parameters[obj_name] = val
+                else:
+                    parameters[obj_name] = None
+            else:
+                parameters[obj_name] = widget.text()
         elif isinstance(widget, (QCheckBox, QRadioButton)):
             parameters[obj_name] = widget.isChecked()
         elif isinstance(widget, QComboBox):
@@ -82,11 +93,11 @@ def scan_widgets_parameters(main_widget, get_combobox_text, remove_postfix = Fal
                 is_checked = widget.isChecked()
                 parameters[obj_name] = is_checked
                 if is_checked:
-                    parameters.update(scan_widgets_parameters(widget, get_combobox_text))
+                    parameters.update(scan_widgets_parameters(widget, get_combobox_text=get_combobox_text, remove_postfix=remove_postfix, lineedits_as_float_or_none=lineedits_as_float_or_none))
             else:
-                parameters.update(scan_widgets_parameters(widget, get_combobox_text))
+                parameters.update(scan_widgets_parameters(widget, get_combobox_text=get_combobox_text, remove_postfix=remove_postfix, lineedits_as_float_or_none=lineedits_as_float_or_none))
         elif isinstance(widget, QWidget):
-            parameters.update(scan_widgets_parameters(widget, get_combobox_text))
+            parameters.update(scan_widgets_parameters(widget, get_combobox_text=get_combobox_text, remove_postfix=remove_postfix, lineedits_as_float_or_none=lineedits_as_float_or_none))
     return parameters
 
 

@@ -1098,6 +1098,8 @@ class ThreediCalls:
     
     def create_simulation_settings_water_quality(self, simulation_pk: int, **data) -> WaterQualitySettings:
         """Create a simulation water quality settings."""
+        logger.error("sending")
+        logger.error(data)
         simulations_settings_wq = self.threedi_api.simulations_settings_water_quality_create(
             str(simulation_pk), data
         )
