@@ -1294,6 +1294,7 @@ class SimulationRunner(QRunnable):
         self.tc.create_simulation_settings_physical(sim_id, **settings.physical_settings)
         self.tc.create_simulation_settings_numerical(sim_id, **settings.numerical_settings)
         self.tc.create_simulation_settings_time_step(sim_id, **settings.time_step_settings)
+        self.tc.create_simulation_settings_water_quality(sim_id, **settings.water_quality_settings)
         for aggregation_settings in settings.aggregation_settings_list:
             self.tc.create_simulation_settings_aggregation(sim_id, **aggregation_settings)
 
