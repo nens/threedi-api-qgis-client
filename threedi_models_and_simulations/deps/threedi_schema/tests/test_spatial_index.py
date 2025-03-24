@@ -1,9 +1,8 @@
 import pytest
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, create_engine, func, Integer
+from sqlalchemy import Column, Integer, create_engine, func
 from sqlalchemy.event import listen
 from sqlalchemy.orm import declarative_base, sessionmaker
-
 from threedi_schema.application.threedi_database import load_spatialite
 from threedi_schema.infrastructure.spatial_index import (
     create_spatial_index,

@@ -8,7 +8,7 @@ from functools import partial
 from operator import attrgetter
 
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QSettings, QSize
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, QSize
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QGridLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QWidget, QWizard, QWizardPage
 from threedi_api_client.openapi import ApiException, SchematisationRevision
@@ -22,7 +22,7 @@ from ..utils import (
     zip_into_archive,
 )
 from ..utils_qgis import geopackage_layer
-from ..utils_ui import get_filepath, migrate_schematisation_schema
+from ..utils_ui import get_filepath, migrate_schematisation_schema, progress_bar_callback_factory
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_start_page, basecls_start_page = uic.loadUiType(os.path.join(base_dir, "ui", "upload_wizard", "page_start.ui"))
@@ -161,7 +161,16 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
                 self.communication.bar_warn("Schematisation checks skipped!")
                 return
             wip_revision = self.current_local_schematisation.wip_revision
-            migration_succeed, migration_feedback_msg = migrate_schematisation_schema(wip_revision.schematisation_db_filepath)
+            QCoreApplication.processEvents()
+            migration_info = "Schema migration..."
+            self.communication.progress_bar(migration_info, 0, 100, 0, clear_msg_bar=True)
+            progress_bar_callback = progress_bar_callback_factory(self.communication, migration_info)
+            migration_succeed, migration_feedback_msg = migrate_schematisation_schema(
+                wip_revision.schematisation_db_filepath, progress_bar_callback
+            )
+            self.communication.progress_bar("Migration complete!", 0, 100, 100, clear_msg_bar=True)
+            QCoreApplication.processEvents()
+            self.communication.clear_message_bar()
             if not migration_succeed:
                 self.communication.show_error(migration_feedback_msg, self)
                 return

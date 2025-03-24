@@ -2,7 +2,7 @@ import re
 
 import geoalchemy2
 from packaging import version
-from sqlalchemy.types import Integer, Text, TypeDecorator, VARCHAR
+from sqlalchemy.types import VARCHAR, Integer, Text, TypeDecorator
 
 
 class Geometry(geoalchemy2.types.Geometry):

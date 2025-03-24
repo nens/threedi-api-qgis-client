@@ -1,9 +1,8 @@
 import logging
 from pathlib import Path
-from unittest.mock import call, MagicMock
+from unittest.mock import MagicMock, call
 
 import pytest
-
 from threedi_schema.application import upgrade_utils
 from threedi_schema.application.schema import get_alembic_config
 from threedi_schema.application.threedi_database import ThreediDatabase
@@ -31,9 +30,7 @@ def test_progress_handler_zero_steps():
     assert progress_func.call_args_list == expected_calls
 
 
-@pytest.mark.parametrize(
-    "target_revision, nsteps_expected", [("0226", 5), ("0200", 0), (None, 0)]
-)
+@pytest.mark.parametrize("target_revision, nsteps_expected", [("0226", 5), ("0200", 0), (None, 0)])
 def test_get_upgrade_steps_count(target_revision, nsteps_expected):
     schema = ThreediDatabase(data_dir.joinpath("v2_bergermeer_221.sqlite")).schema
     nsteps = upgrade_utils.get_upgrade_steps_count(

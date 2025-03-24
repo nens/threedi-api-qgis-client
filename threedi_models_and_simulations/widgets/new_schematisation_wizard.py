@@ -22,7 +22,6 @@ from ..utils import SchematisationRasterReferences, extract_error_message
 from ..utils_qgis import geopackage_layer
 from ..utils_ui import ensure_valid_schema, get_filepath, read_3di_settings, save_3di_settings, scan_widgets_parameters
 
-
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_schema_name_page, basecls_schema_name_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "new_schematisation_wizard", "page_schema_name.ui")

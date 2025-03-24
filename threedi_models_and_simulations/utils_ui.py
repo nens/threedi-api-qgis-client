@@ -5,7 +5,7 @@ import shutil
 from uuid import uuid4
 
 from qgis.gui import QgsFileWidget, QgsProjectionSelectionWidget
-from qgis.PyQt.QtCore import QDate, QSettings, QTime
+from qgis.PyQt.QtCore import QCoreApplication, QDate, QSettings, QTime
 from qgis.PyQt.QtGui import QColor, QDoubleValidator, QIcon
 from qgis.PyQt.QtWidgets import (
     QCheckBox,
@@ -191,7 +191,7 @@ def backup_schematisation_file(filename):
     return backup_file_path
 
 
-def migrate_schematisation_schema(schematisation_filepath):
+def migrate_schematisation_schema(schematisation_filepath, progress_callback=None):
     migration_succeed = False
     srid = None
 
@@ -208,7 +208,9 @@ def migrate_schematisation_schema(schematisation_filepath):
             except errors.InvalidSRIDException:
                 srid = None
         if srid is None:
-            migration_feedback_msg = "Could not fetch valid EPSG code from database or DEM; aborting database migration."
+            migration_feedback_msg = (
+                "Could not fetch valid EPSG code from database or DEM; aborting database migration."
+            )
     except ImportError:
         migration_feedback_msg = "Missing threedi-schema library (or its dependencies). Schema migration failed."
     except Exception as e:
@@ -216,7 +218,7 @@ def migrate_schematisation_schema(schematisation_filepath):
 
     if srid is not None:
         try:
-            schema.upgrade(backup=False, epsg_code_override=srid)
+            schema.upgrade(backup=False, epsg_code_override=srid, progress_func=progress_callback)
             shutil.rmtree(os.path.dirname(backup_filepath))
             migration_succeed = True
             migration_feedback_msg = "Migration succeeded."
@@ -229,6 +231,16 @@ def migrate_schematisation_schema(schematisation_filepath):
             migration_feedback_msg = f"{e}"
 
     return migration_succeed, migration_feedback_msg
+
+
+def progress_bar_callback_factory(communication, message, minimum=0, maximum=100, clear_msg_bar=True):
+    """Callback function to track schematisation migration progress."""
+
+    def progress_bar_callback(progres_value):
+        communication.progress_bar(message, minimum, maximum, progres_value, clear_msg_bar=clear_msg_bar)
+        QCoreApplication.processEvents()
+
+    return progress_bar_callback
 
 
 def save_3di_settings(entry_name, value):

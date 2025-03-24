@@ -7,9 +7,7 @@ __all__ = ["copy_models"]
 
 def get_spatialite_version(db):
     with db.session_scope() as session:
-        ((lib_version,),) = session.execute(
-            text("SELECT spatialite_version()")
-        ).fetchall()
+        ((lib_version,),) = session.execute(text("SELECT spatialite_version()")).fetchall()
 
     # Identify Spatialite version
     inspector = inspect(db.engine)

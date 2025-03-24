@@ -98,9 +98,7 @@ class ThreediDatabase:
                 poolclass = None
             else:
                 poolclass = NullPool
-            engine = create_engine(
-                "sqlite:///{0}".format(self.path), echo=self.echo, poolclass=poolclass
-            )
+            engine = create_engine("sqlite:///{0}".format(self.path), echo=self.echo, poolclass=poolclass)
             listen(engine, "connect", load_spatialite)
             if get_seperate_engine:
                 return engine

@@ -10,9 +10,7 @@ def drop_view(connection, name):
     except OperationalError:
         connection.execute(text(f"SELECT DropGeoTable('{name}')"))
         connection.execute(text(f"DROP VIEW IF EXISTS '{name}'"))
-    connection.execute(
-        text(f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'")
-    )
+    connection.execute(text(f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"))
 
 
 def recreate_views(db, file_version, all_views, views_to_delete):
