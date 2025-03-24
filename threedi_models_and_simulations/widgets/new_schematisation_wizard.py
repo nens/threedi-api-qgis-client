@@ -211,6 +211,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         defaults = {
             "name": "default",
             "use_structure_control": None,
+            "use_0d_inflow": None,
         }
         return defaults
 
@@ -223,7 +224,6 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "max_time_step": None,
             "output_time_step": None,
             "use_time_step_stretch": 0,
-            "use_0d_inflow": None,
         }
         return defaults
 
@@ -349,11 +349,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         out_timestep_mod = suggested_ots % time_step
         output_time_step = suggested_ots + (time_step - out_timestep_mod) if out_timestep_mod else suggested_ots
         user_settings["output_time_step"] = output_time_step
-        if self.use_0d_inflow_group.isChecked():
-            use_0d_inflow_surfaces = user_settings["use_0d_inflow_surfaces"]
-            user_settings["use_0d_inflow"] = 2 if use_0d_inflow_surfaces else 1
-        else:
-            user_settings["use_0d_inflow"] = 0
+        user_settings["use_0d_inflow"] = self.use_0d_inflow_group.isChecked()
         user_settings["use_1d_flow"] = 1 if use_1d_checked else 0
         user_settings["use_2d_flow"] = 1 if use_2d_checked else 0
         user_settings["use_2d_rain"] = 1 if use_2d_checked else 0
