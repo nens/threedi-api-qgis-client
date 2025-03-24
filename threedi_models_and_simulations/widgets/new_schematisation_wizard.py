@@ -10,6 +10,7 @@ from pathlib import Path
 
 from qgis.core import QgsFeature, QgsRasterLayer
 from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
+from qgis.gui import QgsProjectionSelectionWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QSettings, QSize, Qt
 from qgis.PyQt.QtGui import QColor
@@ -105,6 +106,10 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
     def __init__(self, parent_page):
         super().__init__()
         self.setupUi(self)
+        self.crs.setOptionVisible(QgsProjectionSelectionWidget.ProjectCrs, False)
+        self.crs.setOptionVisible(QgsProjectionSelectionWidget.CurrentCrs, False)
+        self.crs.setOptionVisible(QgsProjectionSelectionWidget.DefaultCrs, False)
+        self.crs.setOptionVisible(QgsProjectionSelectionWidget.RecentCrs, True)
         self.crs.setCrs(QgsCoordinateReferenceSystem("EPSG:28992"))
 
         self.parent_page = parent_page
