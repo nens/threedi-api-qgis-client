@@ -8,10 +8,20 @@ from uuid import uuid4
 from qgis.gui import QgsFileWidget, QgsProjectionSelectionWidget
 from qgis.PyQt.QtCore import QCoreApplication, QDate, QLocale, QSettings, QTime
 from qgis.PyQt.QtGui import QColor, QDoubleValidator, QIcon
-from qgis.PyQt.QtWidgets import (QCheckBox, QComboBox, QDateEdit,
-                                 QDoubleSpinBox, QFileDialog, QGroupBox,
-                                 QItemDelegate, QLineEdit, QRadioButton,
-                                 QSpinBox, QTimeEdit, QWidget)
+from qgis.PyQt.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDateEdit,
+    QDoubleSpinBox,
+    QFileDialog,
+    QGroupBox,
+    QItemDelegate,
+    QLineEdit,
+    QRadioButton,
+    QSpinBox,
+    QTimeEdit,
+    QWidget,
+)
 
 
 def style_path(qml_filename):
@@ -66,7 +76,7 @@ def scan_widgets_parameters(main_widget, get_combobox_text, remove_postfix, line
                     val, to_float_possible = QLocale().toFloat(widget.text())
                     assert to_float_possible  # Should be handled by validators
                     if "e" in widget.text().lower():  # we use python buildin for scientific notation
-                       parameters[obj_name] = float(widget.text())
+                        parameters[obj_name] = float(widget.text())
                     else:
                         parameters[obj_name] = val
                 else:
@@ -92,11 +102,32 @@ def scan_widgets_parameters(main_widget, get_combobox_text, remove_postfix, line
                 is_checked = widget.isChecked()
                 parameters[obj_name] = is_checked
                 if is_checked:
-                    parameters.update(scan_widgets_parameters(widget, get_combobox_text=get_combobox_text, remove_postfix=remove_postfix, lineedits_as_float_or_none=lineedits_as_float_or_none))
+                    parameters.update(
+                        scan_widgets_parameters(
+                            widget,
+                            get_combobox_text=get_combobox_text,
+                            remove_postfix=remove_postfix,
+                            lineedits_as_float_or_none=lineedits_as_float_or_none,
+                        )
+                    )
             else:
-                parameters.update(scan_widgets_parameters(widget, get_combobox_text=get_combobox_text, remove_postfix=remove_postfix, lineedits_as_float_or_none=lineedits_as_float_or_none))
+                parameters.update(
+                    scan_widgets_parameters(
+                        widget,
+                        get_combobox_text=get_combobox_text,
+                        remove_postfix=remove_postfix,
+                        lineedits_as_float_or_none=lineedits_as_float_or_none,
+                    )
+                )
         elif isinstance(widget, QWidget):
-            parameters.update(scan_widgets_parameters(widget, get_combobox_text=get_combobox_text, remove_postfix=remove_postfix, lineedits_as_float_or_none=lineedits_as_float_or_none))
+            parameters.update(
+                scan_widgets_parameters(
+                    widget,
+                    get_combobox_text=get_combobox_text,
+                    remove_postfix=remove_postfix,
+                    lineedits_as_float_or_none=lineedits_as_float_or_none,
+                )
+            )
     return parameters
 
 

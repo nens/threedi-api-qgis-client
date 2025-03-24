@@ -15,33 +15,61 @@ from dateutil.relativedelta import relativedelta
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import (QDateTime, QLocale, QSettings, QSize, Qt,
-                              QTimeZone, pyqtSignal)
-from qgis.PyQt.QtGui import (QColor, QDoubleValidator, QFont, QStandardItem,
-                             QStandardItemModel)
-from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
-                                 QGridLayout, QGroupBox, QHBoxLayout, QLabel,
-                                 QLineEdit, QRadioButton, QScrollArea,
-                                 QSizePolicy, QSpacerItem, QSpinBox,
-                                 QTableWidgetItem, QWidget, QWizard,
-                                 QWizardPage)
+from qgis.PyQt.QtCore import QDateTime, QLocale, QSettings, QSize, Qt, QTimeZone, pyqtSignal
+from qgis.PyQt.QtGui import QColor, QDoubleValidator, QFont, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import (
+    QComboBox,
+    QDoubleSpinBox,
+    QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QRadioButton,
+    QScrollArea,
+    QSizePolicy,
+    QSpacerItem,
+    QSpinBox,
+    QTableWidgetItem,
+    QWidget,
+    QWizard,
+    QWizardPage,
+)
 from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
-from ..utils import (TEMPDIR, BreachSourceType, EventTypes,
-                     apply_24h_timeseries, constains_only_ascii,
-                     convert_timeseries_to_seconds, extract_error_message,
-                     get_download_file, handle_csv_header, intervals_are_even,
-                     mmh_to_mmtimestep, mmh_to_ms, mmtimestep_to_mmh,
-                     ms_to_mmh, parse_timeseries, read_json_data)
-from ..utils_ui import (NumericDelegate, get_filepath,
-                        qgis_layers_cbo_get_layer_uri, read_3di_settings,
-                        save_3di_settings, scan_widgets_parameters,
-                        set_widget_background_color, set_widgets_parameters)
+from ..utils import (
+    TEMPDIR,
+    BreachSourceType,
+    EventTypes,
+    apply_24h_timeseries,
+    constains_only_ascii,
+    convert_timeseries_to_seconds,
+    extract_error_message,
+    get_download_file,
+    handle_csv_header,
+    intervals_are_even,
+    mmh_to_mmtimestep,
+    mmh_to_ms,
+    mmtimestep_to_mmh,
+    ms_to_mmh,
+    parse_timeseries,
+    read_json_data,
+)
+from ..utils_ui import (
+    NumericDelegate,
+    get_filepath,
+    qgis_layers_cbo_get_layer_uri,
+    read_3di_settings,
+    save_3di_settings,
+    scan_widgets_parameters,
+    set_widget_background_color,
+    set_widgets_parameters,
+)
 from .custom_items import FilteredComboBox
-from .initial_concentrations import (Initial1DConcentrationsWidget,
-                                     Initial2DConcentrationsWidget)
+from .initial_concentrations import Initial1DConcentrationsWidget, Initial2DConcentrationsWidget
 from .substance_concentrations import SubstanceConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -2839,10 +2867,18 @@ class SettingsWidget(uicls_settings_page, basecls_settings_page):
 
     def collect_single_settings(self):
         """Get data from the single settings groupboxes."""
-        physical_settings = scan_widgets_parameters(self.group_physical, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False)
-        numerical_settings = scan_widgets_parameters(self.group_numerical, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False)
-        time_step_settings = scan_widgets_parameters(self.group_timestep, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False)
-        water_quality_settings = scan_widgets_parameters(self.group_water_quality, get_combobox_text=False, remove_postfix=True, lineedits_as_float_or_none=True)
+        physical_settings = scan_widgets_parameters(
+            self.group_physical, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False
+        )
+        numerical_settings = scan_widgets_parameters(
+            self.group_numerical, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False
+        )
+        time_step_settings = scan_widgets_parameters(
+            self.group_timestep, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False
+        )
+        water_quality_settings = scan_widgets_parameters(
+            self.group_water_quality, get_combobox_text=False, remove_postfix=True, lineedits_as_float_or_none=True
+        )
         return physical_settings, numerical_settings, time_step_settings, water_quality_settings
 
     def collect_aggregation_settings(self):
@@ -3556,16 +3592,30 @@ class SimulationWizard(QWizard):
         # Water quality settings is tricky, as the widgets in these settings do not have unique object names, therefore
         # we need to do explicit mapping
         if settings_overview.water_quality_settings is not None:
-            self.settings_page.main_widget.time_step_2.setText(QLocale().toString(settings_overview.water_quality_settings.time_step))
+            self.settings_page.main_widget.time_step_2.setText(
+                QLocale().toString(settings_overview.water_quality_settings.time_step)
+            )
             if settings_overview.water_quality_settings.min_time_step:
-                self.settings_page.main_widget.min_time_step_2.setText(QLocale().toString(settings_overview.water_quality_settings.min_time_step))
+                self.settings_page.main_widget.min_time_step_2.setText(
+                    QLocale().toString(settings_overview.water_quality_settings.min_time_step)
+                )
             if settings_overview.water_quality_settings.max_time_step:
-                self.settings_page.main_widget.max_time_step_2.setText(QLocale().toString(settings_overview.water_quality_settings.max_time_step))
-            self.settings_page.main_widget.general_numerical_threshold_2.setText(QLocale().toString(settings_overview.water_quality_settings.general_numerical_threshold))
-            self.settings_page.main_widget.max_number_of_multi_step.setValue(settings_overview.water_quality_settings.max_number_of_multi_step)
-            self.settings_page.main_widget.max_gs_sweep_iterations.setValue(settings_overview.water_quality_settings.max_gs_sweep_iterations)
-            self.settings_page.main_widget.convergence_eps_2.setText(QLocale().toString(settings_overview.water_quality_settings.convergence_eps))
-        
+                self.settings_page.main_widget.max_time_step_2.setText(
+                    QLocale().toString(settings_overview.water_quality_settings.max_time_step)
+                )
+            self.settings_page.main_widget.general_numerical_threshold_2.setText(
+                QLocale().toString(settings_overview.water_quality_settings.general_numerical_threshold)
+            )
+            self.settings_page.main_widget.max_number_of_multi_step.setValue(
+                settings_overview.water_quality_settings.max_number_of_multi_step
+            )
+            self.settings_page.main_widget.max_gs_sweep_iterations.setValue(
+                settings_overview.water_quality_settings.max_gs_sweep_iterations
+            )
+            self.settings_page.main_widget.convergence_eps_2.setText(
+                QLocale().toString(settings_overview.water_quality_settings.convergence_eps)
+            )
+
         aggregation_settings_list = [settings.to_dict() for settings in settings_overview.aggregation_settings]
         self.settings_page.main_widget.populate_aggregation_settings(aggregation_settings_list)
         # Simulation events
@@ -4110,7 +4160,9 @@ class SimulationWizard(QWizard):
         main_settings = self.settings_page.main_widget.collect_single_settings()
         physical_settings, numerical_settings, time_step_settings, water_quality_settings = main_settings
         aggregation_settings_list = self.settings_page.main_widget.collect_aggregation_settings()
-        settings = dm.Settings(physical_settings, numerical_settings, time_step_settings, aggregation_settings_list, water_quality_settings)
+        settings = dm.Settings(
+            physical_settings, numerical_settings, time_step_settings, aggregation_settings_list, water_quality_settings
+        )
         # Post-processing in Lizard
         lizard_post_processing = dm.LizardPostProcessing()
         if self.init_conditions.include_lizard_post_processing:
