@@ -379,11 +379,11 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         """Get all needed settings."""
         all_schematisation_settings = defaultdict(dict)
         user_settings = self.user_input_settings
-        # prevent data from being overwritten based on column name
-        no_overwrite = ["material", "dry_weather_flow_distribution", "surface_parameters"]
+        # force defaults for these tables
+        force_default = ["material", "dry_weather_flow_distribution", "surface_parameters"]
         for table_name, settings in self.settings_tables_defaults.items():
             for entry, default_value in settings.items():
-                if entry in user_settings and table_name not in no_overwrite:
+                if entry in user_settings and table_name not in force_default:
                     all_schematisation_settings[table_name][entry] = user_settings[entry]
                 else:
                     all_schematisation_settings[table_name][entry] = default_value
