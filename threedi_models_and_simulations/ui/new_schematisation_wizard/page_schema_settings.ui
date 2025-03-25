@@ -99,7 +99,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Timestep settings</string>
+         <string>Time step settings</string>
         </property>
        </widget>
       </item>
@@ -121,10 +121,10 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Simulation timestep [s]</string>
+            <string>Simulation time step [s]</string>
            </property>
            <property name="text">
-            <string>Simulation timestep [s]:</string>
+            <string>Simulation time step [s]:</string>
            </property>
           </widget>
          </item>
@@ -137,7 +137,7 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Used to set the output timestep</string>
+            <string>Used to set the output time step</string>
            </property>
            <property name="text">
             <string>Typical simulation duration:</string>
@@ -165,7 +165,7 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Used to set the output timestep</string>
+            <string>Used to set the output time step</string>
            </property>
            <item>
             <property name="text">
@@ -575,7 +575,7 @@
        </widget>
       </item>
       <item row="4" column="0">
-       <widget class="QGroupBox" name="use_0d_inflow_group">
+       <widget class="QCheckBox" name="use_0d_inflow_checkbox">
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -583,76 +583,14 @@
          </font>
         </property>
         <property name="toolTip">
-         <string>Check this box if you want to include rainfall-runoff from surfaces or impervious surfaces in your schematisation.</string>
+         <string>Check this box if you want to include rainfall-runoff from surfaces and/or urban wastewater production (dry weather flow) in your schematisation.</string>
         </property>
-        <property name="title">
+        <property name="text">
          <string>0D Inflow</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
         </property>
         <property name="checked">
          <bool>false</bool>
         </property>
-        <layout class="QGridLayout" name="gridLayout_4">
-         <item row="0" column="1">
-          <widget class="QRadioButton" name="use_0d_inflow_surfaces">
-           <property name="font">
-            <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Use 'surfaces' with custom parameters to define the 0D inflow model for each surface.</string>
-           </property>
-           <property name="text">
-            <string>Custom</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QRadioButton" name="use_0d_inflow_impervious_surfaces">
-           <property name="font">
-            <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Use 'impervious surfaces' with the default Dutch 'NWRW' parameters to define the 0D inflow model for each surface.</string>
-           </property>
-           <property name="text">
-            <string>Dutch NWRW</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_8">
-           <property name="minimumSize">
-            <size>
-             <width>350</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Use 'surfaces' or 'impervious surfaces' to parameterize the 0D inflow models for each surface</string>
-           </property>
-           <property name="text">
-            <string>Inflow parameters type:</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </widget>
       </item>
       <item row="0" column="0">
@@ -859,9 +797,7 @@
   <tabstop>friction_shallow_water_depth_correction_sloping</tabstop>
   <tabstop>use_1d_flow_group</tabstop>
   <tabstop>manhole_aboveground_storage_area</tabstop>
-  <tabstop>use_0d_inflow_group</tabstop>
-  <tabstop>use_0d_inflow_surfaces</tabstop>
-  <tabstop>use_0d_inflow_impervious_surfaces</tabstop>
+  <tabstop>use_0d_inflow_checkbox</tabstop>
   <tabstop>friction_type_text</tabstop>
   <tabstop>friction_coefficient</tabstop>
   <tabstop>time_step</tabstop>
