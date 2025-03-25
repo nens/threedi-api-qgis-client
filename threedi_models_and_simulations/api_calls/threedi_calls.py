@@ -83,6 +83,7 @@ from threedi_api_client.openapi import (
     Upload,
     UploadEventFile,
     User,
+    WaterQualitySettings,
     WindDragCoefficient,
 )
 
@@ -1130,6 +1131,13 @@ class ThreediCalls:
         )
         return simulations_settings_aggregation
 
+    def create_simulation_settings_water_quality(self, simulation_pk: int, **data) -> WaterQualitySettings:
+        """Create a simulation water quality settings."""
+        logger.error("sending")
+        logger.error(data)
+        simulations_settings_wq = self.threedi_api.simulations_settings_water_quality_create(str(simulation_pk), data)
+        return simulations_settings_wq
+
     def update_simulation_settings_physical(self, simulation_pk: int, **data) -> None:
         """Update a simulation physical settings."""
         self.threedi_api.simulations_settings_physical_partial_update(str(simulation_pk), data)
@@ -1145,6 +1153,10 @@ class ThreediCalls:
     def update_simulation_settings_aggregation(self, setting_id: int, simulation_pk: int, **data) -> None:
         """Update a simulation aggregation settings."""
         self.threedi_api.simulations_settings_aggregation_partial_update(setting_id, str(simulation_pk), data)
+
+    def update_simulation_settings_water_quality(self, setting_id: int, simulation_pk: int, **data) -> None:
+        """Update a simulation water quality settings."""
+        self.threedi_api.simulations_settings_water_quality_partial_update(setting_id, str(simulation_pk), data)
 
     def fetch_contracts(self, **data) -> List[Contract]:
         """Get valid 3Di contracts list."""

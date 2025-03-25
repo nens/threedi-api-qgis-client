@@ -24,7 +24,6 @@ from ..utils import SchematisationRasterReferences, extract_error_message
 from ..utils_qgis import geopackage_layer
 from ..utils_ui import ensure_valid_schema, get_filepath, read_3di_settings, save_3di_settings, scan_widgets_parameters
 
-
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_schema_name_page, basecls_schema_name_page = uic.loadUiType(
     os.path.join(base_dir, "ui", "new_schematisation_wizard", "page_schema_name.ui")
@@ -324,7 +323,9 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
     @property
     def user_input_settings(self):
         """Get user input settings."""
-        user_settings = scan_widgets_parameters(self)
+        user_settings = scan_widgets_parameters(
+            self, get_combobox_text=True, remove_postfix=False, lineedits_as_float_or_none=False
+        )
         crs = user_settings["crs"]
         epsg = crs.authid()
         user_settings["epsg_code"] = int(epsg.split(":")[-1]) if epsg else 0

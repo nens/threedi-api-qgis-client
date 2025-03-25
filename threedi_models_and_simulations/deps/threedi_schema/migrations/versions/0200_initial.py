@@ -5,10 +5,10 @@ Revises:
 Create Date: 2021-02-15 16:31:00.792077
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import inspect, text
-
 from threedi_schema.domain.custom_types import Geometry
 
 # revision identifiers, used by Alembic.
@@ -40,9 +40,7 @@ def create_table_if_not_exists(table_name, *args, **kwargs):
 def _get_version(connection):
     if "south_migrationhistory" not in existing_tables:
         return
-    res = connection.execute(
-        text("SELECT id FROM south_migrationhistory ORDER BY id DESC LIMIT 1")
-    )
+    res = connection.execute(text("SELECT id FROM south_migrationhistory ORDER BY id DESC LIMIT 1"))
     results = res.fetchall()
     if len(results) == 1:
         return results[0][0]
@@ -54,12 +52,8 @@ def upgrade_160():
     0160_auto__add_field_v2controlpid_target_upper_limit__add_field_v2controlpi
     """
     with op.batch_alter_table("v2_control_pid") as batch_op:
-        batch_op.add_column(
-            sa.Column("target_upper_limit", sa.String(length=50), nullable=True)
-        )
-        batch_op.add_column(
-            sa.Column("target_lower_limit", sa.String(length=50), nullable=True)
-        )
+        batch_op.add_column(sa.Column("target_upper_limit", sa.String(length=50), nullable=True))
+        batch_op.add_column(sa.Column("target_lower_limit", sa.String(length=50), nullable=True))
 
 
 def upgrade_161():
@@ -78,9 +72,7 @@ def upgrade_162():
     """
     with op.batch_alter_table("v2_global_settings") as batch_op:
         batch_op.add_column(sa.Column("table_step_size_1d", sa.Float(), nullable=True))
-        batch_op.add_column(
-            sa.Column("table_step_size_volume_2d", sa.Float(), nullable=True)
-        )
+        batch_op.add_column(sa.Column("table_step_size_volume_2d", sa.Float(), nullable=True))
 
 
 def upgrade_163():
@@ -105,15 +97,7 @@ def upgrade_164():
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("refinement_level", sa.Integer(), nullable=True),
         sa.Column("code", sa.String(length=100), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POLYGON"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POLYGON"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
 
@@ -127,38 +111,22 @@ def upgrade_165():
         "v2_groundwater",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("groundwater_impervious_layer_level", sa.Float(), nullable=True),
-        sa.Column(
-            "groundwater_impervious_layer_level_file",
-            sa.String(length=255),
-            nullable=True
-        ),
-        sa.Column(
-            "groundwater_impervious_layer_level_type", sa.Integer(), nullable=True
-        ),
+        sa.Column("groundwater_impervious_layer_level_file", sa.String(length=255), nullable=True),
+        sa.Column("groundwater_impervious_layer_level_type", sa.Integer(), nullable=True),
         sa.Column("phreatic_storage_capacity", sa.Float(), nullable=True),
-        sa.Column(
-            "phreatic_storage_capacity_file", sa.String(length=255), nullable=True
-        ),
+        sa.Column("phreatic_storage_capacity_file", sa.String(length=255), nullable=True),
         sa.Column("phreatic_storage_capacity_type", sa.Integer(), nullable=True),
         sa.Column("equilibrium_infiltration_rate", sa.Float(), nullable=True),
-        sa.Column(
-            "equilibrium_infiltration_rate_file", sa.String(length=255), nullable=True
-        ),
+        sa.Column("equilibrium_infiltration_rate_file", sa.String(length=255), nullable=True),
         sa.Column("equilibrium_infiltration_rate_type", sa.Integer(), nullable=True),
         sa.Column("initial_infiltration_rate", sa.Float(), nullable=True),
-        sa.Column(
-            "initial_infiltration_rate_file", sa.String(length=255), nullable=True
-        ),
+        sa.Column("initial_infiltration_rate_file", sa.String(length=255), nullable=True),
         sa.Column("initial_infiltration_rate_type", sa.Integer(), nullable=True),
         sa.Column("infiltration_decay_period", sa.Float(), nullable=True),
-        sa.Column(
-            "infiltration_decay_period_file", sa.String(length=255), nullable=True
-        ),
+        sa.Column("infiltration_decay_period_file", sa.String(length=255), nullable=True),
         sa.Column("infiltration_decay_period_type", sa.Integer(), nullable=True),
         sa.Column("groundwater_hydro_connectivity", sa.Float(), nullable=True),
-        sa.Column(
-            "groundwater_hydro_connectivity_file", sa.String(length=255), nullable=True
-        ),
+        sa.Column("groundwater_hydro_connectivity_file", sa.String(length=255), nullable=True),
         sa.Column("groundwater_hydro_connectivity_type", sa.Integer(), nullable=True),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("seepage", sa.Float(), nullable=True),
@@ -192,26 +160,12 @@ def upgrade_165():
     )
 
     with op.batch_alter_table("v2_global_settings") as batch_op:
-        batch_op.add_column(
-            sa.Column("initial_groundwater_level", sa.Float(), nullable=True)
-        )
-        batch_op.add_column(
-            sa.Column(
-                "initial_groundwater_level_file", sa.String(length=255), nullable=True
-            )
-        )
-        batch_op.add_column(
-            sa.Column("initial_groundwater_level_type", sa.Integer(), nullable=True)
-        )
-        batch_op.add_column(
-            sa.Column("groundwater_settings_id", sa.Integer(), nullable=True)
-        )
-        batch_op.add_column(
-            sa.Column("simple_infiltration_settings_id", sa.Integer(), nullable=True)
-        )
-        batch_op.add_column(
-            sa.Column("interflow_settings_id", sa.Integer(), nullable=True)
-        )
+        batch_op.add_column(sa.Column("initial_groundwater_level", sa.Float(), nullable=True))
+        batch_op.add_column(sa.Column("initial_groundwater_level_file", sa.String(length=255), nullable=True))
+        batch_op.add_column(sa.Column("initial_groundwater_level_type", sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column("groundwater_settings_id", sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column("simple_infiltration_settings_id", sa.Integer(), nullable=True))
+        batch_op.add_column(sa.Column("interflow_settings_id", sa.Integer(), nullable=True))
 
 
 def upgrade_166():
@@ -219,27 +173,31 @@ def upgrade_166():
 
     0166_fill_Groundwater_Interflow_SimpleInfiltration
     """
-    op.execute(text(
-        """
+    op.execute(
+        text(
+            """
     INSERT INTO v2_interflow (id, interflow_type, porosity, porosity_file, porosity_layer_thickness,
                               impervious_layer_elevation, hydraulic_conductivity, hydraulic_conductivity_file)
     SELECT id, interflow_type, porosity, porosity_file, porosity_layer_thickness,
            impervious_layer_elevation, hydraulic_conductivity, hydraulic_conductivity_file
     FROM v2_global_settings;
     """
-    ))
-    op.execute(text(
-        """
+        )
+    )
+    op.execute(
+        text(
+            """
     INSERT INTO v2_simple_infiltration (id, infiltration_rate, infiltration_rate_file,
                                         infiltration_surface_option, max_infiltration_capacity_file)
     SELECT id, infiltration_rate, infiltration_rate_file,
            infiltration_surface_option, max_infiltration_capacity_file
     FROM v2_global_settings;
     """
-    ))
-    op.execute(text(
-        """UPDATE v2_global_settings SET interflow_settings_id = id, simple_infiltration_settings_id = id"""
-    ))
+        )
+    )
+    op.execute(
+        text("""UPDATE v2_global_settings SET interflow_settings_id = id, simple_infiltration_settings_id = id""")
+    )
 
 
 def upgrade_167():
@@ -272,9 +230,7 @@ def upgrade_168():
         batch_op.drop_column("seepage_file")
         batch_op.drop_column("seepage")
         batch_op.add_column(sa.Column("leakage", sa.Float(), nullable=True))
-        batch_op.add_column(
-            sa.Column("leakage_file", sa.String(length=255), nullable=True)
-        )
+        batch_op.add_column(sa.Column("leakage_file", sa.String(length=255), nullable=True))
 
 
 def upgrade_169():
@@ -299,12 +255,12 @@ def upgrade_171():
 
     0170_auto__chg_field_v2culvert_discharge_coefficient_negative__chg_field_v2.py
     """
-    op.execute(text(
-        "UPDATE v2_culvert SET discharge_coefficient_negative = 1.0 WHERE discharge_coefficient_negative IS NULL"
-    ))
-    op.execute(text(
-        "UPDATE v2_culvert SET discharge_coefficient_positive = 1.0 WHERE discharge_coefficient_positive IS NULL"
-    ))
+    op.execute(
+        text("UPDATE v2_culvert SET discharge_coefficient_negative = 1.0 WHERE discharge_coefficient_negative IS NULL")
+    )
+    op.execute(
+        text("UPDATE v2_culvert SET discharge_coefficient_positive = 1.0 WHERE discharge_coefficient_positive IS NULL")
+    )
 
 
 def upgrade_172():
@@ -313,9 +269,7 @@ def upgrade_172():
     0171_auto__chg_field_v2aggregationsettings_aggregation_method__del_field_v2.py
     """
     with op.batch_alter_table("v2_global_settings") as batch_op:
-        batch_op.alter_column(
-            "max_interception_file", new_column_name="interception_file"
-        )
+        batch_op.alter_column("max_interception_file", new_column_name="interception_file")
         batch_op.alter_column("max_interception", new_column_name="interception_global")
 
 
@@ -381,30 +335,14 @@ def upgrade():
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("timeseries", sa.Text(), nullable=True),
         sa.Column("boundary_type", sa.Integer(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "LINESTRING"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("LINESTRING"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
         "v2_2d_lateral",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("type", sa.Integer(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POINT"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POINT"), nullable=True),
         sa.Column("timeseries", sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -414,15 +352,7 @@ def upgrade():
         sa.Column("content_type_id", sa.Integer(), nullable=True),
         sa.Column("user_ref", sa.String(length=80), nullable=True),
         sa.Column("calc_type", sa.Integer(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POINT"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POINT"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
@@ -430,24 +360,8 @@ def upgrade():
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("storage_area", sa.Float(), nullable=True),
         sa.Column("initial_waterlevel", sa.Float(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POINT"
-                
-                
-            ),
-            nullable=True
-        ),
-        sa.Column(
-            "the_geom_linestring",
-            Geometry(
-                "LINESTRING"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POINT"), nullable=True),
+        sa.Column("the_geom_linestring", Geometry("LINESTRING"), nullable=True),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -536,30 +450,14 @@ def upgrade():
     create_table_if_not_exists(
         "v2_dem_average_area",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POLYGON"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POLYGON"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
         "v2_floodfill",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("waterlevel", sa.Float(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POINT"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POINT"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
@@ -567,15 +465,7 @@ def upgrade():
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("refinement_level", sa.Integer(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "LINESTRING"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("LINESTRING"), nullable=True),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -585,53 +475,29 @@ def upgrade():
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("refinement_level", sa.Integer(), nullable=True),
         sa.Column("code", sa.String(length=100), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POLYGON"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POLYGON"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
         "v2_groundwater",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("groundwater_impervious_layer_level", sa.Float(), nullable=True),
-        sa.Column(
-            "groundwater_impervious_layer_level_file",
-            sa.String(length=255),
-            nullable=True
-        ),
-        sa.Column(
-            "groundwater_impervious_layer_level_type", sa.Integer(), nullable=True
-        ),
+        sa.Column("groundwater_impervious_layer_level_file", sa.String(length=255), nullable=True),
+        sa.Column("groundwater_impervious_layer_level_type", sa.Integer(), nullable=True),
         sa.Column("phreatic_storage_capacity", sa.Float(), nullable=True),
-        sa.Column(
-            "phreatic_storage_capacity_file", sa.String(length=255), nullable=True
-        ),
+        sa.Column("phreatic_storage_capacity_file", sa.String(length=255), nullable=True),
         sa.Column("phreatic_storage_capacity_type", sa.Integer(), nullable=True),
         sa.Column("equilibrium_infiltration_rate", sa.Float(), nullable=True),
-        sa.Column(
-            "equilibrium_infiltration_rate_file", sa.String(length=255), nullable=True
-        ),
+        sa.Column("equilibrium_infiltration_rate_file", sa.String(length=255), nullable=True),
         sa.Column("equilibrium_infiltration_rate_type", sa.Integer(), nullable=True),
         sa.Column("initial_infiltration_rate", sa.Float(), nullable=True),
-        sa.Column(
-            "initial_infiltration_rate_file", sa.String(length=255), nullable=True
-        ),
+        sa.Column("initial_infiltration_rate_file", sa.String(length=255), nullable=True),
         sa.Column("initial_infiltration_rate_type", sa.Integer(), nullable=True),
         sa.Column("infiltration_decay_period", sa.Float(), nullable=True),
-        sa.Column(
-            "infiltration_decay_period_file", sa.String(length=255), nullable=True
-        ),
+        sa.Column("infiltration_decay_period_file", sa.String(length=255), nullable=True),
         sa.Column("infiltration_decay_period_type", sa.Integer(), nullable=True),
         sa.Column("groundwater_hydro_connectivity", sa.Float(), nullable=True),
-        sa.Column(
-            "groundwater_hydro_connectivity_file", sa.String(length=255), nullable=True
-        ),
+        sa.Column("groundwater_hydro_connectivity_file", sa.String(length=255), nullable=True),
         sa.Column("groundwater_hydro_connectivity_type", sa.Integer(), nullable=True),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("leakage", sa.Float(), nullable=True),
@@ -650,15 +516,7 @@ def upgrade():
         sa.Column("nr_of_inhabitants", sa.Float(), nullable=True),
         sa.Column("area", sa.Float(), nullable=True),
         sa.Column("dry_weather_flow", sa.Float(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POLYGON"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POLYGON"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
@@ -679,15 +537,7 @@ def upgrade():
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("crest_level", sa.Float(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "LINESTRING"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("LINESTRING"), nullable=True),
         sa.Column("material", sa.Integer(), nullable=True),
         sa.Column("max_breach_depth", sa.Float(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -724,15 +574,7 @@ def upgrade():
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("crest_level", sa.Float(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "LINESTRING"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("LINESTRING"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
@@ -780,15 +622,7 @@ def upgrade():
         sa.Column("calculation_type", sa.Integer(), nullable=True),
         sa.Column("dist_calc_points", sa.Float(), nullable=True),
         sa.Column("zoom_category", sa.Integer(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "LINESTRING"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("LINESTRING"), nullable=True),
         sa.Column("connection_node_start_id", sa.Integer(), nullable=True),
         sa.Column("connection_node_end_id", sa.Integer(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -799,15 +633,7 @@ def upgrade():
         sa.Column("calculation_pnt_id", sa.Integer(), nullable=True),
         sa.Column("levee_id", sa.Integer(), nullable=True),
         sa.Column("exchange_level", sa.Float(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POINT"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POINT"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
@@ -845,15 +671,7 @@ def upgrade():
         sa.Column("discharge_coefficient_negative", sa.Float(), nullable=True),
         sa.Column("invert_level_start_point", sa.Float(), nullable=True),
         sa.Column("invert_level_end_point", sa.Float(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "LINESTRING"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("LINESTRING"), nullable=True),
         sa.Column("connection_node_start_id", sa.Integer(), nullable=True),
         sa.Column("connection_node_end_id", sa.Integer(), nullable=True),
         sa.Column("cross_section_definition_id", sa.Integer(), nullable=True),
@@ -903,9 +721,7 @@ def upgrade():
         sa.Column("table_step_size_volume_2d", sa.Float(), nullable=True),
         sa.Column("use_2d_rain", sa.Integer(), nullable=True),
         sa.Column("initial_groundwater_level", sa.Float(), nullable=True),
-        sa.Column(
-            "initial_groundwater_level_file", sa.String(length=255), nullable=True
-        ),
+        sa.Column("initial_groundwater_level_file", sa.String(length=255), nullable=True),
         sa.Column("initial_groundwater_level_type", sa.Integer(), nullable=True),
         sa.Column("numerical_settings_id", sa.Integer(), nullable=True),
         sa.Column("interflow_settings_id", sa.Integer(), nullable=True),
@@ -1007,15 +823,7 @@ def upgrade():
         sa.Column("function", sa.String(length=64), nullable=True),
         sa.Column("area", sa.Float(), nullable=True),
         sa.Column("surface_parameters_id", sa.Integer(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POLYGON"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POLYGON"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
@@ -1065,15 +873,7 @@ def upgrade():
         sa.Column("friction_type", sa.Integer(), nullable=True),
         sa.Column("friction_value", sa.Float(), nullable=True),
         sa.Column("bank_level", sa.Float(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POINT"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POINT"), nullable=True),
         sa.Column("channel_id", sa.Integer(), nullable=True),
         sa.Column("definition_id", sa.Integer(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -1089,15 +889,7 @@ def upgrade():
         sa.Column("southwest", sa.Float(), nullable=True),
         sa.Column("west", sa.Float(), nullable=True),
         sa.Column("northwest", sa.Float(), nullable=True),
-        sa.Column(
-            "the_geom",
-            Geometry(
-                "POINT"
-                
-                
-            ),
-            nullable=True
-        ),
+        sa.Column("the_geom", Geometry("POINT"), nullable=True),
         sa.Column("channel_id", sa.Integer(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )

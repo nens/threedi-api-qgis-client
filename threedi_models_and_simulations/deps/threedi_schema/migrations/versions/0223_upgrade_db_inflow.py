@@ -5,6 +5,7 @@ Revises:
 Create Date: 2024-05-27 10:35
 
 """
+
 import csv
 import json
 import uuid
@@ -17,7 +18,6 @@ from alembic import op
 from sqlalchemy import Boolean, Column, Float, Integer, String, Text
 from sqlalchemy.event import listen
 from sqlalchemy.orm import declarative_base
-
 from threedi_schema.application.threedi_database import load_spatialite
 from threedi_schema.domain.custom_types import Geometry
 from threedi_schema.migrations.utils import drop_conflicting, drop_geo_table
@@ -75,14 +75,8 @@ ADD_TABLES = {
         Column("code", String(100)),
         Column("display_name", String(255)),
     ],
-    "dry_weather_flow_distribution": [
-        Column("description", Text),
-        Column("tags", Text),
-        Column("distribution", Text)
-    ],
-    "tags": [
-        Column("description", Text)
-    ]
+    "dry_weather_flow_distribution": [Column("description", Text), Column("tags", Text), Column("distribution", Text)],
+    "tags": [Column("description", Text)],
 }
 
 # Geom columns need to be added using geoalchemy, so therefore that's a seperate task
@@ -90,15 +84,10 @@ NEW_GEOM_COLUMNS = {
     ("surface", Column("geom", Geometry("POLYGON"), nullable=False)),
     ("dry_weather_flow", Column("geom", Geometry("POLYGON"), nullable=False)),
     ("surface_map", Column("geom", Geometry("LINESTRING"), nullable=False)),
-    ("dry_weather_flow_map", Column("geom", Geometry("LINESTRING"), nullable=False))
+    ("dry_weather_flow_map", Column("geom", Geometry("LINESTRING"), nullable=False)),
 }
 
-REMOVE_TABLES = [
-    "v2_impervious_surface",
-    "v2_impervious_surface_map",
-    "v2_surface",
-    "v2_surface_map"
-]
+REMOVE_TABLES = ["v2_impervious_surface", "v2_impervious_surface_map", "v2_surface", "v2_surface_map"]
 
 
 class NoMappingWarning(UserWarning):
@@ -114,8 +103,7 @@ def rename_tables(table_sets: List[Tuple[str, str]]):
 def create_new_tables(new_tables: Dict[str, sa.Column]):
     # no checks for existence are done, this will fail if any table already exists
     for table_name, columns in new_tables.items():
-        op.create_table(table_name, sa.Column("id", sa.Integer(), primary_key=True),
-                        *columns)
+        op.create_table(table_name, sa.Column("id", sa.Integer(), primary_key=True), *columns)
 
 
 def add_columns_to_tables(table_columns: List[Tuple[str, Column]]):
@@ -132,8 +120,7 @@ def add_geometry_column(table: str, geocol: Column):
     # Adding geometry columns via alembic doesn't work
     # https://postgis.net/docs/AddGeometryColumn.html
     geotype = geocol.type
-    query = (
-        f"SELECT AddGeometryColumn('{table}', '{geocol.name}', {geotype.srid}, '{geotype.geometry_type}', 'XY', 0);")
+    query = f"SELECT AddGeometryColumn('{table}', '{geocol.name}', {geotype.srid}, '{geotype.geometry_type}', 'XY', 0);"
     op.execute(sa.text(query))
 
 
@@ -161,13 +148,21 @@ def copy_v2_data_to_dry_weather_flow(src_table: str):
     src_columns = ["id", "code", "display_name", "dwf_geom", "nr_of_inhabitants", "dry_weather_flow"]
     dst_columns = ["id", "code", "display_name", "geom", "multiplier", "daily_total"]
     copy_values_to_new_table(src_table, src_columns, "dry_weather_flow", dst_columns)
-    op.execute(sa.text("""
+    op.execute(
+        sa.text(
+            """
     UPDATE dry_weather_flow
     SET dry_weather_flow_distribution_id = 1,
         interpolate = 0;
-        """))
-    op.execute(sa.text("DELETE FROM dry_weather_flow "
-                       "WHERE multiplier = 0 OR daily_total = 0 OR multiplier IS NULL OR daily_total IS NULL;"))
+        """
+        )
+    )
+    op.execute(
+        sa.text(
+            "DELETE FROM dry_weather_flow "
+            "WHERE multiplier = 0 OR daily_total = 0 OR multiplier IS NULL OR daily_total IS NULL;"
+        )
+    )
 
 
 def remove_orphans_from_map(basename: str):
@@ -176,13 +171,13 @@ def remove_orphans_from_map(basename: str):
 
 
 def copy_v2_data_to_dry_weather_flow_map(src_table: str):
-    src_columns = ["connection_node_id", "percentage", src_table.strip('v2_').replace('_map', '_id')]
+    src_columns = ["connection_node_id", "percentage", src_table.strip("v2_").replace("_map", "_id")]
     dst_columns = ["connection_node_id", "percentage", "dry_weather_flow_id"]
     copy_values_to_new_table(src_table, src_columns, "dry_weather_flow_map", dst_columns)
 
 
 def copy_v2_data_to_surface_map(src_table: str):
-    src_columns = ["connection_node_id", "percentage", src_table.strip('v2_').replace('_map', '_id')]
+    src_columns = ["connection_node_id", "percentage", src_table.strip("v2_").replace("_map", "_id")]
     dst_columns = ["connection_node_id", "percentage", "surface_id"]
     copy_values_to_new_table(src_table, src_columns, "surface_map", dst_columns)
 
@@ -247,7 +242,7 @@ def get_global_srid():
 
 def get_area_str(geom_str) -> str:
     # Get SQLite statement to compute area for a given geometry
-    return f'ST_Area(ST_Transform({geom_str},{get_global_srid()}))'
+    return f"ST_Area(ST_Transform({geom_str},{get_global_srid()}))"
 
 
 def copy_polygons(src_table: str, tmp_geom: str):
@@ -260,46 +255,65 @@ def copy_polygons(src_table: str, tmp_geom: str):
     # Copy polygons directly
     op.execute(sa.text(f"UPDATE {src_table} SET {tmp_geom} = the_geom WHERE GeometryType(the_geom) = 'POLYGON';"))
     # Copy first polygon of each multipolygon and correct the area
-    op.execute(sa.text(f"""
+    op.execute(
+        sa.text(
+            f"""
     UPDATE {src_table} 
     SET {tmp_geom} = ST_GeometryN(the_geom,1), area = {get_area_str('ST_GeometryN(the_geom,1)')}
     WHERE GeometryType(the_geom) = 'MULTIPOLYGON' 
     AND GeometryType(ST_GeometryN(the_geom,1))  = 'POLYGON';
-    """))
+    """
+        )
+    )
     # Copy the remaining polygons for multipolygons with more than one polygon
     # select column names that we will copy directly
-    col_names = [col_info[1] for col_info in
-                 conn.execute(sa.text(f"PRAGMA table_info({src_table})")).fetchall()]
-    col_str = ', '.join(list(set(col_names) - {'id', 'the_geom', 'tmp_geom', 'area'}))
+    col_names = [col_info[1] for col_info in conn.execute(sa.text(f"PRAGMA table_info({src_table})")).fetchall()]
+    col_str = ", ".join(list(set(col_names) - {"id", "the_geom", "tmp_geom", "area"}))
     conn = op.get_bind()
-    rows = conn.execute(sa.text(f"""
+    rows = conn.execute(
+        sa.text(
+            f"""
         SELECT id, {col_str}, NumGeometries(the_geom) FROM {src_table}
         WHERE GeometryType(the_geom) = 'MULTIPOLYGON'
         AND GeometryType(ST_GeometryN(the_geom,1))  = 'POLYGON'
-        AND NumGeometries(the_geom) > 1;""")).fetchall()
+        AND NumGeometries(the_geom) > 1;"""
+        )
+    ).fetchall()
     id_next = conn.execute(sa.text(f"SELECT MAX(id) FROM {src_table}")).fetchall()[0][0]
     surf_id = f"{src_table.strip('v2_')}_id"
     for row in rows:
         id = row[0]
         nof_polygons = row[-1]
         # Retrieve data from map table
-        conn_node_id, percentage = conn.execute(sa.text(f"""
+        conn_node_id, percentage = conn.execute(
+            sa.text(
+                f"""
             SELECT connection_node_id, percentage FROM {src_table}_map
-            WHERE {surf_id} = {id}""")).fetchall()[0]
+            WHERE {surf_id} = {id}"""
+            )
+        ).fetchall()[0]
         for i in range(2, nof_polygons + 1):
             id_next += 1
             # Copy polygon to new row
-            op.execute(sa.text(f"""
+            op.execute(
+                sa.text(
+                    f"""
                 INSERT INTO {src_table} (id, the_geom, {tmp_geom}, area, {col_str})
                 SELECT {id_next}, the_geom, ST_GeometryN(the_geom, {i}),
                 {get_area_str(f'ST_GeometryN(the_geom,{i})')}, {col_str}
                 FROM {src_table} WHERE id = {id} LIMIT 1
-            """))
+            """
+                )
+            )
             # Add new row to the map
-            op.execute(sa.text(f"""
+            op.execute(
+                sa.text(
+                    f"""
                 INSERT INTO {src_table}_map ({surf_id}, connection_node_id, percentage)
                 VALUES ({id_next}, {conn_node_id}, {percentage})
-            """))
+            """
+                )
+            )
 
 
 def create_buffer_polygons(src_table: str, tmp_geom: str):
@@ -329,7 +343,7 @@ def create_buffer_polygons(src_table: str, tmp_geom: str):
 
 def create_square_polygons(src_table: str, tmp_geom: str):
     # create square polygon with area area around the connection node
-    side_expr = f'sqrt({src_table}.area)'
+    side_expr = f"sqrt({src_table}.area)"
     surf_id = f"{src_table.strip('v2_')}_id"
     # When no geometry is defined, a square with area matching the area column
     # with the center at the connection node is added
@@ -376,30 +390,34 @@ def fix_src_geometry(src_table: str, tmp_geom: str, create_polygons):
     # Copy existing polygons
     copy_polygons(src_table, tmp_geom)
     # Check if any existing geometries where not copied
-    not_copied = conn.execute(sa.text(f'SELECT id FROM {src_table} '
-                                      f'WHERE {tmp_geom} IS NULL '
-                                      f'AND the_geom IS NOT NULL')).fetchall()
+    not_copied = conn.execute(
+        sa.text(f"SELECT id FROM {src_table} " f"WHERE {tmp_geom} IS NULL " f"AND the_geom IS NOT NULL")
+    ).fetchall()
     if len(not_copied) > 0:
-        raise BaseException(f'Found {len(not_copied)} geometries in {src_table} that could not'
-                            f'be converted to a POLYGON geometry: {not_copied}')
+        raise BaseException(
+            f"Found {len(not_copied)} geometries in {src_table} that could not"
+            f"be converted to a POLYGON geometry: {not_copied}"
+        )
     # Create polygons for rows where no geometry was defined
     create_polygons(src_table, tmp_geom)
 
 
 def remove_invalid_rows(src_table: str):
     # Remove rows with insufficient data
-    op.execute(sa.text(f"DELETE FROM {src_table} WHERE area = 0 "
-                       "AND (nr_of_inhabitants = 0 OR dry_weather_flow = 0);"))
+    op.execute(
+        sa.text(f"DELETE FROM {src_table} WHERE area = 0 " "AND (nr_of_inhabitants = 0 OR dry_weather_flow = 0);")
+    )
 
     # Remove rows without mapping
     conn = op.get_bind()
-    where_clause = (f"WHERE id NOT IN (SELECT {src_table.strip('v2_')}_id FROM {src_table}_map) "
-                    f"AND the_geom IS NULL")
+    where_clause = f"WHERE id NOT IN (SELECT {src_table.strip('v2_')}_id FROM {src_table}_map) " f"AND the_geom IS NULL"
     no_map_id = conn.execute(sa.text(f"SELECT id FROM {src_table} {where_clause};")).fetchall()
     if len(no_map_id) > 0:
         op.execute(sa.text(f"DELETE FROM {src_table} {where_clause};"))
-        msg = (f"Could not migrate the following rows from {src_table} because "
-               f"they are not mapped to a connection node in {src_table}_map: {no_map_id}")
+        msg = (
+            f"Could not migrate the following rows from {src_table} because "
+            f"they are not mapped to a connection node in {src_table}_map: {no_map_id}"
+        )
         warnings.warn(msg, NoMappingWarning)
 
 
@@ -418,8 +436,8 @@ def populate_surface_and_dry_weather_flow():
     # This has to be done in advance because NULL geometries cannot be copied
     # And this had to be done seperately because the geometries for surfaces and
     # DWF are not by definition the same
-    fix_src_geometry(src_table, 'sur_geom', create_square_polygons)
-    fix_src_geometry(src_table, 'dwf_geom', create_buffer_polygons)
+    fix_src_geometry(src_table, "sur_geom", create_square_polygons)
+    fix_src_geometry(src_table, "dwf_geom", create_buffer_polygons)
     # Copy data to new tables
     copy_v2_data_to_surface(src_table)
     copy_v2_data_to_dry_weather_flow(src_table)
@@ -441,36 +459,45 @@ def populate_surface_and_dry_weather_flow():
     populate_surface_parameters()
     update_use_0d_inflow()
 
+
 def update_use_0d_inflow():
-    op.execute(sa.text("""
+    op.execute(
+        sa.text(
+            """
     UPDATE simulation_template_settings
     SET use_0d_inflow = 0 
     WHERE 
         (SELECT COUNT(*) FROM surface) = 0 
         AND 
         (SELECT COUNT(*) FROM dry_weather_flow) = 0;    
-    """))
+    """
+        )
+    )
 
 
 def set_surface_parameters_id():
     # Make sure not to call this on an empty database
-    with open(data_dir.joinpath('0223_surface_parameters_id.csv'), 'r') as f:
+    with open(data_dir.joinpath("0223_surface_parameters_id.csv"), "r") as f:
         parameter_map = list(csv.reader(f))
     conn = op.get_bind()
     for surface_class, surface_inclination, surface_parameters_id in parameter_map:
-        res = conn.execute(sa.text(f"""
+        res = conn.execute(
+            sa.text(
+                f"""
             SELECT id FROM v2_impervious_surface
             WHERE surface_class = '{surface_class}'
-            AND surface_inclination = '{surface_inclination}'""")).fetchall()
+            AND surface_inclination = '{surface_inclination}'"""
+            )
+        ).fetchall()
         if len(res) == 0:
             continue
-        id_list = ','.join([str(item[0]) for item in res])
-        op.execute(f'UPDATE surface SET surface_parameters_id = {surface_parameters_id} where id IN ({id_list})')
+        id_list = ",".join([str(item[0]) for item in res])
+        op.execute(f"UPDATE surface SET surface_parameters_id = {surface_parameters_id} where id IN ({id_list})")
 
 
 def populate_surface_parameters():
     # Make sure not to call this on an empty database
-    with open(data_dir.joinpath('0223_surface_parameters_contents.json'), 'r') as f:
+    with open(data_dir.joinpath("0223_surface_parameters_contents.json"), "r") as f:
         data_to_insert = json.load(f)
     keys_str = "(" + ",".join(data_to_insert[0].keys()) + ")"
     for row in data_to_insert:
@@ -480,10 +507,12 @@ def populate_surface_parameters():
 
 
 def populate_dry_weather_flow_distribution():
-    with open(data_dir.joinpath('0223_dry_weather_flow_distribution.csv'), 'r') as f:
+    with open(data_dir.joinpath("0223_dry_weather_flow_distribution.csv"), "r") as f:
         distr = f.read().strip()
     description = "Kennisbank Stichting Rioned - https://www.riool.net/huishoudelijk-afvalwater"
-    sql_query = f"INSERT INTO dry_weather_flow_distribution (description, distribution) VALUES ('{description}', '{distr}')"
+    sql_query = (
+        f"INSERT INTO dry_weather_flow_distribution (description, distribution) VALUES ('{description}', '{distr}')"
+    )
     op.execute(sa.text(sql_query))
 
 
@@ -499,23 +528,27 @@ def make_geom_col_notnull(table_name):
     columns = connection.execute(sa.text(f"PRAGMA table_info('{table_name}')")).fetchall()
     col_names = [col[1] for col in columns]
     col_types = [col[2] for col in columns]
-    cols = (['id INTEGER PRIMARY KEY'] +
-            [f'{cname} {ctype}' for cname, ctype in zip(col_names[:-1], col_types[:-1]) if cname != 'id'] +
-            [f'geom {columns[-1][2]} NOT NULL'])
+    cols = (
+        ["id INTEGER PRIMARY KEY"]
+        + [f"{cname} {ctype}" for cname, ctype in zip(col_names[:-1], col_types[:-1]) if cname != "id"]
+        + [f"geom {columns[-1][2]} NOT NULL"]
+    )
     # Create new table, insert data, drop original and rename to table_name
-    temp_name = f'_temp_223_{uuid.uuid4().hex}'
+    temp_name = f"_temp_223_{uuid.uuid4().hex}"
     op.execute(sa.text(f"CREATE TABLE {temp_name} ({','.join(cols)});"))
-    op.execute(sa.text(f"INSERT INTO {temp_name} ({','.join(col_names)}) SELECT {','.join(col_names)} FROM {table_name}"))
+    op.execute(
+        sa.text(f"INSERT INTO {temp_name} ({','.join(col_names)}) SELECT {','.join(col_names)} FROM {table_name}")
+    )
     drop_geo_table(op, table_name)
     op.execute(sa.text(f"ALTER TABLE {temp_name} RENAME TO {table_name};"))
 
 
 def fix_geometry_columns():
     GEO_COL_INFO = [
-        ('dry_weather_flow', 'geom', 'POLYGON'),
-        ('dry_weather_flow_map', 'geom', 'LINESTRING'),
-        ('surface', 'geom', 'POLYGON'),
-        ('surface_map', 'geom', 'LINESTRING'),
+        ("dry_weather_flow", "geom", "POLYGON"),
+        ("dry_weather_flow_map", "geom", "LINESTRING"),
+        ("surface", "geom", "POLYGON"),
+        ("surface_map", "geom", "LINESTRING"),
     ]
     for table, column, geotype in GEO_COL_INFO:
         make_geom_col_notnull(table)

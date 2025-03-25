@@ -1,6 +1,5 @@
 import pytest
 from sqlalchemy import text
-
 from threedi_schema.domain import constants
 
 
@@ -21,9 +20,7 @@ def test_convert_to_geopackage(oldest_sqlite, upgrade_spatialite):
     with oldest_sqlite.get_session() as session:
         assert (
             session.execute(
-                text(
-                    "SELECT count(*) FROM sqlite_master WHERE type='view' AND name='spatial_ref_sys'"
-                )
+                text("SELECT count(*) FROM sqlite_master WHERE type='view' AND name='spatial_ref_sys'")
             ).scalar()
             == 1
         )

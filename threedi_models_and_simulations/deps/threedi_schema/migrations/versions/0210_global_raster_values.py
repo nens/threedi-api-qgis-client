@@ -5,6 +5,7 @@ Revises: 0209
 Create Date: 2022-11-08 16:37
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 
@@ -29,9 +30,7 @@ def upgrade():
         op.execute(sa.text(q))
 
     with op.batch_alter_table("v2_simple_infiltration") as batch_op:
-        batch_op.add_column(
-            sa.Column("max_infiltration_capacity", sa.Float(), nullable=True)
-        )
+        batch_op.add_column(sa.Column("max_infiltration_capacity", sa.Float(), nullable=True))
 
 
 def downgrade():

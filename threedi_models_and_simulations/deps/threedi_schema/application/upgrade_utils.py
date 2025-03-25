@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from alembic.config import Config
 from alembic.script import ScriptDirectory
@@ -27,9 +27,7 @@ class ProgressHandler(logging.Handler):
             self.current_step += 1
 
 
-def get_upgrade_steps_count(
-    config: Config, current_revision: int, target_revision: str = "head"
-) -> int:
+def get_upgrade_steps_count(config: Config, current_revision: int, target_revision: str = "head") -> int:
     """
     Count number of upgrade steps for a schematisation upgrade.
 

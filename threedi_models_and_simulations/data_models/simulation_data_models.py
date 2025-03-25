@@ -176,6 +176,7 @@ class Settings(SimulationElement):
     numerical_settings: dict = None
     time_step_settings: dict = None
     aggregation_settings_list: list = None
+    water_quality_settings: dict = None
 
 
 @dataclass

@@ -1,11 +1,12 @@
 # 3Di Models and Simulations for QGIS, licensed under GPLv2 or (at your option) any later version
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os
+import re
 import shutil
 from uuid import uuid4
 
 from qgis.gui import QgsFileWidget, QgsProjectionSelectionWidget
-from qgis.PyQt.QtCore import QDate, QSettings, QTime
+from qgis.PyQt.QtCore import QCoreApplication, QDate, QLocale, QSettings, QTime
 from qgis.PyQt.QtGui import QColor, QDoubleValidator, QIcon
 from qgis.PyQt.QtWidgets import (
     QCheckBox,
@@ -55,13 +56,33 @@ def set_widget_background_color(widget, hex_color="#F0F0F0"):
     widget.setPalette(palette)
 
 
-def scan_widgets_parameters(main_widget, get_combobox_text=True):
-    """Scan widget children and get their values."""
+def scan_widgets_parameters(main_widget, get_combobox_text, remove_postfix, lineedits_as_float_or_none):
+    """Scan widget children and get their values.
+
+    In Qt Designer, widgets in the same UI file need to have an unique object name. When an object
+    name already exist, Qt designer adds a _2 postfix. Use remove_postfix to remove these.
+    """
     parameters = {}
     for widget in main_widget.children():
         obj_name = widget.objectName()
+        if remove_postfix:
+            result = re.match("^(.+)(_\d+)$", obj_name)
+            if result is not None:
+                obj_name = result.group(1)
+
         if isinstance(widget, QLineEdit):
-            parameters[obj_name] = widget.text()
+            if lineedits_as_float_or_none:
+                if widget.text():
+                    val, to_float_possible = QLocale().toFloat(widget.text())
+                    assert to_float_possible  # Should be handled by validators
+                    if "e" in widget.text().lower():  # we use python buildin for scientific notation
+                        parameters[obj_name] = float(widget.text())
+                    else:
+                        parameters[obj_name] = val
+                else:
+                    parameters[obj_name] = None
+            else:
+                parameters[obj_name] = widget.text()
         elif isinstance(widget, (QCheckBox, QRadioButton)):
             parameters[obj_name] = widget.isChecked()
         elif isinstance(widget, QComboBox):
@@ -81,11 +102,32 @@ def scan_widgets_parameters(main_widget, get_combobox_text=True):
                 is_checked = widget.isChecked()
                 parameters[obj_name] = is_checked
                 if is_checked:
-                    parameters.update(scan_widgets_parameters(widget, get_combobox_text))
+                    parameters.update(
+                        scan_widgets_parameters(
+                            widget,
+                            get_combobox_text=get_combobox_text,
+                            remove_postfix=remove_postfix,
+                            lineedits_as_float_or_none=lineedits_as_float_or_none,
+                        )
+                    )
             else:
-                parameters.update(scan_widgets_parameters(widget, get_combobox_text))
+                parameters.update(
+                    scan_widgets_parameters(
+                        widget,
+                        get_combobox_text=get_combobox_text,
+                        remove_postfix=remove_postfix,
+                        lineedits_as_float_or_none=lineedits_as_float_or_none,
+                    )
+                )
         elif isinstance(widget, QWidget):
-            parameters.update(scan_widgets_parameters(widget, get_combobox_text))
+            parameters.update(
+                scan_widgets_parameters(
+                    widget,
+                    get_combobox_text=get_combobox_text,
+                    remove_postfix=remove_postfix,
+                    lineedits_as_float_or_none=lineedits_as_float_or_none,
+                )
+            )
     return parameters
 
 
@@ -191,7 +233,7 @@ def backup_schematisation_file(filename):
     return backup_file_path
 
 
-def migrate_schematisation_schema(schematisation_filepath):
+def migrate_schematisation_schema(schematisation_filepath, progress_callback=None):
     migration_succeed = False
     srid = None
 
@@ -208,7 +250,9 @@ def migrate_schematisation_schema(schematisation_filepath):
             except errors.InvalidSRIDException:
                 srid = None
         if srid is None:
-            migration_feedback_msg = "Could not fetch valid EPSG code from database or DEM; aborting database migration."
+            migration_feedback_msg = (
+                "Could not fetch valid EPSG code from database or DEM; aborting database migration."
+            )
     except ImportError:
         migration_feedback_msg = "Missing threedi-schema library (or its dependencies). Schema migration failed."
     except Exception as e:
@@ -216,7 +260,7 @@ def migrate_schematisation_schema(schematisation_filepath):
 
     if srid is not None:
         try:
-            schema.upgrade(backup=False)
+            schema.upgrade(backup=False, epsg_code_override=srid, progress_func=progress_callback)
             shutil.rmtree(os.path.dirname(backup_filepath))
             migration_succeed = True
             migration_feedback_msg = "Migration succeeded."
@@ -229,6 +273,16 @@ def migrate_schematisation_schema(schematisation_filepath):
             migration_feedback_msg = f"{e}"
 
     return migration_succeed, migration_feedback_msg
+
+
+def progress_bar_callback_factory(communication, message, minimum=0, maximum=100, clear_msg_bar=True):
+    """Callback function to track schematisation migration progress."""
+
+    def progress_bar_callback(progres_value):
+        communication.progress_bar(message, minimum, maximum, progres_value, clear_msg_bar=clear_msg_bar)
+        QCoreApplication.processEvents()
+
+    return progress_bar_callback
 
 
 def save_3di_settings(entry_name, value):

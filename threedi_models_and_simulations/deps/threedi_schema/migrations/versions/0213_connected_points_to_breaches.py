@@ -5,12 +5,12 @@ Revises: 0212
 Create Date: 2022-12-21 14:54:00
 
 """
+
 import logging
 
 from alembic import op
-from sqlalchemy import Column, Float, ForeignKey, func, Integer, String
-from sqlalchemy.orm import declarative_base, Session
-
+from sqlalchemy import Column, Float, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Session, declarative_base
 from threedi_schema.domain.custom_types import Geometry
 
 # revision identifiers, used by Alembic.
@@ -31,12 +31,7 @@ class Levee(Base):
     id = Column(Integer, primary_key=True)
     code = Column(String(100))
     crest_level = Column(Float)
-    the_geom = Column(
-        Geometry(
-            "LINESTRING"
-        ),
-        nullable=False
-    )
+    the_geom = Column(Geometry("LINESTRING"), nullable=False)
     material = Column(Integer)
     max_breach_depth = Column(Float)
 
@@ -48,26 +43,18 @@ class CalculationPoint(Base):
     content_type_id = Column(Integer)
     user_ref = Column(String(80), nullable=False)
     calc_type = Column(Integer)
-    the_geom = Column(
-        Geometry("POINT"),
-        nullable=False
-    )
+    the_geom = Column(Geometry("POINT"), nullable=False)
 
 
 class ConnectedPoint(Base):
     __tablename__ = "v2_connected_pnt"
     id = Column(Integer, primary_key=True)
 
-    calculation_pnt_id = Column(
-        Integer, ForeignKey(CalculationPoint.__tablename__ + ".id"), nullable=False
-    )
+    calculation_pnt_id = Column(Integer, ForeignKey(CalculationPoint.__tablename__ + ".id"), nullable=False)
     levee_id = Column(Integer, ForeignKey(Levee.__tablename__ + ".id"))
 
     exchange_level = Column(Float)
-    the_geom = Column(
-        Geometry("POINT"),
-        nullable=False
-    )
+    the_geom = Column(Geometry("POINT"), nullable=False)
 
 
 class PotentialBreach(Base):
@@ -78,20 +65,14 @@ class PotentialBreach(Base):
     exchange_level = Column(Float)
     maximum_breach_depth = Column(Float)
     levee_material = Column(Integer)
-    the_geom = Column(
-        Geometry("LINESTRING", from_text="ST_GeomFromEWKB"),
-        nullable=False
-    )
+    the_geom = Column(Geometry("LINESTRING", from_text="ST_GeomFromEWKB"), nullable=False)
     channel_id = Column(Integer, nullable=False)
 
 
 class ConnectionNode(Base):
     __tablename__ = "v2_connection_nodes"
     id = Column(Integer, primary_key=True)
-    the_geom = Column(
-        Geometry("POINT"),
-        nullable=False
-    )
+    the_geom = Column(Geometry("POINT"), nullable=False)
 
 
 class Manhole(Base):
@@ -114,12 +95,7 @@ class Channel(Base):
     dist_calc_points = Column(Float, nullable=True)
     connection_node_start_id = Column(Integer, nullable=False)
     connection_node_end_id = Column(Integer, nullable=False)
-    the_geom = Column(
-        Geometry(
-            "LINESTRING" 
-        ),
-        nullable=True
-    )
+    the_geom = Column(Geometry("LINESTRING"), nullable=True)
 
 
 def parse_connected_point_user_ref(user_ref: str):
@@ -148,18 +124,14 @@ def clean_connected_points(session):
         )
         .all()
     ]
-    session.query(ConnectedPoint).filter(
-        ConnectedPoint.id.notin_(conn_point_ids)
-    ).delete(synchronize_session="fetch")
+    session.query(ConnectedPoint).filter(ConnectedPoint.id.notin_(conn_point_ids)).delete(synchronize_session="fetch")
     calc_point_ids = [
         x[0]
-        for x in session.query(ConnectedPoint.calculation_pnt_id)
-        .filter(ConnectedPoint.id.in_(conn_point_ids))
-        .all()
+        for x in session.query(ConnectedPoint.calculation_pnt_id).filter(ConnectedPoint.id.in_(conn_point_ids)).all()
     ]
-    session.query(CalculationPoint).filter(
-        CalculationPoint.id.notin_(calc_point_ids)
-    ).delete(synchronize_session="fetch")
+    session.query(CalculationPoint).filter(CalculationPoint.id.notin_(calc_point_ids)).delete(
+        synchronize_session="fetch"
+    )
     return conn_point_ids
 
 
@@ -212,9 +184,7 @@ def scalar_subquery(query):
 
 
 def get_breach_line_geom(session, conn_point_id, channel_id, node_idx):
-    channel = scalar_subquery(
-        session.query(Channel.the_geom).filter(Channel.id == channel_id)
-    )
+    channel = scalar_subquery(session.query(Channel.the_geom).filter(Channel.id == channel_id))
     if node_idx == 0:
         breach_line_start = func.ST_PointN(channel, 1)
     elif node_idx == -1:
@@ -223,9 +193,7 @@ def get_breach_line_geom(session, conn_point_id, channel_id, node_idx):
         breach_line_start = func.Snap(CalculationPoint.the_geom, channel, 1e-7)
 
     return (
-        session.query(
-            func.AsEWKB(func.MakeLine(breach_line_start, ConnectedPoint.the_geom))
-        )
+        session.query(func.AsEWKB(func.MakeLine(breach_line_start, ConnectedPoint.the_geom)))
         .join(CalculationPoint)
         .filter(ConnectedPoint.id == conn_point_id)
         .one()[0]

@@ -108,9 +108,7 @@ class SimpleInfiltration(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     infiltration_rate = Column(Float)
     infiltration_rate_file = Column(String(255))
-    infiltration_surface_option = Column(
-        IntegerEnum(constants.InfiltrationSurfaceOption)
-    )
+    infiltration_surface_option = Column(IntegerEnum(constants.InfiltrationSurfaceOption))
     max_infiltration_volume = Column(Float)
     max_infiltration_volume_file = Column(Text)
 
@@ -193,34 +191,22 @@ class GroundWater(Base):
 
     groundwater_impervious_layer_level = Column(Float)
     groundwater_impervious_layer_level_file = Column(String(255))
-    groundwater_impervious_layer_level_aggregation = Column(
-        IntegerEnum(constants.InitializationType)
-    )
+    groundwater_impervious_layer_level_aggregation = Column(IntegerEnum(constants.InitializationType))
     phreatic_storage_capacity = Column(Float)
     phreatic_storage_capacity_file = Column(String(255))
-    phreatic_storage_capacity_aggregation = Column(
-        IntegerEnum(constants.InitializationType)
-    )
+    phreatic_storage_capacity_aggregation = Column(IntegerEnum(constants.InitializationType))
     equilibrium_infiltration_rate = Column(Float)
     equilibrium_infiltration_rate_file = Column(String(255))
-    equilibrium_infiltration_rate_aggregation = Column(
-        IntegerEnum(constants.InitializationType)
-    )
+    equilibrium_infiltration_rate_aggregation = Column(IntegerEnum(constants.InitializationType))
     initial_infiltration_rate = Column(Float)
     initial_infiltration_rate_file = Column(String(255))
-    initial_infiltration_rate_aggregation = Column(
-        IntegerEnum(constants.InitializationType)
-    )
+    initial_infiltration_rate_aggregation = Column(IntegerEnum(constants.InitializationType))
     infiltration_decay_period = Column(Float)
     infiltration_decay_period_file = Column(String(255))
-    infiltration_decay_period_aggregation = Column(
-        IntegerEnum(constants.InitializationType)
-    )
+    infiltration_decay_period_aggregation = Column(IntegerEnum(constants.InitializationType))
     groundwater_hydraulic_conductivity = Column(Float)
     groundwater_hydraulic_conductivity_file = Column(String(255))
-    groundwater_hydraulic_conductivity_aggregation = Column(
-        IntegerEnum(constants.InitializationType)
-    )
+    groundwater_hydraulic_conductivity_aggregation = Column(IntegerEnum(constants.InitializationType))
     leakage = Column(Float)
     leakage_file = Column(String(255))
 
@@ -293,16 +279,12 @@ class NumericalSettings(Base):
     convergence_cg = Column(Float)
     convergence_eps = Column(Float)
     flow_direction_threshold = Column(Float)
-    friction_shallow_water_depth_correction = Column(
-        IntegerEnum(constants.FrictionShallowWaterDepthCorrection)
-    )
+    friction_shallow_water_depth_correction = Column(IntegerEnum(constants.FrictionShallowWaterDepthCorrection))
     general_numerical_threshold = Column(Float)
     time_integration_method = Column(IntegerEnum(constants.IntegrationMethod))
     limiter_waterlevel_gradient_1d = Column(IntegerEnum(constants.OffOrStandard))
     limiter_waterlevel_gradient_2d = Column(IntegerEnum(constants.OffOrStandard))
-    limiter_slope_crossectional_area_2d = Column(
-        IntegerEnum(constants.LimiterSlopeXArea)
-    )
+    limiter_slope_crossectional_area_2d = Column(IntegerEnum(constants.LimiterSlopeXArea))
     limiter_slope_friction_2d = Column(IntegerEnum(constants.OffOrStandard))
     max_non_linear_newton_iterations = Column(Integer)
     max_degree_gauss_seidel = Column(Integer)
@@ -373,9 +355,7 @@ class InitialConditions(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     initial_groundwater_level = Column(Float)
     initial_groundwater_level_file = Column(String(255))
-    initial_groundwater_level_aggregation = Column(
-        IntegerEnum(constants.InitializationType)
-    )
+    initial_groundwater_level_aggregation = Column(IntegerEnum(constants.InitializationType))
     initial_water_level = Column(Float)
     initial_water_level_aggregation = Column(IntegerEnum(constants.InitializationType))
     initial_water_level_file = Column(String(255))
@@ -628,9 +608,7 @@ class Pump(Base):
     lower_stop_level = Column(Float)
     upper_stop_level = Column(Float)
     capacity = Column(Float)
-    type_ = Column(
-        IntegerEnum(constants.PumpType), name="type", key="type_"
-    )  # type: ignore[call-overload]
+    type_ = Column(IntegerEnum(constants.PumpType), name="type", key="type_")  # type: ignore[call-overload]
     sewerage = Column(Boolean)
     connection_node_id = Column(Integer)
     geom = Column(Geometry("POINT"), nullable=False)

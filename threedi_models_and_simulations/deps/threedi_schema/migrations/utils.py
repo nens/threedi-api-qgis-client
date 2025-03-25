@@ -2,7 +2,6 @@ import sqlite3
 from typing import List
 
 import sqlalchemy as sa
-
 from threedi_schema.application.errors import InvalidSRIDException
 
 
@@ -29,8 +28,9 @@ def drop_conflicting(op, new_tables: List[str]):
     new_tables: A list of new table names to be checked for conflicts with existing tables.
     """
     connection = op.get_bind()
-    existing_tables = [item[0] for item in connection.execute(
-        sa.text("SELECT name FROM sqlite_master WHERE type='table';")).fetchall()]
+    existing_tables = [
+        item[0] for item in connection.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table';")).fetchall()
+    ]
     for table_name in set(existing_tables).intersection(new_tables):
         drop_geo_table(op, table_name)
 
@@ -47,8 +47,6 @@ def get_crs_info(srid):
     if not success:
         raise InvalidSRIDException(srid, "the supplied epsg_code is invalid")
     # retrieve units and is_projected
-    unit = conn.execute(f'SELECT SridGetUnit({srid})').fetchone()[0]
-    is_projected = conn.execute(f'SELECT SridIsProjected({srid})').fetchone()[0]
+    unit = conn.execute(f"SELECT SridGetUnit({srid})").fetchone()[0]
+    is_projected = conn.execute(f"SELECT SridIsProjected({srid})").fetchone()[0]
     return unit, is_projected
-
-

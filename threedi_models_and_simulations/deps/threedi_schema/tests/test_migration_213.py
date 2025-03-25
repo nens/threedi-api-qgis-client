@@ -1,7 +1,6 @@
 import struct
 
 import pytest
-
 from threedi_schema import ModelSchema, ThreediDatabase
 
 # from threedi_schema.migrations.versions import 0213_connected_points_to_breaches
@@ -84,9 +83,7 @@ def test_clean_connected_points(session, objs):
         ],
         [
             CalculationPoint(id=1, the_geom=GEOM1),
-            ConnectedPoint(
-                id=1, the_geom=GEOM2, calculation_pnt_id=1, exchange_level=1.0
-            ),
+            ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1, exchange_level=1.0),
         ],
         [
             CalculationPoint(id=1, the_geom=GEOM1),
@@ -99,9 +96,7 @@ def test_clean_connected_points_keep(session, objs):
     session.flush()
     migration_213.clean_connected_points(session)
 
-    actual = (
-        session.query(CalculationPoint).count() + session.query(ConnectedPoint).count()
-    )
+    actual = session.query(CalculationPoint).count() + session.query(ConnectedPoint).count()
     assert actual == len(objs)
 
 
@@ -130,9 +125,7 @@ def assert_sqlalchemy_objects_equal(a, b):
         [
             [
                 CalculationPoint(id=1, user_ref="123#4#v2_channel#1"),
-                ConnectedPoint(
-                    id=1, the_geom=GEOM2, calculation_pnt_id=1, exchange_level=1.1
-                ),
+                ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1, exchange_level=1.1),
                 Channel(id=4, the_geom=CHANNEL),
             ],
             PotentialBreach(

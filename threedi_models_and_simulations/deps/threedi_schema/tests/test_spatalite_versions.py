@@ -1,11 +1,7 @@
-from sqlalchemy import Column, func, Integer, String
+from sqlalchemy import Column, Integer, String, func
 from sqlalchemy.orm import declarative_base
-
 from threedi_schema.domain.custom_types import Geometry
-from threedi_schema.infrastructure.spatialite_versions import (
-    copy_model,
-    get_spatialite_version,
-)
+from threedi_schema.infrastructure.spatialite_versions import copy_model, get_spatialite_version
 
 
 def test_get_spatialite_version(empty_sqlite_v3):
@@ -26,9 +22,7 @@ def test_copy_model(empty_sqlite_v3, empty_sqlite_v4):
             "__tablename__": "v2_connection_nodes",
             "id": Column(Integer, primary_key=True),
             "code": Column(String(100)),
-            "the_geom": Column(
-                Geometry("POINT")
-            ),  # Use Text as a placeholder for Geometry
+            "the_geom": Column(Geometry("POINT")),  # Use Text as a placeholder for Geometry
         },
     )
     # Add a record to 'db_from'
@@ -67,9 +61,7 @@ def test_copy_invalid_geometry(empty_sqlite_v3, empty_sqlite_v4):
             "id": Column(Integer, primary_key=True),
             "display_name": Column(String(255)),
             "code": Column(String(100)),
-            "the_geom": Column(
-                Geometry("POINT")
-            ),  # Use Text as a placeholder for Geometry
+            "the_geom": Column(Geometry("POINT")),  # Use Text as a placeholder for Geometry
         },
     )
     obj = TestModel(
