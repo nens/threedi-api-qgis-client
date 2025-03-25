@@ -575,7 +575,7 @@
        </widget>
       </item>
       <item row="4" column="0">
-       <widget class="QCheckBox" name="use_0d_inflow_group">
+       <widget class="QCheckBox" name="use_0d_inflow_checkbox">
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -797,7 +797,7 @@
   <tabstop>friction_shallow_water_depth_correction_sloping</tabstop>
   <tabstop>use_1d_flow_group</tabstop>
   <tabstop>manhole_aboveground_storage_area</tabstop>
-  <tabstop>use_0d_inflow_group</tabstop>
+  <tabstop>use_0d_inflow_checkbox</tabstop>
   <tabstop>friction_type_text</tabstop>
   <tabstop>friction_coefficient</tabstop>
   <tabstop>time_step</tabstop>
