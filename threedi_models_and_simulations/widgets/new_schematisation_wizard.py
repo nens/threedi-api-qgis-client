@@ -105,12 +105,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
     def __init__(self, parent_page):
         super().__init__()
         self.setupUi(self)
-        self.crs.setOptionVisible(QgsProjectionSelectionWidget.ProjectCrs, False)
-        self.crs.setOptionVisible(QgsProjectionSelectionWidget.CurrentCrs, False)
         self.crs.setOptionVisible(QgsProjectionSelectionWidget.DefaultCrs, False)
-        self.crs.setOptionVisible(QgsProjectionSelectionWidget.RecentCrs, True)
-        self.crs.setCrs(QgsCoordinateReferenceSystem("EPSG:28992"))
-
         self.parent_page = parent_page
         self.use_1d_flow_group.toggled.connect(self.on_1d_flow_toggled)
         self.use_2d_flow_group.toggled.connect(self.on_2d_flow_toggled)
