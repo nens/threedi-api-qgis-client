@@ -3,6 +3,7 @@ import pathlib
 import shutil
 
 import pytest
+
 from threedi_schema import ThreediDatabase
 
 data_dir = pathlib.Path(__file__).parent / "data"

@@ -5,9 +5,9 @@ Revises: 0210
 Create Date: 2022-11-23 11:21:10.967235
 
 """
-
 import sqlalchemy as sa
 from alembic import op
+
 from threedi_schema.domain.custom_types import Geometry
 
 # revision identifiers, used by Alembic.

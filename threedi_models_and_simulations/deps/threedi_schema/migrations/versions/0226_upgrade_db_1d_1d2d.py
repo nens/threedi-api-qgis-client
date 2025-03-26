@@ -5,13 +5,13 @@ Revises:
 Create Date: 2024-08-30 07:52
 
 """
-
 from typing import Dict, List, Tuple
 
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import Boolean, Column, Float, Integer, String, Text
 from sqlalchemy.orm import declarative_base
+
 from threedi_schema.migrations.utils import drop_conflicting, drop_geo_table
 
 # revision identifiers, used by Alembic.
@@ -41,13 +41,13 @@ NEW_COLUMNS = [
     ("obstacle", Column("tags", Text)),
     ("obstacle", Column("display_name", Text)),
     ("potential_breach", Column("tags", Text)),
-    ("potential_breach", Column("final_exchange_level", Float)),
+    ("potential_breach", Column("final_exchange_level", Float))
 ]
 
 RENAME_COLUMNS = {
     "grid_refinement_line": {"refinement_level": "grid_level"},
     "grid_refinement_area": {"refinement_level": "grid_level"},
-    "potential_breach": {"exchange_level": "initial_exchange_level"},
+    "potential_breach": {"exchange_level": "initial_exchange_level"}
 }
 
 RETYPE_COLUMNS = {
@@ -55,7 +55,10 @@ RETYPE_COLUMNS = {
     "exchange_line": [("channel_id", "INTEGER")],
 }
 
-REMOVE_COLUMNS = {"exchange_line": ["channel"], "potential_breach": ["channel", "maximum_breach_depth"]}
+REMOVE_COLUMNS = {
+    "exchange_line": ["channel"],
+    "potential_breach": ["channel", "maximum_breach_depth"]
+}
 
 
 class Schema225UpgradeException(Exception):
@@ -90,12 +93,12 @@ def modify_table(old_table_name, new_table_name):
     # get type of the geometry column
     geom_type = None
     for col in columns:
-        if col[1] == "the_geom":
+        if col[1] == 'the_geom':
             geom_type = col[2]
             break
     # create list of new columns and types for creating the new table
     # create list of old columns to copy to new table
-    skip_cols = ["id", "the_geom"]
+    skip_cols = ['id', 'the_geom']
     if new_table_name in REMOVE_COLUMNS:
         skip_cols += REMOVE_COLUMNS[new_table_name]
     old_col_names = []
@@ -114,31 +117,26 @@ def modify_table(old_table_name, new_table_name):
         else:
             new_col_types.append(ctype)
     # add to the end manually
-    old_col_names.append("the_geom")
-    new_col_names.append("geom")
-    new_col_types.append(f"{geom_type} NOT NULL")
+    old_col_names.append('the_geom')
+    new_col_names.append('geom')
+    new_col_types.append(f'{geom_type} NOT NULL')
     # Create new table (temp), insert data, drop original and rename temp to table_name
-    new_col_str = ",".join(
-        ["id INTEGER PRIMARY KEY NOT NULL"] + [f"{cname} {ctype}" for cname, ctype in zip(new_col_names, new_col_types)]
-    )
+    new_col_str = ','.join(['id INTEGER PRIMARY KEY NOT NULL'] + [f'{cname} {ctype}' for cname, ctype in
+                                                                  zip(new_col_names, new_col_types)])
     op.execute(sa.text(f"CREATE TABLE {new_table_name} ({new_col_str});"))
     # Copy data
-    op.execute(
-        sa.text(
-            f"INSERT INTO {new_table_name} (id, {','.join(new_col_names)}) "
-            f"SELECT id, {','.join(old_col_names)} FROM {old_table_name}"
-        )
-    )
+    op.execute(sa.text(f"INSERT INTO {new_table_name} (id, {','.join(new_col_names)}) "
+                       f"SELECT id, {','.join(old_col_names)} FROM {old_table_name}"))
 
 
 def fix_geometry_columns():
     GEO_COL_INFO = [
-        ("dem_average_area", "geom", "POLYGON"),
-        ("exchange_line", "geom", "LINESTRING"),
-        ("grid_refinement_line", "geom", "LINESTRING"),
-        ("grid_refinement_area", "geom", "POLYGON"),
-        ("obstacle", "geom", "LINESTRING"),
-        ("potential_breach", "geom", "LINESTRING"),
+        ('dem_average_area', 'geom', 'POLYGON'),
+        ('exchange_line', 'geom', 'LINESTRING'),
+        ('grid_refinement_line', 'geom', 'LINESTRING'),
+        ('grid_refinement_area', 'geom', 'POLYGON'),
+        ('obstacle', 'geom', 'LINESTRING'),
+        ('potential_breach', 'geom', 'LINESTRING'),
     ]
     for table, column, geotype in GEO_COL_INFO:
         migration_query = f"SELECT RecoverGeometryColumn('{table}', '{column}', {4326}, '{geotype}', 'XY')"
@@ -147,21 +145,17 @@ def fix_geometry_columns():
 
 def set_potential_breach_final_exchange_level():
     conn = op.get_bind()
-    res = conn.execute(
-        sa.text(
-            """
+    res = conn.execute(sa.text(
+        """
         SELECT id FROM v2_potential_breach
         WHERE exchange_level IS NOT NULL AND maximum_breach_depth IS NULL;
         """
-        )
-    ).fetchall()
+    )).fetchall()
     if len(res) > 0:
         raise Schema225UpgradeException(
-            f"Could not set final_exchange_level because maximum_breach_depth was not defined for rows: {res}"
-        )
-    op.execute(
-        sa.text(
-            """
+            f"Could not set final_exchange_level because maximum_breach_depth was not defined for rows: {res}")
+    op.execute(sa.text(
+        """
         UPDATE potential_breach
         SET final_exchange_level = (
             SELECT vb.exchange_level - vb.maximum_breach_depth
@@ -170,8 +164,7 @@ def set_potential_breach_final_exchange_level():
             AND exchange_level IS NOT NULL
         );
         """
-        )
-    )
+    ))
 
 
 def upgrade():

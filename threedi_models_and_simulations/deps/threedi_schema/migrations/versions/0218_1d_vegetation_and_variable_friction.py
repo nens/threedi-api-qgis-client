@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "0218"
-down_revision = "0217"
+revision = '0218'
+down_revision = '0217'
 branch_labels = None
 depends_on = None
 
@@ -20,7 +20,7 @@ LOC_COLUMNS = (
     "vegetation_stem_diameter",
     "vegetation_height",
     "vegetation_drag_coefficient",
-    "vegetation_drag_coeficients",
+    "vegetation_drag_coeficients"
 )
 
 DEF_COLUMNS = (
@@ -28,7 +28,7 @@ DEF_COLUMNS = (
     "vegetation_stem_densities",
     "vegetation_stem_diameters",
     "vegetation_heights",
-    "vegetation_drag_coefficients",
+    "vegetation_drag_coefficients"
 )
 
 

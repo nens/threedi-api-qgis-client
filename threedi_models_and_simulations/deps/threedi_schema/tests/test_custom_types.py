@@ -1,4 +1,5 @@
 import pytest
+
 from threedi_schema.domain.custom_types import clean_csv_string, clean_csv_table
 
 
@@ -42,6 +43,8 @@ def test_clean_csv_table(value):
     assert clean_csv_table(value) == "1,2,3\n4,5,6"
 
 
-@pytest.mark.parametrize("value", [" ", "0 1", "3;5", "foo", "1,2\n3,", ",2", ",2\n3,4"])
+@pytest.mark.parametrize(
+    "value", [" ", "0 1", "3;5", "foo", "1,2\n3,", ",2", ",2\n3,4"]
+)
 def test_clean_csv_table_no_fail(value):
     clean_csv_table(value)

@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Callable
+from typing import Callable, TYPE_CHECKING
 
 from alembic.config import Config
 from alembic.script import ScriptDirectory
@@ -21,13 +21,15 @@ class ProgressHandler(logging.Handler):
         msg = record.getMessage()
         if msg.startswith("Running upgrade"):
             if self.total_steps > 0:
-                self.progress_func(100 * self.current_step / self.total_steps)
+                self.progress_func(100 * self.current_step / self.total_steps, msg)
             else:
-                self.progress_func(100)  # Assume 100% if total steps are zero
+                self.progress_func(100, msg)  # Assume 100% if total steps are zero
             self.current_step += 1
 
 
-def get_upgrade_steps_count(config: Config, current_revision: int, target_revision: str = "head") -> int:
+def get_upgrade_steps_count(
+    config: Config, current_revision: int, target_revision: str = "head"
+) -> int:
     """
     Count number of upgrade steps for a schematisation upgrade.
 
