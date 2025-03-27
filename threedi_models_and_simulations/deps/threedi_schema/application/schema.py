@@ -45,12 +45,11 @@ def get_schema_version():
         return int(env.get_head_revision())
 
 
-def _upgrade_database(db, revision="head", unsafe=True, progress_func=None):
+def _upgrade_database(db, revision="head", unsafe=True, config=None):
     """Upgrade ThreediDatabase instance"""
     engine = db.engine
-    config = get_alembic_config(engine, unsafe=unsafe)
-    if progress_func is not None:
-        setup_logging(db.schema, revision, config, progress_func)
+    if config is None:
+        config = get_alembic_config(engine, unsafe=unsafe)
     alembic_command.upgrade(config, revision)
 
 
@@ -68,12 +67,16 @@ class ModelSchema:
 
     def _get_version_old(self):
         """The version of the database using the old 'south' versioning."""
-        south_migrationhistory = Table("south_migrationhistory", MetaData(), Column("id", Integer))
+        south_migrationhistory = Table(
+            "south_migrationhistory", MetaData(), Column("id", Integer)
+        )
         engine = self.db.engine
         if not self.db.has_table("south_migrationhistory"):
             return
         with engine.connect() as connection:
-            query = south_migrationhistory.select().order_by(south_migrationhistory.columns["id"].desc())
+            query = south_migrationhistory.select().order_by(
+                south_migrationhistory.columns["id"].desc()
+            )
             versions = list(connection.execute(query.limit(1)))
             if len(versions) == 1:
                 return versions[0][0]
@@ -83,7 +86,9 @@ class ModelSchema:
     def get_version(self):
         """Returns the id (integer) of the latest migration"""
         with self.db.engine.connect() as connection:
-            context = MigrationContext.configure(connection, opts={"version_table": constants.VERSION_TABLE_NAME})
+            context = MigrationContext.configure(
+                connection, opts={"version_table": constants.VERSION_TABLE_NAME}
+            )
             version = context.get_current_revision()
         if version is not None:
             return int(version)
@@ -104,19 +109,25 @@ class ModelSchema:
         # for revision < 230 read explicit epsg from schematisation
         if version is not None and version < 230:
             try:
-                epsg_code = get_model_srid(connection=session, v2_global_settings=version < 222)
+                epsg_code = get_model_srid(
+                    connection=session, v2_global_settings=version < 222
+                )
             except InvalidSRIDException:
                 return None, ""
 
             return (
                 epsg_code,
-                "v2_global_settings.epsg_code" if version < 222 else "model_settings.epsg_code",
+                "v2_global_settings.epsg_code"
+                if version < 222
+                else "model_settings.epsg_code",
             )
         # for version 230 (implicit crs in spatialite) get epsg from first geometry object found in the model
         elif version == 230:
             for model in self.declared_models:
                 if hasattr(model, "geom"):
-                    srids = [item[0] for item in session.query(ST_SRID(model.geom)).all()]
+                    srids = [
+                        item[0] for item in session.query(ST_SRID(model.geom)).all()
+                    ]
                     if len(srids) > 0:
                         return srids[0], f"{model.__tablename__}.geom"
             return None, ""
@@ -139,8 +150,14 @@ class ModelSchema:
         """
         if not raster_path:
             with self.db.get_session() as session:
-                settings_table = "v2_global_settings" if self.get_version() < 222 else "model_settings"
-                raster_path = session.execute(text(f"SELECT dem_file FROM {settings_table};")).scalar()
+                settings_table = (
+                    "v2_global_settings"
+                    if self.get_version() < 222
+                    else "model_settings"
+                )
+                raster_path = session.execute(
+                    text(f"SELECT dem_file FROM {settings_table};")
+                ).scalar()
             if raster_path is None:
                 raise InvalidSRIDException(None, "no DEM is provided")
         # old dem paths include rasters/ but new ones do not
@@ -174,7 +191,9 @@ class ModelSchema:
         with self.db.get_session() as session:
             return bool(
                 session.execute(
-                    text("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='gpkg_contents';")
+                    text(
+                        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='gpkg_contents';"
+                    )
                 ).scalar()
             )
 
@@ -183,7 +202,9 @@ class ModelSchema:
         with self.db.get_session() as session:
             return bool(
                 session.execute(
-                    text("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='spatial_ref_sys';")
+                    text(
+                        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='spatial_ref_sys';"
+                    )
                 ).scalar()
             )
 
@@ -211,7 +232,7 @@ class ModelSchema:
         spatialite file version after the upgrade.
 
         Specify a 'progress_func' to handle progress updates. `progress_func` should
-        expect a single argument representing the fraction of progress
+        expect two arguments: the percentage of progress and a string describing the migration step
 
         Specify a `epsg_code_override` to set the model epsg_code before migration.
         This can be used for testing and for setting the DEM epsg_code when self.epsg_code is None.
@@ -219,7 +240,9 @@ class ModelSchema:
         try:
             rev_nr = get_schema_version() if revision == "head" else int(revision)
         except ValueError:
-            raise ValueError(f"Incorrect version format: {revision}. Expected 'head' or a numeric value.")
+            raise ValueError(
+                f"Incorrect version format: {revision}. Expected 'head' or a numeric value."
+            )
         v = self.get_version()
 
         if v is not None and v < constants.LATEST_SOUTH_MIGRATION_ID:
@@ -228,10 +251,27 @@ class ModelSchema:
                 f"{constants.LATEST_SOUTH_MIGRATION_ID}. Please consult the "
                 f"3Di documentation on how to update legacy databases."
             )
-        if v is not None and v <= constants.LAST_SPTL_SCHEMA_VERSION and not self.is_spatialite:
-            raise UpgradeFailedError(f"Cannot upgrade from {revision=} because {self.db.path} is not a spatialite")
-        elif v is not None and v > constants.LAST_SPTL_SCHEMA_VERSION and not self.is_geopackage:
-            raise UpgradeFailedError(f"Cannot upgrade from {revision=} because {self.db.path} is not a geopackage")
+        if (
+            v is not None
+            and v <= constants.LAST_SPTL_SCHEMA_VERSION
+            and not self.is_spatialite
+        ):
+            raise UpgradeFailedError(
+                f"Cannot upgrade from {revision=} because {self.db.path} is not a spatialite"
+            )
+        elif (
+            v is not None
+            and v > constants.LAST_SPTL_SCHEMA_VERSION
+            and not self.is_geopackage
+        ):
+            raise UpgradeFailedError(
+                f"Cannot upgrade from {revision=} because {self.db.path} is not a geopackage"
+            )
+
+        config = None
+        if progress_func is not None:
+            config = get_alembic_config(self.db.engine, unsafe=backup)
+            setup_logging(self.db.schema, revision, config, progress_func)
 
         def run_upgrade(_revision):
             if backup:
@@ -240,21 +280,25 @@ class ModelSchema:
                         work_db,
                         revision=_revision,
                         unsafe=True,
-                        progress_func=progress_func,
+                        config=config,
                     )
             else:
                 _upgrade_database(
                     self.db,
                     revision=_revision,
                     unsafe=False,
-                    progress_func=progress_func,
+                    config=config,
                 )
 
         if epsg_code_override is not None:
             if self.get_version() is not None and self.get_version() > 229:
-                warnings.warn("Cannot set epsg_code_override when upgrading from 230 or newer")
+                warnings.warn(
+                    "Cannot set epsg_code_override when upgrading from 230 or newer"
+                )
             elif rev_nr < 230:
-                warnings.warn("Warning: cannot set epsg_code_override when upgrading to 229 or older.")
+                warnings.warn(
+                    "Warning: cannot set epsg_code_override when upgrading to 229 or older."
+                )
             else:
                 if self.get_version() is None or self.get_version() < 229:
                     run_upgrade("0229")
@@ -264,7 +308,9 @@ class ModelSchema:
         # First upgrade to LAST_SPTL_SCHEMA_VERSION.
         # When the requested revision <= LAST_SPTL_SCHEMA_VERSION, this is the only upgrade step
         run_upgrade(
-            revision if rev_nr <= constants.LAST_SPTL_SCHEMA_VERSION else f"{constants.LAST_SPTL_SCHEMA_VERSION:04d}"
+            revision
+            if rev_nr <= constants.LAST_SPTL_SCHEMA_VERSION
+            else f"{constants.LAST_SPTL_SCHEMA_VERSION:04d}"
         )
         # only upgrade spatialite version is target revision is <= LAST_SPTL_SCHEMA_VERSION
         if rev_nr <= constants.LAST_SPTL_SCHEMA_VERSION and upgrade_spatialite_version:
@@ -276,16 +322,28 @@ class ModelSchema:
 
     def _set_custom_epsg_code(self, custom_epsg_code: int):
         """Temporarily set epsg code in model settings for migration 230"""
-        if self.get_version() is None or self.get_version() < 222 or self.get_version() > 229:
+        if (
+            self.get_version() is None
+            or self.get_version() < 222
+            or self.get_version() > 229
+        ):
             raise ValueError(f"Cannot set epsg code for revision {self.get_version()}")
         # modify epsg_code
         with self.db.get_session() as session:
-            settings_row_count = session.execute(text("SELECT COUNT(id) FROM model_settings;")).scalar()
+            settings_row_count = session.execute(
+                text("SELECT COUNT(id) FROM model_settings;")
+            ).scalar()
             # to update empty databases, they must have model_settings.epsg_code set
             if settings_row_count == 0:
-                session.execute(text(f"INSERT INTO model_settings (id, epsg_code) VALUES (99999, {custom_epsg_code});"))
+                session.execute(
+                    text(
+                        f"INSERT INTO model_settings (id, epsg_code) VALUES (99999, {custom_epsg_code});"
+                    )
+                )
             else:
-                session.execute(text(f"UPDATE model_settings SET epsg_code = {custom_epsg_code};"))
+                session.execute(
+                    text(f"UPDATE model_settings SET epsg_code = {custom_epsg_code};")
+                )
             session.commit()
 
     def _remove_temporary_model_settings(self):
@@ -308,7 +366,8 @@ class ModelSchema:
         schema_version = get_schema_version()
         if version is None or version < schema_version:
             raise MigrationMissingError(
-                f"This tool requires at least schema version " f"{schema_version}. Current version: {version}."
+                f"This tool requires at least schema version "
+                f"{schema_version}. Current version: {version}."
             )
 
         if version > schema_version:
@@ -325,7 +384,8 @@ class ModelSchema:
         schema_version = get_schema_version()
         if version != schema_version:
             raise MigrationMissingError(
-                f"Setting views requires schema version " f"{schema_version}. Current version: {version}."
+                f"Setting views requires schema version "
+                f"{schema_version}. Current version: {version}."
             )
 
         ensure_spatial_indexes(self.db.engine, models.DECLARED_MODELS)
@@ -357,7 +417,9 @@ class ModelSchema:
                         )
                     ).fetchone()[0]
                 with work_db.get_session() as session:
-                    session.execute(text(f"INSERT INTO model_settings (epsg_code) VALUES ({srid});"))
+                    session.execute(
+                        text(f"INSERT INTO model_settings (epsg_code) VALUES ({srid});")
+                    )
                     session.commit()
                 if get_schema_version() > 229:
                     _upgrade_database(work_db, revision="head", unsafe=True)
@@ -390,9 +452,13 @@ class ModelSchema:
         # Ensure database is upgraded and views are recreated
         revision = self.get_version()
         if revision is None or revision < constants.LAST_SPTL_SCHEMA_VERSION:
-            self.upgrade(revision=f"{constants.LAST_SPTL_SCHEMA_VERSION:04d}", backup=False)
+            self.upgrade(
+                revision=f"{constants.LAST_SPTL_SCHEMA_VERSION:04d}", backup=False
+            )
         elif revision > constants.LAST_SPTL_SCHEMA_VERSION:
-            UpgradeFailedError(f"Cannot convert schema version {revision} to geopackage")
+            UpgradeFailedError(
+                f"Cannot convert schema version {revision} to geopackage"
+            )
         # Make necessary modifications for conversion on temporary database
         with self.db.file_transaction(start_empty=False, copy_results=False) as work_db:
             # remove spatialite specific tables that break conversion
@@ -402,12 +468,20 @@ class ModelSchema:
 
                 all_tablenames = [model.__tablename__ for model in self.declared_models]
                 geometry_tablenames = (
-                    session.execute(text("SELECT f_table_name FROM geometry_columns;")).scalars().all()
+                    session.execute(text("SELECT f_table_name FROM geometry_columns;"))
+                    .scalars()
+                    .all()
                 )
-                non_geometry_tablenames = list(set(all_tablenames) - set(geometry_tablenames))
+                non_geometry_tablenames = list(
+                    set(all_tablenames) - set(geometry_tablenames)
+                )
 
                 if (
-                    session.execute(text("SELECT count(*) FROM sqlite_master WHERE name='schema_version';")).scalar()
+                    session.execute(
+                        text(
+                            "SELECT count(*) FROM sqlite_master WHERE name='schema_version';"
+                        )
+                    ).scalar()
                     > 0
                 ):
                     non_geometry_tablenames.append("schema_version")
@@ -452,7 +526,9 @@ class ModelSchema:
                         warnings_list.append(handler.err_msg)
 
             if len(warnings_list) > 0:
-                warning_string = "\n".join(["GeoPackage conversion didn't finish as expected:"] + warnings_list)
+                warning_string = "\n".join(
+                    ["GeoPackage conversion didn't finish as expected:"] + warnings_list
+                )
                 warnings.warn(warning_string)
 
         # Correct path of current database

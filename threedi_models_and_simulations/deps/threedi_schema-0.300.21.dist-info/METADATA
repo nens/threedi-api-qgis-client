@@ -1,6 +1,6 @@
-Metadata-Version: 2.2
+Metadata-Version: 2.4
 Name: threedi-schema
-Version: 0.300.19
+Version: 0.300.21
 Summary: The schema of 3Di schematization files
 Author-email: Nelen & Schuurmans <info@nelen-schuurmans.nl>
 License: MIT
@@ -17,6 +17,7 @@ Requires-Dist: pytest; extra == "test"
 Requires-Dist: pytest-cov; extra == "test"
 Provides-Extra: cli
 Requires-Dist: click; extra == "cli"
+Dynamic: license-file
 
 threedi-schema
 ==========================================
@@ -88,6 +89,18 @@ Install with::
 
 Changelog of threedi-schema
 ===================================================
+
+
+0.300.21 (2025-03-26)
+---------------------
+
+- Add migration step description to upgrade progress tracking
+
+
+0.300.20 (2025-03-25)
+---------------------
+
+- Fix progress tracking for upgrade to be continuous
 
 
 0.300.19 (2025-03-17)

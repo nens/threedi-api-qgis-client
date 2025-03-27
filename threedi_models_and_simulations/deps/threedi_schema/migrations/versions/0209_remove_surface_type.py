@@ -5,7 +5,6 @@ Revises: 0208
 Create Date: 2022-10-13 10:45
 
 """
-
 import sqlalchemy as sa
 from alembic import op
 
@@ -23,4 +22,6 @@ def upgrade():
 
 def downgrade():
     with op.batch_alter_table("v2_surface_map") as batch_op:
-        batch_op.add_column(sa.Column("surface_type", sa.String(length=40), nullable=True))
+        batch_op.add_column(
+            sa.Column("surface_type", sa.String(length=40), nullable=True)
+        )

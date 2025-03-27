@@ -12,7 +12,9 @@ def create_spatial_index(connection, column):
     try:
         connection.execute(func.gpkgAddSpatialIndex(column.table.name, column.name))
     except Exception as e:
-        raise RuntimeError(f"Spatial index creation for {idx_name} failed with error {e}")
+        raise RuntimeError(
+            f"Spatial index creation for {idx_name} failed with error {e}"
+        )
     return True
 
 
@@ -26,7 +28,8 @@ def get_missing_spatial_indexes(engine, models):
     return [
         model
         for model in models
-        if "geom" in model.__table__.columns and f"rtree_{model.__table__.name}_geom" not in table_names
+        if "geom" in model.__table__.columns
+        and f"rtree_{model.__table__.name}_geom" not in table_names
     ]
 
 
@@ -37,6 +40,8 @@ def ensure_spatial_indexes(engine, models):
     with engine.connect() as connection:
         with connection.begin():
             for model in no_spatial_index_models:
-                created &= create_spatial_index(connection, model.__table__.columns["geom"])
+                created &= create_spatial_index(
+                    connection, model.__table__.columns["geom"]
+                )
             if created:
                 connection.execute(text("VACUUM"))

@@ -164,7 +164,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             QCoreApplication.processEvents()
             migration_info = "Schema migration..."
             self.communication.progress_bar(migration_info, 0, 100, 0, clear_msg_bar=True)
-            progress_bar_callback = progress_bar_callback_factory(self.communication, migration_info)
+            progress_bar_callback = progress_bar_callback_factory(self.communication)
             migration_succeed, migration_feedback_msg = migrate_schematisation_schema(
                 wip_revision.schematisation_db_filepath, progress_bar_callback
             )

@@ -10,11 +10,10 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "0220"
-down_revision = "0219"
+revision = '0220'
+down_revision = '0219'
 branch_labels = None
 depends_on = None
-
 
 def upgrade():
     with op.batch_alter_table("v2_connection_nodes") as batch_op:
@@ -26,7 +25,6 @@ def upgrade():
     for prefix in {"gii_", "giu_", "gid_"}:
         op.execute(sa.text(f"DROP TRIGGER IF EXISTS {prefix}v2_connection_nodes_the_geom"))
     op.execute(sa.text("SELECT CreateSpatialIndex('v2_connection_nodes', 'the_geom')"))
-
 
 def downgrade():
     with op.batch_alter_table("v2_connection_nodes") as batch_op:
