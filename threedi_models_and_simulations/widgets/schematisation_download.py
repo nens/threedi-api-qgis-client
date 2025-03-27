@@ -344,6 +344,8 @@ class SchematisationDownload(uicls, basecls):
                 self.pbar_download.setValue(current_progress)
             self.downloaded_local_schematisation = local_schematisation
             expected_geopackage_path = os.path.join(schematisation_db_dir, schematisation_db_file)
+            if expected_geopackage_path.lower().endswith(".sqlite"):
+                expected_geopackage_path = expected_geopackage_path.rsplit(".", 1)[0] + ".gpkg"
             self.downloaded_geopackage_filepath = expected_geopackage_path
             sleep(1)
             settings = QSettings()
