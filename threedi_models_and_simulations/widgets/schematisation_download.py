@@ -344,12 +344,8 @@ class SchematisationDownload(uicls, basecls):
                 self.pbar_download.setValue(current_progress)
             self.downloaded_local_schematisation = local_schematisation
             expected_geopackage_path = os.path.join(schematisation_db_dir, schematisation_db_file)
-            schema_is_valid = ensure_valid_schema(expected_geopackage_path, self.communication)
-            if schema_is_valid is True:
-                if expected_geopackage_path.lower().endswith(".sqlite"):
-                    expected_geopackage_path = expected_geopackage_path.rsplit(".", 1)[0] + ".gpkg"
-            else:
-                raise Exception("Downloaded schematisation database schema version is not valid.")
+            if expected_geopackage_path.lower().endswith(".sqlite"):
+                expected_geopackage_path = expected_geopackage_path.rsplit(".", 1)[0] + ".gpkg"
             self.downloaded_geopackage_filepath = expected_geopackage_path
             sleep(1)
             settings = QSettings()
