@@ -62,12 +62,7 @@ def get_upgrade_steps_count(
     return len(list(revisions)) + offset
 
 
-def setup_logging(
-    schema: ModelSchema,
-    target_revision: str,
-    config: Config,
-    progress_func: Callable[[float], None],
-):
+def setup_logging(progress_func: Callable[[float, str], None], n_steps: int):
     """
     Set up logging for schematisation upgrade
 
@@ -77,8 +72,8 @@ def setup_logging(
         config: Config object containing configuration settings
         progress_func: A Callable with a single argument of type float, used to track progress during migration
     """
-    n_steps = get_upgrade_steps_count(config, schema.get_version(), target_revision)
     logger = logging.getLogger("alembic.runtime.migration")
     logger.setLevel(logging.INFO)
     handler = ProgressHandler(progress_func, total_steps=n_steps)
     logger.addHandler(handler)
+    return handler

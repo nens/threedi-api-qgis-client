@@ -20,7 +20,7 @@ from ..domain import constants, models
 from ..infrastructure.spatial_index import ensure_spatial_indexes
 from ..infrastructure.spatialite_versions import copy_models, get_spatialite_version
 from .errors import InvalidSRIDException, MigrationMissingError, UpgradeFailedError
-from .upgrade_utils import setup_logging
+from .upgrade_utils import get_upgrade_steps_count, setup_logging
 
 gdal.UseExceptions()
 
@@ -45,11 +45,10 @@ def get_schema_version():
         return int(env.get_head_revision())
 
 
-def _upgrade_database(db, revision="head", unsafe=True, config=None):
+def _upgrade_database(db, revision="head", unsafe=True):
     """Upgrade ThreediDatabase instance"""
     engine = db.engine
-    if config is None:
-        config = get_alembic_config(engine, unsafe=unsafe)
+    config = get_alembic_config(engine, unsafe=unsafe)
     alembic_command.upgrade(config, revision)
 
 
@@ -268,27 +267,19 @@ class ModelSchema:
                 f"Cannot upgrade from {revision=} because {self.db.path} is not a geopackage"
             )
 
-        config = None
         if progress_func is not None:
             config = get_alembic_config(self.db.engine, unsafe=backup)
-            setup_logging(self.db.schema, revision, config, progress_func)
+            n_steps = get_upgrade_steps_count(
+                config, self.db.schema.get_version(), revision
+            )
+            setup_logging(progress_func, n_steps)
 
         def run_upgrade(_revision):
             if backup:
                 with self.db.file_transaction() as work_db:
-                    _upgrade_database(
-                        work_db,
-                        revision=_revision,
-                        unsafe=True,
-                        config=config,
-                    )
+                    _upgrade_database(work_db, revision=_revision, unsafe=True)
             else:
-                _upgrade_database(
-                    self.db,
-                    revision=_revision,
-                    unsafe=False,
-                    config=config,
-                )
+                _upgrade_database(self.db, revision=_revision, unsafe=False)
 
         if epsg_code_override is not None:
             if self.get_version() is not None and self.get_version() > 229:
