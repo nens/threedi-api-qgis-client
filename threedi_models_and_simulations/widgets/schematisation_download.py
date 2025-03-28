@@ -346,7 +346,8 @@ class SchematisationDownload(uicls, basecls):
             expected_geopackage_path = os.path.join(schematisation_db_dir, schematisation_db_file)
             if expected_geopackage_path.lower().endswith(".sqlite"):
                 expected_geopackage_path = expected_geopackage_path.rsplit(".", 1)[0] + ".gpkg"
-            self.downloaded_geopackage_filepath = expected_geopackage_path
+            if os.path.isfile(expected_geopackage_path):
+                self.downloaded_geopackage_filepath = expected_geopackage_path
             sleep(1)
             settings = QSettings()
             settings.setValue("threedi/last_schematisation_folder", schematisation_db_dir)
