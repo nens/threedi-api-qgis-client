@@ -1,8 +1,8 @@
 History
 =======
 
-4.0 (unreleased)
--------------------
+3.16 (2025-04-01)
+-----------------
 
 - Adjusting plugin to work with schema version >= 300.
 - Fixed schematisation tag setting (#640)
