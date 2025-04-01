@@ -54,7 +54,7 @@ class UploadOverview(uicls_log, basecls_log):
         self.upload_progresses = defaultdict(lambda: ("NO TASK", 0, 0))
         self.current_upload_row = 0
         self.schematisation = None
-        self.schematisation_sqlite = None
+        self.schematisation_filepath = None
         self.schematisation_id = None
         self.pb_new_upload.clicked.connect(self.upload_new_model)
         self.pb_hide.clicked.connect(self.close)
@@ -149,17 +149,17 @@ class UploadOverview(uicls_log, basecls_log):
 
     def upload_new_model(self):
         """Initializing new upload wizard."""
-        if not self.current_local_schematisation or not self.current_local_schematisation.sqlite:
+        if not self.current_local_schematisation or not self.current_local_schematisation.schematisation_db_filepath:
             warn_msg = "Please load the schematisation first before starting the upload."
             self.communication.show_warn(warn_msg, parent=self)
             self.plugin_dock.build_options.load_local_schematisation()
             return
-        self.schematisation_sqlite = self.current_local_schematisation.sqlite
-        schema_sqlite_loaded = is_loaded_in_schematisation_editor(self.schematisation_sqlite)
-        if schema_sqlite_loaded is False:
+        self.schematisation_filepath = self.current_local_schematisation.schematisation_db_filepath
+        schema_gpkg_loaded = is_loaded_in_schematisation_editor(self.schematisation_filepath)
+        if schema_gpkg_loaded is False:
             title = "Warning"
             question = (
-                "Warning: the Spatialite that you loaded with the 3Di Schematisation Editor is not in the revision you "
+                "Warning: the GeoPackage that you loaded with the 3Di Schematisation Editor is not in the revision you "
                 "are about to upload. Do you want to continue?"
             )
             on_continue_answer = self.communication.ask(self, title, question, QMessageBox.Warning)

@@ -15,33 +15,61 @@ from dateutil.relativedelta import relativedelta
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import (QDateTime, QLocale, QSettings, QSize, Qt,
-                              QTimeZone, pyqtSignal)
-from qgis.PyQt.QtGui import (QColor, QDoubleValidator, QFont, QStandardItem,
-                             QStandardItemModel)
-from qgis.PyQt.QtWidgets import (QComboBox, QDoubleSpinBox, QFileDialog,
-                                 QGridLayout, QGroupBox, QHBoxLayout, QLabel,
-                                 QLineEdit, QRadioButton, QScrollArea,
-                                 QSizePolicy, QSpacerItem, QSpinBox,
-                                 QTableWidgetItem, QWidget, QWizard,
-                                 QWizardPage)
+from qgis.PyQt.QtCore import QDateTime, QLocale, QSettings, QSize, Qt, QTimeZone, pyqtSignal
+from qgis.PyQt.QtGui import QColor, QDoubleValidator, QFont, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import (
+    QComboBox,
+    QDoubleSpinBox,
+    QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QRadioButton,
+    QScrollArea,
+    QSizePolicy,
+    QSpacerItem,
+    QSpinBox,
+    QTableWidgetItem,
+    QWidget,
+    QWizard,
+    QWizardPage,
+)
 from threedi_api_client.openapi import ApiException, Threshold
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
-from ..utils import (TEMPDIR, BreachSourceType, EventTypes,
-                     apply_24h_timeseries, constains_only_ascii,
-                     convert_timeseries_to_seconds, extract_error_message,
-                     get_download_file, handle_csv_header, intervals_are_even,
-                     mmh_to_mmtimestep, mmh_to_ms, mmtimestep_to_mmh,
-                     ms_to_mmh, parse_timeseries, read_json_data)
-from ..utils_ui import (NumericDelegate, get_filepath,
-                        qgis_layers_cbo_get_layer_uri, read_3di_settings,
-                        save_3di_settings, scan_widgets_parameters,
-                        set_widget_background_color, set_widgets_parameters)
+from ..utils import (
+    TEMPDIR,
+    BreachSourceType,
+    EventTypes,
+    apply_24h_timeseries,
+    constains_only_ascii,
+    convert_timeseries_to_seconds,
+    extract_error_message,
+    get_download_file,
+    handle_csv_header,
+    intervals_are_even,
+    mmh_to_mmtimestep,
+    mmh_to_ms,
+    mmtimestep_to_mmh,
+    ms_to_mmh,
+    parse_timeseries,
+    read_json_data,
+)
+from ..utils_ui import (
+    NumericDelegate,
+    get_filepath,
+    qgis_layers_cbo_get_layer_uri,
+    read_3di_settings,
+    save_3di_settings,
+    scan_widgets_parameters,
+    set_widget_background_color,
+    set_widgets_parameters,
+)
 from .custom_items import FilteredComboBox
-from .initial_concentrations import (Initial1DConcentrationsWidget,
-                                     Initial2DConcentrationsWidget)
+from .initial_concentrations import Initial1DConcentrationsWidget, Initial2DConcentrationsWidget
 from .substance_concentrations import SubstanceConcentrationsWidget
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -609,7 +637,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
                     name = sub.get("substance")
                     existing_substance.setdefault(name, sub)
                 substance_concentrations[bc_id] = list(existing_substance.values())
-        
+
         # Convert to the timeseries of the substance concentration
         substances = deepcopy(substance_concentrations)
         substances_data = {}
@@ -637,7 +665,7 @@ class BoundaryConditionsWidget(uicls_boundary_conditions, basecls_boundary_condi
         if self.substance_concentrations_1d or self.substance_constants_1d:
             substances = self.recalculate_substances_timeseries(self.TYPE_1D)
             self.update_boundary_conditions_with_substances(boundary_conditions_data_1d, substances)
-        
+
         boundary_conditions_data_2d = self.recalculate_boundary_conditions_timeseries(self.TYPE_2D)
         if self.substance_concentrations_2d or self.substance_constants_2d:
             substances = self.recalculate_substances_timeseries(self.TYPE_2D)
@@ -893,6 +921,8 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                 if initial_saved_state_idx >= 0:
                     self.cbo_saved_states.setCurrentIndex(initial_saved_state_idx)
             initial_waterlevels = tc.fetch_3di_model_initial_waterlevels(model_id) or []
+            for initial_waterlevel in initial_waterlevels:
+                print(initial_waterlevel.to_dict())
             initial_waterlevels_2d = [iw for iw in initial_waterlevels if iw.dimension == "two_d"]
             initial_waterlevels_1d = [iw for iw in initial_waterlevels if iw.dimension == "one_d"]
             if initial_waterlevels_1d:
@@ -905,15 +935,21 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
                     self.cbo_1d_online_file.addItem(iw.file.filename)
                 else:
                     logger.info(f"Water level instance {iw.id} does not have a file, skipping.")
-            if initial_waterlevels_2d:
-                self.rb_2d_online_raster.setChecked(True)
-                self.rb_gw_online_raster.setChecked(True)
             for iw in sorted(initial_waterlevels_2d, key=attrgetter("id")):
                 raster = tc.fetch_3di_model_raster(model_id, iw.source_raster_id)
                 raster_filename = raster.file.filename
+                raster_type = raster.type
                 self.initial_waterlevels[raster_filename] = iw
-                self.cbo_2d_online_raster.addItem(raster_filename)
-                self.cbo_gw_online_raster.addItem(raster_filename)
+                if raster_type == "initial_waterlevel_file":
+                    if not self.rb_2d_online_raster.isChecked():
+                        self.rb_2d_online_raster.setChecked(True)
+                    self.cbo_2d_online_raster.addItem(raster_filename)
+                elif raster_type == "initial_groundwater_level_file":
+                    if not self.rb_gw_online_raster.isChecked():
+                        self.rb_gw_online_raster.setChecked(True)
+                    self.cbo_gw_online_raster.addItem(raster_filename)
+                else:
+                    continue
         except ApiException as e:
             error_msg = extract_error_message(e)
             self.parent_page.parent_wizard.plugin_dock.communication.bar_error(error_msg, log_text_color=QColor(Qt.red))
@@ -1175,8 +1211,8 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
             self.laterals_2d_timeseries = values
         else:
             raise NotImplementedError
-        
-        _, warning_message =  self.recalculate_laterals_timeseries(laterals_type)
+
+        _, warning_message = self.recalculate_laterals_timeseries(laterals_type)
         if warning_message:
             self.parent_page.parent_wizard.plugin_dock.communication.show_warn(warning_message)
 
@@ -1199,7 +1235,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     if lateral_id in laterals_timeseries:
                         duplicate_lateral_ids.append(str(lateral_id))
                 if duplicate_lateral_ids:
-                    warning  = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
+                    warning = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
 
                 laterals_timeseries.update(laterals_data)
         else:
@@ -1217,7 +1253,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
                     if lateral_id in laterals_timeseries:
                         duplicate_lateral_ids.append(str(lateral_id))
                 if duplicate_lateral_ids:
-                    warning  = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
+                    warning = f"Lateral from CSV with id {','.join(duplicate_lateral_ids)} already present in template, will be overwritten."
 
                 laterals_timeseries.update(laterals_data)
 
@@ -1225,7 +1261,7 @@ class LateralsWidget(uicls_laterals, basecls_laterals):
 
     def recalculate_substances_timeseries(self, laterals_type):
         """Recalculate substances timeseries (timesteps in seconds)."""
-        
+
         # Recalculate laterat timeseries to seconds, if required
         laterals_timeseries, _ = self.recalculate_laterals_timeseries(laterals_type)
 
@@ -2831,10 +2867,18 @@ class SettingsWidget(uicls_settings_page, basecls_settings_page):
 
     def collect_single_settings(self):
         """Get data from the single settings groupboxes."""
-        physical_settings = scan_widgets_parameters(self.group_physical, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False)
-        numerical_settings = scan_widgets_parameters(self.group_numerical, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False)
-        time_step_settings = scan_widgets_parameters(self.group_timestep, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False)
-        water_quality_settings = scan_widgets_parameters(self.group_water_quality, get_combobox_text=False, remove_postfix=True, lineedits_as_float_or_none=True)
+        physical_settings = scan_widgets_parameters(
+            self.group_physical, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False
+        )
+        numerical_settings = scan_widgets_parameters(
+            self.group_numerical, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False
+        )
+        time_step_settings = scan_widgets_parameters(
+            self.group_timestep, get_combobox_text=False, remove_postfix=False, lineedits_as_float_or_none=False
+        )
+        water_quality_settings = scan_widgets_parameters(
+            self.group_water_quality, get_combobox_text=False, remove_postfix=True, lineedits_as_float_or_none=True
+        )
         return physical_settings, numerical_settings, time_step_settings, water_quality_settings
 
     def collect_aggregation_settings(self):
@@ -3548,16 +3592,30 @@ class SimulationWizard(QWizard):
         # Water quality settings is tricky, as the widgets in these settings do not have unique object names, therefore
         # we need to do explicit mapping
         if settings_overview.water_quality_settings is not None:
-            self.settings_page.main_widget.time_step_2.setText(QLocale().toString(settings_overview.water_quality_settings.time_step))
+            self.settings_page.main_widget.time_step_2.setText(
+                QLocale().toString(settings_overview.water_quality_settings.time_step)
+            )
             if settings_overview.water_quality_settings.min_time_step:
-                self.settings_page.main_widget.min_time_step_2.setText(QLocale().toString(settings_overview.water_quality_settings.min_time_step))
+                self.settings_page.main_widget.min_time_step_2.setText(
+                    QLocale().toString(settings_overview.water_quality_settings.min_time_step)
+                )
             if settings_overview.water_quality_settings.max_time_step:
-                self.settings_page.main_widget.max_time_step_2.setText(QLocale().toString(settings_overview.water_quality_settings.max_time_step))
-            self.settings_page.main_widget.general_numerical_threshold_2.setText(QLocale().toString(settings_overview.water_quality_settings.general_numerical_threshold))
-            self.settings_page.main_widget.max_number_of_multi_step.setValue(settings_overview.water_quality_settings.max_number_of_multi_step)
-            self.settings_page.main_widget.max_gs_sweep_iterations.setValue(settings_overview.water_quality_settings.max_gs_sweep_iterations)
-            self.settings_page.main_widget.convergence_eps_2.setText(QLocale().toString(settings_overview.water_quality_settings.convergence_eps))
-        
+                self.settings_page.main_widget.max_time_step_2.setText(
+                    QLocale().toString(settings_overview.water_quality_settings.max_time_step)
+                )
+            self.settings_page.main_widget.general_numerical_threshold_2.setText(
+                QLocale().toString(settings_overview.water_quality_settings.general_numerical_threshold)
+            )
+            self.settings_page.main_widget.max_number_of_multi_step.setValue(
+                settings_overview.water_quality_settings.max_number_of_multi_step
+            )
+            self.settings_page.main_widget.max_gs_sweep_iterations.setValue(
+                settings_overview.water_quality_settings.max_gs_sweep_iterations
+            )
+            self.settings_page.main_widget.convergence_eps_2.setText(
+                QLocale().toString(settings_overview.water_quality_settings.convergence_eps)
+            )
+
         aggregation_settings_list = [settings.to_dict() for settings in settings_overview.aggregation_settings]
         self.settings_page.main_widget.populate_aggregation_settings(aggregation_settings_list)
         # Simulation events
@@ -3964,7 +4022,7 @@ class SimulationWizard(QWizard):
                         ]
                     )
                 else:
-                    initial_conditions.from_spatialite_1d = True
+                    initial_conditions.from_geopackage_1d = True
             # 2D
             if self.init_conditions_page.main_widget.gb_2d.isChecked():
                 if self.init_conditions_page.main_widget.rb_2d_global_value.isChecked():
@@ -4102,7 +4160,9 @@ class SimulationWizard(QWizard):
         main_settings = self.settings_page.main_widget.collect_single_settings()
         physical_settings, numerical_settings, time_step_settings, water_quality_settings = main_settings
         aggregation_settings_list = self.settings_page.main_widget.collect_aggregation_settings()
-        settings = dm.Settings(physical_settings, numerical_settings, time_step_settings, aggregation_settings_list, water_quality_settings)
+        settings = dm.Settings(
+            physical_settings, numerical_settings, time_step_settings, aggregation_settings_list, water_quality_settings
+        )
         # Post-processing in Lizard
         lizard_post_processing = dm.LizardPostProcessing()
         if self.init_conditions.include_lizard_post_processing:

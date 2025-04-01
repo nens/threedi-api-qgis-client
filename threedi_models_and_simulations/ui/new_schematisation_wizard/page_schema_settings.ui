@@ -99,7 +99,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Timestep settings</string>
+         <string>Time step settings</string>
         </property>
        </widget>
       </item>
@@ -121,10 +121,10 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Simulation timestep [s]</string>
+            <string>Simulation time step [s]</string>
            </property>
            <property name="text">
-            <string>Simulation timestep [s]:</string>
+            <string>Simulation time step [s]:</string>
            </property>
           </widget>
          </item>
@@ -137,7 +137,7 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Used to set the output timestep</string>
+            <string>Used to set the output time step</string>
            </property>
            <property name="text">
             <string>Typical simulation duration:</string>
@@ -165,7 +165,7 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>Used to set the output timestep</string>
+            <string>Used to set the output time step</string>
            </property>
            <item>
             <property name="text">
@@ -203,7 +203,7 @@
           </spacer>
          </item>
          <item row="0" column="2">
-          <widget class="QSpinBox" name="sim_time_step">
+          <widget class="QSpinBox" name="time_step">
            <property name="minimumSize">
             <size>
              <width>150</width>
@@ -346,7 +346,7 @@
           </widget>
          </item>
          <item row="1" column="2" colspan="2">
-          <widget class="QDoubleSpinBox" name="grid_space">
+          <widget class="QDoubleSpinBox" name="minimum_cell_size">
            <property name="minimumSize">
             <size>
              <width>150</width>
@@ -360,7 +360,7 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>This value is used to fill in the 'grid_space' attribute in the global settings</string>
+            <string>This value is used to fill in the 'minimum_cell_size' attribute in the model settings</string>
            </property>
            <property name="buttonSymbols">
             <enum>QAbstractSpinBox::NoButtons</enum>
@@ -382,7 +382,7 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="QRadioButton" name="frict_shallow_water_correction_flat">
+            <widget class="QRadioButton" name="friction_shallow_water_depth_correction_flat">
              <property name="font">
               <font>
                <family>Segoe UI</family>
@@ -401,7 +401,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QRadioButton" name="frict_shallow_water_correction_sloping">
+            <widget class="QRadioButton" name="friction_shallow_water_depth_correction_sloping">
              <property name="font">
               <font>
                <family>Segoe UI</family>
@@ -427,7 +427,7 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>This value is used to fill in the 'grid_space' attribute in the global settings</string>
+            <string>This value is used to fill in the 'minimum_cell_size' attribute in the model settings</string>
            </property>
            <property name="text">
             <string>Computational cell size [m]:</string>
@@ -475,7 +475,7 @@
           </spacer>
          </item>
          <item row="0" column="2" colspan="2">
-          <widget class="QSpinBox" name="manhole_storage_area">
+          <widget class="QSpinBox" name="manhole_aboveground_storage_area">
            <property name="minimumSize">
             <size>
              <width>150</width>
@@ -500,7 +500,7 @@
           </widget>
          </item>
          <item row="0" column="0">
-          <widget class="QLabel" name="manhole_storage_area_label">
+          <widget class="QLabel" name="manhole_aboveground_storage_area_label">
            <property name="minimumSize">
             <size>
              <width>350</width>
@@ -575,7 +575,7 @@
        </widget>
       </item>
       <item row="4" column="0">
-       <widget class="QGroupBox" name="use_0d_inflow_group">
+       <widget class="QCheckBox" name="use_0d_inflow_checkbox">
         <property name="font">
          <font>
           <family>Segoe UI</family>
@@ -583,76 +583,14 @@
          </font>
         </property>
         <property name="toolTip">
-         <string>Check this box if you want to include rainfall-runoff from surfaces or impervious surfaces in your schematisation.</string>
+         <string>Check this box if you want to include rainfall-runoff from surfaces and/or urban wastewater production (dry weather flow) in your schematisation.</string>
         </property>
-        <property name="title">
+        <property name="text">
          <string>0D Inflow</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
         </property>
         <property name="checked">
          <bool>false</bool>
         </property>
-        <layout class="QGridLayout" name="gridLayout_4">
-         <item row="0" column="1">
-          <widget class="QRadioButton" name="use_0d_inflow_surfaces">
-           <property name="font">
-            <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Use 'surfaces' with custom parameters to define the 0D inflow model for each surface.</string>
-           </property>
-           <property name="text">
-            <string>Custom</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QRadioButton" name="use_0d_inflow_impervious_surfaces">
-           <property name="font">
-            <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Use 'impervious surfaces' with the default Dutch 'NWRW' parameters to define the 0D inflow model for each surface.</string>
-           </property>
-           <property name="text">
-            <string>Dutch NWRW</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_8">
-           <property name="minimumSize">
-            <size>
-             <width>350</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Use 'surfaces' or 'impervious surfaces' to parameterize the 0D inflow models for each surface</string>
-           </property>
-           <property name="text">
-            <string>Inflow parameters type:</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </widget>
       </item>
       <item row="0" column="0">
@@ -683,7 +621,7 @@
         </property>
         <layout class="QGridLayout" name="gridLayout_5">
          <item row="2" column="0">
-          <widget class="QLabel" name="frict_coef_label">
+          <widget class="QLabel" name="friction_coefficient_label">
            <property name="font">
             <font>
              <family>Segoe UI</family>
@@ -750,7 +688,7 @@
           </spacer>
          </item>
          <item row="0" column="1" colspan="2">
-          <widget class="QComboBox" name="frict_type_text">
+          <widget class="QComboBox" name="friction_type_text">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -779,7 +717,7 @@
           </widget>
          </item>
          <item row="2" column="1" colspan="2">
-          <widget class="QgsFileWidget" name="frict_coef_file">
+          <widget class="QgsFileWidget" name="friction_coefficient_file">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -804,7 +742,7 @@
           </widget>
          </item>
          <item row="3" column="2">
-          <widget class="QDoubleSpinBox" name="frict_coef">
+          <widget class="QDoubleSpinBox" name="friction_coefficient">
            <property name="minimumSize">
             <size>
              <width>150</width>
@@ -854,17 +792,15 @@
  <tabstops>
   <tabstop>crs</tabstop>
   <tabstop>use_2d_flow_group</tabstop>
-  <tabstop>grid_space</tabstop>
-  <tabstop>frict_shallow_water_correction_flat</tabstop>
-  <tabstop>frict_shallow_water_correction_sloping</tabstop>
+  <tabstop>minimum_cell_size</tabstop>
+  <tabstop>friction_shallow_water_depth_correction_flat</tabstop>
+  <tabstop>friction_shallow_water_depth_correction_sloping</tabstop>
   <tabstop>use_1d_flow_group</tabstop>
-  <tabstop>manhole_storage_area</tabstop>
-  <tabstop>use_0d_inflow_group</tabstop>
-  <tabstop>use_0d_inflow_surfaces</tabstop>
-  <tabstop>use_0d_inflow_impervious_surfaces</tabstop>
-  <tabstop>frict_type_text</tabstop>
-  <tabstop>frict_coef</tabstop>
-  <tabstop>sim_time_step</tabstop>
+  <tabstop>manhole_aboveground_storage_area</tabstop>
+  <tabstop>use_0d_inflow_checkbox</tabstop>
+  <tabstop>friction_type_text</tabstop>
+  <tabstop>friction_coefficient</tabstop>
+  <tabstop>time_step</tabstop>
   <tabstop>output_time_step_text</tabstop>
  </tabstops>
  <resources/>

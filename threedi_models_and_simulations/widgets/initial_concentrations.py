@@ -8,10 +8,19 @@ from typing import Dict, List
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapLayerComboBox
 from qgis.PyQt.QtGui import QFont
-from qgis.PyQt.QtWidgets import (QComboBox, QFileDialog, QGridLayout,
-                                 QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-                                 QRadioButton, QSizePolicy, QToolButton,
-                                 QWidget)
+from qgis.PyQt.QtWidgets import (
+    QComboBox,
+    QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QRadioButton,
+    QSizePolicy,
+    QToolButton,
+    QWidget,
+)
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils_ui import get_filepath, read_3di_settings, save_3di_settings

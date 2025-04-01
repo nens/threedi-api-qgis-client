@@ -80,7 +80,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Spatialite:</string>
+      <string>GeoPackage:</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -240,7 +240,7 @@
    <item row="7" column="2">
     <layout class="QGridLayout" name="gridLayout_2">
      <item row="0" column="0">
-      <widget class="QRadioButton" name="rb_new_spatialite">
+      <widget class="QRadioButton" name="rb_new_geopackage">
        <property name="font">
         <font>
          <family>Segoe UI</family>
@@ -248,7 +248,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Create new Spatialite</string>
+        <string>Create new GeoPackage</string>
        </property>
        <property name="checked">
         <bool>true</bool>
@@ -261,7 +261,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QRadioButton" name="rb_existing_spatialite">
+        <widget class="QRadioButton" name="rb_existing_geopackage">
          <property name="font">
           <font>
            <family>Segoe UI</family>
@@ -274,7 +274,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="le_spatialite_path">
+        <widget class="QLineEdit" name="le_geopackage_path">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -287,7 +287,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QToolButton" name="btn_browse_spatialite">
+        <widget class="QToolButton" name="btn_browse_geopackage">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -428,10 +428,10 @@
   <tabstop>le_description</tabstop>
   <tabstop>le_tags</tabstop>
   <tabstop>cbo_organisations</tabstop>
-  <tabstop>rb_new_spatialite</tabstop>
-  <tabstop>rb_existing_spatialite</tabstop>
-  <tabstop>le_spatialite_path</tabstop>
-  <tabstop>btn_browse_spatialite</tabstop>
+  <tabstop>rb_new_geopackage</tabstop>
+  <tabstop>rb_existing_geopackage</tabstop>
+  <tabstop>le_geopackage_path</tabstop>
+  <tabstop>btn_browse_geopackage</tabstop>
  </tabstops>
  <resources/>
  <connections/>

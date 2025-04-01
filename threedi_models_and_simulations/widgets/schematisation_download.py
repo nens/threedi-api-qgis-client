@@ -14,7 +14,7 @@ from threedi_mi_utils import LocalSchematisation, list_local_schematisations
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import extract_error_message, get_download_file, unzip_archive
-from ..utils_ui import set_icon
+from ..utils_ui import ensure_valid_schema, set_icon
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "schematisation_download.ui"))
@@ -37,9 +37,9 @@ class SchematisationDownload(uicls, basecls):
         self.threedi_api = self.plugin_dock.threedi_api
         self.schematisations = None
         self.revisions = None
-        self.local_schematisations = list_local_schematisations(self.working_dir)
+        self.local_schematisations = list_local_schematisations(self.working_dir, use_config_for_revisions=False)
         self.downloaded_local_schematisation = None
-        self.downloaded_sqlite_filepath = None
+        self.downloaded_geopackage_filepath = None
         self.tv_schematisations_model = QStandardItemModel()
         self.schematisations_tv.setModel(self.tv_schematisations_model)
         self.tv_revisions_model = QStandardItemModel()
@@ -320,7 +320,7 @@ class SchematisationDownload(uicls, basecls):
             get_download_file(sqlite_download, zip_filepath)
             content_list = unzip_archive(zip_filepath)
             os.remove(zip_filepath)
-            sqlite_file = content_list[0]
+            schematisation_db_file = content_list[0]
             current_progress += 1
             self.pbar_download.setValue(current_progress)
             if gridadmin_download is not None:
@@ -343,7 +343,11 @@ class SchematisationDownload(uicls, basecls):
                 current_progress += 1
                 self.pbar_download.setValue(current_progress)
             self.downloaded_local_schematisation = local_schematisation
-            self.downloaded_sqlite_filepath = os.path.join(schematisation_db_dir, sqlite_file)
+            expected_geopackage_path = os.path.join(schematisation_db_dir, schematisation_db_file)
+            if expected_geopackage_path.lower().endswith(".sqlite"):
+                expected_geopackage_path = expected_geopackage_path.rsplit(".", 1)[0] + ".gpkg"
+            if os.path.isfile(expected_geopackage_path):
+                self.downloaded_geopackage_filepath = expected_geopackage_path
             sleep(1)
             settings = QSettings()
             settings.setValue("threedi/last_schematisation_folder", schematisation_db_dir)

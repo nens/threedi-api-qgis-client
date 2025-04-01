@@ -107,7 +107,7 @@
             </font>
            </property>
            <property name="text">
-            <string>From Spatialite</string>
+            <string>From GeoPackage</string>
            </property>
           </widget>
          </item>

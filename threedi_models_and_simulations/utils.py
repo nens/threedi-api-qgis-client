@@ -21,8 +21,6 @@ INITIAL_CONCENTRATIONS_TEMPLATE = os.path.join(CACHE_PATH, "initial_concentratio
 BOUNDARY_CONDITIONS_TEMPLATE = os.path.join(CACHE_PATH, "boundary_conditions.json")
 LATERALS_FILE_TEMPLATE = os.path.join(CACHE_PATH, "laterals.json")
 DWF_FILE_TEMPLATE = os.path.join(CACHE_PATH, "dwf.json")
-DATA_PATH = os.path.join(PLUGIN_PATH, "_data")
-EMPTY_DB_PATH = os.path.join(DATA_PATH, "empty.sqlite")
 CHUNK_SIZE = 1024**2
 RADAR_ID = "d6c2347d-7bd1-4d9d-a1f6-b342c865516f"
 API_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
@@ -225,10 +223,10 @@ def is_file_checksum_equal(file_path, etag):
 
 def zip_into_archive(file_path, compression=ZIP_DEFLATED):
     """Zip file."""
-    sqlite_file = os.path.basename(file_path)
+    zip_filename = os.path.basename(file_path)
     zip_filepath = file_path.rsplit(".", 1)[0] + ".zip"
     with ZipFile(zip_filepath, "w", compression=compression) as zf:
-        zf.write(file_path, arcname=sqlite_file)
+        zf.write(file_path, arcname=zip_filename)
     return zip_filepath
 
 
@@ -360,18 +358,62 @@ class NestedObject:
 
 
 class SchematisationRasterReferences:
+
     @staticmethod
-    def global_settings_rasters():
-        """Rasters mapping for the Terrain Model."""
+    def settings_to_api_raster_types():
+        raster_type_map = {
+            "friction_coefficient_file": "frict_coef_file",
+            "max_infiltration_volume_file": "max_infiltration_capacity_file",
+            "groundwater_hydraulic_conductivity_file": "groundwater_hydro_connectivity_file",
+            "initial_water_level_file": "initial_waterlevel_file",
+        }
+        return raster_type_map
+
+    @staticmethod
+    def api_to_settings_raster_types():
+        raster_type_map = {v: k for k, v in SchematisationRasterReferences.settings_to_api_raster_types().items()}
+        return raster_type_map
+
+    @staticmethod
+    def api_client_raster_type(settings_raster_type):
+        try:
+            return SchematisationRasterReferences.settings_to_api_raster_types()[settings_raster_type]
+        except KeyError:
+            return settings_raster_type
+
+    @staticmethod
+    def settings_raster_type(api_raster_type):
+        try:
+            return SchematisationRasterReferences.api_to_settings_raster_types()[api_raster_type]
+        except KeyError:
+            return api_raster_type
+
+    @staticmethod
+    def model_settings_rasters():
+        """Rasters mapping from the Model settings layer."""
         raster_info = OrderedDict(
             (
-                ("dem_file", "Digital Elevation Model"),
-                ("frict_coef_file", "Friction coefficient"),
-                ("initial_groundwater_level_file", "Initial groundwater level"),
-                ("initial_waterlevel_file", "Initial waterlevel"),
-                ("interception_file", "Interception"),
+                ("dem_file", "Digital elevation model [m MSL]"),
+                ("friction_coefficient_file", "Friction coefficient [-]"),
             )
         )
+        return raster_info
+
+    @staticmethod
+    def initial_conditions_rasters():
+        """Rasters mapping for the Initial conditions."""
+        raster_info = OrderedDict(
+            (
+                ("initial_groundwater_level_file", "Initial groundwater level [m MSL]"),
+                ("initial_water_level_file", "Initial water level [m MSL]"),
+            )
+        )
+        return raster_info
+
+    @staticmethod
+    def interception_rasters():
+        """Rasters mapping for the Interception."""
+        raster_info = OrderedDict((("interception_file", "Interception [m]"),))
         return raster_info
 
     @staticmethod
@@ -379,8 +421,8 @@ class SchematisationRasterReferences:
         """Rasters mapping for the Infiltration."""
         raster_info = OrderedDict(
             (
-                ("infiltration_rate_file", "Infiltration rate"),
-                ("max_infiltration_capacity_file", "Max infiltration capacity"),
+                ("infiltration_rate_file", "Infiltration rate [mm/d]"),
+                ("max_infiltration_volume_file", "Max infiltration volume [m]"),
             )
         )
         return raster_info
@@ -390,13 +432,13 @@ class SchematisationRasterReferences:
         """Rasters mapping for the Groundwater."""
         raster_info = OrderedDict(
             (
-                ("equilibrium_infiltration_rate_file", "Equilibrium infiltration rate"),
-                ("groundwater_hydro_connectivity_file", "Groundwater hydro connectivity"),
-                ("groundwater_impervious_layer_level_file", "Groundwater impervious layer level"),
-                ("infiltration_decay_period_file", "Infiltration decay period"),
-                ("initial_infiltration_rate_file", "Initial infiltration rate"),
-                ("leakage_file", "Leakage"),
-                ("phreatic_storage_capacity_file", "Phreatic storage capacity"),
+                ("equilibrium_infiltration_rate_file", "Equilibrium infiltration rate [mm/d]"),
+                ("groundwater_hydraulic_conductivity_file", "Hydraulic conductivity [m/day]"),
+                ("groundwater_impervious_layer_level_file", "Impervious layer level [m MSL]"),
+                ("infiltration_decay_period_file", "Infiltration decay period [d]"),
+                ("initial_infiltration_rate_file", "Initial infiltration rate [mm/d]"),
+                ("leakage_file", "Leakage [mm/d]"),
+                ("phreatic_storage_capacity_file", "Phreatic storage capacity [-]"),
             )
         )
         return raster_info
@@ -406,8 +448,8 @@ class SchematisationRasterReferences:
         """Rasters mapping for the Interflow."""
         raster_info = OrderedDict(
             (
-                ("hydraulic_conductivity_file", "Hydraulic conductivity"),
-                ("porosity_file", "Porosity"),
+                ("hydraulic_conductivity_file", "Hydraulic conductivity [m/d]"),
+                ("porosity_file", "Porosity [-]"),
             )
         )
         return raster_info
@@ -417,31 +459,33 @@ class SchematisationRasterReferences:
         """Rasters mapping for the Vegetation drag settings."""
         raster_info = OrderedDict(
             (
-                ("vegetation_height_file", "Vegetation height"),
-                ("vegetation_stem_count_file", "Vegetation stem count"),
-                ("vegetation_stem_diameter_file", "Vegetation stem diameter"),
-                ("vegetation_drag_coefficient_file", "Vegetation drag coefficient"),
+                ("vegetation_height_file", "Vegetation height [m]"),
+                ("vegetation_stem_count_file", "Vegetation stem count [-]"),
+                ("vegetation_stem_diameter_file", "Vegetation stem diameter [m]"),
+                ("vegetation_drag_coefficient_file", "Vegetation drag coefficient [-]"),
             )
         )
         return raster_info
 
     @classmethod
     def raster_reference_tables(cls):
-        """Spatialite tables mapping with references to the rasters."""
+        """GeoPackage tables mapping with references to the rasters."""
         reference_tables = OrderedDict(
             (
-                ("v2_global_settings", cls.global_settings_rasters()),
-                ("v2_simple_infiltration", cls.simple_infiltration_rasters()),
-                ("v2_groundwater", cls.groundwater_rasters()),
-                ("v2_interflow", cls.interflow_rasters()),
-                ("v2_vegetation_drag", cls.vegetation_drag_rasters()),
+                ("model_settings", cls.model_settings_rasters()),
+                ("initial_conditions", cls.initial_conditions_rasters()),
+                ("interception", cls.interception_rasters()),
+                ("simple_infiltration", cls.simple_infiltration_rasters()),
+                ("groundwater", cls.groundwater_rasters()),
+                ("interflow", cls.interflow_rasters()),
+                ("vegetation_drag_2d", cls.vegetation_drag_rasters()),
             )
         )
         return reference_tables
 
     @classmethod
     def raster_table_mapping(cls):
-        """Rasters to spatialite tables mapping."""
+        """Rasters to geopackage tables mapping."""
         table_mapping = {}
         for table_name, raster_files_references in cls.raster_reference_tables().items():
             for raster_type in raster_files_references.keys():

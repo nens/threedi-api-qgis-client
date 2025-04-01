@@ -127,9 +127,9 @@ class UICommunication(object):
             self.iface.messageBar().clearWidgets()
         pmb = self.iface.messageBar().createMessage(msg)
         pb = QProgressBar()
-        pb.setMinimum(minimum)
-        pb.setMaximum(maximum)
-        pb.setValue(init_value)
+        pb.setMinimum(int(minimum))
+        pb.setMaximum(int(maximum))
+        pb.setValue(int(init_value))
         pb.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         pmb.layout().addWidget(pb)
         self.iface.messageBar().pushWidget(pmb, Qgis.Info)
@@ -194,6 +194,7 @@ class TreeViewLogger(object):
             LogLevels.INFO.value: QColor(Qt.black),
             LogLevels.WARNING.value: QColor(229, 144, 80),
             LogLevels.ERROR.value: QColor(Qt.red),
+            LogLevels.FUTURE_ERROR.value: QColor(102, 51, 153),
         }
         self.initialize_view()
 
@@ -229,3 +230,4 @@ class LogLevels(Enum):
     INFO = "INFO"
     WARNING = "WARNING"
     ERROR = "ERROR"
+    FUTURE_ERROR = "FUTURE_ERROR"

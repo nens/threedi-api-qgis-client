@@ -39,32 +39,37 @@ class BuildOptions:
             self.load_local_schematisation(local_schematisation, action=BuildOptionActions.CREATED)
 
     def load_local_schematisation(
-        self, local_schematisation=None, action=BuildOptionActions.LOADED, custom_sqlite_filepath=None
+        self, local_schematisation=None, action=BuildOptionActions.LOADED, custom_geopackage_filepath=None
     ):
         """Load locally stored schematisation."""
         if not local_schematisation:
             schematisation_load = SchematisationLoad(self.plugin_dock)
             schematisation_load.exec_()
             local_schematisation = schematisation_load.selected_local_schematisation
-        if local_schematisation and local_schematisation.sqlite:
+        if local_schematisation and local_schematisation.schematisation_db_filepath:
             try:
                 self.plugin_dock.current_local_schematisation = local_schematisation
                 self.plugin_dock.update_schematisation_view()
-                sqlite_filepath = local_schematisation.sqlite if not custom_sqlite_filepath else custom_sqlite_filepath
+                geopackage_filepath = (
+                    local_schematisation.schematisation_db_filepath
+                    if not custom_geopackage_filepath
+                    else custom_geopackage_filepath
+                )
                 msg = f"Schematisation '{local_schematisation.name}' {action.value}!\n"
                 self.plugin_dock.communication.bar_info(msg)
                 # Load new schematisation
                 schematisation_editor = get_schematisation_editor_instance()
                 if schematisation_editor:
                     title = "Load schematisation"
-                    question = "Do you want to load schematisation data from the associated Spatialite file?"
+                    question = "Do you want to load schematisation data from the associated GeoPackage file?"
                     if self.plugin_dock.communication.ask(None, title, question):
-                        schematisation_editor.load_from_spatialite(sqlite_filepath)
+                        schematisation_editor.load_schematisation(geopackage_filepath)
                 else:
                     msg += (
-                        "Please use the 3Di Schematisation Editor to load it to your project from the Spatialite:"
-                        f"\n{sqlite_filepath}"
+                        "Please use the 3Di Schematisation Editor to load it to your project from the GeoPackage:"
+                        f"\n{geopackage_filepath}"
                     )
+                    self.plugin_dock.communication.show_warn(msg)
             except (TypeError, ValueError):
                 error_msg = "Invalid schematisation directory structure. Loading schematisation canceled."
                 self.plugin_dock.communication.show_error(error_msg)
@@ -76,17 +81,17 @@ class BuildOptions:
         schematisation_download = SchematisationDownload(self.plugin_dock)
         schematisation_download.exec_()
         downloaded_local_schematisation = schematisation_download.downloaded_local_schematisation
-        custom_sqlite_filepath = schematisation_download.downloaded_sqlite_filepath
+        custom_geopackage_filepath = schematisation_download.downloaded_geopackage_filepath
         if downloaded_local_schematisation is not None:
             self.load_local_schematisation(
                 local_schematisation=downloaded_local_schematisation,
                 action=BuildOptionActions.DOWNLOADED,
-                custom_sqlite_filepath=custom_sqlite_filepath,
+                custom_geopackage_filepath=custom_geopackage_filepath,
             )
             wip_revision = downloaded_local_schematisation.wip_revision
             if wip_revision is not None:
                 settings = QSettings("3di", "qgisplugin")
-                settings.setValue("last_used_spatialite_path", wip_revision.schematisation_dir)
+                settings.setValue("last_used_geopackage_path", wip_revision.schematisation_dir)
 
     @api_client_required
     def load_remote_schematisation(self, schematisation, revision):
@@ -100,14 +105,14 @@ class BuildOptions:
         schematisation_download = SchematisationDownload(self.plugin_dock)
         schematisation_download.download_required_files(schematisation, revision, is_latest_revision=True)
         downloaded_local_schematisation = schematisation_download.downloaded_local_schematisation
-        custom_sqlite_filepath = schematisation_download.downloaded_sqlite_filepath
+        custom_geopackage_filepath = schematisation_download.downloaded_geopackage_filepath
         if downloaded_local_schematisation is not None:
             self.load_local_schematisation(
                 local_schematisation=downloaded_local_schematisation,
                 action=BuildOptionActions.DOWNLOADED,
-                custom_sqlite_filepath=custom_sqlite_filepath,
+                custom_geopackage_filepath=custom_geopackage_filepath,
             )
             wip_revision = downloaded_local_schematisation.wip_revision
             if wip_revision is not None:
                 settings = QSettings("3di", "qgisplugin")
-                settings.setValue("last_used_spatialite_path", wip_revision.schematisation_dir)
+                settings.setValue("last_used_geopackage_path", wip_revision.schematisation_dir)
