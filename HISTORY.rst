@@ -4,7 +4,7 @@ History
 3.17 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Bumped threedi_mi_utils to 0.1.10.
 
 
 3.16 (2025-04-01)
