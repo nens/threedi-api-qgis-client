@@ -259,11 +259,17 @@ def migrate_schematisation_schema(schematisation_filepath, progress_callback=Non
         migration_feedback_msg = f"{e}"
 
     if srid is not None:
+        migration_feedback_msg = ""
         try:
-            schema.upgrade(backup=False, epsg_code_override=srid, progress_func=progress_callback)
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always", UserWarning)
+                schema.upgrade(backup=False, epsg_code_override=srid, progress_func=progress_callback)
+            if w:
+                for warning in w:
+                    migration_feedback_msg += f'{warning._category_name}: {warning.message}'
             shutil.rmtree(os.path.dirname(backup_filepath))
             migration_succeed = True
-            migration_feedback_msg = "Migration succeeded."
+            migration_feedback_msg = None
         except errors.UpgradeFailedError:
             migration_feedback_msg = (
                 "The schematisation database schema cannot be migrated to the current version. "

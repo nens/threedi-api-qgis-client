@@ -4,7 +4,7 @@ History
 3.18 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Show upgrade warnings in popup and log
 
 
 3.17 (2025-04-02)

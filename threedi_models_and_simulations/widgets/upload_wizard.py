@@ -171,9 +171,14 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             self.communication.progress_bar("Migration complete!", 0, 100, 100, clear_msg_bar=True)
             QCoreApplication.processEvents()
             self.communication.clear_message_bar()
+            if migration_succeed and len(migration_feedback_msg) > 0:
+                self.communication.show_info(migration_feedback_msg)
+                QgsMessageLog.logMessage(migration_feedback_msg, level=Qgis.Warning, tag="Messages")
             if not migration_succeed:
                 self.communication.show_error(migration_feedback_msg, self)
                 return
+            elif migration_feedback_msg is not None:
+                self.grid_checker_logger.log_result_row([LogLevels.INFO.value, migration_feedback_msg], LogLevels.INFO)
         except Exception as e:
             error_msg = f"{e}"
             self.communication.show_error(error_msg, self)
