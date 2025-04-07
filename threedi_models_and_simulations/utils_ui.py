@@ -8,20 +8,10 @@ from uuid import uuid4
 from qgis.gui import QgsFileWidget, QgsProjectionSelectionWidget
 from qgis.PyQt.QtCore import QCoreApplication, QDate, QLocale, QSettings, QTime
 from qgis.PyQt.QtGui import QColor, QDoubleValidator, QIcon
-from qgis.PyQt.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QDateEdit,
-    QDoubleSpinBox,
-    QFileDialog,
-    QGroupBox,
-    QItemDelegate,
-    QLineEdit,
-    QRadioButton,
-    QSpinBox,
-    QTimeEdit,
-    QWidget,
-)
+from qgis.PyQt.QtWidgets import (QCheckBox, QComboBox, QDateEdit,
+                                 QDoubleSpinBox, QFileDialog, QGroupBox,
+                                 QItemDelegate, QLineEdit, QRadioButton,
+                                 QSpinBox, QTimeEdit, QWidget)
 
 
 def style_path(qml_filename):
@@ -203,6 +193,15 @@ def ensure_valid_schema(schematisation_filepath, communication):
         return
     try:
         threedi_db = ThreediDatabase(schematisation_filepath)
+
+        # Add additional check to deal with legacy gpkgs created by schematisation editor
+        if schematisation_filepath.endswith(".gpkg"):
+            version_num = threedi_db.schema.get_version()
+            if version_num < 300:
+                warn_msg = "Perhaps you have selected a geopackage that was created by an older version (< 2.0) of the 3Di Schematisation Editor. In that case, please use the processing algorithm Migrate schematisation database on the Spatialite in the same folder to solve this problem."
+                communication.show_error(warn_msg)
+                return False
+
         threedi_db.schema.validate_schema()
     except errors.MigrationMissingError:
         warn_and_ask_msg = (

@@ -4,7 +4,7 @@ History
 3.18 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Add additional check to deal with legacy gpkgs created by schematisation editor.
 
 
 3.17 (2025-04-02)
