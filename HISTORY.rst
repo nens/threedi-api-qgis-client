@@ -5,6 +5,8 @@ History
 -----------------
 
 - Show upgrade warnings in popup and log
+- Add additional check to deal with legacy gpkgs created by schematisation editor.
+- New schematisation from existing file - move migration logic to after users have clicked Create schematisation (#671)
 
 
 3.17 (2025-04-02)
