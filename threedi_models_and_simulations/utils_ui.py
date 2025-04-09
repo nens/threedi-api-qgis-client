@@ -212,7 +212,8 @@ def ensure_valid_schema(schematisation_filepath, communication):
         do_migration = communication.ask(None, "Missing migration", warn_and_ask_msg)
         if not do_migration:
             return False
-        migration_succeed, migration_feedback_msg = migrate_schematisation_schema(schematisation_filepath)
+        progress_bar_callback = progress_bar_callback_factory(communication)
+        migration_succeed, migration_feedback_msg = migrate_schematisation_schema(schematisation_filepath, progress_bar_callback)
         if not migration_succeed:
             communication.show_error(migration_feedback_msg)
             return False
