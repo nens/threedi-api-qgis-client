@@ -8,8 +8,8 @@ from functools import partial
 from operator import itemgetter
 from pathlib import Path
 
-from qgis.core import QgsFeature, QgsRasterLayer
-from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
+from qgis.core import (QgsCoordinateReferenceSystem, QgsFeature,
+                       QgsRasterLayer, QgsUnitTypes)
 from qgis.gui import QgsProjectionSelectionWidget
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QSettings, QSize, Qt
@@ -22,7 +22,8 @@ from threedi_schema import ThreediDatabase
 from ..api_calls.threedi_calls import ThreediCalls
 from ..utils import SchematisationRasterReferences, extract_error_message
 from ..utils_qgis import geopackage_layer
-from ..utils_ui import ensure_valid_schema, get_filepath, read_3di_settings, save_3di_settings, scan_widgets_parameters
+from ..utils_ui import (ensure_valid_schema, get_filepath, read_3di_settings,
+                        save_3di_settings, scan_widgets_parameters)
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls_schema_name_page, basecls_schema_name_page = uic.loadUiType(
@@ -81,13 +82,7 @@ class SchematisationNameWidget(uicls_schema_name_page, basecls_schema_name_page)
         gpkg_filter = "GeoPackage/SQLite (*.gpkg *.GPKG *.sqlite *SQLITE)"
         geopackage_path = get_filepath(self, dialog_title="Select Schematisation file", extension_filter=gpkg_filter)
         if geopackage_path is not None:
-            schema_is_valid = ensure_valid_schema(
-                geopackage_path, self.parent_page.parent_wizard.plugin_dock.communication
-            )
-            if schema_is_valid is True:
-                if geopackage_path.lower().endswith(".sqlite"):
-                    geopackage_path = geopackage_path.rsplit(".", 1)[0] + ".gpkg"
-                self.le_geopackage_path.setText(geopackage_path)
+            self.le_geopackage_path.setText(geopackage_path)
 
 
 class SchematisationExplainWidget(uicls_schema_explain_page, basecls_schema_explain_page):
@@ -635,15 +630,23 @@ class NewSchematisationWizard(QWizard):
     def create_schematisation_from_geopackage(self):
         """Get settings from existing GeoPackage and create new schematisation (locally and remotely)."""
         try:
+            src_db = self.schematisation_name_page.field("geopackage_path")
+            schema_is_valid = ensure_valid_schema(  # possible migration
+                src_db, self.plugin_dock.communication
+            )
+            if schema_is_valid is True:
+                if src_db.lower().endswith(".sqlite"):
+                    src_db = src_db.rsplit(".", 1)[0] + ".gpkg"
+            else:
+                return  # ensure_valid_schema deals with showing errors.
+
             name, description, tags, owner = self.schematisation_name_page.main_widget.get_new_schematisation_data()
             schematisation = self.tc.create_schematisation(name, owner, tags=tags, meta={"description": description})
             local_schematisation = LocalSchematisation(
                 self.working_dir, schematisation.id, name, parent_revision_number=0, create=True
             )
             wip_revision = local_schematisation.wip_revision
-            sqlite_filename = f"{name}.gpkg"
-            geopackage_filepath = os.path.join(wip_revision.schematisation_dir, sqlite_filename)
-            src_db = self.schematisation_name_page.field("geopackage_path")
+            geopackage_filepath = os.path.join(wip_revision.schematisation_dir, f"{name}.gpkg")
             raster_paths = self.get_paths_from_geopackage(src_db)
             src_dir = os.path.dirname(src_db)
             shutil.copyfile(src_db, geopackage_filepath)
