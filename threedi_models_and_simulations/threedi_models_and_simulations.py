@@ -7,12 +7,6 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QApplication
 
 from .communication import UICommunication
-from .deps.custom_imports import (
-    API_CLIENT_WHEEL,
-    api_client_version_matches,
-    patch_wheel_imports,
-    reinstall_packages_from_wheels,
-)
 from .settings import SettingsDialog
 
 
@@ -132,13 +126,8 @@ class ThreediModelsAndSimulations:
 
     def run(self):
         """Run method that loads and starts the plugin"""
-        patch_wheel_imports()
-        api_client_versions_matches, available_api_client_version = api_client_version_matches(exact_match=True)
-        if not api_client_versions_matches:
-            self.ensure_required_api_client_version(available_api_client_version)
-            return
-
-        from threedi_models_and_simulations.widgets.threedi_dockwidget import ThreediDockWidget
+        from threedi_models_and_simulations.widgets.threedi_dockwidget import \
+            ThreediDockWidget
 
         if not self.plugin_settings.settings_are_valid():
             self.settings()
