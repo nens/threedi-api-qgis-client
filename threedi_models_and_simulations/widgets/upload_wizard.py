@@ -179,6 +179,7 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             elif not migration_succeed:
                 self.communication.show_error(migration_feedback_msg, self)
                 return
+            threedi_db = ThreediDatabase(self.schematisation_filepath.rsplit(".", 1)[0] + ".gpkg")
         except Exception as e:
             error_msg = f"{e}"
             self.communication.show_error(error_msg, self)
