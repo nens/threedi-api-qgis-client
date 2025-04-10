@@ -3,6 +3,7 @@
 import os
 import re
 import shutil
+import warnings
 from uuid import uuid4
 
 from qgis.gui import QgsFileWidget, QgsProjectionSelectionWidget
@@ -265,10 +266,9 @@ def migrate_schematisation_schema(schematisation_filepath, progress_callback=Non
                 schema.upgrade(backup=False, epsg_code_override=srid, progress_func=progress_callback)
             if w:
                 for warning in w:
-                    migration_feedback_msg += f'{warning._category_name}: {warning.message}'
+                    migration_feedback_msg += f'{warning._category_name}: {warning.message}\n'
             shutil.rmtree(os.path.dirname(backup_filepath))
             migration_succeed = True
-            migration_feedback_msg = None
         except errors.UpgradeFailedError:
             migration_feedback_msg = (
                 "The schematisation database schema cannot be migrated to the current version. "
