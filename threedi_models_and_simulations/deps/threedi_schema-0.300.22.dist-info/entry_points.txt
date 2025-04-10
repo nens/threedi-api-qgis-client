@@ -1,2 +1,0 @@
-[console_scripts]
-threedi_schema = threedi_schema.scripts:main
