@@ -9,6 +9,7 @@ from operator import attrgetter
 
 from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QCoreApplication, QSettings, QSize
+from qgis.core import QgsMessageLog, Qgis
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QGridLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QWidget, QWizard, QWizardPage
 from threedi_api_client.openapi import ApiException, SchematisationRevision
@@ -171,7 +172,11 @@ class CheckModelWidget(uicls_check_page, basecls_check_page):
             self.communication.progress_bar("Migration complete!", 0, 100, 100, clear_msg_bar=True)
             QCoreApplication.processEvents()
             self.communication.clear_message_bar()
-            if not migration_succeed:
+            # Something is wrong here - check this logic!!!
+            if migration_succeed and len(migration_feedback_msg) > 0:
+                self.communication.show_info(migration_feedback_msg)
+                QgsMessageLog.logMessage(migration_feedback_msg, level=Qgis.Warning, tag="Messages")
+            elif not migration_succeed:
                 self.communication.show_error(migration_feedback_msg, self)
                 return
             threedi_db = ThreediDatabase(self.schematisation_filepath.rsplit(".", 1)[0] + ".gpkg")
