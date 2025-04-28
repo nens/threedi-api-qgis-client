@@ -166,6 +166,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
             "use_1d_flow": None,
             "use_2d_flow": None,
             "use_2d_rain": None,
+            "node_open_water_detection": 0,
         }
         return defaults
 
