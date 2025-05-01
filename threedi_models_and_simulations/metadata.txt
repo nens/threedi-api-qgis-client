@@ -11,15 +11,9 @@ version=3.99
 author=3Di Water Management
 email=servicedesk@nelen-schuurmans.nl
 
-about=Work with 3Di models and simulations in the cloud from the Modeller Interface.
+about=Work with 3Di models and simulations in the cloud from the 3Di Modeller Interface.
 
-    Check, upload and download schematizations, start calculations, and download results. A 3Di subscription is required.
-
-	Note: before version 3.0, this plugin was called '3Di API Client'. Please uninstall that plugin to prevent any confusion.
-
-	Although we aim to be as backwards compatible as possible, it is possible that at some point old schematizations
-    will not work with the newest version of the plugin. We expressly disclaim any
-    guarantee or warranty of compatibility between the two.
+    Upload, download and check schematisations, start simulations, and download results. A 3Di subscription is required.
 
     For questions on 3Di or the use of this plugin please contact us via
     servicedesk@nelen-schuurmans.nl
@@ -56,4 +50,4 @@ Category of the plugin: Raster, Vector, Database or Web
 # If the plugin can run on QGIS Server.
 server=False
 
-plugin_dependencies=Dependency Loader
+plugin_dependencies=Nelen and Schuurmans Dependency Loader>=1.0.8
