@@ -1,7 +1,7 @@
 History
 =======
 
-3.18 (unreleased)
+3.18 (2025-05-07)
 -----------------
 
 - Show upgrade warnings in popup and log
