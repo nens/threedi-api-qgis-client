@@ -50,4 +50,4 @@ Category of the plugin: Raster, Vector, Database or Web
 # If the plugin can run on QGIS Server.
 server=False
 
-plugin_dependencies=Nelen and Schuurmans Dependency Loader==1.0.9
+plugin_dependencies=Nelen and Schuurmans Dependency Loader==1.0.10
