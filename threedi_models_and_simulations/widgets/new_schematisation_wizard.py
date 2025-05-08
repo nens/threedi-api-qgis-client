@@ -146,7 +146,7 @@ class SchematisationSettingsWidget(uicls_schema_settings_page, basecls_schema_se
         """Model settings defaults."""
         defaults = {
             "dem_file": None,
-            "calculation_point_distance": 1000.0,
+            "calculation_point_distance_1d": 1000.0,
             "embedded_cutoff_threshold": 0.05,
             "epsg_code": None,
             "friction_averaging": 0,
