@@ -1,10 +1,11 @@
 History
 =======
 
-3.19 (unreleased)
+3.19 (2025-05-12)
 -----------------
 
-- Nothing changed yet.
+- Bumped dependency loader
+- Bugfix: correctly set *Calculation point distance 1D* in new schematisations
 
 
 3.18 (2025-05-07)
