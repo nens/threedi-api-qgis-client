@@ -27,7 +27,8 @@ from .utils import (
     LATERALS_FILE_TEMPLATE,
     RADAR_ID,
     TEMPDIR,
-    EventTypes,
+    RainEventTypes,
+    WindEventTypes,
     FileState,
     SchematisationRasterReferences,
     ThreediFileState,
@@ -1189,7 +1190,7 @@ class SimulationRunner(QRunnable):
                 substance["substance"] = substance_id
                 assert len(substance["concentrations"]) == 1
 
-            if precipitation_type == EventTypes.CONSTANT.value:
+            if precipitation_type == RainEventTypes.CONSTANT.value:
                 # Adjust substance timekeys for precipitation type
                 for substance in substances:
                     substance_value = substance["concentrations"][0][1]
@@ -1206,7 +1207,7 @@ class SimulationRunner(QRunnable):
                     offset=offset,
                     substances=substances,
                 )
-            elif precipitation_type == EventTypes.FROM_CSV.value:
+            elif precipitation_type == RainEventTypes.FROM_CSV.value:
                 for values_chunk in split_to_even_chunks(values, 300):
                     chunk_offset = values_chunk[0][0]
                     values_chunk = [[t - chunk_offset, v] for t, v in values_chunk]
@@ -1225,7 +1226,7 @@ class SimulationRunner(QRunnable):
                         interpolate=interpolate,
                         substances=substances,
                     )
-            elif precipitation_type == EventTypes.FROM_NETCDF.value:
+            elif precipitation_type == RainEventTypes.FROM_NETCDF.value:
                 # No substances for this type
                 filename = os.path.basename(netcdf_filepath)
                 if netcdf_global:
@@ -1233,7 +1234,7 @@ class SimulationRunner(QRunnable):
                 else:
                     upload = self.tc.create_simulation_raster_netcdf_precipitation(sim_id, filename=filename)
                 upload_local_file(upload, netcdf_filepath)
-            elif precipitation_type == EventTypes.DESIGN.value:
+            elif precipitation_type == RainEventTypes.DESIGN.value:
                 # Adjust substance timekeys for precipitation type
                 for substance in substances:
                     substance_value = substance["concentrations"][0][1]
@@ -1247,7 +1248,7 @@ class SimulationRunner(QRunnable):
                     offset=offset,
                     substances=substances,
                 )
-            elif precipitation_type == EventTypes.RADAR.value:
+            elif precipitation_type == RainEventTypes.RADAR.value:
                 # No substances for this type
                 self.tc.create_simulation_radar_precipitation(
                     sim_id, reference_uuid=RADAR_ID, units=units, duration=duration, offset=offset, start_datetime=start
@@ -1268,7 +1269,7 @@ class SimulationRunner(QRunnable):
             interpolate_direction = self.current_simulation.wind.interpolate_speed
             values = self.current_simulation.wind.values
             self.tc.create_simulation_initial_wind_drag_coefficient(sim_id, value=drag_coefficient)
-            if wind_type == EventTypes.CONSTANT.value:
+            if wind_type == WindEventTypes.CONSTANT.value:
                 self.tc.create_simulation_constant_wind(
                     sim_id,
                     offset=offset,
@@ -1277,7 +1278,7 @@ class SimulationRunner(QRunnable):
                     speed_value=speed,
                     direction_value=direction,
                 )
-            elif wind_type == EventTypes.FROM_CSV.value:
+            elif wind_type == WindEventTypes.CUSTOM.value:
                 self.tc.create_simulation_custom_wind(
                     sim_id,
                     offset=offset,
