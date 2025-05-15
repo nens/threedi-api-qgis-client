@@ -4,7 +4,7 @@ History
 3.20 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Use separate enum fro wind events with "Custom" instead of "From CSV".
 
 
 3.19 (2025-05-12)
