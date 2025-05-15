@@ -27,12 +27,17 @@ API_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
 USER_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
-class EventTypes(Enum):
+class RainEventTypes(Enum):
     CONSTANT = "Constant"
     FROM_CSV = "From CSV"
     FROM_NETCDF = "From NetCDF"
     DESIGN = "Design"
     RADAR = "Radar - NL Only"
+
+
+class WindEventTypes(Enum):
+    CONSTANT = "Constant"
+    CUSTOM = "Custom"
 
 
 class UploadFileStatus(Enum):
