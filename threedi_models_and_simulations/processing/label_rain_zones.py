@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict
 
-from threedi_api_client.api import ThreediApi
+from threedi_api_client import ThreediApi
 
 
 class MockFeedback:
@@ -69,7 +69,10 @@ def label_rain_zones(
     # Delete existing rain events
     time_series_rain_events = api_client.simulations_events(simulation.id).timeseriesrain
     for rain_event in time_series_rain_events:
-        api_client.simulations_events_rain_timeseries_delete(simulation.id, rain_event.id)
+        if rain_event.constant:
+            api_client.simulations_events_rain_constant_delete(simulation_pk=simulation.id, id=rain_event.id)
+        else:
+            api_client.simulations_events_rain_timeseries_delete(simulation_pk=simulation.id, id=rain_event.id)
 
     # Re-add rain events, but now with zone and substance concentrations
     for rain_event in original_time_series_rain_events:

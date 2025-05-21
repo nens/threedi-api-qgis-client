@@ -2,11 +2,13 @@
 # Copyright (C) 2023 by Lutra Consulting for 3Di Water Management
 import os.path
 
+from qgis.core import QgsApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QApplication
 
 from .communication import UICommunication
+from .processing.providers import ThreediModelsAndSimulationsProvider
 from .settings import SettingsDialog
 
 
@@ -77,6 +79,8 @@ class ThreediModelsAndSimulations:
             parent=self.iface.mainWindow(),
             add_to_toolbar=False,
         )
+        self.provider = ThreediModelsAndSimulationsProvider()
+        QgsApplication.processingRegistry().addProvider(self.provider)
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed."""
@@ -86,6 +90,7 @@ class ThreediModelsAndSimulations:
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
+        QgsApplication.processingRegistry().removeProvider(self.provider)
         for action in self.actions:
             self.iface.removePluginMenu("3Di Models and Simulations", action)
             self.iface.removeToolBarIcon(action)

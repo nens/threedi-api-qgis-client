@@ -35,7 +35,12 @@ class MockIFace:
 # TODO add processing algorithms
 
 
-def get_name_wkt_dict(features: QgsProcessingFeatureSource, name_field: str, context) -> Dict[str, str]:
+def get_name_wkt_dict(
+        features: QgsProcessingFeatureSource,
+        source_crs: QgsCoordinateReferenceSystem,
+        name_field: str,
+        context
+) -> Dict[str, str]:
     """
     Returns a {name: wkt} dict
     Transforms the input geometry to WGS84
@@ -46,7 +51,6 @@ def get_name_wkt_dict(features: QgsProcessingFeatureSource, name_field: str, con
     result = dict()
 
     # Define CRS transformation: source to WGS84
-    source_crs = features.crs()
     target_crs = QgsCoordinateReferenceSystem("EPSG:4326")
     transform = QgsCoordinateTransform(source_crs, target_crs, context.transformContext())
 
@@ -150,10 +154,14 @@ class SimulateWithRainZonesAlgorithm(QgsProcessingAlgorithm):
         simulation_template_id = self.parameterAsInt(parameters, self.SIMULATION_TEMPLATE_ID, context)
         simulation_name = self.parameterAsString(parameters, self.SIMULATION_NAME, context)
         polygon_feature_source = self.parameterAsSource(parameters, self.POLYGON_LAYER, context)
+        polygon_feature_layer = self.parameterAsVectorLayer(parameters, self.POLYGON_LAYER, context)
         polygon_name_field = self.parameterAsString(parameters, self.POLYGON_NAME_FIELD, context)
+
+        polygon_feature_layer.crs()
 
         name_wkt_dict = get_name_wkt_dict(
             features=polygon_feature_source,
+            source_crs=polygon_feature_layer.crs(),
             name_field=polygon_name_field,
             context=context
         )
