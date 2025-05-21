@@ -24,11 +24,16 @@ from qgis.core import (
 )
 
 from threedi_models_and_simulations.processing.label_rain_zones import label_rain_zones
+from threedi_models_and_simulations.settings import SettingsDialog
 
 
-# TODO get api host and key from plugin
-# TODO update metadata
+class MockIFace:
+    """Used to replace iface when instantiating a SettingsDialog in a processing context"""
+    def messageBar(message):
+        pass
+
 # TODO add processing algorithms
+
 
 def get_name_wkt_dict(features: QgsProcessingFeatureSource, name_field: str, context) -> Dict[str, str]:
     """
@@ -61,7 +66,7 @@ def get_name_wkt_dict(features: QgsProcessingFeatureSource, name_field: str, con
     return result
 
 
-class SimulateWithRainZones(QgsProcessingAlgorithm):
+class SimulateWithRainZonesAlgorithm(QgsProcessingAlgorithm):
     """
     Creates a simulation from a template, adds rain zones to the rain event(s) and add the simulation to the queue
     """
@@ -72,7 +77,7 @@ class SimulateWithRainZones(QgsProcessingAlgorithm):
     POLYGON_NAME_FIELD = "POLYGON_NAME_FIELD"
 
     def createInstance(self):
-        return SimulateWithRainZones()
+        return SimulateWithRainZonesAlgorithm()
 
     def name(self):
         return 'threedi_simulate_with_rain_zones'
@@ -152,6 +157,10 @@ class SimulateWithRainZones(QgsProcessingAlgorithm):
             name_field=polygon_name_field,
             context=context
         )
+
+        settings_dialog = SettingsDialog(MockIFace())
+        api_host = settings_dialog.api_url
+        _, api_key = settings_dialog.get_3di_auth()
 
         label_rain_zones(
             api_host,
