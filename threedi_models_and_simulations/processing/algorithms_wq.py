@@ -87,7 +87,7 @@ class SimulateWithRainZonesAlgorithm(QgsProcessingAlgorithm):
         return 'threedi_simulate_with_rain_zones'
 
     def displayName(self):
-        return 'Simulate with rain zones'
+        return 'BETA Simulate with rain zones'
 
     def group(self):
         return "Simulate"
@@ -100,9 +100,10 @@ class SimulateWithRainZonesAlgorithm(QgsProcessingAlgorithm):
             <p>Creates a simulation from a template, adds rain zones to the rain event(s) and add the simulation to the queue</p>
             <p>Only constant rain events and time series rain events are supported. The simulation template must contain at least one such rain event.</p>
             <p>The simulation is owned by the same organisation that owns the simulation from which the template was made</p>
+            <p><i>Note: in the future, this functionality will be integrated into the "New simulation" wizard.</i></p>
             <h3>Parameters</h3>
             <h4>Simulation template ID</h4>
-            <p>ID of the simulation template you want to use</p>
+            <p>ID of the simulation template you want to use. Use the simulation wizard to create the simulation you want to run, save it as a template, and copy the simulation template ID to use in this processing algorithm.</p>
             <h4>Simulation name</h4>
             <p>Name of the simulation</p>
             <h4>Rain zones</h4>
