@@ -23,6 +23,7 @@ from qgis.core import (
     # QgsProject,
 )
 
+from threedi_models_and_simulations.processing.label_dwf import label_dwf
 from threedi_models_and_simulations.processing.label_rain_zones import label_rain_zones
 from threedi_models_and_simulations.settings import SettingsDialog
 
@@ -182,5 +183,79 @@ class SimulateWithRainZonesAlgorithm(QgsProcessingAlgorithm):
 
         return {}
 
+
+class SimulateWithDWFLabellingAlgorithm(QgsProcessingAlgorithm):
+    """
+    Creates a simulation from a template, adds rain zones to the rain event(s) and add the simulation to the queue
+    """
+
+    SIMULATION_TEMPLATE_ID = "SIMULATION_TEMPLATE_ID"
+    SIMULATION_NAME = "SIMULATION_NAME"
+
+    def createInstance(self):
+        return SimulateWithDWFLabellingAlgorithm()
+
+    def name(self):
+        return 'threedi_simulate_with_dwf_labelling'
+
+    def displayName(self):
+        return 'BETA Simulate with DWF labelling'
+
+    def group(self):
+        return "Simulate"
+
+    def groupId(self):
+        return "simulate"
+
+    def shortHelpString(self):
+        return  f"""
+            <p>Creates a simulation from a template, labels the dry weather flow and adds the simulation to the queue</p>
+            <p>The simulation template must contain dry weather flow.</p>
+            <p>The simulation is owned by the same organisation that owns the simulation from which the template was made</p>
+            <p><i>Note: in the future, this functionality will be integrated into the "New simulation" wizard.</i></p>
+            <h3>Parameters</h3>
+            <h4>Simulation template ID</h4>
+            <p>ID of the simulation template you want to use. Use the simulation wizard to create the simulation you want to run, save it as a template, and copy the simulation template ID to use in this processing algorithm.</p>
+            <h4>Simulation name</h4>
+            <p>Name of the simulation</p>
+            """
+
+    def initAlgorithm(self, config=None):
+        """Define input and output parameters."""
+        self.addParameter(
+            QgsProcessingParameterNumber(
+                self.SIMULATION_TEMPLATE_ID,
+                "Simulation template ID",
+                type=QgsProcessingParameterNumber.Integer
+            )
+        )
+
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.SIMULATION_NAME,
+                "Simulation name"
+            )
+        )
+
+    def processAlgorithm(self, parameters, context, feedback):
+        """
+        Process the algorithm.
+        """
+        simulation_template_id = self.parameterAsInt(parameters, self.SIMULATION_TEMPLATE_ID, context)
+        simulation_name = self.parameterAsString(parameters, self.SIMULATION_NAME, context)
+
+        settings_dialog = SettingsDialog(MockIFace())
+        api_host = settings_dialog.api_url
+        _, api_key = settings_dialog.get_3di_auth()
+
+        label_dwf(
+            api_host,
+            api_key,
+            simulation_template_id=simulation_template_id,
+            simulation_name=simulation_name,
+            feedback=feedback
+        )
+
+        return {}
 
 
