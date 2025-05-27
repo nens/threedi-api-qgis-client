@@ -4,6 +4,7 @@ History
 3.20 (unreleased)
 -----------------
 
+- Use separate enum for wind events with "Custom" instead of "From CSV".
 - Allow more decimals in wind drag coefficient setting.
 
 
