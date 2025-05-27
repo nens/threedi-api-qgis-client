@@ -5,6 +5,7 @@ History
 -----------------
 
 - Use separate enum for wind events with "Custom" instead of "From CSV".
+- Allow more decimals in wind drag coefficient setting.
 
 
 3.19 (2025-05-12)
