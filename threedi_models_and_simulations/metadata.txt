@@ -24,7 +24,7 @@ repository=https://github.com/nens/threedi-api-qgis-client
 
 # Recommended items:
 
-hasProcessingProvider=no
+hasProcessingProvider=yes
 changelog=https://docs.3di.live/a_releasenotes_3di_mi.html
 
 # Tags are comma separated with spaces allowed
@@ -42,12 +42,10 @@ deprecated=False
 # Since QGIS 3.8, a comma separated list of plugins to be installed
 # (or upgraded) can be specified.
 # Check the documentation for more information.
-# plugin_dependencies=
+plugin_dependencies=Nelen and Schuurmans Dependency Loader==1.0.11
 
 Category of the plugin: Raster, Vector, Database or Web
 # category=
 
 # If the plugin can run on QGIS Server.
 server=False
-
-plugin_dependencies=Nelen and Schuurmans Dependency Loader==1.0.11
