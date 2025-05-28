@@ -4,7 +4,7 @@ History
 3.20 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Add beta processing algorithm *Simulate with rain zones* (#682)
 
 
 3.19 (2025-05-12)
