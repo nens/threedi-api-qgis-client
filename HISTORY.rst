@@ -4,6 +4,8 @@ History
 3.20 (unreleased)
 -----------------
 
+- Add beta processing algorithm *Simulate with rain zones* (#682)
+- Add beta processing algorithm *Simulate with DWF labelling* (#683)
 - Use separate enum for wind events with "Custom" instead of "From CSV".
 - Allow more decimals in wind drag coefficient setting.
 
