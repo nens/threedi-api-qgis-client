@@ -4,6 +4,7 @@ from qgis.core import QgsProcessingProvider
 from qgis.PyQt.QtGui import QIcon
 from threedi_models_and_simulations.processing.algorithms_wq import (
     SimulateWithRainZonesAlgorithm,
+    SimulateWithDWFLabellingAlgorithm,
 )
 
 
@@ -12,6 +13,7 @@ class ThreediModelsAndSimulationsProvider(QgsProcessingProvider):
 
     def loadAlgorithms(self, *args, **kwargs):
         self.addAlgorithm(SimulateWithRainZonesAlgorithm())
+        self.addAlgorithm(SimulateWithDWFLabellingAlgorithm())
 
     def id(self, *args, **kwargs):
         """The ID of your plugin, used for identifying the provider.
