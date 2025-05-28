@@ -4,23 +4,15 @@ from qgis.core import (
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
     QgsWkbTypes,
-    # QgsGeometry,
 )
 
 from qgis.core import (
-    # QgsFeature,
-    # QgsFeatureRequest,
-    # QgsGeometry,
     QgsProcessing,
     QgsProcessingAlgorithm,
-    # QgsProcessingException,
-    # QgsProcessingParameterBoolean,
     QgsProcessingParameterField,
     QgsProcessingParameterFeatureSource,
     QgsProcessingParameterNumber,
     QgsProcessingParameterString,
-    # QgsProcessingParameterVectorLayer,
-    # QgsProject,
 )
 
 from threedi_models_and_simulations.processing.label_rain_zones import label_rain_zones
@@ -32,8 +24,6 @@ class MockIFace:
     def messageBar(message):
         pass
 
-# TODO add processing algorithms
-
 
 def get_name_wkt_dict(
         features: QgsProcessingFeatureSource,
@@ -42,7 +32,7 @@ def get_name_wkt_dict(
         context
 ) -> Dict[str, str]:
     """
-    Returns a {name: wkt} dict
+    Returns a {name: wkt} dict (wkt = geometry of the feature in Well-Known Text format)
     Transforms the input geometry to WGS84
     Converts curve geometry to linear geometry
     Converts single part to multipart
