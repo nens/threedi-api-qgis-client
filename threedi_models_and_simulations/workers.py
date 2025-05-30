@@ -1341,17 +1341,23 @@ class SimulationRunner(QRunnable):
                 )
 
     def start_simulation(self):
-        """Start (or add to queue) given simulation."""
+        """Start (or add to queue) given simulation. Or only create a template"""
         sim_id = self.current_simulation.simulation.id
-        try:
-            self.tc.create_simulation_action(sim_id, name="start")
-        except ApiException as e:
-            if e.status == 429:
-                self.tc.create_simulation_action(sim_id, name="queue")
-            else:
-                raise e
+        if self.current_simulation.start_simulation:
+            try:
+                self.tc.create_simulation_action(sim_id, name="start")
+            except ApiException as e:
+                if e.status == 429:
+                    self.tc.create_simulation_action(sim_id, name="queue")
+                else:
+                    raise e
+        else:
+            # simulation_start can only be disabled when template name is set.
+            assert self.current_simulation.template_name
+
         if self.current_simulation.template_name is not None:
-            self.tc.create_template_from_simulation(self.current_simulation.template_name, str(sim_id))
+            template = self.tc.create_template_from_simulation(self.current_simulation.template_name, str(sim_id))
+            logger.info(f"Created template {template.name} ({template.id})")
 
     @pyqtSlot()
     def run(self):

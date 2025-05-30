@@ -929,7 +929,6 @@ class InitialConditionsWidget(uicls_initial_conds, basecls_initial_conds):
             if initial_waterlevels_1d:
                 self.rb_1d_online_file.setChecked(True)
                 logger.info("Retrieved 1d initial waterlevel from model")
-                logger.info(initial_waterlevels_1d)
             for iw in sorted(initial_waterlevels_1d, key=attrgetter("id")):
                 if iw.file:
                     self.initial_waterlevels_files[iw.file.filename] = iw
@@ -3067,6 +3066,10 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         self.lout_plot.addWidget(self.plot_widget, 0, 0)
         self.template_widget.hide()
         self.cb_save_template.stateChanged.connect(self.save_template_state_changed)
+        # This option is opt-out if "create simulation template" is checked,
+        # but required when "create simulation template is not checked"
+        self.cb_start_simulation.setEnabled(False)
+
         self.dd_simulation.currentIndexChanged.connect(self.simulation_change)
         self.precipitation_widget.hide()
         self.initial_conditions = initial_conditions
@@ -3124,8 +3127,12 @@ class SummaryWidget(uicls_summary_page, basecls_summary_page):
         """Handle template checkbox state change."""
         if value == 0:
             self.template_widget.hide()
+            self.cb_start_simulation.setChecked(True)
+            self.cb_start_simulation.setEnabled(False)
         if value == 2:
             self.template_widget.show()
+            self.cb_start_simulation.setChecked(True)
+            self.cb_start_simulation.setEnabled(True)
 
 
 class NamePage(QWizardPage):
@@ -4233,6 +4240,7 @@ class SimulationWizard(QWizard):
                     new_simulation.template_name = template_name + f"_{i}"
                 else:
                     new_simulation.template_name = template_name
+            new_simulation.start_simulation = self.summary_page.main_widget.cb_start_simulation.isChecked()
             self.new_simulations.append(new_simulation)
         self.model_selection_dlg.unload_breach_layers()
         self.plugin_dock.simulation_overview_dlg.start_simulations(self.new_simulations)

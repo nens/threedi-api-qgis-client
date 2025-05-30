@@ -520,8 +520,6 @@ class ThreediCalls:
         return bc_upload_file
 
     def create_simulation_constant_precipitation(self, simulation_pk: int, **rain_data) -> ConstantRain:
-
-        logger.info(rain_data)
         for substance in rain_data["substances"]:
             ForcingSubstance(**substance)
         """Add ConstantRain to the given simulation."""
@@ -530,7 +528,6 @@ class ThreediCalls:
 
     def create_simulation_custom_precipitation(self, simulation_pk: int, **rain_data) -> TimeseriesRain:
         """Add TimeseriesRain to the given simulation."""
-        logger.info(rain_data)
         for substance in rain_data["substances"]:
             ForcingSubstance(**substance)
         time_series_rain = self.threedi_api.simulations_events_rain_timeseries_create(str(simulation_pk), rain_data)
@@ -548,7 +545,6 @@ class ThreediCalls:
 
     def create_simulation_radar_precipitation(self, simulation_pk: int, **rain_data) -> LizardRasterRain:
         """Add LizardRasterRain to the given simulation."""
-        logger.info(rain_data)
         time_series_rain = self.threedi_api.simulations_events_rain_rasters_lizard_create(str(simulation_pk), rain_data)
         return time_series_rain
 
@@ -1133,8 +1129,6 @@ class ThreediCalls:
 
     def create_simulation_settings_water_quality(self, simulation_pk: int, **data) -> WaterQualitySettings:
         """Create a simulation water quality settings."""
-        logger.error("sending")
-        logger.error(data)
         simulations_settings_wq = self.threedi_api.simulations_settings_water_quality_create(str(simulation_pk), data)
         return simulations_settings_wq
 

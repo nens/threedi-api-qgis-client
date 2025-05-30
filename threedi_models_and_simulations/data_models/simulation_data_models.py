@@ -228,6 +228,7 @@ class NewSimulation:
     lizard_post_processing: LizardPostProcessing = None
     new_saved_state: SavedState = None
     template_name: str = None
+    start_simulation: bool = True
     # Last two attributes will be added after new simulation initialization
     simulation: Simulation = None
     initial_status: CurrentStatus = None
