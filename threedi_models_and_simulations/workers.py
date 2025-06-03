@@ -1341,17 +1341,25 @@ class SimulationRunner(QRunnable):
                 )
 
     def start_simulation(self):
-        """Start (or add to queue) given simulation."""
+        """Start (or add to queue) given simulation. Or only create a template"""
         sim_id = self.current_simulation.simulation.id
-        try:
-            self.tc.create_simulation_action(sim_id, name="start")
-        except ApiException as e:
-            if e.status == 429:
-                self.tc.create_simulation_action(sim_id, name="queue")
-            else:
-                raise e
+        if self.current_simulation.start_simulation:
+            try:
+                self.tc.create_simulation_action(sim_id, name="start")
+            except ApiException as e:
+                if e.status == 429:
+                    self.tc.create_simulation_action(sim_id, name="queue")
+                else:
+                    raise e
+        else:
+            # simulation_start can only be disabled when template name is set.
+            assert self.current_simulation.template_name
+
         if self.current_simulation.template_name is not None:
-            self.tc.create_template_from_simulation(self.current_simulation.template_name, str(sim_id))
+            template = self.tc.create_template_from_simulation(self.current_simulation.template_name, str(sim_id))
+            return template.id
+        
+        return None
 
     @pyqtSlot()
     def run(self):
@@ -1389,9 +1397,13 @@ class SimulationRunner(QRunnable):
                 self.report_progress()
                 self.include_lizard_post_processing()
                 self.report_progress()
-                self.start_simulation()
+                template_id = self.start_simulation()
                 self.report_progress(simulation_initialized=True)
-            self.report_finished("Simulations successfully initialized!")
+            msg = f"Simulations successfully initialized!"
+            if template_id:
+                msg += f" Created template ID: {template_id}"
+
+            self.report_finished(msg)
         except ApiException as e:
             error_msg = extract_error_message(e)
             self.report_failure(error_msg)

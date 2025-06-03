@@ -28,7 +28,10 @@ class SimulationProgressDelegate(QStyledItemDelegate):
         pbar.maximum = 100
         default_color = QColor(0, 140, 255)
 
-        if status_name in {SimulationStatusName.CREATED.value, SimulationStatusName.STARTING.value}:
+        if status_name in {SimulationStatusName.CREATED.value}:
+            pbar_color = default_color
+            ptext = "Created simulation"
+        elif status_name in {SimulationStatusName.STARTING.value}:
             pbar_color = default_color
             ptext = "Starting up simulation .."
         elif status_name in {SimulationStatusName.INITIALIZED.value, SimulationStatusName.POSTPROCESSING.value}:
