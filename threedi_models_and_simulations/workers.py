@@ -1357,7 +1357,9 @@ class SimulationRunner(QRunnable):
 
         if self.current_simulation.template_name is not None:
             template = self.tc.create_template_from_simulation(self.current_simulation.template_name, str(sim_id))
-            logger.info(f"Created template {template.name} ({template.id})")
+            return template.id
+        
+        return None
 
     @pyqtSlot()
     def run(self):
@@ -1395,9 +1397,13 @@ class SimulationRunner(QRunnable):
                 self.report_progress()
                 self.include_lizard_post_processing()
                 self.report_progress()
-                self.start_simulation()
+                template_id = self.start_simulation()
                 self.report_progress(simulation_initialized=True)
-            self.report_finished("Simulations successfully initialized!")
+            msg = f"Simulations successfully initialized!"
+            if template_id:
+                msg += f" Created template ID: {template_id}"
+
+            self.report_finished(msg)
         except ApiException as e:
             error_msg = extract_error_message(e)
             self.report_failure(error_msg)
