@@ -3,6 +3,7 @@
 import os
 import re
 import shutil
+from typing import List
 import warnings
 from uuid import uuid4
 
@@ -311,3 +312,22 @@ class NumericDelegate(QItemDelegate):
         validator.setNotation(QDoubleValidator.StandardNotation)
         editor.setValidator(validator)
         return editor
+
+class EnumDelegate(QItemDelegate):
+    def __init__(self, parent: QWidget, options: List[str]):
+        super().__init__(parent)
+        self.options = options
+
+    def createEditor(self, parent: QWidget, option, index) -> QWidget:
+        editor = QComboBox(parent)
+        editor.setStyleSheet("background-color:white; selection-background-color: lightgray;")
+        editor.addItems(self.options)
+        return editor
+
+    def setEditorData(self, editor: QWidget, index):
+        enum_name = (index.model().data(index))
+        if enum_name:
+            editor.setCurrentText(enum_name)  # Sets corresponding index
+
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.currentText())

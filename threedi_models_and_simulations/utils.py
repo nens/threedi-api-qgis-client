@@ -91,6 +91,8 @@ class BreachSourceType(Enum):
     POTENTIAL_BREACHES = "Potential breaches"
     FLOWLINES = "1D2D Flowlines"
 
+numerical_diffusion_limiter_to_int = { "Off": 0, "Standard": 1, "Pulse conserving": 2 }
+int_to_numerical_diffusion_limiter = {v: k for (k, v) in numerical_diffusion_limiter_to_int.items()}
 
 def mmh_to_ms(mmh_value):
     """Converting values from 'mm/h' to the 'm/s'."""
