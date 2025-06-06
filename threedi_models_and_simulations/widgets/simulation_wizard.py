@@ -234,6 +234,8 @@ class SubstancesWidget(uicls_substances, basecls_substances):
     DIFFUSION_COEFFICIENT_COLUMN = 3
     NUMERICAL_DIFFUSION_LIMITER_COLUMN = 4
 
+    COMBOBOX_STYLE = "background-color:white; selection-background-color: lightgray;"
+
     def __init__(self, parent_page):
         super().__init__()
         self.setupUi(self)
@@ -262,7 +264,7 @@ class SubstancesWidget(uicls_substances, basecls_substances):
         numeric_delegate = NumericDelegate(self.tw_substances)
         self.tw_substances.setItemDelegateForColumn(self.DECAY_COEFFICIENT_COLUMN, numeric_delegate)
         self.tw_substances.setItemDelegateForColumn(self.DIFFUSION_COEFFICIENT_COLUMN, numeric_delegate)
-        self.tw_substances.setItemDelegateForColumn(self.NUMERICAL_DIFFUSION_LIMITER_COLUMN, EnumDelegate(self.tw_substances, numerical_diffusion_limiter_to_int.keys()))
+        self.tw_substances.setItemDelegateForColumn(self.NUMERICAL_DIFFUSION_LIMITER_COLUMN, EnumDelegate(self.tw_substances, numerical_diffusion_limiter_to_int.keys(), self.COMBOBOX_STYLE))
 
     def prepopulate_substances_table(self, substances):
         self.tw_substances.setRowCount(0)

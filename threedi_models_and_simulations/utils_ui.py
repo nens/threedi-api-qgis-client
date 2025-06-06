@@ -8,12 +8,12 @@ import warnings
 from uuid import uuid4
 
 from qgis.gui import QgsFileWidget, QgsProjectionSelectionWidget
-from qgis.PyQt.QtCore import QCoreApplication, QDate, QLocale, QSettings, QTime
+from qgis.PyQt.QtCore import QCoreApplication, QDate, QLocale, QSettings, QTime, QTimer, Qt
 from qgis.PyQt.QtGui import QColor, QDoubleValidator, QIcon
 from qgis.PyQt.QtWidgets import (QCheckBox, QComboBox, QDateEdit,
                                  QDoubleSpinBox, QFileDialog, QGroupBox,
-                                 QItemDelegate, QLineEdit, QRadioButton,
-                                 QSpinBox, QTimeEdit, QWidget)
+                                 QItemDelegate, QLineEdit, QRadioButton, QStyledItemDelegate,
+                                 QSpinBox, QTimeEdit, QWidget, QApplication, QStyle, QStyleOptionComboBox)
 
 
 def style_path(qml_filename):
@@ -313,21 +313,39 @@ class NumericDelegate(QItemDelegate):
         editor.setValidator(validator)
         return editor
 
-class EnumDelegate(QItemDelegate):
-    def __init__(self, parent: QWidget, options: List[str]):
+class EnumDelegate(QStyledItemDelegate):
+    def __init__(self, parent: QWidget, options: List[str], style_sheet: str):
         super().__init__(parent)
         self.options = options
+        self.style_sheet = style_sheet
 
     def createEditor(self, parent: QWidget, option, index) -> QWidget:
         editor = QComboBox(parent)
-        editor.setStyleSheet("background-color:white; selection-background-color: lightgray;")
+        if self.style_sheet:
+            editor.setStyleSheet(self.style_sheet)
         editor.addItems(self.options)
+        # Requires one click less
+        QTimer.singleShot(0, editor.showPopup)
         return editor
 
     def setEditorData(self, editor: QWidget, index):
         enum_name = (index.model().data(index))
-        if enum_name:
-            editor.setCurrentText(enum_name)  # Sets corresponding index
-
+        combo_index = editor.findText(enum_name)
+        assert combo_index != -1
+        editor.setCurrentIndex(combo_index)
+        
     def setModelData(self, editor, model, index):
         model.setData(index, editor.currentText())
+
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
+
+    def paint(self, painter, option, index):
+        cb_option = QStyleOptionComboBox()
+        cb_option.rect = option.rect
+        cb_option.currentText = index.data(Qt.DisplayRole)
+        cb_option.state = option.state
+
+        style = option.widget.style() if option.widget else QApplication.style()
+        style.drawComplexControl(QStyle.CC_ComboBox, cb_option, painter)
+        style.drawControl(QStyle.CE_ComboBoxLabel, cb_option, painter)
