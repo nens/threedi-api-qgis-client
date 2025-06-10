@@ -1,7 +1,7 @@
 History
 =======
 
-3.20 (unreleased)
+3.20 (2025-06-10)
 -----------------
 
 - Add beta processing algorithm *Simulate with rain zones* (#682)
