@@ -5,6 +5,7 @@ History
 -----------------
 
 - Use custom sorting for expiration days in finished simulation results. (#668)
+- Added external progress bar option to load_remote_schematisation (nens/rana#1745)
 
 
 3.20 (2025-06-10)
