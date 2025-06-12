@@ -94,7 +94,7 @@ class BuildOptions:
                 settings.setValue("last_used_geopackage_path", wip_revision.schematisation_dir)
 
     @api_client_required
-    def load_remote_schematisation(self, schematisation, revision):
+    def load_remote_schematisation(self, schematisation, revision, progress_bar = None):
         """Download and load a schematisation from the server."""
         if isinstance(schematisation, dict):
             schematisation = NestedObject(schematisation)
@@ -103,7 +103,7 @@ class BuildOptions:
 
         # Download and load the schematisation
         schematisation_download = SchematisationDownload(self.plugin_dock)
-        schematisation_download.download_required_files(schematisation, revision, is_latest_revision=True)
+        schematisation_download.download_required_files(schematisation, revision, True, progress_bar)
         downloaded_local_schematisation = schematisation_download.downloaded_local_schematisation
         custom_geopackage_filepath = schematisation_download.downloaded_geopackage_filepath
         if downloaded_local_schematisation is not None:
