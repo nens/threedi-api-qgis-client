@@ -4,7 +4,7 @@ History
 3.21 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Use custom sorting for expiration days in finished simulation results. (#668)
 
 
 3.20 (2025-06-10)
