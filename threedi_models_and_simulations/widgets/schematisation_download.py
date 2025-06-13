@@ -219,7 +219,7 @@ class SchematisationDownload(uicls, basecls):
         if self.downloaded_local_schematisation:
             self.close()
 
-    def download_required_files(self, schematisation, revision, is_latest_revision, external_progress_bar):
+    def download_required_files(self, schematisation, revision, is_latest_revision, external_progress_bar = None):
         """Download required schematisation revision files."""
         try:
             progress_bar = external_progress_bar if external_progress_bar else self.pbar_download
