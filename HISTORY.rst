@@ -1,7 +1,7 @@
 History
 =======
 
-3.21 (unreleased)
+3.21 (2025-06-16)
 -----------------
 
 - Use custom sorting for expiration days in finished simulation results. (#668)
