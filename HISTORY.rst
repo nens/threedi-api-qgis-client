@@ -1,7 +1,7 @@
 History
 =======
 
-3.22 (unreleased)
+3.22 (2025-06-17)
 -----------------
 
 - Fix incorrect filtering and project id retrieval in simulation results.
