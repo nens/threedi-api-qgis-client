@@ -141,12 +141,12 @@ class SimulationResults(uicls, basecls):
         """Filter finished simulations list."""
         filter_first_name = self.first_name_le.text().lower()
         filter_last_name = self.last_name_le.text().lower()
-        row_count = self.tv_model.rowCount()
+        row_count = self.proxy_model.rowCount()
         root_model_index = self.tv_model.invisibleRootItem().index()
         if self.username_filter_grp.isChecked():
             for row in range(row_count):
-                item = self.tv_model.item(row, USERNAME_COLUMN_IDX)
-                first_name, last_name = item.data(Qt.UserRole)
+                model_index = self.proxy_model.index(row, USERNAME_COLUMN_IDX)
+                first_name, last_name = self.proxy_model.data(model_index, Qt.UserRole) 
                 first_name_match, last_name_match = True, True
                 if filter_first_name:
                     if filter_first_name not in first_name.lower():
@@ -206,8 +206,8 @@ class SimulationResults(uicls, basecls):
         if not current_index.isValid():
             return
         current_row = current_index.row()
-        name_item = self.tv_model.item(current_row, 0)
-        sim_id = name_item.data(Qt.UserRole)
+        current_sim_id_index = self.proxy_model.index(current_row, 0)
+        sim_id = self.proxy_model.data(current_sim_id_index, Qt.UserRole)
         if sim_id in self.running_downloads:
             self.plugin_dock.communication.bar_warn("The selected results are already being downloaded!")
             return

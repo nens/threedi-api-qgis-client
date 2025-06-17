@@ -4,7 +4,7 @@ History
 3.22 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fix incorrect filtering and project id retrieval in simulation results.
 
 
 3.21 (2025-06-16)
