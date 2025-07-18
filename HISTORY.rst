@@ -4,7 +4,7 @@ History
 3.24 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Bugfix: Allow multiple polygons per substance in the "Simulate with rain zones" processing algorithm
 
 
 3.23 (2025-07-16)
