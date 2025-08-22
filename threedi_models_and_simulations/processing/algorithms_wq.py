@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List, Tuple
 from qgis.core import (
     QgsProcessingFeatureSource,
     QgsCoordinateReferenceSystem,
@@ -26,20 +26,20 @@ class MockIFace:
         pass
 
 
-def get_name_wkt_dict(
+def get_name_wkt_pairs(
         features: QgsProcessingFeatureSource,
         source_crs: QgsCoordinateReferenceSystem,
         name_field: str,
         context
-) -> Dict[str, str]:
+) -> List[Tuple[str, str]]:
     """
-    Returns a {name: wkt} dict (wkt = geometry of the feature in Well-Known Text format)
+    Returns a list of (name: wkt) pairs (wkt = geometry of the feature in Well-Known Text format)
     Transforms the input geometry to WGS84
     Converts curve geometry to linear geometry
     Converts single part to multipart
     Adds postfix to name if geometry is multipart
     """
-    result = dict()
+    result = list()
 
     # Define CRS transformation: source to WGS84
     target_crs = QgsCoordinateReferenceSystem("EPSG:4326")
@@ -57,7 +57,7 @@ def get_name_wkt_dict(
             wkt = geom_part.asWkt()
             if i > 0:
                 name = name + f" {i + 1}"
-            result[name] = wkt
+            result.append((name, wkt))
     return result
 
 
@@ -151,7 +151,7 @@ class SimulateWithRainZonesAlgorithm(QgsProcessingAlgorithm):
 
         polygon_feature_layer.crs()
 
-        name_wkt_dict = get_name_wkt_dict(
+        name_wkt_dict = get_name_wkt_pairs(
             features=polygon_feature_source,
             source_crs=polygon_feature_layer.crs(),
             name_field=polygon_name_field,

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict
+from typing import Dict, List, Tuple
 
 from threedi_api_client import ThreediApi
 
@@ -14,7 +14,7 @@ def label_rain_zones(
     api_key: str,
     simulation_template_id: int,
     simulation_name: str,
-    zones: Dict[str, str],
+    zones: List[Tuple[str, str]],
     feedback=None
 ):
     """
@@ -22,6 +22,9 @@ def label_rain_zones(
     The simulation is owned by the same organisation that owns the simulation from which the template was made
     Feedback (e.g. a QgsProcessingFeedback) should have the following methods:
     - pushInfo()
+
+    :param zones: List of (name, wkt) tuples
+
     """
     feedback = feedback or MockFeedback()
 
@@ -53,13 +56,14 @@ def label_rain_zones(
     )
 
     feedback.pushInfo(f"Created simulation '{simulation.name}' with id {simulation.id}")
+    substance_names = {zone[0] for zone in zones}
     substances = []
-    for i, zone_name in enumerate(zones.keys()):
+    for i, substance_name in enumerate(substance_names):
         substances.append(
             api_client.simulations_substances_create(
                 simulation.id,
                 {
-                    "name": zone_name,
+                    "name": substance_name,
                     "units": "%",
                 }
             )
@@ -79,12 +83,15 @@ def label_rain_zones(
         concentration_time_series = [[row[0], 100] for row in rain_event.values]
         concentration_data = []
         for substance in substances:
-            concentration_data_entry = {
-                'substance': substance.id,
-                'concentrations': concentration_time_series,
-                'zone': zones[substance.name],
-            }
-            concentration_data.append(concentration_data_entry)
+            for zone in zones:
+                if zone[0] == substance.name:
+                    concentration_data_entry = {
+                        'substance': substance.id,
+                        'concentrations': concentration_time_series,
+                        'zone': zone[1],
+                    }
+                    concentration_data.append(concentration_data_entry)
+                    feedback.pushInfo(f"Created rain zone for substance {substance.id}")
 
         rain = api_client.simulations_events_rain_timeseries_create(
             simulation_pk=simulation.id, data={
@@ -96,7 +103,7 @@ def label_rain_zones(
             }
         )
 
-        feedback.pushInfo(f"Created time series rain event with id {rain.id} ")
+        feedback.pushInfo(f"Created time series rain event with id {rain.id}")
 
     api_client.simulations_actions_create(simulation.id, data={"name": "queue"})
     feedback.pushInfo(f"Added simulation '{simulation.name}' with id {simulation.id} to queue")
