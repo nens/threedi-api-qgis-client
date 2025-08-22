@@ -33,7 +33,7 @@ def get_name_wkt_pairs(
         context
 ) -> List[Tuple[str, str]]:
     """
-    Returns a {name: wkt} dict (wkt = geometry of the feature in Well-Known Text format)
+    Returns a list of (name: wkt) pairs (wkt = geometry of the feature in Well-Known Text format)
     Transforms the input geometry to WGS84
     Converts curve geometry to linear geometry
     Converts single part to multipart
