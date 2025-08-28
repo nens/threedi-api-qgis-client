@@ -1,7 +1,7 @@
 History
 =======
 
-3.24 (unreleased)
+3.24 (2025-08-28)
 -----------------
 
 - Bugfix: Allow multiple polygons per substance in the "Simulate with rain zones" processing algorithm
