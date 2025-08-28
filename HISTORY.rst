@@ -5,6 +5,7 @@ History
 -----------------
 
 - Bugfix: Allow multiple polygons per substance in the "Simulate with rain zones" processing algorithm
+- Prevent N&S Dependency Loader from getting disabled (nens/nens-dependency-loader#19)
 
 
 3.23 (2025-07-16)
