@@ -4,7 +4,7 @@ History
 3.25 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Re-released 3.24
 
 
 3.24 (2025-08-28)
