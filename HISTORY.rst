@@ -1,7 +1,7 @@
 History
 =======
 
-3.26 (unreleased)
+3.26 (2025-09-08)
 -----------------
 
 - Bumped dependency loader.
