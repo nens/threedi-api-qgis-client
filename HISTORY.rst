@@ -4,7 +4,7 @@ History
 3.27 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Bumped dependency loader.
 
 
 3.26 (2025-09-08)
