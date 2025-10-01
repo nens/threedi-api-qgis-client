@@ -1,7 +1,7 @@
 History
 =======
 
-3.27 (unreleased)
+3.27 (2025-10-01)
 -----------------
 
 - Bumped dependency loader.
