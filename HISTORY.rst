@@ -4,7 +4,7 @@ History
 3.28 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Simulate with DWF labelling and Simulate with rain zones now use original simulation start datetime instead of current datetime.
 
 
 3.27 (2025-10-01)

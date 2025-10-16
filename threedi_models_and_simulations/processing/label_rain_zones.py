@@ -50,7 +50,7 @@ def label_rain_zones(
             "template": simulation_template.id,
             "name": simulation_name,
             "organisation": simulation_template.simulation.organisation,
-            "start_datetime": datetime.now(),
+            "start_datetime": simulation_template.simulation.start_datetime,
             "duration": simulation_template.simulation.duration
         }
     )
