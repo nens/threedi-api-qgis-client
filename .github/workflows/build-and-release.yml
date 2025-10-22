@@ -1,0 +1,31 @@
+name: release-action
+
+# Run on pull requests and on the master branch itself.
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "*"
+  pull_request:
+  workflow_dispatch:
+
+
+jobs:
+  build_upload:
+    runs-on: ubuntu-22.04
+    steps:
+      # Checkout the code.
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13' 
+      - run: python3 zip_plugin.py
+
+      - name: Publish package
+        if: startsWith(github.event.ref, 'refs/tags')
+        run: bash upload-artifact.sh
+        env:
+          ARTIFACTS_KEY: ${{ secrets.ARTIFACTS_KEY }}
+
