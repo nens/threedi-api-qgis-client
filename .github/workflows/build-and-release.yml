@@ -18,9 +18,10 @@ jobs:
       # Checkout the code.
       - uses: actions/checkout@v2
 
-      - name: build
-        run: |
-          docker compose run --rm qgis make zip
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13' 
+      - run: python3 zip_plugin.py
 
       - name: Publish package
         if: startsWith(github.event.ref, 'refs/tags')
