@@ -1,8 +1,8 @@
 History
 =======
 
-3.28 (unreleased)
------------------
+3.27.1 (2025-10-22)
+-------------------
 
 - Simulate with DWF labelling and Simulate with rain zones now use original simulation start datetime instead of current datetime.
 
