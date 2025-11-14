@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 from qgis.core import (
     QgsProcessingFeatureSource,
     QgsCoordinateReferenceSystem,
@@ -9,6 +9,7 @@ from qgis.core import (
 from qgis.core import (
     QgsProcessing,
     QgsProcessingAlgorithm,
+    QgsProcessingException,
     QgsProcessingParameterField,
     QgsProcessingParameterFeatureSource,
     QgsProcessingParameterNumber,
@@ -16,7 +17,7 @@ from qgis.core import (
 )
 
 from threedi_models_and_simulations.processing.label_dwf import label_dwf
-from threedi_models_and_simulations.processing.label_rain_zones import label_rain_zones
+from threedi_models_and_simulations.processing.label_rain_zones import label_rain_zones, ProcessingException
 from threedi_models_and_simulations.settings import SettingsDialog
 
 
@@ -159,17 +160,22 @@ class SimulateWithRainZonesAlgorithm(QgsProcessingAlgorithm):
         )
 
         settings_dialog = SettingsDialog(MockIFace())
+        settings_dialog.load_settings()
         api_host = settings_dialog.api_url
         _, api_key = settings_dialog.get_3di_auth()
 
-        label_rain_zones(
-            api_host,
-            api_key,
-            simulation_template_id=simulation_template_id,
-            simulation_name=simulation_name,
-            zones=name_wkt_dict,
-            feedback=feedback
-        )
+        try:
+            label_rain_zones(
+                api_host,
+                api_key,
+                simulation_template_id=simulation_template_id,
+                simulation_name=simulation_name,
+                zones=name_wkt_dict,
+                feedback=feedback,
+                max_retries=settings_dialog.upload_timeout
+            )
+        except ProcessingException as e:
+            raise QgsProcessingException(str(e)) from e
 
         return {}
 
