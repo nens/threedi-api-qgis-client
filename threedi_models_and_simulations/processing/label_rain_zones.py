@@ -28,7 +28,7 @@ def post_rain_events(api_client: ThreediApi, data: List, simulation, feedback, w
         state = api_client.simulations_events_rain_timeseries_file_read(
             simulation_pk=simulation.id, id=rain_events.id
         ).file.state
-        feedback.pushInfo(f"{i}: Rain file {rain_events.id} state: {state}")
+        feedback.pushInfo(f"{i}: Rain file state: {state}")
         if state not in ["created", "uploaded", "processed"]:
             raise ProcessingException("Something went wrong while processing uploaded rain events")
         if state == "processed":
