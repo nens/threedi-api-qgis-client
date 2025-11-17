@@ -15,6 +15,7 @@ from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterString,
 )
+from shapely import wkt
 
 from threedi_models_and_simulations.processing.label_dwf import label_dwf
 from threedi_models_and_simulations.processing.label_rain_zones import label_rain_zones, ProcessingException
@@ -27,14 +28,14 @@ class MockIFace:
         pass
 
 
-def get_name_wkt_pairs(
+def get_name_coordinate_pairs(
         features: QgsProcessingFeatureSource,
         source_crs: QgsCoordinateReferenceSystem,
         name_field: str,
         context
-) -> List[Tuple[str, str]]:
+) -> List[Tuple[str, List]]:
     """
-    Returns a list of (name: wkt) pairs (wkt = geometry of the feature in Well-Known Text format)
+    Returns a list of (name: coordinates) pairs
     Transforms the input geometry to WGS84
     Converts curve geometry to linear geometry
     Converts single part to multipart
@@ -55,10 +56,13 @@ def get_name_wkt_pairs(
         geom = geom.convertToType(QgsWkbTypes.PolygonGeometry, True)
         for i, geom_part in enumerate(geom.parts()):
             geom_part.transform(transform)
-            wkt = geom_part.asWkt()
+            wkt_string = geom_part.asWkt()
+            shapely_polygon = wkt.loads(wkt_string)
+            rings = [list(shapely_polygon.exterior.coords)]
+            rings += [list(ring.coords) for ring in shapely_polygon.interiors]
             if i > 0:
                 name = name + f" {i + 1}"
-            result.append((name, wkt))
+            result.append((name, rings))
     return result
 
 
@@ -139,7 +143,6 @@ class SimulateWithRainZonesAlgorithm(QgsProcessingAlgorithm):
             )
         )
 
-
     def processAlgorithm(self, parameters, context, feedback):
         """
         Process the algorithm.
@@ -152,7 +155,7 @@ class SimulateWithRainZonesAlgorithm(QgsProcessingAlgorithm):
 
         polygon_feature_layer.crs()
 
-        name_wkt_dict = get_name_wkt_pairs(
+        name_coordinates_dict = get_name_coordinate_pairs(
             features=polygon_feature_source,
             source_crs=polygon_feature_layer.crs(),
             name_field=polygon_name_field,
@@ -170,7 +173,7 @@ class SimulateWithRainZonesAlgorithm(QgsProcessingAlgorithm):
                 api_key,
                 simulation_template_id=simulation_template_id,
                 simulation_name=simulation_name,
-                zones=name_wkt_dict,
+                zones=name_coordinates_dict,
                 feedback=feedback,
                 max_retries=settings_dialog.upload_timeout
             )

@@ -42,7 +42,7 @@ def label_rain_zones(
     api_key: str,
     simulation_template_id: int,
     simulation_name: str,
-    zones: List[Tuple[str, str]],
+    zones: List[Tuple[str, List]],
     feedback=None,
     wait_time=1,
     max_retries=900,
@@ -119,7 +119,10 @@ def label_rain_zones(
                     concentration_data_entry = {
                         'substance': substance.id,
                         'concentrations': concentration_time_series,
-                        'zone': zone[1],
+                        'zone': {
+                            "type": "Polygon",
+                            "coordinates": zone[1]
+                        },
                     }
                     concentration_data.append(concentration_data_entry)
                     feedback.pushInfo(f"Created rain zone for substance {substance.id}")
