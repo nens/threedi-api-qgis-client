@@ -1,19 +1,15 @@
 import json
 import tempfile
-from datetime import datetime
 import time
 from pathlib import Path
-from typing import Dict
 
 import urllib3
 from threedi_api_client import ThreediApi
 from threedi_api_client.files import download_file, upload_file
 
-DOWNLOAD_TIMEOUT = urllib3.Timeout(connect=60, read=600)
+from threedi_models_and_simulations.processing.utils import MockFeedback, ProcessingException
 
-class MockFeedback:
-    def pushInfo(self, message):
-        pass
+DOWNLOAD_TIMEOUT = urllib3.Timeout(connect=60, read=600)
 
 
 def add_substance_concentration(input_file, output_file, substance_id):
@@ -144,7 +140,7 @@ def label_dwf(
                 feedback.pushInfo(f"Found lateral with id {lateral.id}")
                 break
         if not found:
-            raise Exception("Lateral not found")
+            raise ProcessingException("Lateral not found")
         wait_time = 1
         for i in range(max_retries):
             state = api_client.simulations_events_lateral_file_read(simulation_pk=simulation.id,
