@@ -4,7 +4,7 @@ History
 3.27.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Change endpoint calls.
 
 
 3.27.1 (2025-10-22)
