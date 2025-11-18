@@ -4,7 +4,7 @@ History
 3.27.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Bump dependency loader to 1.2.5.
 
 
 3.27.2 (2025-11-18)
