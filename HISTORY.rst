@@ -1,7 +1,7 @@
 History
 =======
 
-3.27.2 (unreleased)
+3.27.2 (2025-11-18)
 -------------------
 
 - Change endpoint calls.
