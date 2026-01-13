@@ -1,7 +1,7 @@
 History
 =======
 
-3.27.5 (unreleased)
+3.27.5 (2026-01-13)
 -------------------
 
 - Made plugin deprecated in metadata.
