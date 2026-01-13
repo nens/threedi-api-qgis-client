@@ -1,10 +1,85 @@
 History
 =======
 
-3.20 (unreleased)
+3.27.5 (unreleased)
+-------------------
+
+- Nothing changed yet.
+
+
+3.27.4 (2025-11-18)
+-------------------
+
+- Bump dependency loader to 1.2.6.
+
+
+3.27.3 (2025-11-18)
+-------------------
+
+- Bump dependency loader to 1.2.5.
+
+
+3.27.2 (2025-11-18)
+-------------------
+
+- Change endpoint calls.
+
+
+3.27.1 (2025-10-22)
+-------------------
+
+- Simulate with DWF labelling and Simulate with rain zones now use original simulation start datetime instead of current datetime.
+
+
+3.27 (2025-10-01)
+-----------------
+
+- Bumped dependency loader.
+
+
+3.26 (2025-09-08)
+-----------------
+
+- Bumped dependency loader.
+
+
+3.25 (2025-08-28)
+-----------------
+
+- Re-released 3.24
+
+
+3.24 (2025-08-28)
+-----------------
+
+- Bugfix: Allow multiple polygons per substance in the "Simulate with rain zones" processing algorithm
+- Prevent N&S Dependency Loader from getting disabled (nens/nens-dependency-loader#19)
+
+
+3.23 (2025-07-16)
+-----------------
+
+- Bump Dependency Loader plugin version to 1.2.1 (nens/nens-dependency-loader#14)
+
+
+3.22 (2025-06-17)
+-----------------
+
+- Fix incorrect filtering and project id retrieval in simulation results.
+
+
+3.21 (2025-06-16)
+-----------------
+
+- Use custom sorting for expiration days in finished simulation results. (#668)
+- Added external progress bar option to load_remote_schematisation (nens/rana#1745)
+
+
+3.20 (2025-06-10)
 -----------------
 
 - Add beta processing algorithm *Simulate with rain zones* (#682)
+- Add beta processing algorithm *Simulate with DWF labelling* (#683)
 - Use separate enum for wind events with "Custom" instead of "From CSV".
 - Allow more decimals in wind drag coefficient setting.
 

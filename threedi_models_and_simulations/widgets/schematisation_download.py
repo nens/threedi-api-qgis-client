@@ -215,13 +215,14 @@ class SchematisationDownload(uicls, basecls):
         """Downloading selected schematisation revision."""
         selected_schematisation = self.get_selected_schematisation()
         selected_revision = self.get_selected_revision()
-        self.download_required_files(selected_schematisation, selected_revision)
+        self.download_required_files(selected_schematisation, selected_revision, False)
         if self.downloaded_local_schematisation:
             self.close()
 
-    def download_required_files(self, schematisation, revision, is_latest_revision=False):
+    def download_required_files(self, schematisation, revision, is_latest_revision, external_progress_bar = None):
         """Download required schematisation revision files."""
         try:
+            progress_bar = external_progress_bar if external_progress_bar else self.pbar_download
             schematisation_pk = schematisation.id
             schematisation_name = schematisation.name
             revision_pk = revision.id
@@ -314,34 +315,34 @@ class SchematisationDownload(uicls, basecls):
             if revision_number not in local_schematisation.revisions:
                 local_schematisation.add_revision(revision_number)
             zip_filepath = os.path.join(schematisation_db_dir, revision_sqlite.file.filename)
-            self.pbar_download.setMaximum(number_of_steps)
+            progress_bar.setMaximum(number_of_steps)
             current_progress = 0
-            self.pbar_download.setValue(current_progress)
+            progress_bar.setValue(current_progress)
             get_download_file(sqlite_download, zip_filepath)
             content_list = unzip_archive(zip_filepath)
             os.remove(zip_filepath)
             schematisation_db_file = content_list[0]
             current_progress += 1
-            self.pbar_download.setValue(current_progress)
+            progress_bar.setValue(current_progress)
             if gridadmin_download is not None:
                 grid_filepath = os.path.join(
                     local_schematisation.revisions[revision_number].grid_dir, gridadmin_file.filename
                 )
                 get_download_file(gridadmin_download, grid_filepath)
                 current_progress += 1
-                self.pbar_download.setValue(current_progress)
+                progress_bar.setValue(current_progress)
             if gridadmin_download_gpkg is not None:
                 gpkg_filepath = os.path.join(
                     local_schematisation.revisions[revision_number].grid_dir, gridadmin_file_gpkg.filename
                 )
                 get_download_file(gridadmin_download_gpkg, gpkg_filepath)
                 current_progress += 1
-                self.pbar_download.setValue(current_progress)
+                progress_bar.setValue(current_progress)
             for raster_filename, raster_download in rasters_downloads:
                 raster_filepath = os.path.join(schematisation_db_dir, "rasters", raster_filename)
                 get_download_file(raster_download, raster_filepath)
                 current_progress += 1
-                self.pbar_download.setValue(current_progress)
+                progress_bar.setValue(current_progress)
             self.downloaded_local_schematisation = local_schematisation
             expected_geopackage_path = os.path.join(schematisation_db_dir, schematisation_db_file)
             if expected_geopackage_path.lower().endswith(".sqlite"):

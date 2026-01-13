@@ -6,7 +6,7 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from qgis.PyQt import uic
-from qgis.PyQt.QtCore import QSettings, Qt, QThreadPool
+from qgis.PyQt.QtCore import QSettings, Qt, QThreadPool, QSortFilterProxyModel, QModelIndex
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QFileDialog
 from threedi_api_client.openapi import ApiException
@@ -22,14 +22,29 @@ base_dir = os.path.dirname(os.path.dirname(__file__))
 uicls, basecls = uic.loadUiType(os.path.join(base_dir, "ui", "simulation_results.ui"))
 
 
+SIMULATION_NAME_IDX = 0
+EXPIRES_COLUMN_IDX = 1
+USERNAME_COLUMN_IDX = 2
+PROGRESS_COLUMN_IDX = 3
+MAX_THREAD_COUNT = 4
+
+class SortFilterProxyModel(QSortFilterProxyModel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def lessThan(self, left: QModelIndex, right: QModelIndex):
+        leftData = self.sourceModel().data(left)
+        rightData = self.sourceModel().data(right)
+        if left.column() in [EXPIRES_COLUMN_IDX]:
+            left_int = int(leftData.split()[0])
+            right_int = int(rightData.split()[0])
+            return left_int < right_int
+        else:
+            return leftData < rightData
+
+
 class SimulationResults(uicls, basecls):
     """Dialog with methods for handling simulations results."""
-
-    SIMULATION_NAME_IDX = 0
-    EXPIRES_COLUMN_IDX = 1
-    USERNAME_COLUMN_IDX = 2
-    PROGRESS_COLUMN_IDX = 3
-    MAX_THREAD_COUNT = 4
 
     def __init__(self, plugin_dock, parent=None):
         super().__init__(parent)
@@ -39,7 +54,7 @@ class SimulationResults(uicls, basecls):
         self.first_name_le.setText(self.plugin_dock.current_user_first_name)
         self.last_name_le.setText(self.plugin_dock.current_user_last_name)
         self.download_results_pool = QThreadPool()
-        self.download_results_pool.setMaxThreadCount(self.MAX_THREAD_COUNT)
+        self.download_results_pool.setMaxThreadCount(MAX_THREAD_COUNT)
         self.finished_simulations = {}
         self.download_progress_bars = {}
         self.running_downloads = set()
@@ -62,11 +77,14 @@ class SimulationResults(uicls, basecls):
 
     def setup_view_model(self):
         """Setting up model and columns for TreeView."""
-        self.tv_model = QStandardItemModel(0, 3)
+        self.tv_model = QStandardItemModel(0, 3, self)
+        # ProxyModel is a wrapper around the source model, but with filtering/sorting
+        self.proxy_model = SortFilterProxyModel(self)
+        self.proxy_model.setSourceModel(self.tv_model)
         delegate = DownloadProgressDelegate(self.tv_finished_sim_tree)
-        self.tv_finished_sim_tree.setItemDelegateForColumn(self.PROGRESS_COLUMN_IDX, delegate)
+        self.tv_finished_sim_tree.setItemDelegateForColumn(PROGRESS_COLUMN_IDX, delegate)
         self.tv_model.setHorizontalHeaderLabels(["Simulation name", "Expires", "Username", "Download progress"])
-        self.tv_finished_sim_tree.setModel(self.tv_model)
+        self.tv_finished_sim_tree.setModel(self.proxy_model)
 
     def refresh_finished_simulations_list(self):
         """Refresh finished simulation results list."""
@@ -115,7 +133,7 @@ class SimulationResults(uicls, basecls):
         for sim_id, sim_data in sorted(finished_simulations_data.items()):
             if sim_id not in self.finished_simulations:
                 self.add_finished_simulation_to_model(sim_id, sim_data)
-        self.tv_finished_sim_tree.resizeColumnToContents(self.SIMULATION_NAME_IDX)
+        self.tv_finished_sim_tree.resizeColumnToContents(SIMULATION_NAME_IDX)
         self.refresh_last_updated_label()
         self.filter_finished_simulations_list()
 
@@ -123,12 +141,12 @@ class SimulationResults(uicls, basecls):
         """Filter finished simulations list."""
         filter_first_name = self.first_name_le.text().lower()
         filter_last_name = self.last_name_le.text().lower()
-        row_count = self.tv_model.rowCount()
+        row_count = self.proxy_model.rowCount()
         root_model_index = self.tv_model.invisibleRootItem().index()
         if self.username_filter_grp.isChecked():
             for row in range(row_count):
-                item = self.tv_model.item(row, self.USERNAME_COLUMN_IDX)
-                first_name, last_name = item.data(Qt.UserRole)
+                model_index = self.proxy_model.index(row, USERNAME_COLUMN_IDX)
+                first_name, last_name = self.proxy_model.data(model_index, Qt.UserRole) 
                 first_name_match, last_name_match = True, True
                 if filter_first_name:
                     if filter_first_name not in first_name.lower():
@@ -188,8 +206,8 @@ class SimulationResults(uicls, basecls):
         if not current_index.isValid():
             return
         current_row = current_index.row()
-        name_item = self.tv_model.item(current_row, 0)
-        sim_id = name_item.data(Qt.UserRole)
+        current_sim_id_index = self.proxy_model.index(current_row, 0)
+        sim_id = self.proxy_model.data(current_sim_id_index, Qt.UserRole)
         if sim_id in self.running_downloads:
             self.plugin_dock.communication.bar_warn("The selected results are already being downloaded!")
             return

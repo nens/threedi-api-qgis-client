@@ -7,7 +7,7 @@ name=3Di Models and Simulations
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 description=3Di Models and Simulations
-version=3.20
+version=3.27.5
 author=3Di Water Management
 email=servicedesk@nelen-schuurmans.nl
 
@@ -42,7 +42,7 @@ deprecated=False
 # Since QGIS 3.8, a comma separated list of plugins to be installed
 # (or upgraded) can be specified.
 # Check the documentation for more information.
-plugin_dependencies=Nelen and Schuurmans Dependency Loader==1.0.11
+plugin_dependencies=Nelen and Schuurmans Dependency Loader==1.2.6
 
 Category of the plugin: Raster, Vector, Database or Web
 # category=
