@@ -4,7 +4,9 @@ History
 3.27.5 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Made plugin deprecated in metadata.
+- Added a warning when a simulation is started using this plugin, and the rana plugin is active.
+- Bump dependency loader to 1.2.10.
 
 
 3.27.4 (2025-11-18)

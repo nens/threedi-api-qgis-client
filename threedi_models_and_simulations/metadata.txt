@@ -37,12 +37,12 @@ icon=icon.png
 experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version)
-deprecated=False
+deprecated=True
 
 # Since QGIS 3.8, a comma separated list of plugins to be installed
 # (or upgraded) can be specified.
 # Check the documentation for more information.
-plugin_dependencies=Nelen and Schuurmans Dependency Loader==1.2.6
+plugin_dependencies=Nelen and Schuurmans Dependency Loader==1.2.10
 
 Category of the plugin: Raster, Vector, Database or Web
 # category=

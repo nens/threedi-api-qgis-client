@@ -18,6 +18,7 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtCore import QDateTime, QLocale, QSettings, QSize, Qt, QTimeZone, pyqtSignal
 from qgis.PyQt.QtGui import QColor, QDoubleValidator, QFont, QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import (
+    QMessageBox,
     QComboBox,
     QDoubleSpinBox,
     QFileDialog,
@@ -37,6 +38,7 @@ from qgis.PyQt.QtWidgets import (
     QWizardPage,
 )
 from threedi_api_client.openapi import ApiException, Threshold
+from threedi_models_and_simulations.utils_qgis import get_plugin_instance
 
 from ..api_calls.threedi_calls import ThreediCalls
 from ..data_models import simulation_data_models as dm
@@ -3930,6 +3932,13 @@ class SimulationWizard(QWizard):
                     )
 
     def run_new_simulation(self):
+        if get_plugin_instance("rana_qgis_plugin"):
+            QMessageBox.warning(
+                None,
+                "Rana plugin detected",
+                "The Models & Simulations plugin is deprecated and replaced by the Rana plugin. Simulation results resulting from the usage of this plugin will not be stored in Rana. Please use the Rana plugin.",
+            )
+        
         """Getting data from the wizard and running new simulation."""
         self.settings.setValue("threedi/wizard_size", self.size())
         events = self.init_conditions_dlg.events
